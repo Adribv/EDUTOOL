@@ -1,0 +1,948 @@
+{
+  "info": {
+    "name": "EduRays - HOD API",
+    "description": "API collection for the Head of Department (HOD) module in Edurays application",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Department Management",
+      "item": [
+        {
+          "name": "Get Department Overview",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/hod/department/overview",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "department", "overview"]
+            },
+            "description": "Retrieves overview of the department headed by the HOD"
+          }
+        },
+        {
+          "name": "Get Department Staff",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/hod/department/staff",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "department", "staff"]
+            },
+            "description": "Retrieves all staff members in the department"
+          }
+        },
+        {
+          "name": "Get Department Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/hod/department/statistics",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "department", "statistics"]
+            },
+            "description": "Retrieves statistical data for the department"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Teacher Management",
+      "item": [
+        {
+          "name": "Get All Teachers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/hod/teacher-management/teachers",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "teacher-management", "teachers"]
+            },
+            "description": "Retrieves all teachers in the department"
+          }
+        },
+        {
+          "name": "Get Teacher Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/hod/teacher-management/teachers/{{teacherId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "teacher-management", "teachers", "{{teacherId}}"]
+            },
+            "description": "Retrieves details of a specific teacher"
+          }
+        },
+        {
+          "name": "Assign Subject to Teacher",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"class\": \"10\",\n  \"section\": \"A\",\n  \"subject\": \"Physics\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/hod/teacher-management/teachers/{{teacherId}}/subjects",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "teacher-management", "teachers", "{{teacherId}}", "subjects"]
+            },
+            "description": "Assigns a subject to a teacher"
+          }
+        },
+        {
+          "name": "Remove Subject from Teacher",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/hod/teacher-management/teachers/{{teacherId}}/subjects/{{subjectId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "teacher-management", "teachers", "{{teacherId}}", "subjects", "{{subjectId}}"]
+            },
+            "description": "Removes a subject from a teacher"
+          }
+        },
+        {
+          "name": "Assign Class to Teacher",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"class\": \"10\",\n  \"section\": \"A\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/hod/teacher-management/teachers/{{teacherId}}/classes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "teacher-management", "teachers", "{{teacherId}}", "classes"]
+            },
+            "description": "Assigns a class to a teacher"
+          }
+        },
+        {
+          "name": "Remove Class from Teacher",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/hod/teacher-management/teachers/{{teacherId}}/classes/{{classId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "teacher-management", "teachers", "{{teacherId}}", "classes", "{{classId}}"]
+            },
+            "description": "Removes a class from a teacher"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Teacher Evaluation",
+      "item": [
+        {
+          "name": "Create Evaluation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"teacherId\": \"{{teacherId}}\",\n  \"evaluationDate\": \"2023-05-15\",\n  \"criteria\": [\n    {\n      \"name\": \"Teaching Quality\",\n      \"score\": 4.5,\n      \"comments\": \"Excellent teaching methods\"\n    },\n    {\n      \"name\": \"Classroom Management\",\n      \"score\": 4.0,\n      \"comments\": \"Good control of classroom\"\n    }\n  ],\n  \"overallComments\": \"Overall good performance\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/hod/teacher-evaluations",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "teacher-evaluations"]
+            },
+            "description": "Creates a new teacher evaluation"
+          }
+        },
+        {
+          "name": "Get All Evaluations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/hod/teacher-evaluations",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "teacher-evaluations"]
+            },
+            "description": "Retrieves all teacher evaluations"
+          }
+        },
+        {
+          "name": "Get Evaluation by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/hod/teacher-evaluations/{{evaluationId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "teacher-evaluations", "{{evaluationId}}"]
+            },
+            "description": "Retrieves a specific teacher evaluation"
+          }
+        },
+        {
+          "name": "Update Evaluation",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"criteria\": [\n    {\n      \"name\": \"Teaching Quality\",\n      \"score\": 4.8,\n      \"comments\": \"Excellent teaching methods and engagement\"\n    },\n    {\n      \"name\": \"Classroom Management\",\n      \"score\": 4.2,\n      \"comments\": \"Good control of classroom with room for improvement\"\n    }\n  ],\n  \"overallComments\": \"Updated overall assessment\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/hod/teacher-evaluations/{{evaluationId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "teacher-evaluations", "{{evaluationId}}"]
+            },
+            "description": "Updates an existing teacher evaluation"
+          }
+        },
+        {
+          "name": "Delete Evaluation",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/hod/teacher-evaluations/{{evaluationId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "teacher-evaluations", "{{evaluationId}}"]
+            },
+            "description": "Deletes a teacher evaluation"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Teacher Supervision",
+      "item": [
+        {
+          "name": "Get Department Teacher Profiles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/hod/teacher-supervision/profiles",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "teacher-supervision", "profiles"]
+            },
+            "description": "Retrieves profiles of all teachers in the department"
+          }
+        },
+        {
+          "name": "Get Leave Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/hod/teacher-supervision/leave-requests",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "teacher-supervision", "leave-requests"]
+            },
+            "description": "Retrieves all leave requests from teachers in the department"
+          }
+        },
+        {
+          "name": "Update Leave Request",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\",\n  \"comments\": \"Approved due to valid reason\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/hod/teacher-supervision/leave-requests/{{requestId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "teacher-supervision", "leave-requests", "{{requestId}}"]
+            },
+            "description": "Updates the status of a leave request"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Academic Planning",
+      "item": [
+        {
+          "name": "Get Lesson Plans for Review",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/hod/academic-planning/lesson-plans",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "academic-planning", "lesson-plans"]
+            },
+            "description": "Retrieves lesson plans submitted for HOD review"
+          }
+        },
+        {
+          "name": "Review Lesson Plan",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\",\n  \"feedback\": \"Well-structured lesson plan with clear objectives\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/hod/academic-planning/lesson-plans/{{planId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "academic-planning", "lesson-plans", "{{planId}}"]
+            },
+            "description": "Reviews and provides feedback on a lesson plan"
+          }
+        },
+        {
+          "name": "Get Syllabus Progress",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/hod/academic-planning/syllabus-progress",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "academic-planning", "syllabus-progress"]
+            },
+            "description": "Retrieves syllabus progress for all subjects in the department"
+          }
+        },
+        {
+          "name": "Create Learning Outcome",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subject\": \"Physics\",\n  \"class\": \"10\",\n  \"description\": \"Students will be able to explain Newton's laws of motion\",\n  \"assessmentCriteria\": \"Written test and practical demonstration\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/hod/academic-planning/learning-outcomes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "academic-planning", "learning-outcomes"]
+            },
+            "description": "Creates a new learning outcome for a subject"
+          }
+        },
+        {
+          "name": "Get Learning Outcomes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/hod/academic-planning/learning-outcomes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "academic-planning", "learning-outcomes"]
+            },
+            "description": "Retrieves all learning outcomes for the department"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Content Quality",
+      "item": [
+        {
+          "name": "Get Resources for Review",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/hod/content-quality/resources",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "content-quality", "resources"]
+            },
+            "description": "Retrieves teaching resources submitted for HOD review"
+          }
+        },
+        {
+          "name": "Review Resource",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\",\n  \"feedback\": \"Excellent resource with comprehensive content\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/hod/content-quality/resources/{{resourceId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "content-quality", "resources", "{{resourceId}}"]
+            },
+            "description": "Reviews and provides feedback on a teaching resource"
+          }
+        },
+        {
+          "name": "Upload Department Resource",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "Department Guidelines",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Guidelines for teaching in the science department",
+                  "type": "text"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "/path/to/file.pdf"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/hod/content-quality/department-resources",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "content-quality", "department-resources"]
+            },
+            "description": "Uploads a resource for the entire department"
+          }
+        },
+        {
+          "name": "Get Department Resources",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/hod/content-quality/department-resources",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "content-quality", "department-resources"]
+            },
+            "description": "Retrieves all resources shared with the department"
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Subject Allocation",
+      "item": [
+        {
+          "name": "Allocate Subject",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"teacherId\": \"{{teacherId}}\",\n  \"subject\": \"Physics\",\n  \"class\": \"10\",\n  \"section\": \"A\",\n  \"academicYear\": \"2023-2024\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/hod/subject-allocation",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "subject-allocation"]
+            },
+            "description": "Allocates a subject to a teacher"
+          }
+        },
+        {
+          "name": "Get Subject Allocations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/hod/subject-allocation",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "subject-allocation"]
+            },
+            "description": "Retrieves all subject allocations in the department"
+          }
+        },
+        {
+          "name": "Remove Subject Allocation",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/hod/subject-allocation/{{allocationId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "subject-allocation", "{{allocationId}}"]
+            },
+            "description": "Removes a subject allocation"
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Department Metrics",
+      "item": [
+        {
+          "name": "Record Metrics",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"metricType\": \"performance\",\n  \"data\": {\n    \"subject\": \"Physics\",\n    \"class\": \"10\",\n    \"averageScore\": 85,\n    \"passPercentage\": 92\n  },\n  \"date\": \"2023-05-15\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/hod/metrics",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "metrics"]
+            },
+            "description": "Records department metrics"
+          }
+        },
+        {
+          "name": "Get Metrics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/hod/metrics",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "metrics"]
+            },
+            "description": "Retrieves all department metrics"
+          }
+        },
+        {
+          "name": "Get Department Performance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/hod/metrics/performance",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "metrics", "performance"]
+            },
+            "description": "Retrieves performance metrics for the department"
+          }
+        },
+        {
+          "name": "Get Department Attendance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/hod/metrics/attendance",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hod", "metrics", "attendance"]
+            },
+            "description": "Retrieves attendance metrics for the department"
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Approval Workflow & Reports",
+      "item": [
+        {
+          "name": "Get Pending Approval Requests",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}],
+            "url": {"raw": "{{base_url}}/api/hod/approval-workflow/pending", "host": ["{{base_url}}"], "path": ["api", "hod", "approval-workflow", "pending"]},
+            "description": "Retrieves all pending approval requests."
+          }
+        },
+        {
+          "name": "Approve Request",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"},
+              {"key": "Content-Type", "value": "application/json", "type": "text"}
+            ],
+            "url": {"raw": "{{base_url}}/api/hod/approval-workflow/approve/{{requestId}}", "host": ["{{base_url}}"], "path": ["api", "hod", "approval-workflow", "approve", "{{requestId}}"]},
+            "description": "Approves a specific request."
+          }
+        },
+        {
+          "name": "Reject Request",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"},
+              {"key": "Content-Type", "value": "application/json", "type": "text"}
+            ],
+            "url": {"raw": "{{base_url}}/api/hod/approval-workflow/reject/{{requestId}}", "host": ["{{base_url}}"], "path": ["api", "hod", "approval-workflow", "reject", "{{requestId}}"]},
+            "description": "Rejects a specific request."
+          }
+        },
+        {
+          "name": "Get All Approval Requests",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}],
+            "url": {"raw": "{{base_url}}/api/hod/approval-workflow/requests", "host": ["{{base_url}}"], "path": ["api", "hod", "approval-workflow", "requests"]},
+            "description": "Retrieves all approval workflow requests."
+          }
+        },
+        {
+          "name": "Get Approval Request History",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}],
+            "url": {"raw": "{{base_url}}/api/hod/approval-workflow/requests/{{requestId}}/history", "host": ["{{base_url}}"], "path": ["api", "hod", "approval-workflow", "requests", "{{requestId}}", "history"]},
+            "description": "Retrieves the history of a specific approval request."
+          }
+        },
+        {
+          "name": "Generate Department Report",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}],
+            "url": {"raw": "{{base_url}}/api/hod/reports/department", "host": ["{{base_url}}"], "path": ["api", "hod", "reports", "department"]},
+            "description": "Generates a department report."
+          }
+        },
+        {
+          "name": "Analyze Learning Trends",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}],
+            "url": {"raw": "{{base_url}}/api/hod/reports/learning-trends", "host": ["{{base_url}}"], "path": ["api", "hod", "reports", "learning-trends"]},
+            "description": "Analyzes learning trends in the department."
+          }
+        },
+        {
+          "name": "Compare Performance Metrics",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}],
+            "url": {"raw": "{{base_url}}/api/hod/reports/performance-metrics", "host": ["{{base_url}}"], "path": ["api", "hod", "reports", "performance-metrics"]},
+            "description": "Compares performance metrics across the department."
+          }
+        },
+        {
+          "name": "Create Improvement Plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"},
+              {"key": "Content-Type", "value": "application/json", "type": "text"}
+            ],
+            "body": {"mode": "raw", "raw": "{\n  \"planName\": \"Improve Math Results\",\n  \"description\": \"Focus on remedial classes for underperforming students\"\n}"},
+            "url": {"raw": "{{base_url}}/api/hod/reports/improvement-plans", "host": ["{{base_url}}"], "path": ["api", "hod", "reports", "improvement-plans"]},
+            "description": "Creates a new improvement plan."
+          }
+        },
+        {
+          "name": "Get Improvement Plans",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}],
+            "url": {"raw": "{{base_url}}/api/hod/reports/improvement-plans", "host": ["{{base_url}}"], "path": ["api", "hod", "reports", "improvement-plans"]},
+            "description": "Retrieves all improvement plans."
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "123456789",
+      "type": "string"
+    },
+    {
+      "key": "studentId",
+      "value": "12001",
+      "type": "string"
+    },
+    {
+      "key": "parentId",
+      "value": "12001",
+      "type": "string"
+    },
+    {
+      "key": "assignmentId",
+      "value": "assignment_id_here",
+      "type": "string"
+    },
+    {
+      "key": "submissionId",
+      "value": "submission_id_here",
+      "type": "string"
+    },
+    {
+      "key": "examId",
+      "value": "exam_id_here",
+      "type": "string"
+    }
+  ]
+}

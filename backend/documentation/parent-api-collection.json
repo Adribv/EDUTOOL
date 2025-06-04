@@ -1,0 +1,920 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "EduRays - Parent API",
+    "description": "API collection for the Parent module in Edurays application",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Parent Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"parent@example.com\",\n    \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/parent/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "login"]
+            },
+            "description": "Authenticates a parent and returns a JWT token"
+          },
+          "response": []
+        },
+        {
+          "name": "Parent Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"John Doe\",\n    \"email\": \"parent@example.com\",\n    \"password\": \"password123\",\n    \"childRollNumbers\": [\"10A001\", \"8B002\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/parent/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "register"]
+            },
+            "description": "Registers a new parent account"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Child Profile Access",
+      "item": [
+        {
+          "name": "Get Children Profiles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/parent/children",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "children"]
+            },
+            "description": "Retrieves all children profiles associated with the parent"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Child Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/parent/children/10A001",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "children", "10A001"]
+            },
+            "description": "Retrieves a specific child's profile information"
+          },
+          "response": []
+        },
+        {
+          "name": "Request Profile Update",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"John Smith\",\n    \"contactNumber\": \"9876543210\",\n    \"address\": \"123 New Street, Education City\",\n    \"email\": \"john.smith@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/parent/children/10A001/update-request",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "children", "10A001", "update-request"]
+            },
+            "description": "Submits a request to update child's profile information (pending admin approval)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Academic Monitoring",
+      "item": [
+        {
+          "name": "Get Child Timetable",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/parent/children/10A001/timetable",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "children", "10A001", "timetable"]
+            },
+            "description": "Retrieves the child's class timetable"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Child Subjects",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/parent/children/10A001/subjects",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "children", "10A001", "subjects"]
+            },
+            "description": "Retrieves the list of subjects and assigned teachers for the child's class"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Child Assignments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/parent/children/10A001/assignments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "children", "10A001", "assignments"]
+            },
+            "description": "Retrieves all assignments for the child's class with submission status"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Child Performance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/parent/children/10A001/performance",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "children", "10A001", "performance"]
+            },
+            "description": "Retrieves the child's academic performance analytics"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Attendance Oversight",
+      "item": [
+        {
+          "name": "Get Child Attendance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/parent/children/10A001/attendance?month=9&year=2023",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "children", "10A001", "attendance"],
+              "query": [
+                {
+                  "key": "month",
+                  "value": "9"
+                },
+                {
+                  "key": "year",
+                  "value": "2023"
+                }
+              ]
+            },
+            "description": "Retrieves the child's attendance records with optional month and year filters"
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Leave Application",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"startDate\": \"2023-10-15\",\n    \"endDate\": \"2023-10-17\",\n    \"reason\": \"Family function\",\n    \"attachments\": []\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/parent/children/10A001/leave-application",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "children", "10A001", "leave-application"]
+            },
+            "description": "Submits a leave application for the child"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Child Leave Applications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/parent/children/10A001/leave-applications",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "children", "10A001", "leave-applications"]
+            },
+            "description": "Retrieves all leave applications submitted for the child"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Examination and Results",
+      "item": [
+        {
+          "name": "Get Child Upcoming Exams",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/parent/children/10A001/exams",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "children", "10A001", "exams"]
+            },
+            "description": "Retrieves the child's upcoming exams"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Child Exam Results",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/parent/children/10A001/exam-results",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "children", "10A001", "exam-results"]
+            },
+            "description": "Retrieves the child's exam results"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Child Report Cards",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/parent/children/10A001/report-cards",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "children", "10A001", "report-cards"]
+            },
+            "description": "Retrieves the child's report cards"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. Fee Management",
+      "item": [
+        {
+          "name": "Get Child Fee Structure",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/parent/children/10A001/fee-structure?academicYear=2023",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "children", "10A001", "fee-structure"],
+              "query": [
+                {
+                  "key": "academicYear",
+                  "value": "2023"
+                }
+              ]
+            },
+            "description": "Retrieves the child's fee structure for a specific academic year"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Child Payment Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/parent/children/10A001/payment-status?academicYear=2023",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "children", "10A001", "payment-status"],
+              "query": [
+                {
+                  "key": "academicYear",
+                  "value": "2023"
+                }
+              ]
+            },
+            "description": "Retrieves the child's fee payment status for a specific academic year"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Child Payment Receipt",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/parent/children/10A001/payment-receipts/6152f9d8a7c2e1234567890",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "children", "10A001", "payment-receipts", "6152f9d8a7c2e1234567890"]
+            },
+            "description": "Retrieves a specific payment receipt for the child"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "7. Communication Tools",
+      "item": [
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"recipientId\": \"6152f9d8a7c2e1234567890\",\n    \"recipientModel\": \"Staff\",\n    \"subject\": \"Regarding my child's performance\",\n    \"content\": \"I would like to discuss my child's recent performance in mathematics.\",\n    \"attachments\": []\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/parent/messages",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "messages"]
+            },
+            "description": "Sends a message to a staff member"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Received Messages",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/parent/messages/received",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "messages", "received"]
+            },
+            "description": "Retrieves all received messages"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Sent Messages",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/parent/messages/sent",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "messages", "sent"]
+            },
+            "description": "Retrieves all sent messages"
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Complaint",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"subject\": \"Complaint about school facilities\",\n    \"content\": \"I would like to raise a concern about the cleanliness of the school cafeteria.\",\n    \"category\": \"Facilities\",\n    \"priority\": \"Medium\",\n    \"attachments\": []\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/parent/complaints",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "complaints"]
+            },
+            "description": "Submits a formal complaint or inquiry"
+          },
+          "response": []
+        },
+        {
+          "name": "Schedule Meeting",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"teacherId\": \"6152f9d8a7c2e1234567890\",\n    \"preferredDate\": \"2023-10-20\",\n    \"preferredTime\": \"15:00\",\n    \"reason\": \"To discuss my child's academic progress\",\n    \"childRollNumber\": \"10A001\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/parent/meetings",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "meetings"]
+            },
+            "description": "Schedules a parent-teacher meeting"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Announcements",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/parent/announcements",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "announcements"]
+            },
+            "description": "Retrieves all announcements targeted to parents"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "8. Transport Tracking",
+      "item": [
+        {
+          "name": "Get Child Transport Info",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/parent/children/10A001/transport",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "children", "10A001", "transport"]
+            },
+            "description": "Retrieves the child's transport information including route, driver details, and stops"
+          },
+          "response": []
+        },
+        {
+          "name": "Contact Transport Coordinator",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"subject\": \"Change in pickup location\",\n    \"message\": \"I would like to request a change in my child's pickup location starting next week.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/parent/transport/contact",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "transport", "contact"]
+            },
+            "description": "Sends a message to the transport coordinator"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "9. Calendar Access",
+      "item": [
+        {
+          "name": "Get School Calendar",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/parent/calendar?month=10&year=2023",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "calendar"],
+              "query": [
+                {
+                  "key": "month",
+                  "value": "10"
+                },
+                {
+                  "key": "year",
+                  "value": "2023"
+                }
+              ]
+            },
+            "description": "Retrieves the school calendar with optional month and year filters"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Child Exam Schedule",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/parent/children/10A001/exam-schedule",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "children", "10A001", "exam-schedule"]
+            },
+            "description": "Retrieves the child's exam schedule"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "10. Health and Wellness",
+      "item": [
+        {
+          "name": "Get Child Health Info",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/parent/children/10A001/health",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "children", "10A001", "health"]
+            },
+            "description": "Retrieves the child's health information including medical conditions, allergies, and medications"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Child Health Incidents",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/parent/children/10A001/health/incidents",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "children", "10A001", "health", "incidents"]
+            },
+            "description": "Retrieves the child's health incidents reported at school"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Child Counselor Recommendations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/parent/children/10A001/health/counselor-recommendations",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "children", "10A001", "health", "counselor-recommendations"]
+            },
+            "description": "Retrieves the counselor recommendations shared with parents for the child"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "11. Document Center",
+      "item": [
+        {
+          "name": "Get Child Fee Receipts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/parent/children/10A001/fee-receipts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "children", "10A001", "fee-receipts"]
+            },
+            "description": "Retrieves all fee receipts for the child"
+          },
+          "response": []
+        },
+        {
+          "name": "Get School Documents",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/parent/school-documents?type=Policy",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "school-documents"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "Policy"
+                }
+              ]
+            },
+            "description": "Retrieves school documents like policies, guidelines, and newsletters with optional type filter"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Child Certificates",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/parent/children/10A001/certificates",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "children", "10A001", "certificates"]
+            },
+            "description": "Retrieves all certificates issued to the child"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "12. Student Management",
+      "item": [
+        {
+          "name": "Add Student to Parent",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"rollNumber\": \"9C003\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/parent/6152f9d8a7c2e1234567890/add-student",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "6152f9d8a7c2e1234567890", "add-student"]
+            },
+            "description": "Adds a student to the parent's account"
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Student from Parent",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"rollNumber\": \"9C003\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/parent/6152f9d8a7c2e1234567890/remove-student",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parents", "6152f9d8a7c2e1234567890", "remove-student"]
+            },
+            "description": "Removes a student from the parent's account"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "your_jwt_token_here",
+      "type": "string"
+    }
+  ]
+}
