@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
   Container,
@@ -9,7 +9,6 @@ import {
   Link,
   Paper,
   Alert,
-  MenuItem,
 } from '@mui/material';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
@@ -20,48 +19,39 @@ import { toast } from 'react-toastify';
 const validationSchema = yup.object({
   name: yup
     .string()
-    .required('Name is required')
-    .min(2, 'Name should be of minimum 2 characters length'),
-  email: yup
+    .required('Name is required'),
+  rollNumber: yup
     .string()
-    .email('Enter a valid email')
-    .required('Email is required'),
+    .required('Roll Number is required'),
+  class: yup
+    .string()
+    .required('Class is required'),
+  section: yup
+    .string()
+    .required('Section is required'),
   password: yup
     .string()
     .min(6, 'Password should be of minimum 6 characters length')
     .required('Password is required'),
-  confirmPassword: yup
-    .string()
-    .oneOf([yup.ref('password'), null], 'Passwords must match')
-    .required('Confirm password is required'),
-  role: yup
-    .string()
-    .required('Role is required'),
 });
 
-const roles = [
-  { value: 'student', label: 'Student' },
-  { value: 'Teacher', label: 'Teacher' },
-  { value: 'parent', label: 'Parent' },
-  { value: 'AdminStaff', label: 'Admin' },
-];
-
-function Register() {
+function StudentRegister() {
   const navigate = useNavigate();
   const [error, setError] = useState('');
-  const [showAdminWarning, setShowAdminWarning] = useState(false);
 
   const registerMutation = useMutation({
     mutationFn: async (values) => {
-      const response = await axios.post('http://localhost:5000/api/staffs/register', values);
+      const response = await axios.post('http://localhost:5000/api/students/register', values);
+      console.log(response.data);
       return response.data;
     },
     onSuccess: (data) => {
-      toast.success('Registration successful! Please login.');
-      navigate('/login');
+      localStorage.setItem('studentToken', data.token);
+      toast.success('Registration successful!');
+      navigate('/Student');
     },
     onError: (error) => {
-      setError(error.response?.data?.message || 'An error occurred during registration');
+      console.error('Registration failed:', error);
       toast.error(error.response?.data?.message || 'Registration failed');
     },
   });
@@ -69,21 +59,16 @@ function Register() {
   const formik = useFormik({
     initialValues: {
       name: '',
-      email: '',
+      rollNumber: '',
+      class: '',
+      section: '',
       password: '',
-      confirmPassword: '',
-      role: '',
     },
     validationSchema: validationSchema,
     onSubmit: (values) => {
-      const { confirmPassword, ...submitData } = values;
-      registerMutation.mutate(submitData);
+      registerMutation.mutate(values);
     },
   });
-
-  useEffect(() => {
-    setShowAdminWarning(formik.values.role === 'AdminStaff');
-  }, [formik.values.role]);
 
   return (
     <Container component="main" maxWidth="xs">
@@ -106,16 +91,11 @@ function Register() {
           }}
         >
           <Typography component="h1" variant="h5">
-            Create an Account
+            Student Registration
           </Typography>
           {error && (
             <Alert severity="error" sx={{ width: '100%', mt: 2 }}>
               {error}
-            </Alert>
-          )}
-          {showAdminWarning && (
-            <Alert severity="warning" sx={{ width: '100%', mt: 2 }}>
-              You are about to create an <b>Admin</b> account. Please ensure this is intentional and authorized.
             </Alert>
           )}
           <Box
@@ -141,14 +121,38 @@ function Register() {
               margin="normal"
               required
               fullWidth
-              id="email"
-              label="Email Address"
-              name="email"
-              autoComplete="email"
-              value={formik.values.email}
+              id="rollNumber"
+              label="Roll Number"
+              name="rollNumber"
+              autoComplete="rollNumber"
+              value={formik.values.rollNumber}
               onChange={formik.handleChange}
-              error={formik.touched.email && Boolean(formik.errors.email)}
-              helperText={formik.touched.email && formik.errors.email}
+              error={formik.touched.rollNumber && Boolean(formik.errors.rollNumber)}
+              helperText={formik.touched.rollNumber && formik.errors.rollNumber}
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="class"
+              label="Class"
+              name="class"
+              value={formik.values.class}
+              onChange={formik.handleChange}
+              error={formik.touched.class && Boolean(formik.errors.class)}
+              helperText={formik.touched.class && formik.errors.class}
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="section"
+              label="Section"
+              name="section"
+              value={formik.values.section}
+              onChange={formik.handleChange}
+              error={formik.touched.section && Boolean(formik.errors.section)}
+              helperText={formik.touched.section && formik.errors.section}
             />
             <TextField
               margin="normal"
@@ -164,38 +168,6 @@ function Register() {
               error={formik.touched.password && Boolean(formik.errors.password)}
               helperText={formik.touched.password && formik.errors.password}
             />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="confirmPassword"
-              label="Confirm Password"
-              type="password"
-              id="confirmPassword"
-              value={formik.values.confirmPassword}
-              onChange={formik.handleChange}
-              error={formik.touched.confirmPassword && Boolean(formik.errors.confirmPassword)}
-              helperText={formik.touched.confirmPassword && formik.errors.confirmPassword}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              select
-              name="role"
-              label="Role"
-              id="role"
-              value={formik.values.role}
-              onChange={formik.handleChange}
-              error={formik.touched.role && Boolean(formik.errors.role)}
-              helperText={formik.touched.role && formik.errors.role}
-            >
-              {roles.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </TextField>
             <Button
               type="submit"
               fullWidth
@@ -203,11 +175,11 @@ function Register() {
               sx={{ mt: 3, mb: 2 }}
               disabled={registerMutation.isPending}
             >
-              {registerMutation.isPending ? 'Creating Account...' : 'Sign Up'}
+              {registerMutation.isPending ? 'Registering...' : 'Register'}
             </Button>
             <Box sx={{ textAlign: 'center' }}>
-              <Link component={RouterLink} to="/login" variant="body2">
-                Already have an account? Sign in
+              <Link component={RouterLink} to="/student-login" variant="body2">
+                {"Already have an account? Sign In"}
               </Link>
             </Box>
           </Box>
@@ -217,4 +189,4 @@ function Register() {
   );
 }
 
-export default Register; 
+export default StudentRegister;

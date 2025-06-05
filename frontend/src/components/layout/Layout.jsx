@@ -112,7 +112,7 @@ function Layout({ role }) {
     <div>
       <Toolbar>
         <Typography variant="h6" noWrap component="div">
-          EduTool
+          Edurays
         </Typography>
       </Toolbar>
       <Divider />
