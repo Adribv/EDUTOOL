@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import {
   Box,
+  Container,
   Typography,
-  Card,
-  CardContent,
   Button,
   TextField,
   Dialog,
@@ -11,17 +10,15 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
+  CircularProgress,
+  Alert,
+  Snackbar,
   Chip,
+  useTheme,
   MenuItem,
   Grid,
-  Tooltip,
+  Card,
+  CardContent,
   FormControl,
   InputLabel,
   Select,
@@ -30,112 +27,100 @@ import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Search as SearchIcon,
   Download as DownloadIcon,
+  FilterList as FilterListIcon,
+  Mail as MailIcon,
+  Phone as PhoneIcon,
 } from '@mui/icons-material';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { adminAPI } from '../../services/api';
-import { toast } from 'react-toastify';
+import { DataGrid, GridToolbar } from '@mui/x-data-grid';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
+import { useFormik } from 'formik';
+import * as yup from 'yup';
+import { motion } from 'framer-motion';
 
 const grades = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
 const sections = ['A', 'B', 'C', 'D', 'E'];
+const genders = ['male', 'female', 'other'];
+
+const validationSchema = yup.object({
+  name: yup.string().required('Name is required'),
+  email: yup.string().email('Invalid email').required('Email is required'),
+  grade: yup.string().required('Grade is required'),
+  section: yup.string().required('Section is required'),
+  rollNumber: yup.string().required('Roll Number is required'),
+  dateOfBirth: yup.string().required('Date of Birth is required'),
+  gender: yup.string().required('Gender is required'),
+  parentName: yup.string().required('Parent Name is required'),
+  parentPhone: yup.string().required('Parent Phone is required'),
+  address: yup.string().required('Address is required'),
+});
 
 function StudentRecords() {
+  const theme = useTheme();
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [filters, setFilters] = useState({
     grade: '',
     section: '',
-    rollNumber: '',
-    dateOfBirth: '',
     gender: '',
-    parentName: '',
-    parentPhone: '',
-    address: '',
   });
 
-  const queryClient = useQueryClient();
-
+  // Fetch students data
   const { data: students, isLoading } = useQuery({
     queryKey: ['students'],
-    queryFn: () => adminAPI.getAllStudents(),
+    queryFn: async () => {
+      const response = await axios.get('http://localhost:5000/api/admin/students');
+      return response.data;
+    }
   });
 
-  const createMutation = useMutation({
-    mutationFn: adminAPI.registerStudent,
+  // Add/Edit student mutation
+  const mutation = useMutation({
+    mutationFn: async (values) => {
+      if (selectedStudent) {
+        await axios.put(`http://localhost:5000/api/admin/students/${selectedStudent._id}`, values);
+      } else {
+        await axios.post('http://localhost:5000/api/admin/students', values);
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['students']);
-      toast.success('Student added successfully');
       handleClose();
-    },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Failed to add student');
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => adminAPI.updateStudent(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['students']);
-      toast.success('Student updated successfully');
-      handleClose();
-    },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Failed to update student');
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: adminAPI.deleteStudent,
-    onSuccess: () => {
-      queryClient.invalidateQueries(['students']);
-      toast.success('Student deleted successfully');
-    },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Failed to delete student');
-    },
-  });
-
-  const handleOpen = (student = null) => {
-    if (student) {
-      setSelectedStudent(student);
-      setFormData({
-        name: student.name,
-        email: student.email,
-        grade: student.grade,
-        section: student.section,
-        rollNumber: student.rollNumber,
-        dateOfBirth: student.dateOfBirth,
-        gender: student.gender,
-        parentName: student.parentName,
-        parentPhone: student.parentPhone,
-        address: student.address,
+      setSnackbar({
+        open: true,
+        message: `Student ${selectedStudent ? 'updated' : 'added'} successfully`,
+        severity: 'success'
       });
-    } else {
-      setSelectedStudent(null);
-      setFormData({
-        name: '',
-        email: '',
-        grade: '',
-        section: '',
-        rollNumber: '',
-        dateOfBirth: '',
-        gender: '',
-        parentName: '',
-        parentPhone: '',
-        address: '',
+    },
+    onError: (error) => {
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.message || 'An error occurred',
+        severity: 'error'
       });
     }
-    setOpen(true);
-  };
+  });
 
-  const handleClose = () => {
-    setOpen(false);
-    setSelectedStudent(null);
-    setFormData({
+  // Delete student mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id) => {
+      await axios.delete(`http://localhost:5000/api/admin/students/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['students']);
+      setSnackbar({
+        open: true,
+        message: 'Student deleted successfully',
+        severity: 'success'
+      });
+    }
+  });
+
+  const formik = useFormik({
+    initialValues: {
       name: '',
       email: '',
       grade: '',
@@ -146,300 +131,429 @@ function StudentRecords() {
       parentName: '',
       parentPhone: '',
       address: '',
+    },
+    validationSchema: validationSchema,
+    onSubmit: (values) => {
+      mutation.mutate(values);
+    },
+  });
+
+  const handleClickOpen = () => {
+    setSelectedStudent(null);
+    formik.resetForm();
+    setOpen(true);
+  };
+
+  const handleEdit = (student) => {
+    setSelectedStudent(student);
+    formik.setValues({
+      ...student,
+      dateOfBirth: student.dateOfBirth.split('T')[0], // Format date for input
     });
+    setOpen(true);
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (selectedStudent) {
-      updateMutation.mutate({ id: selectedStudent._id, data: formData });
-    } else {
-      createMutation.mutate(formData);
-    }
+  const handleClose = () => {
+    setOpen(false);
+    formik.resetForm();
   };
 
   const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this student?')) {
+    if (window.confirm('Are you sure you want to delete this student record?')) {
       deleteMutation.mutate(id);
     }
   };
 
-  const handleDownloadReport = async () => {
-    try {
-      const response = await adminAPI.generateStudentReport();
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'student-report.pdf');
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      toast.success('Report downloaded successfully');
-    } catch (error) {
-      toast.error('Failed to download report');
-    }
+  const handleFilterChange = (event) => {
+    const { name, value } = event.target;
+    setFilters(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
-  const filteredStudents = students?.filter((student) =>
-    Object.values(student).some((value) =>
-      value.toString().toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
+  const filteredStudents = students?.filter(student => {
+    return (
+      (!filters.grade || student.grade === filters.grade) &&
+      (!filters.section || student.section === filters.section) &&
+      (!filters.gender || student.gender === filters.gender)
+    );
+  });
+
+  const columns = [
+    { field: 'rollNumber', headerName: 'Roll Number', width: 130 },
+    { field: 'name', headerName: 'Name', width: 180 },
+    { field: 'grade', headerName: 'Grade', width: 100 },
+    { field: 'section', headerName: 'Section', width: 100 },
+    { field: 'gender', headerName: 'Gender', width: 100 },
+    { 
+      field: 'dateOfBirth', 
+      headerName: 'Date of Birth', 
+      width: 130,
+      valueFormatter: (params) => new Date(params.value).toLocaleDateString(),
+    },
+    { field: 'parentName', headerName: 'Parent Name', width: 180 },
+    {
+      field: 'contact',
+      headerName: 'Contact',
+      width: 200,
+      renderCell: (params) => (
+        <Box>
+          <IconButton
+            size="small"
+            onClick={() => window.location.href = `mailto:${params.row.email}`}
+            sx={{ color: theme.palette.info.main }}
+          >
+            <MailIcon />
+          </IconButton>
+          <IconButton
+            size="small"
+            onClick={() => window.location.href = `tel:${params.row.parentPhone}`}
+            sx={{ color: theme.palette.success.main }}
+          >
+            <PhoneIcon />
+          </IconButton>
+          {params.row.parentPhone}
+        </Box>
+      ),
+    },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 120,
+      sortable: false,
+      renderCell: (params) => (
+        <Box>
+          <IconButton
+            size="small"
+            onClick={() => handleEdit(params.row)}
+            sx={{ color: theme.palette.primary.main }}
+          >
+            <EditIcon />
+          </IconButton>
+          <IconButton
+            size="small"
+            onClick={() => handleDelete(params.row._id)}
+            sx={{ color: theme.palette.error.main }}
+          >
+            <DeleteIcon />
+          </IconButton>
+        </Box>
+      ),
+    },
+  ];
 
   if (isLoading) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '60vh',
-        }}
-      >
-        <Typography>Loading...</Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+        <CircularProgress />
       </Box>
     );
   }
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Typography variant="h4">Student Records</Typography>
-        <Box>
-          <Button
-            variant="outlined"
-            startIcon={<DownloadIcon />}
-            onClick={handleDownloadReport}
-            sx={{ mr: 2 }}
-          >
-            Download Report
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => handleOpen()}
-          >
-            Add Student
-          </Button>
-        </Box>
-      </Box>
+    <Container maxWidth="xl">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <Box sx={{ py: 4 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
+            <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+              Student Records
+            </Typography>
+            <Box>
+              <Button
+                variant="contained"
+                startIcon={<DownloadIcon />}
+                sx={{ mr: 2 }}
+                onClick={() => {/* Handle export */}}
+              >
+                Export Records
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={handleClickOpen}
+              >
+                Add Record
+              </Button>
+            </Box>
+          </Box>
 
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <TextField
-            fullWidth
-            variant="outlined"
-            placeholder="Search students..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            InputProps={{
-              startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
-            }}
-          />
-        </CardContent>
-      </Card>
-
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Roll Number</TableCell>
-              <TableCell>Grade</TableCell>
-              <TableCell>Section</TableCell>
-              <TableCell>Parent Name</TableCell>
-              <TableCell>Parent Phone</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredStudents?.map((student) => (
-              <TableRow key={student._id}>
-                <TableCell>{student.name}</TableCell>
-                <TableCell>{student.rollNumber}</TableCell>
-                <TableCell>{student.grade}</TableCell>
-                <TableCell>{student.section}</TableCell>
-                <TableCell>{student.parentName}</TableCell>
-                <TableCell>{student.parentPhone}</TableCell>
-                <TableCell>
-                  <Tooltip title="Edit">
-                    <IconButton
-                      size="small"
-                      onClick={() => handleOpen(student)}
-                      sx={{ mr: 1 }}
+          {/* Filters */}
+          <Card sx={{ mb: 4 }}>
+            <CardContent>
+              <Grid container spacing={2} alignItems="center">
+                <Grid item xs={12} sm={6} md={3}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Grade</InputLabel>
+                    <Select
+                      name="grade"
+                      value={filters.grade}
+                      onChange={handleFilterChange}
+                      label="Grade"
                     >
-                      <EditIcon />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Delete">
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => handleDelete(student._id)}
+                      <MenuItem value="">All Grades</MenuItem>
+                      {grades.map((grade) => (
+                        <MenuItem key={grade} value={grade}>
+                          Grade {grade}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Section</InputLabel>
+                    <Select
+                      name="section"
+                      value={filters.section}
+                      onChange={handleFilterChange}
+                      label="Section"
                     >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Tooltip>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-        <DialogTitle>
-          {selectedStudent ? 'Edit Student' : 'Add New Student'}
-        </DialogTitle>
-        <form onSubmit={handleSubmit}>
-          <DialogContent>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <TextField
-                  fullWidth
-                  select
-                  label="Grade"
-                  name="grade"
-                  value={formData.grade}
-                  onChange={handleInputChange}
-                  required
-                >
-                  {grades.map((grade) => (
-                    <MenuItem key={grade} value={grade}>
-                      {grade}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <TextField
-                  fullWidth
-                  select
-                  label="Section"
-                  name="section"
-                  value={formData.section}
-                  onChange={handleInputChange}
-                  required
-                >
-                  {sections.map((section) => (
-                    <MenuItem key={section} value={section}>
-                      {section}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <TextField
-                  fullWidth
-                  label="Roll Number"
-                  name="rollNumber"
-                  value={formData.rollNumber}
-                  onChange={handleInputChange}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Date of Birth"
-                  name="dateOfBirth"
-                  type="date"
-                  value={formData.dateOfBirth}
-                  onChange={handleInputChange}
-                  InputLabelProps={{ shrink: true }}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth required>
-                  <InputLabel>Gender</InputLabel>
-                  <Select
-                    name="gender"
-                    value={formData.gender}
-                    onChange={handleInputChange}
-                    label="Gender"
+                      <MenuItem value="">All Sections</MenuItem>
+                      {sections.map((section) => (
+                        <MenuItem key={section} value={section}>
+                          Section {section}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Gender</InputLabel>
+                    <Select
+                      name="gender"
+                      value={filters.gender}
+                      onChange={handleFilterChange}
+                      label="Gender"
+                    >
+                      <MenuItem value="">All</MenuItem>
+                      {genders.map((gender) => (
+                        <MenuItem key={gender} value={gender}>
+                          {gender.charAt(0).toUpperCase() + gender.slice(1)}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    startIcon={<FilterListIcon />}
+                    onClick={() => setFilters({ grade: '', section: '', gender: '' })}
                   >
-                    <MenuItem value="male">Male</MenuItem>
-                    <MenuItem value="female">Female</MenuItem>
-                    <MenuItem value="other">Other</MenuItem>
-                  </Select>
-                </FormControl>
+                    Clear Filters
+                  </Button>
+                </Grid>
               </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Parent Name"
-                  name="parentName"
-                  value={formData.parentName}
-                  onChange={handleInputChange}
-                  required
-                />
+            </CardContent>
+          </Card>
+
+          {/* Data Grid */}
+          <Box sx={{ height: 600, width: '100%', bgcolor: 'background.paper' }}>
+            <DataGrid
+              rows={filteredStudents || []}
+              columns={columns}
+              pageSize={10}
+              rowsPerPageOptions={[10, 25, 50]}
+              checkboxSelection
+              disableSelectionOnClick
+              getRowId={(row) => row._id}
+              components={{ Toolbar: GridToolbar }}
+              componentsProps={{
+                toolbar: {
+                  showQuickFilter: true,
+                  quickFilterProps: { debounceMs: 500 },
+                },
+              }}
+              sx={{
+                '& .MuiDataGrid-cell:hover': {
+                  color: 'primary.main',
+                },
+              }}
+            />
+          </Box>
+        </Box>
+
+        {/* Add/Edit Student Dialog */}
+        <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+          <DialogTitle>
+            {selectedStudent ? 'Edit Student Record' : 'Add New Student Record'}
+          </DialogTitle>
+          <form onSubmit={formik.handleSubmit}>
+            <DialogContent>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    name="name"
+                    label="Full Name"
+                    value={formik.values.name}
+                    onChange={formik.handleChange}
+                    error={formik.touched.name && Boolean(formik.errors.name)}
+                    helperText={formik.touched.name && formik.errors.name}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    name="email"
+                    label="Email"
+                    value={formik.values.email}
+                    onChange={formik.handleChange}
+                    error={formik.touched.email && Boolean(formik.errors.email)}
+                    helperText={formik.touched.email && formik.errors.email}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <TextField
+                    fullWidth
+                    select
+                    name="grade"
+                    label="Grade"
+                    value={formik.values.grade}
+                    onChange={formik.handleChange}
+                    error={formik.touched.grade && Boolean(formik.errors.grade)}
+                    helperText={formik.touched.grade && formik.errors.grade}
+                  >
+                    {grades.map((grade) => (
+                      <MenuItem key={grade} value={grade}>
+                        Grade {grade}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <TextField
+                    fullWidth
+                    select
+                    name="section"
+                    label="Section"
+                    value={formik.values.section}
+                    onChange={formik.handleChange}
+                    error={formik.touched.section && Boolean(formik.errors.section)}
+                    helperText={formik.touched.section && formik.errors.section}
+                  >
+                    {sections.map((section) => (
+                      <MenuItem key={section} value={section}>
+                        Section {section}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <TextField
+                    fullWidth
+                    name="rollNumber"
+                    label="Roll Number"
+                    value={formik.values.rollNumber}
+                    onChange={formik.handleChange}
+                    error={formik.touched.rollNumber && Boolean(formik.errors.rollNumber)}
+                    helperText={formik.touched.rollNumber && formik.errors.rollNumber}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    name="dateOfBirth"
+                    label="Date of Birth"
+                    type="date"
+                    value={formik.values.dateOfBirth}
+                    onChange={formik.handleChange}
+                    InputLabelProps={{ shrink: true }}
+                    error={formik.touched.dateOfBirth && Boolean(formik.errors.dateOfBirth)}
+                    helperText={formik.touched.dateOfBirth && formik.errors.dateOfBirth}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    select
+                    name="gender"
+                    label="Gender"
+                    value={formik.values.gender}
+                    onChange={formik.handleChange}
+                    error={formik.touched.gender && Boolean(formik.errors.gender)}
+                    helperText={formik.touched.gender && formik.errors.gender}
+                  >
+                    {genders.map((gender) => (
+                      <MenuItem key={gender} value={gender}>
+                        {gender.charAt(0).toUpperCase() + gender.slice(1)}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    name="parentName"
+                    label="Parent Name"
+                    value={formik.values.parentName}
+                    onChange={formik.handleChange}
+                    error={formik.touched.parentName && Boolean(formik.errors.parentName)}
+                    helperText={formik.touched.parentName && formik.errors.parentName}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    name="parentPhone"
+                    label="Parent Phone"
+                    value={formik.values.parentPhone}
+                    onChange={formik.handleChange}
+                    error={formik.touched.parentPhone && Boolean(formik.errors.parentPhone)}
+                    helperText={formik.touched.parentPhone && formik.errors.parentPhone}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    name="address"
+                    label="Address"
+                    multiline
+                    rows={2}
+                    value={formik.values.address}
+                    onChange={formik.handleChange}
+                    error={formik.touched.address && Boolean(formik.errors.address)}
+                    helperText={formik.touched.address && formik.errors.address}
+                  />
+                </Grid>
               </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Parent Phone"
-                  name="parentPhone"
-                  value={formData.parentPhone}
-                  onChange={handleInputChange}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Address"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  multiline
-                  rows={2}
-                />
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={createMutation.isPending || updateMutation.isPending}
-            >
-              {selectedStudent ? 'Update' : 'Add'}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
-    </Box>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleClose}>Cancel</Button>
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={mutation.isPending}
+              >
+                {mutation.isPending ? 'Saving...' : 'Save'}
+              </Button>
+            </DialogActions>
+          </form>
+        </Dialog>
+
+        {/* Snackbar for notifications */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+        >
+          <Alert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            severity={snackbar.severity}
+            sx={{ width: '100%' }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </motion.div>
+    </Container>
   );
 }
 

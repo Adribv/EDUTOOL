@@ -30,6 +30,14 @@ import Exams from './pages/student/Exams';
 import Fees from './pages/student/Fees';
 import Resources from './pages/student/Resources';
 import Messages from './pages/student/Messages';
+import Courses from './pages/student/Courses';
+import Timetable from './pages/student/Timetable';
+import Results from './pages/student/Results';
+import Notifications from './pages/student/Notifications';
+import Calendar from './pages/student/Calendar';
+import Transport from './pages/student/Transport';
+import StudyMaterials from './pages/student/StudyMaterials';
+import Settings from './pages/student/Settings';
 
 // Staff Pages
 import StaffDashboard from './pages/staff/Dashboard';
@@ -77,19 +85,18 @@ function App() {
               <Route
                 path="/student"
                 element={
-                  <ProtectedRoute>
-                    <Layout role="student" />
-                  </ProtectedRoute>
+                 <Layout role="student" />
                 }
               >
                 <Route index element={<StudentDashboard />} />
-                <Route path="profile" element={<StudentProfile />} />
-                <Route path="assignments" element={<Assignments />} />
-                <Route path="attendance" element={<Attendance />} />
-                <Route path="exams" element={<Exams />} />
-                <Route path="fees" element={<Fees />} />
-                <Route path="resources" element={<Resources />} />
-                <Route path="messages" element={<Messages />} />
+                <Route path="courses" element={<Courses />} />
+                <Route path="timetable" element={<Timetable />} />
+                <Route path="results" element={<Results />} />
+                <Route path="notifications" element={<Notifications />} />
+                <Route path="calendar" element={<Calendar />} />
+                <Route path="transport" element={<Transport />} />
+                <Route path="materials" element={<StudyMaterials />} />
+                <Route path="settings" element={<Settings />} />
               </Route>
 
               {/* Staff Routes */}

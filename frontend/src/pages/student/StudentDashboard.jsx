@@ -1,206 +1,195 @@
 import { useState, useEffect } from 'react';
 import {
   Box,
+  Container,
+  Typography,
   Grid,
   Paper,
-  Typography,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  Divider,
   Card,
   CardContent,
+  CardHeader,
+  IconButton,
+  Button,
   LinearProgress,
-  CircularProgress,
+  Avatar,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from '@mui/material';
 import {
-  Assignment,
-  Event,
-  School,
-  Payment,
+  Assignment as AssignmentIcon,
+  School as SchoolIcon,
+  Functions as FunctionsIcon,
+  Visibility as VisibilityIcon,
+  CalendarToday as CalendarIcon,
 } from '@mui/icons-material';
-import { studentAPI } from '../../services/api';
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const StudentDashboard = () => {
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    attendance: 0,
-    assignments: {
-      completed: 0,
-      pending: 0,
+  const { data: studentData, isLoading } = useQuery({
+    queryKey: ['studentDashboard'],
+    queryFn: async () => {
+      const response = await axios.get('http://localhost:5000/api/students/dashboard', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('studentToken')}`,
+        },
+      });
+      return response.data;
     },
-    exams: {
-      upcoming: 0,
-      completed: 0,
-    },
-    fees: {
-      paid: 0,
-      pending: 0,
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to load dashboard data');
     },
   });
 
-  const [recentActivities, setRecentActivities] = useState([]);
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      const response = await studentAPI.getDashboard();
-      const { stats: dashboardStats, recentActivities: activities } = response.data;
-      setStats(dashboardStats);
-      setRecentActivities(activities);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      toast.error('Failed to load dashboard data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const StatCard = ({ title, value, icon, color }) => (
-    <Card>
+  const CourseCard = ({ subject, chapter, homework }) => (
+    <Card sx={{ height: '100%', bgcolor: '#1a237e', color: 'white', position: 'relative' }}>
       <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          {icon}
-          <Typography variant="h6" sx={{ ml: 1 }}>
-            {title}
-          </Typography>
-        </Box>
-        <Typography variant="h4" color={color}>
-          {value}
+        <Typography variant="h6" component="div" sx={{ mb: 2 }}>
+          {subject}
         </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+          <Typography variant="body2">Chapter: {chapter}</Typography>
+          <Typography variant="body2">Homework: {homework}</Typography>
+        </Box>
+        <Typography variant="body2" sx={{ mb: 2 }}>
+          C3: Algebraic Expressions
+        </Typography>
+        <Box sx={{ position: 'absolute', bottom: 16, right: 16 }}>
+          <Button
+            variant="contained"
+            size="small"
+            sx={{
+              bgcolor: 'rgba(255, 255, 255, 0.1)',
+              '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.2)' },
+            }}
+          >
+            View Notes
+          </Button>
+        </Box>
       </CardContent>
     </Card>
   );
 
-  if (loading) {
+  const StudentInfo = () => (
+    <Box sx={{ mb: 4 }}>
+      <Typography variant="h4" sx={{ mb: 1 }}>
+        Welcome Back {studentData?.name || 'Student'}
+      </Typography>
+      <Box sx={{ display: 'flex', gap: 2 }}>
+        <Typography variant="body1" color="text.secondary">
+          REGNO: {studentData?.regNo || 'ABC1234'}
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          CLASS: {studentData?.class || '11'}
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          SECTION: {studentData?.section || 'B'}
+        </Typography>
+      </Box>
+    </Box>
+  );
+
+  const ProgressChart = () => (
+    <Card>
+      <CardHeader title="Student Progress" />
+      <CardContent>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Subject</TableCell>
+                <TableCell align="right">ET-1</TableCell>
+                <TableCell align="right">FT-2</TableCell>
+                <TableCell align="right">Annual</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {['Maths', 'Science', 'English', 'Language-2', 'CSE'].map((subject) => (
+                <TableRow key={subject}>
+                  <TableCell component="th" scope="row">
+                    {subject}
+                  </TableCell>
+                  <TableCell align="right">85%</TableCell>
+                  <TableCell align="right">78%</TableCell>
+                  <TableCell align="right">92%</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </CardContent>
+    </Card>
+  );
+
+  const TimeTable = () => (
+    <Card>
+      <CardHeader title="Timetable" />
+      <CardContent>
+        <TableContainer>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Day</TableCell>
+                {[1, 2, 3, 4, 5, 6, 7].map((period) => (
+                  <TableCell key={period} align="center">{period}</TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {['MON', 'TUE', 'WED', 'THU', 'FRI'].map((day) => (
+                <TableRow key={day}>
+                  <TableCell component="th" scope="row">
+                    {day}
+                  </TableCell>
+                  {[1, 2, 3, 4, 5, 6, 7].map((period) => (
+                    <TableCell key={`${day}-${period}`} align="center">-</TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </CardContent>
+    </Card>
+  );
+
+  if (isLoading) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '60vh',
-        }}
-      >
-        <CircularProgress />
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <Typography>Loading...</Typography>
       </Box>
     );
   }
 
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
-        Student Dashboard
+    <Container maxWidth="xl">
+      <StudentInfo />
+      
+      <Typography variant="h6" sx={{ mb: 2 }}>
+        COURSE ASSIGNMENTS
       </Typography>
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        {[1, 2, 3].map((item) => (
+          <Grid item xs={12} sm={6} md={4} key={item}>
+            <CourseCard subject="MATHS" chapter="2" homework="2" />
+          </Grid>
+        ))}
+      </Grid>
 
       <Grid container spacing={3}>
-        {/* Stats Cards */}
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Attendance"
-            value={`${stats.attendance}%`}
-            icon={<Event color="primary" />}
-            color="primary"
-          />
+        <Grid item xs={12} md={6}>
+          <ProgressChart />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Assignments"
-            value={`${stats.assignments.completed}/${stats.assignments.completed + stats.assignments.pending}`}
-            icon={<Assignment color="success" />}
-            color="success"
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Exams"
-            value={`${stats.exams.completed} completed`}
-            icon={<School color="warning" />}
-            color="warning"
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Fees Paid"
-            value={`₹${stats.fees.paid}`}
-            icon={<Payment color="error" />}
-            color="error"
-          />
-        </Grid>
-
-        {/* Progress Section */}
-        <Grid item xs={12} md={8}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Academic Progress
-            </Typography>
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="body2" color="text.secondary">
-                Overall Performance
-              </Typography>
-              <LinearProgress
-                variant="determinate"
-                value={stats.attendance}
-                sx={{ height: 10, borderRadius: 5 }}
-              />
-            </Box>
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="body2" color="text.secondary">
-                Assignment Completion
-              </Typography>
-              <LinearProgress
-                variant="determinate"
-                value={(stats.assignments.completed / (stats.assignments.completed + stats.assignments.pending)) * 100}
-                sx={{ height: 10, borderRadius: 5 }}
-              />
-            </Box>
-            <Box>
-              <Typography variant="body2" color="text.secondary">
-                Attendance Rate
-              </Typography>
-              <LinearProgress
-                variant="determinate"
-                value={stats.attendance}
-                sx={{ height: 10, borderRadius: 5 }}
-              />
-            </Box>
-          </Paper>
-        </Grid>
-
-        {/* Recent Activities */}
-        <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Recent Activities
-            </Typography>
-            <List>
-              {recentActivities.map((activity, index) => (
-                <Box key={index}>
-                  <ListItem>
-                    <ListItemIcon>
-                      {activity.type === 'assignment' && <Assignment />}
-                      {activity.type === 'exam' && <School />}
-                      {activity.type === 'attendance' && <Event />}
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={activity.title}
-                      secondary={activity.date}
-                    />
-                  </ListItem>
-                  {index < recentActivities.length - 1 && <Divider />}
-                </Box>
-              ))}
-            </List>
-          </Paper>
+        <Grid item xs={12} md={6}>
+          <TimeTable />
         </Grid>
       </Grid>
-    </Box>
+    </Container>
   );
 };
 

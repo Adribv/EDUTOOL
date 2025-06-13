@@ -1,375 +1,379 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Box,
+  Container,
   Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
   Button,
-  IconButton,
   TextField,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Grid,
-  MenuItem,
-  Chip,
+  IconButton,
   CircularProgress,
-  Tooltip,
+  Alert,
+  Snackbar,
+  Chip,
+  useTheme,
+  MenuItem,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Search as SearchIcon,
+  Download as DownloadIcon,
+  Mail as MailIcon,
 } from '@mui/icons-material';
-import { adminAPI } from '../../services/api';
-import { toast } from 'react-toastify';
+import { DataGrid, GridToolbar } from '@mui/x-data-grid';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
+import { useFormik } from 'formik';
+import * as yup from 'yup';
+import { motion } from 'framer-motion';
 
-const Teachers = () => {
-  const [loading, setLoading] = useState(true);
-  const [teachers, setTeachers] = useState([]);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [openDialog, setOpenDialog] = useState(false);
+const validationSchema = yup.object({
+  name: yup.string().required('Name is required'),
+  email: yup.string().email('Invalid email').required('Email is required'),
+  phone: yup.string().required('Phone is required'),
+  subject: yup.string().required('Subject is required'),
+  qualification: yup.string().required('Qualification is required'),
+  experience: yup.number().required('Experience is required').min(0, 'Invalid experience'),
+  status: yup.string().required('Status is required'),
+});
+
+const statusOptions = [
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
+  { value: 'onLeave', label: 'On Leave' },
+];
+
+function Teachers() {
+  const theme = useTheme();
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    subject: '',
-    qualification: '',
-    joiningDate: '',
-    status: 'active',
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  // Fetch teachers data
+  const { data: teachers, isLoading } = useQuery({
+    queryKey: ['teachers'],
+    queryFn: async () => {
+      const response = await axios.get('http://localhost:5000/api/admin/teachers');
+      return response.data;
+    }
   });
 
-  useEffect(() => {
-    fetchTeachers();
-  }, [page, rowsPerPage]);
-
-  const fetchTeachers = async () => {
-    try {
-      setLoading(true);
-      const response = await adminAPI.getTeachers({
-        page: page + 1,
-        limit: rowsPerPage,
-        search: searchQuery,
-      });
-      setTeachers(response.data);
-    } catch (error) {
-      console.error('Error fetching teachers:', error);
-      toast.error('Failed to load teachers');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
-  const handleSearch = (event) => {
-    setSearchQuery(event.target.value);
-    setPage(0);
-    fetchTeachers();
-  };
-
-  const handleOpenDialog = (teacher = null) => {
-    if (teacher) {
-      setSelectedTeacher(teacher);
-      setFormData({
-        firstName: teacher.firstName,
-        lastName: teacher.lastName,
-        email: teacher.email,
-        phone: teacher.phone,
-        subject: teacher.subject,
-        qualification: teacher.qualification,
-        joiningDate: teacher.joiningDate,
-        status: teacher.status,
-      });
-    } else {
-      setSelectedTeacher(null);
-      setFormData({
-        firstName: '',
-        lastName: '',
-        email: '',
-        phone: '',
-        subject: '',
-        qualification: '',
-        joiningDate: '',
-        status: 'active',
-      });
-    }
-    setOpenDialog(true);
-  };
-
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-    setSelectedTeacher(null);
-  };
-
-  const handleInputChange = (event) => {
-    const { name, value } = event.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async () => {
-    try {
+  // Add/Edit teacher mutation
+  const mutation = useMutation({
+    mutationFn: async (values) => {
       if (selectedTeacher) {
-        await adminAPI.updateTeacher(selectedTeacher.id, formData);
-        toast.success('Teacher updated successfully');
+        await axios.put(`http://localhost:5000/api/admin/teachers/${selectedTeacher.id}`, values);
       } else {
-        await adminAPI.createTeacher(formData);
-        toast.success('Teacher added successfully');
+        await axios.post('http://localhost:5000/api/admin/teachers', values);
       }
-      handleCloseDialog();
-      fetchTeachers();
-    } catch (error) {
-      console.error('Error saving teacher:', error);
-      toast.error('Failed to save teacher');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['teachers']);
+      handleClose();
+      setSnackbar({
+        open: true,
+        message: `Teacher ${selectedTeacher ? 'updated' : 'added'} successfully`,
+        severity: 'success'
+      });
+    },
+    onError: (error) => {
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.message || 'An error occurred',
+        severity: 'error'
+      });
+    }
+  });
+
+  // Delete teacher mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id) => {
+      await axios.delete(`http://localhost:5000/api/admin/teachers/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['teachers']);
+      setSnackbar({
+        open: true,
+        message: 'Teacher deleted successfully',
+        severity: 'success'
+      });
+    }
+  });
+
+  const formik = useFormik({
+    initialValues: {
+      name: '',
+      email: '',
+      phone: '',
+      subject: '',
+      qualification: '',
+      experience: '',
+      status: 'active',
+    },
+    validationSchema: validationSchema,
+    onSubmit: (values) => {
+      mutation.mutate(values);
+    },
+  });
+
+  const handleClickOpen = () => {
+    setSelectedTeacher(null);
+    formik.resetForm();
+    setOpen(true);
+  };
+
+  const handleEdit = (teacher) => {
+    setSelectedTeacher(teacher);
+    formik.setValues(teacher);
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    formik.resetForm();
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm('Are you sure you want to delete this teacher?')) {
+      deleteMutation.mutate(id);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this teacher?')) {
-      try {
-        await adminAPI.deleteTeacher(id);
-        toast.success('Teacher deleted successfully');
-        fetchTeachers();
-      } catch (error) {
-        console.error('Error deleting teacher:', error);
-        toast.error('Failed to delete teacher');
-      }
-    }
-  };
+  const columns = [
+    { field: 'name', headerName: 'Name', width: 200 },
+    { field: 'email', headerName: 'Email', width: 220 },
+    { field: 'phone', headerName: 'Phone', width: 150 },
+    { field: 'subject', headerName: 'Subject', width: 150 },
+    { field: 'qualification', headerName: 'Qualification', width: 150 },
+    { field: 'experience', headerName: 'Experience (Years)', width: 150 },
+    {
+      field: 'status',
+      headerName: 'Status',
+      width: 120,
+      renderCell: (params) => (
+        <Chip
+          label={params.value}
+          color={
+            params.value === 'active'
+              ? 'success'
+              : params.value === 'inactive'
+              ? 'error'
+              : 'warning'
+          }
+          size="small"
+        />
+      ),
+    },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 150,
+      sortable: false,
+      renderCell: (params) => (
+        <Box>
+          <IconButton
+            size="small"
+            onClick={() => handleEdit(params.row)}
+            sx={{ color: theme.palette.primary.main }}
+          >
+            <EditIcon />
+          </IconButton>
+          <IconButton
+            size="small"
+            onClick={() => handleDelete(params.row.id)}
+            sx={{ color: theme.palette.error.main }}
+          >
+            <DeleteIcon />
+          </IconButton>
+          <IconButton
+            size="small"
+            onClick={() => window.location.href = `mailto:${params.row.email}`}
+            sx={{ color: theme.palette.info.main }}
+          >
+            <MailIcon />
+          </IconButton>
+        </Box>
+      ),
+    },
+  ];
+
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Typography variant="h4">Teachers Management</Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => handleOpenDialog()}
-        >
-          Add Teacher
-        </Button>
-      </Box>
-
-      <Paper sx={{ mb: 3, p: 2 }}>
-        <TextField
-          fullWidth
-          variant="outlined"
-          placeholder="Search teachers..."
-          value={searchQuery}
-          onChange={handleSearch}
-          InputProps={{
-            startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
-          }}
-        />
-      </Paper>
-
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Phone</TableCell>
-              <TableCell>Subject</TableCell>
-              <TableCell>Qualification</TableCell>
-              <TableCell>Joining Date</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={8} align="center">
-                  <CircularProgress />
-                </TableCell>
-              </TableRow>
-            ) : teachers.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} align="center">
-                  No teachers found
-                </TableCell>
-              </TableRow>
-            ) : (
-              teachers.map((teacher) => (
-                <TableRow key={teacher.id}>
-                  <TableCell>
-                    {teacher.firstName} {teacher.lastName}
-                  </TableCell>
-                  <TableCell>{teacher.email}</TableCell>
-                  <TableCell>{teacher.phone}</TableCell>
-                  <TableCell>{teacher.subject}</TableCell>
-                  <TableCell>{teacher.qualification}</TableCell>
-                  <TableCell>
-                    {new Date(teacher.joiningDate).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={teacher.status}
-                      color={teacher.status === 'active' ? 'success' : 'error'}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Tooltip title="Edit">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleOpenDialog(teacher)}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleDelete(teacher.id)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component="div"
-          count={-1}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </TableContainer>
-
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-        <DialogTitle>
-          {selectedTeacher ? 'Edit Teacher' : 'Add New Teacher'}
-        </DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="First Name"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleInputChange}
-                required
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Last Name"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleInputChange}
-                required
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                required
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleInputChange}
-                required
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Subject"
-                name="subject"
-                value={formData.subject}
-                onChange={handleInputChange}
-                required
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Qualification"
-                name="qualification"
-                value={formData.qualification}
-                onChange={handleInputChange}
-                required
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Joining Date"
-                name="joiningDate"
-                type="date"
-                value={formData.joiningDate}
-                onChange={handleInputChange}
-                InputLabelProps={{ shrink: true }}
-                required
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                select
-                label="Status"
-                name="status"
-                value={formData.status}
-                onChange={handleInputChange}
-                required
+    <Container maxWidth="xl">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <Box sx={{ py: 4 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
+            <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+              Teacher Management
+            </Typography>
+            <Box>
+              <Button
+                variant="contained"
+                startIcon={<DownloadIcon />}
+                sx={{ mr: 2 }}
+                onClick={() => {/* Handle export */}}
               >
-                <MenuItem value="active">Active</MenuItem>
-                <MenuItem value="inactive">Inactive</MenuItem>
-              </TextField>
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained">
-            {selectedTeacher ? 'Update' : 'Add'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+                Export
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={handleClickOpen}
+              >
+                Add Teacher
+              </Button>
+            </Box>
+          </Box>
+
+          <Box sx={{ height: 600, width: '100%', bgcolor: 'background.paper' }}>
+            <DataGrid
+              rows={teachers || []}
+              columns={columns}
+              pageSize={10}
+              rowsPerPageOptions={[10, 25, 50]}
+              checkboxSelection
+              disableSelectionOnClick
+              components={{ Toolbar: GridToolbar }}
+              componentsProps={{
+                toolbar: {
+                  showQuickFilter: true,
+                  quickFilterProps: { debounceMs: 500 },
+                },
+              }}
+              sx={{
+                '& .MuiDataGrid-cell:hover': {
+                  color: 'primary.main',
+                },
+              }}
+            />
+          </Box>
+        </Box>
+
+        {/* Add/Edit Teacher Dialog */}
+        <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+          <DialogTitle>{selectedTeacher ? 'Edit Teacher' : 'Add New Teacher'}</DialogTitle>
+          <form onSubmit={formik.handleSubmit}>
+            <DialogContent>
+              <Box sx={{ display: 'grid', gap: 2 }}>
+                <TextField
+                  fullWidth
+                  name="name"
+                  label="Full Name"
+                  value={formik.values.name}
+                  onChange={formik.handleChange}
+                  error={formik.touched.name && Boolean(formik.errors.name)}
+                  helperText={formik.touched.name && formik.errors.name}
+                />
+                <TextField
+                  fullWidth
+                  name="email"
+                  label="Email"
+                  value={formik.values.email}
+                  onChange={formik.handleChange}
+                  error={formik.touched.email && Boolean(formik.errors.email)}
+                  helperText={formik.touched.email && formik.errors.email}
+                />
+                <TextField
+                  fullWidth
+                  name="phone"
+                  label="Phone"
+                  value={formik.values.phone}
+                  onChange={formik.handleChange}
+                  error={formik.touched.phone && Boolean(formik.errors.phone)}
+                  helperText={formik.touched.phone && formik.errors.phone}
+                />
+                <TextField
+                  fullWidth
+                  name="subject"
+                  label="Subject"
+                  value={formik.values.subject}
+                  onChange={formik.handleChange}
+                  error={formik.touched.subject && Boolean(formik.errors.subject)}
+                  helperText={formik.touched.subject && formik.errors.subject}
+                />
+                <TextField
+                  fullWidth
+                  name="qualification"
+                  label="Qualification"
+                  value={formik.values.qualification}
+                  onChange={formik.handleChange}
+                  error={formik.touched.qualification && Boolean(formik.errors.qualification)}
+                  helperText={formik.touched.qualification && formik.errors.qualification}
+                />
+                <TextField
+                  fullWidth
+                  name="experience"
+                  label="Experience (Years)"
+                  type="number"
+                  value={formik.values.experience}
+                  onChange={formik.handleChange}
+                  error={formik.touched.experience && Boolean(formik.errors.experience)}
+                  helperText={formik.touched.experience && formik.errors.experience}
+                />
+                <TextField
+                  fullWidth
+                  select
+                  name="status"
+                  label="Status"
+                  value={formik.values.status}
+                  onChange={formik.handleChange}
+                  error={formik.touched.status && Boolean(formik.errors.status)}
+                  helperText={formik.touched.status && formik.errors.status}
+                >
+                  {statusOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Box>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleClose}>Cancel</Button>
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={mutation.isPending}
+              >
+                {mutation.isPending ? 'Saving...' : 'Save'}
+              </Button>
+            </DialogActions>
+          </form>
+        </Dialog>
+
+        {/* Snackbar for notifications */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+        >
+          <Alert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            severity={snackbar.severity}
+            sx={{ width: '100%' }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </motion.div>
+    </Container>
   );
-};
+}
 
 export default Teachers; 

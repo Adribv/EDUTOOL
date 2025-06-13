@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import logo from '../../assets/logo.jpg';
 import {
   Box,
   Drawer,
@@ -33,6 +34,9 @@ import {
   Assessment,
   Group,
   Timeline,
+  Notifications,
+  DirectionsBus,
+  Settings,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 
@@ -40,13 +44,14 @@ const drawerWidth = 240;
 
 const studentMenuItems = [
   { text: 'Dashboard', icon: <Dashboard />, path: '/student' },
-  { text: 'Profile', icon: <Person />, path: '/student/profile' },
-  { text: 'Assignments', icon: <Assignment />, path: '/student/assignments' },
-  { text: 'Attendance', icon: <Event />, path: '/student/attendance' },
-  { text: 'Exams', icon: <School />, path: '/student/exams' },
-  { text: 'Fees', icon: <Payment />, path: '/student/fees' },
-  { text: 'Resources', icon: <Book />, path: '/student/resources' },
-  { text: 'Messages', icon: <Message />, path: '/student/messages' },
+  { text: 'My Courses', icon: <School />, path: '/student/courses' },
+  { text: 'My Timetable', icon: <Event />, path: '/student/timetable' },
+  { text: 'Results', icon: <Assessment />, path: '/student/results' },
+  { text: 'Notifications', icon: <Notifications />, path: '/student/notifications' },
+  { text: 'Calenders', icon: <Event />, path: '/student/calendar' },
+  { text: 'Transport', icon: <DirectionsBus />, path: '/student/transport' },
+  { text: 'Study Materials', icon: <Book />, path: '/student/materials' },
+  { text: 'Profile Settings', icon: <Settings />, path: '/student/settings' },
 ];
 
 const staffMenuItems = [
@@ -109,35 +114,78 @@ function Layout({ role }) {
   };
 
   const drawer = (
-    <div>
-      <Toolbar>
-        <Typography variant="h6" noWrap component="div">
-          Edurays
+    <Box sx={{ 
+      bgcolor: '#0A1929', 
+      color: 'white',
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
+      <Toolbar sx={{ 
+        borderBottom: '1px solid rgba(255,255,255,0.1)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 2,
+        px: 2
+      }}>
+        <img src={logo} alt="Logo" style={{ width: '40px', height: '40px', borderRadius: '50%' }} />
+        <Typography variant="h5" component="div" sx={{ 
+          color: 'white',
+          fontWeight: 'bold',
+          letterSpacing: 1
+        }}>
+          EDURAYS
         </Typography>
       </Toolbar>
-      <Divider />
-      <List>
+      <List sx={{ flex: 1, px: 2 }}>
         {menuItems.map((item) => (
           <ListItemButton
             key={item.text}
             selected={location.pathname === item.path}
             onClick={() => navigate(item.path)}
+            sx={{
+              borderRadius: 1,
+              mb: 0.5,
+              '&.Mui-selected': {
+                bgcolor: 'rgba(255,255,255,0.1)',
+                '&:hover': {
+                  bgcolor: 'rgba(255,255,255,0.2)',
+                },
+              },
+              '&:hover': {
+                bgcolor: 'rgba(255,255,255,0.05)',
+              },
+            }}
           >
-            <ListItemIcon>{item.icon}</ListItemIcon>
-            <ListItemText primary={item.text} />
+            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+              {item.icon}
+            </ListItemIcon>
+            <ListItemText 
+              primary={item.text} 
+              sx={{ 
+                '& .MuiTypography-root': { 
+                  fontSize: '0.9rem',
+                  fontWeight: location.pathname === item.path ? 'bold' : 'normal'
+                } 
+              }} 
+            />
           </ListItemButton>
         ))}
       </List>
-    </div>
+    </Box>
   );
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', bgcolor: '#F5F5F5', minHeight: '100vh' }}>
       <AppBar
         position="fixed"
         sx={{
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           ml: { sm: `${drawerWidth}px` },
+          bgcolor: 'white',
+          color: 'text.primary',
+          boxShadow: 'none',
+          borderBottom: '1px solid #e0e0e0'
         }}
       >
         <Toolbar>
@@ -151,43 +199,23 @@ function Layout({ role }) {
             <MenuIcon />
           </IconButton>
           <Box sx={{ flexGrow: 1 }} />
-          <Typography variant="subtitle1" sx={{ mr: 2 }}>
-            {user?.name}
-          </Typography>
           <IconButton
             onClick={handleProfileMenuOpen}
-            size="large"
-            edge="end"
-            color="inherit"
+            size="small"
+            sx={{ ml: 2 }}
           >
             <Avatar sx={{ width: 32, height: 32 }}>
-              {user?.name?.charAt(0)}
+              {user?.name?.charAt(0) || 'U'}
             </Avatar>
           </IconButton>
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleProfileMenuClose}
-          >
-            <MenuItem onClick={() => navigate(`/${role}/profile`)}>
-              <ListItemIcon>
-                <Person fontSize="small" />
-              </ListItemIcon>
-              Profile
-            </MenuItem>
-            <MenuItem onClick={handleLogout}>
-              <ListItemIcon>
-                <ExitToApp fontSize="small" />
-              </ListItemIcon>
-              Logout
-            </MenuItem>
-          </Menu>
         </Toolbar>
       </AppBar>
+
       <Box
         component="nav"
         sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
       >
+        {/* Mobile drawer */}
         <Drawer
           variant="temporary"
           open={mobileOpen}
@@ -200,11 +228,13 @@ function Layout({ role }) {
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
               width: drawerWidth,
+              bgcolor: '#0A1929',
             },
           }}
         >
           {drawer}
         </Drawer>
+        {/* Desktop drawer */}
         <Drawer
           variant="permanent"
           sx={{
@@ -212,6 +242,8 @@ function Layout({ role }) {
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
               width: drawerWidth,
+              bgcolor: '#0A1929',
+              border: 'none',
             },
           }}
           open
@@ -219,6 +251,7 @@ function Layout({ role }) {
           {drawer}
         </Drawer>
       </Box>
+
       <Box
         component="main"
         sx={{
@@ -226,10 +259,39 @@ function Layout({ role }) {
           p: 3,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           mt: '64px',
+          bgcolor: '#F5F5F5',
         }}
       >
         <Outlet />
       </Box>
+
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleProfileMenuClose}
+        onClick={handleProfileMenuClose}
+        PaperProps={{
+          sx: {
+            mt: 1.5,
+            minWidth: 180,
+          },
+        }}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+      >
+        <MenuItem onClick={() => navigate(`/${role}/profile`)}>
+          <ListItemIcon>
+            <Person fontSize="small" />
+          </ListItemIcon>
+          Profile
+        </MenuItem>
+        <MenuItem onClick={handleLogout}>
+          <ListItemIcon>
+            <ExitToApp fontSize="small" />
+          </ListItemIcon>
+          Logout
+        </MenuItem>
+      </Menu>
     </Box>
   );
 }

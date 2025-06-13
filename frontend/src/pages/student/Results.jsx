@@ -1,14 +1,14 @@
 import { Box, Typography } from '@mui/material';
 
-function Calendar() {
+function Results() {
   return (
     <Box>
       <Typography variant="h4" gutterBottom>
-        Calendar
+        Results
       </Typography>
-      {/* Add calendar content here */}
+      {/* Add results content here */}
     </Box>
   );
 }
 
-export default Calendar; 
+export default Results; 
