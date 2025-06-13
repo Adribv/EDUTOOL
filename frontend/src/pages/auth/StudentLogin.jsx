@@ -13,61 +13,42 @@ import {
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { useMutation } from '@tanstack/react-query';
+import axios from 'axios';
 import { toast } from 'react-toastify';
-import { useAuth } from '../../context/AuthContext';
 
 const validationSchema = yup.object({
-  email: yup
+  rollNumber: yup
     .string()
-    .email('Enter a valid email')
-    .required('Email is required'),
+    .required('Roll Number is required'),
   password: yup
     .string()
     .min(6, 'Password should be of minimum 6 characters length')
     .required('Password is required'),
 });
 
-function Login() {
+function StudentLogin() {
   const navigate = useNavigate();
   const [error, setError] = useState('');
-  const { login } = useAuth();
 
   const loginMutation = useMutation({
     mutationFn: async (values) => {
-      const user = await login(values);
-      return user;
+      const response = await axios.post('http://localhost:5000/api/students/login', values);
+      return response.data;
     },
-    onSuccess: (user) => {
-      // Navigate based on role
-      switch (user.role) {
-        case 'AdminStaff':
-          navigate('/admin');
-          break;
-        case 'Teacher':
-          navigate('/teacher');
-          break;
-        case 'HOD':
-          navigate('/hod');
-          break;
-        case 'Principal':
-          navigate('/principal');
-          break;
-        case 'Counsellor':
-          navigate('/counselor');
-          break;
-        default:
-          navigate('/');
-      }
+    onSuccess: (data) => {
+      localStorage.setItem('studentToken', data.token);
+      toast.success('Login successful!');
+      navigate('/Student');
     },
     onError: (error) => {
       console.error('Login failed:', error);
-      setError(error.response?.data?.message || 'Login failed');
+      toast.error(error.response?.data?.message || 'Login failed');
     },
   });
 
   const formik = useFormik({
     initialValues: {
-      email: '',
+      rollNumber: '',
       password: '',
     },
     validationSchema: validationSchema,
@@ -97,7 +78,7 @@ function Login() {
           }}
         >
           <Typography component="h1" variant="h5">
-            Sign in to EduTool
+            Student Login
           </Typography>
           {error && (
             <Alert severity="error" sx={{ width: '100%', mt: 2 }}>
@@ -113,15 +94,15 @@ function Login() {
               margin="normal"
               required
               fullWidth
-              id="email"
-              label="Email Address"
-              name="email"
-              autoComplete="email"
+              id="rollNumber"
+              label="Roll Number"
+              name="rollNumber"
+              autoComplete="rollNumber"
               autoFocus
-              value={formik.values.email}
+              value={formik.values.rollNumber}
               onChange={formik.handleChange}
-              error={formik.touched.email && Boolean(formik.errors.email)}
-              helperText={formik.touched.email && formik.errors.email}
+              error={formik.touched.rollNumber && Boolean(formik.errors.rollNumber)}
+              helperText={formik.touched.rollNumber && formik.errors.rollNumber}
             />
             <TextField
               margin="normal"
@@ -146,16 +127,8 @@ function Login() {
             >
               {loginMutation.isPending ? 'Signing in...' : 'Sign In'}
             </Button>
-            <Button
-              fullWidth
-              variant="outlined"
-              sx={{ mb: 2 }}
-              onClick={() => navigate('/student-login')}
-            >
-              Student Login
-            </Button>
             <Box sx={{ textAlign: 'center' }}>
-              <Link component={RouterLink} to="/register" variant="body2">
+              <Link component={RouterLink} to="/student-register" variant="body2">
                 {"Don't have an account? Sign Up"}
               </Link>
             </Box>
@@ -166,4 +139,4 @@ function Login() {
   );
 }
 
-export default Login; 
+export default StudentLogin;

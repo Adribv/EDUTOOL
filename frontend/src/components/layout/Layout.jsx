@@ -98,7 +98,11 @@ const Layout = () => {
     <div>
       <Toolbar>
         <Typography variant="h6" noWrap component="div">
+<<<<<<< HEAD
           EduRays
+=======
+          Edurays
+>>>>>>> 10a1793c8ac3c10e93e291f27899918c29245901
         </Typography>
       </Toolbar>
       <List>

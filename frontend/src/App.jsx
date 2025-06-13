@@ -17,6 +17,8 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 // Auth Pages
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import StudentLogin from './pages/auth/StudentLogin';
+import StudentRegister from './pages/auth/StudentRegister';
 import NotFound from './pages/NotFound';
 
 // Student Pages
