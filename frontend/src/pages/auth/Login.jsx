@@ -13,8 +13,8 @@ import {
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { useMutation } from '@tanstack/react-query';
-import axios from 'axios';
 import { toast } from 'react-toastify';
+import { useAuth } from '../../context/AuthContext';
 
 const validationSchema = yup.object({
   email: yup
@@ -30,31 +30,38 @@ const validationSchema = yup.object({
 function Login() {
   const navigate = useNavigate();
   const [error, setError] = useState('');
+  const { login } = useAuth();
 
   const loginMutation = useMutation({
     mutationFn: async (values) => {
-      const response = await axios.post('http://localhost:5000/api/staffs/login', values);
-      return response.data;
+      const user = await login(values);
+      return user;
     },
-    onSuccess: (data) => {
-      localStorage.setItem('token', data.token);
-      toast.success('Login successful!');
-      
-      if (data.role === 'AdminStaff') {
-        navigate('/admin');
-      } else if (data.role === 'teacher') {
-        navigate('/staff');
-      } else if (data.role === 'student') {
-        navigate('/student');
-      } else if (data.role === 'parent') {
-        navigate('/parent');
-      } else {
-        navigate('/');
+    onSuccess: (user) => {
+      // Navigate based on role
+      switch (user.role) {
+        case 'AdminStaff':
+          navigate('/admin');
+          break;
+        case 'Teacher':
+          navigate('/teacher');
+          break;
+        case 'HOD':
+          navigate('/hod');
+          break;
+        case 'Principal':
+          navigate('/principal');
+          break;
+        case 'Counsellor':
+          navigate('/counselor');
+          break;
+        default:
+          navigate('/');
       }
     },
     onError: (error) => {
       console.error('Login failed:', error);
-      toast.error(error.response?.data?.message || 'Login failed');
+      setError(error.response?.data?.message || 'Login failed');
     },
   });
 

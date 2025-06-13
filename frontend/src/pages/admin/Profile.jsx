@@ -41,12 +41,12 @@ function AdminProfile() {
     queryFn: () => adminAPI.getProfile(),
     onSuccess: (data) => {
       setFormData({
-        firstName: data.firstName || '',
-        lastName: data.lastName || '',
+        firstName: data.name?.split(' ')[0] || '',
+        lastName: data.name?.split(' ').slice(1).join(' ') || '',
         email: data.email || '',
-        phone: data.phone || '',
+        phone: data.contactNumber || '',
         address: data.address || '',
-        designation: data.designation || '',
+        designation: data.role || '',
         department: data.department || '',
       });
     },
@@ -155,7 +155,7 @@ function AdminProfile() {
             <CardContent sx={{ textAlign: 'center' }}>
               <Box sx={{ position: 'relative', display: 'inline-block' }}>
                 <Avatar
-                  src={profile?.image}
+                  src={profile?.profileImage ? `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/${profile.profileImage}` : undefined}
                   sx={{ width: 120, height: 120, mb: 2 }}
                 />
                 <input
@@ -182,13 +182,13 @@ function AdminProfile() {
                 </label>
               </Box>
               <Typography variant="h6" gutterBottom>
-                {`${profile?.firstName} ${profile?.lastName}`}
+                {profile?.name || 'No Name'}
               </Typography>
               <Typography color="textSecondary" gutterBottom>
-                {profile?.designation}
+                {profile?.role || 'No Role'}
               </Typography>
               <Typography color="textSecondary">
-                {profile?.department}
+                {profile?.department || 'No Department'}
               </Typography>
             </CardContent>
           </Card>

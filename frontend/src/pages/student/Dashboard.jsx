@@ -33,9 +33,16 @@ const Dashboard = () => {
   const [assignments, setAssignments] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
   const [performance, setPerformance] = useState(null);
+  const [dashboardData, setDashboardData] = useState({
+    upcomingAssignments: [],
+    recentAttendance: [],
+    upcomingExams: [],
+    notifications: [],
+  });
 
   useEffect(() => {
     fetchData();
+    fetchDashboardData();
   }, []);
 
   const fetchData = async () => {
@@ -68,6 +75,15 @@ const Dashboard = () => {
     }
   };
 
+  const fetchDashboardData = async () => {
+    try {
+      const response = await studentAPI.get('/api/student/dashboard');
+      setDashboardData(response.data);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    }
+  };
+
   const getGradeColor = (grade) => {
     if (grade >= 90) return 'success';
     if (grade >= 80) return 'primary';
@@ -91,190 +107,111 @@ const Dashboard = () => {
     );
   }
 
+  const StatCard = ({ title, value, icon }) => (
+    <Card>
+      <CardContent>
+        <Box display="flex" alignItems="center" mb={2}>
+          {icon}
+          <Typography variant="h6" component="div" sx={{ ml: 1 }}>
+            {title}
+          </Typography>
+        </Box>
+        <Typography variant="h4" component="div">
+          {value}
+        </Typography>
+      </CardContent>
+    </Card>
+  );
+
+  const ListCard = ({ title, items, icon }) => (
+    <Card sx={{ height: '100%' }}>
+      <CardContent>
+        <Box display="flex" alignItems="center" mb={2}>
+          {icon}
+          <Typography variant="h6" component="div" sx={{ ml: 1 }}>
+            {title}
+          </Typography>
+        </Box>
+        <List>
+          {items.map((item, index) => (
+            <div key={index}>
+              <ListItem>
+                <ListItemText
+                  primary={item.title}
+                  secondary={item.date || item.status}
+                />
+              </ListItem>
+              {index < items.length - 1 && <Divider />}
+            </div>
+          ))}
+        </List>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <Box>
-      <Typography variant="h4" sx={{ mb: 3 }}>
-        Welcome, {profile?.name}
+      <Typography variant="h4" gutterBottom>
+        Welcome back!
       </Typography>
-
-      {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <School color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Class</Typography>
-              </Box>
-              <Typography variant="h4" color="primary">
-                {profile?.class} {profile?.section}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <Assignment color="warning" sx={{ mr: 1 }} />
-                <Typography variant="h6">Pending Assignments</Typography>
-              </Box>
-              <Typography variant="h4" color="warning">
-                {assignments.filter(a => a.submissionStatus === 'Not Submitted').length}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <TrendingUp color="success" sx={{ mr: 1 }} />
-                <Typography variant="h6">Average Grade</Typography>
-              </Box>
-              <Typography variant="h4" color="success">
-                {performance?.overallPerformance?.averageScore?.toFixed(1)}%
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <Event color="info" sx={{ mr: 1 }} />
-                <Typography variant="h6">Upcoming Exams</Typography>
-              </Box>
-              <Typography variant="h4" color="info">
-                {performance?.upcomingExams?.length || 0}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {/* Main Content */}
       <Grid container spacing={3}>
-        {/* Subjects and Teachers */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                Subjects & Teachers
-              </Typography>
-              <List>
-                {subjects.map((subject, index) => (
-                  <ListItem key={index}>
-                    <ListItemIcon>
-                      <Book />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={subject.name}
-                      secondary={`Teacher: ${subject.teacher}`}
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            </CardContent>
-          </Card>
+        <Grid item xs={12} md={3}>
+          <StatCard
+            title="Pending Assignments"
+            value={dashboardData.upcomingAssignments.length}
+            icon={<Assignment color="primary" />}
+          />
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <StatCard
+            title="Upcoming Exams"
+            value={dashboardData.upcomingExams.length}
+            icon={<School color="primary" />}
+          />
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <StatCard
+            title="Attendance Rate"
+            value={`${dashboardData.attendanceRate || 0}%`}
+            icon={<Event color="primary" />}
+          />
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <StatCard
+            title="Notifications"
+            value={dashboardData.notifications.length}
+            icon={<Notifications color="primary" />}
+          />
         </Grid>
 
-        {/* Recent Assignments */}
         <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                Recent Assignments
-              </Typography>
-              <List>
-                {assignments.slice(0, 5).map((assignment, index) => (
-                  <ListItem key={index}>
-                    <ListItemIcon>
-                      <Assignment color={assignment.submissionStatus === 'Submitted' ? 'success' : 'warning'} />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={assignment.title}
-                      secondary={`Due: ${new Date(assignment.dueDate).toLocaleDateString()}`}
-                    />
-                    <Chip
-                      label={assignment.submissionStatus}
-                      color={assignment.submissionStatus === 'Submitted' ? 'success' : 'warning'}
-                      size="small"
-                    />
-                  </ListItem>
-                ))}
-              </List>
-              <Button
-                variant="outlined"
-                fullWidth
-                sx={{ mt: 2 }}
-                onClick={() => window.location.href = '/student/assignments'}
-              >
-                View All Assignments
-              </Button>
-            </CardContent>
-          </Card>
+          <ListCard
+            title="Upcoming Assignments"
+            items={dashboardData.upcomingAssignments}
+            icon={<Assignment color="primary" />}
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <ListCard
+            title="Recent Notifications"
+            items={dashboardData.notifications}
+            icon={<Notifications color="primary" />}
+          />
         </Grid>
 
-        {/* Performance Overview */}
         <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                Performance Overview
-              </Typography>
-              <List>
-                {Object.entries(performance?.subjectPerformance || {}).map(([subject, data], index) => (
-                  <ListItem key={index}>
-                    <ListItemIcon>
-                      <TrendingUp color={getGradeColor(data.average)} />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={subject}
-                      secondary={`Average: ${data.average.toFixed(1)}%`}
-                    />
-                    <Chip
-                      label={`${data.average.toFixed(1)}%`}
-                      color={getGradeColor(data.average)}
-                      size="small"
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            </CardContent>
-          </Card>
+          <ListCard
+            title="Upcoming Exams"
+            items={dashboardData.upcomingExams}
+            icon={<School color="primary" />}
+          />
         </Grid>
-
-        {/* Recent Announcements */}
         <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                Recent Announcements
-              </Typography>
-              <List>
-                {announcements.slice(0, 5).map((announcement, index) => (
-                  <ListItem key={index}>
-                    <ListItemIcon>
-                      <Notifications />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={announcement.title}
-                      secondary={new Date(announcement.createdAt).toLocaleDateString()}
-                    />
-                  </ListItem>
-                ))}
-              </List>
-              <Button
-                variant="outlined"
-                fullWidth
-                sx={{ mt: 2 }}
-                onClick={() => window.location.href = '/student/announcements'}
-              >
-                View All Announcements
-              </Button>
-            </CardContent>
-          </Card>
+          <ListCard
+            title="Recent Attendance"
+            items={dashboardData.recentAttendance}
+            icon={<Event color="primary" />}
+          />
         </Grid>
       </Grid>
     </Box>

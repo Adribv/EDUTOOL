@@ -32,7 +32,7 @@ const inventorySchema = new mongoose.Schema({
   category: {
     type: String,
     required: true,
-    enum: ['Stationery', 'Classroom Materials', 'Sports Equipment', 'Lab Supplies', 'Maintenance', 'Other']
+    enum: ['Stationery', 'Classroom Materials', 'Sports Equipment', 'Lab Supplies', 'Maintenance', 'Furniture', 'Other']
   },
   quantity: {
     type: Number,
@@ -43,10 +43,7 @@ const inventorySchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  unitPrice: {
-    type: Number,
-    required: true
-  },
+  unitPrice: Number,
   supplier: {
     name: String,
     contactNumber: String,

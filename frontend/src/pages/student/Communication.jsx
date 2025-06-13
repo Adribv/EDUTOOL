@@ -1,56 +1,47 @@
 import { useState, useEffect } from 'react';
 import {
   Box,
-  Typography,
-  Grid,
   Card,
   CardContent,
+  Typography,
   CircularProgress,
+  Grid,
   Tabs,
   Tab,
   List,
   ListItem,
-  ListItemIcon,
   ListItemText,
-  ListItemSecondaryAction,
-  IconButton,
+  ListItemAvatar,
+  Avatar,
+  Divider,
   Button,
-  Chip,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   TextField,
-  MenuItem,
-  Divider,
 } from '@mui/material';
 import {
   Announcement,
   Message,
-  Send,
-  Email,
-  Phone,
   Person,
-  Subject,
-  Close,
+  Send,
   Notifications,
-  Schedule,
+  Download,
 } from '@mui/icons-material';
-import { studentAPI } from '../../services/api';
 import { toast } from 'react-toastify';
+import studentService from '../../services/studentService';
 
 const Communication = () => {
   const [loading, setLoading] = useState(true);
-  const [selectedTab, setSelectedTab] = useState(0);
   const [announcements, setAnnouncements] = useState([]);
-  const [teachers, setTeachers] = useState([]);
-  const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
-  const [announcementDialog, setAnnouncementDialog] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [activeTab, setActiveTab] = useState(0);
   const [messageDialog, setMessageDialog] = useState(false);
-  const [selectedTeacher, setSelectedTeacher] = useState(null);
-  const [messageData, setMessageData] = useState({
+  const [newMessage, setNewMessage] = useState({
+    recipient: '',
     subject: '',
-    message: '',
+    content: '',
   });
 
   useEffect(() => {
@@ -59,83 +50,38 @@ const Communication = () => {
 
   const fetchData = async () => {
     try {
-      setLoading(true);
-      const [announcementsRes, teachersRes] = await Promise.all([
-        studentAPI.getAnnouncements(),
-        studentAPI.getTeachers(),
+      const [announcementsResponse, messagesResponse] = await Promise.all([
+        studentService.getAnnouncements(),
+        studentService.getMessages(),
       ]);
-
-      setAnnouncements(announcementsRes.data);
-      setTeachers(teachersRes.data);
-    } catch (error) {
-      console.error('Error fetching data:', error);
+      setAnnouncements(announcementsResponse.data);
+      setMessages(messagesResponse.data);
+    } catch {
       toast.error('Failed to load communication data');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleViewAnnouncement = (announcement) => {
-    setSelectedAnnouncement(announcement);
-    setAnnouncementDialog(true);
-  };
-
-  const handleSendMessage = (teacher) => {
-    setSelectedTeacher(teacher);
-    setMessageData({ subject: '', message: '' });
-    setMessageDialog(true);
-  };
-
-  const handleSubmitMessage = async () => {
+  const handleSendMessage = async () => {
     try {
-      await studentAPI.sendMessage({
-        teacherId: selectedTeacher.id,
-        ...messageData,
-      });
+      await studentService.sendMessage(newMessage);
       toast.success('Message sent successfully');
       setMessageDialog(false);
-    } catch (error) {
-      console.error('Error sending message:', error);
+      setNewMessage({
+        recipient: '',
+        subject: '',
+        content: '',
+      });
+      fetchData();
+    } catch {
       toast.error('Failed to send message');
-    }
-  };
-
-  const getAnnouncementIcon = (type) => {
-    switch (type) {
-      case 'general':
-        return <Announcement />;
-      case 'exam':
-        return <Schedule />;
-      case 'event':
-        return <Notifications />;
-      default:
-        return <Announcement />;
-    }
-  };
-
-  const getAnnouncementType = (type) => {
-    switch (type) {
-      case 'general':
-        return 'General';
-      case 'exam':
-        return 'Exam';
-      case 'event':
-        return 'Event';
-      default:
-        return type;
     }
   };
 
   if (loading) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '60vh',
-        }}
-      >
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
         <CircularProgress />
       </Box>
     );
@@ -143,100 +89,62 @@ const Communication = () => {
 
   return (
     <Box>
-      <Typography variant="h4" sx={{ mb: 3 }}>
-        Communication
-      </Typography>
-
-      {/* Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs
-          value={selectedTab}
-          onChange={(e, newValue) => setSelectedTab(newValue)}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h4">Communication</Typography>
+        <Button
+          variant="contained"
+          startIcon={<Send />}
+          onClick={() => setMessageDialog(true)}
         >
-          <Tab icon={<Announcement />} label="Announcements" />
-          <Tab icon={<Message />} label="Contact Teachers" />
-        </Tabs>
+          New Message
+        </Button>
       </Box>
 
-      {/* Announcements Tab */}
-      {selectedTab === 0 && (
-        <List>
-          {announcements.map((announcement) => (
-            <Card key={announcement.id} sx={{ mb: 2 }}>
-              <CardContent>
-                <ListItem>
-                  <ListItemIcon>
-                    {getAnnouncementIcon(announcement.type)}
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={announcement.title}
-                    secondary={
-                      <Box>
-                        <Typography variant="body2" color="text.secondary">
-                          {announcement.content}
-                        </Typography>
-                        <Box sx={{ mt: 1 }}>
-                          <Chip
-                            size="small"
-                            label={getAnnouncementType(announcement.type)}
-                            sx={{ mr: 1 }}
-                          />
-                          <Chip
-                            size="small"
-                            label={new Date(
-                              announcement.date
-                            ).toLocaleDateString()}
-                          />
-                        </Box>
-                      </Box>
-                    }
-                  />
-                  <ListItemSecondaryAction>
-                    <IconButton
-                      edge="end"
-                      onClick={() => handleViewAnnouncement(announcement)}
-                    >
-                      <Message />
-                    </IconButton>
-                  </ListItemSecondaryAction>
-                </ListItem>
-              </CardContent>
-            </Card>
-          ))}
-        </List>
-      )}
+      <Tabs
+        value={activeTab}
+        onChange={(e, newValue) => setActiveTab(newValue)}
+        sx={{ mb: 3 }}
+      >
+        <Tab icon={<Announcement />} label="Announcements" />
+        <Tab icon={<Message />} label="Messages" />
+      </Tabs>
 
-      {/* Contact Teachers Tab */}
-      {selectedTab === 1 && (
+      {activeTab === 0 && (
         <Grid container spacing={3}>
-          {teachers.map((teacher) => (
-            <Grid item xs={12} sm={6} md={4} key={teacher.id}>
+          {announcements.map((announcement) => (
+            <Grid item xs={12} key={announcement.id}>
               <Card>
                 <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <Person sx={{ mr: 1 }} />
-                    <Typography variant="h6">{teacher.name}</Typography>
+                  <Box display="flex" alignItems="center" mb={2}>
+                    <Notifications color="primary" sx={{ mr: 1 }} />
+                    <Typography variant="h6">{announcement.title}</Typography>
                   </Box>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    {teacher.subject}
+                  <Typography color="textSecondary" gutterBottom>
+                    Posted by: {announcement.postedBy} on{' '}
+                    {new Date(announcement.date).toLocaleDateString()}
                   </Typography>
-                  <Box sx={{ mt: 2 }}>
-                    <Button
-                      variant="outlined"
-                      startIcon={<Email />}
-                      onClick={() => window.location.href = `mailto:${teacher.email}`}
-                      sx={{ mr: 1 }}
-                    >
-                      Email
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      startIcon={<Message />}
-                      onClick={() => handleSendMessage(teacher)}
-                    >
-                      Message
-                    </Button>
-                  </Box>
+                  <Typography variant="body1" paragraph>
+                    {announcement.content}
+                  </Typography>
+                  {announcement.attachments && (
+                    <Box mt={2}>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Attachments:
+                      </Typography>
+                      {announcement.attachments.map((attachment, index) => (
+                        <Button
+                          key={index}
+                          variant="outlined"
+                          size="small"
+                          startIcon={<Download />}
+                          sx={{ mr: 1 }}
+                          onClick={() => window.open(attachment.url, '_blank')}
+                        >
+                          {attachment.name}
+                        </Button>
+                      ))}
+                    </Box>
+                  )}
                 </CardContent>
               </Card>
             </Grid>
@@ -244,97 +152,79 @@ const Communication = () => {
         </Grid>
       )}
 
-      {/* Announcement Dialog */}
-      <Dialog
-        open={announcementDialog}
-        onClose={() => setAnnouncementDialog(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            {selectedAnnouncement && (
-              <>
-                {getAnnouncementIcon(selectedAnnouncement.type)}
-                <Typography variant="h6" sx={{ ml: 1 }}>
-                  {selectedAnnouncement.title}
-                </Typography>
-              </>
-            )}
-          </Box>
-        </DialogTitle>
-        <DialogContent>
-          {selectedAnnouncement && (
-            <Box sx={{ mt: 2 }}>
-              <Typography variant="body1" paragraph>
-                {selectedAnnouncement.content}
-              </Typography>
-              <Box sx={{ mt: 2 }}>
-                <Chip
-                  icon={<Schedule />}
-                  label={`Posted on ${new Date(
-                    selectedAnnouncement.date
-                  ).toLocaleDateString()}`}
-                  sx={{ mr: 1 }}
+      {activeTab === 1 && (
+        <List>
+          {messages.map((message) => (
+            <React.Fragment key={message.id}>
+              <ListItem alignItems="flex-start">
+                <ListItemAvatar>
+                  <Avatar>
+                    <Person />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={
+                    <Box display="flex" justifyContent="space-between">
+                      <Typography variant="subtitle1">
+                        {message.sender}
+                      </Typography>
+                      <Typography variant="caption" color="textSecondary">
+                        {new Date(message.date).toLocaleString()}
+                      </Typography>
+                    </Box>
+                  }
+                  secondary={
+                    <Box>
+                      <Typography variant="subtitle2" color="primary">
+                        {message.subject}
+                      </Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        {message.content}
+                      </Typography>
+                    </Box>
+                  }
                 />
-                <Chip
-                  icon={getAnnouncementIcon(selectedAnnouncement.type)}
-                  label={getAnnouncementType(selectedAnnouncement.type)}
-                />
-              </Box>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setAnnouncementDialog(false)}>Close</Button>
-        </DialogActions>
-      </Dialog>
+              </ListItem>
+              <Divider variant="inset" component="li" />
+            </React.Fragment>
+          ))}
+        </List>
+      )}
 
-      {/* Message Dialog */}
-      <Dialog
-        open={messageDialog}
-        onClose={() => setMessageDialog(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Message sx={{ mr: 1 }} />
-            <Typography variant="h6">
-              Message to {selectedTeacher?.name}
-            </Typography>
-          </Box>
-        </DialogTitle>
+      <Dialog open={messageDialog} onClose={() => setMessageDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>New Message</DialogTitle>
         <DialogContent>
-          <Box sx={{ mt: 2 }}>
-            <TextField
-              fullWidth
-              label="Subject"
-              value={messageData.subject}
-              onChange={(e) =>
-                setMessageData({ ...messageData, subject: e.target.value })
-              }
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="Message"
-              multiline
-              rows={4}
-              value={messageData.message}
-              onChange={(e) =>
-                setMessageData({ ...messageData, message: e.target.value })
-              }
-            />
-          </Box>
+          <TextField
+            fullWidth
+            label="Recipient"
+            value={newMessage.recipient}
+            onChange={(e) => setNewMessage({ ...newMessage, recipient: e.target.value })}
+            margin="normal"
+          />
+          <TextField
+            fullWidth
+            label="Subject"
+            value={newMessage.subject}
+            onChange={(e) => setNewMessage({ ...newMessage, subject: e.target.value })}
+            margin="normal"
+          />
+          <TextField
+            fullWidth
+            multiline
+            rows={4}
+            label="Message"
+            value={newMessage.content}
+            onChange={(e) => setNewMessage({ ...newMessage, content: e.target.value })}
+            margin="normal"
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setMessageDialog(false)}>Cancel</Button>
           <Button
+            onClick={handleSendMessage}
             variant="contained"
-            startIcon={<Send />}
-            onClick={handleSubmitMessage}
-            disabled={!messageData.subject || !messageData.message}
+            color="primary"
+            disabled={!newMessage.recipient || !newMessage.subject || !newMessage.content}
           >
             Send Message
           </Button>

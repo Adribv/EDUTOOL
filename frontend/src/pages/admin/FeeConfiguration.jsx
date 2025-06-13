@@ -24,6 +24,7 @@ import {
   FormControl,
   InputLabel,
   Select,
+  InputAdornment,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -160,7 +161,7 @@ function FeeConfiguration() {
       link.click();
       link.remove();
       toast.success('Report downloaded successfully');
-    } catch (error) {
+    } catch {
       toast.error('Failed to download report');
     }
   };
@@ -218,11 +219,11 @@ function FeeConfiguration() {
           <TableBody>
             {feeStructures?.map((fee) => (
               <TableRow key={fee._id}>
-                <TableCell>{fee.grade}</TableCell>
-                <TableCell>{fee.feeType}</TableCell>
-                <TableCell>${fee.amount}</TableCell>
-                <TableCell>{new Date(fee.dueDate).toLocaleDateString()}</TableCell>
-                <TableCell>{fee.description}</TableCell>
+                <TableCell>{fee.grade || fee.class}</TableCell>
+                <TableCell>{fee.feeType || (fee.components?.[0]?.name)}</TableCell>
+                <TableCell>₹{fee.amount || fee.totalAmount}</TableCell>
+                <TableCell>{fee.dueDate ? new Date(fee.dueDate).toLocaleDateString() : ''}</TableCell>
+                <TableCell>{fee.description || fee.components?.[0]?.description}</TableCell>
                 <TableCell>
                   <Tooltip title="Edit">
                     <IconButton
@@ -300,7 +301,7 @@ function FeeConfiguration() {
                   onChange={handleInputChange}
                   required
                   InputProps={{
-                    startAdornment: '$',
+                    startAdornment: <InputAdornment position="start">₹</InputAdornment>,
                   }}
                 />
               </Grid>

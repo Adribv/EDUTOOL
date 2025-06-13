@@ -1,31 +1,36 @@
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { CircularProgress, Box } from '@mui/material';
+import { toast } from 'react-toastify';
+import { useEffect } from 'react';
 
-function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth();
-  const location = useLocation();
+const ProtectedRoute = ({ allowedRoles }) => {
+  const { user, isAuthenticated, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      toast.error('Please login to access this page');
+    }
+  }, [loading, isAuthenticated]);
+
+  useEffect(() => {
+    if (!loading && isAuthenticated && !allowedRoles.includes(user?.role)) {
+      toast.error('You do not have permission to access this page');
+    }
+  }, [loading, isAuthenticated, user, allowedRoles]);
 
   if (loading) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '100vh',
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    );
+    return <div>Loading...</div>; // You can replace this with a proper loading component
   }
 
-  if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
   }
 
-  return children;
-}
+  if (!allowedRoles.includes(user.role)) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  return <Outlet />;
+};
 
 export default ProtectedRoute; 

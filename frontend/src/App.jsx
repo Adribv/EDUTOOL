@@ -54,6 +54,15 @@ import SystemSettings from './pages/admin/SystemSettings';
 import UserManagement from './pages/admin/UserManagement';
 import Reports from './pages/admin/Reports';
 
+// Role-based Components
+import StudentRoutes from './routes/StudentRoutes';
+import TeacherRoutes from './routes/TeacherRoutes';
+import AdminRoutes from './routes/AdminRoutes';
+import ParentRoutes from './routes/ParentRoutes';
+import HODRoutes from './routes/HODRoutes';
+import PrincipalRoutes from './routes/PrincipalRoutes';
+import CounselorRoutes from './routes/CounselorRoutes';
+
 // Create a client
 const queryClient = new QueryClient();
 
@@ -65,84 +74,40 @@ function App() {
         <Router>
           <AuthProvider>
             <Routes>
-              {/* Auth Routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-
-              {/* Student Routes */}
-              <Route
-                path="/student"
-                element={
-                  <ProtectedRoute>
-                    <Layout role="student" />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<StudentDashboard />} />
-                <Route path="profile" element={<StudentProfile />} />
-                <Route path="assignments" element={<Assignments />} />
-                <Route path="attendance" element={<Attendance />} />
-                <Route path="exams" element={<Exams />} />
-                <Route path="fees" element={<Fees />} />
-                <Route path="resources" element={<Resources />} />
-                <Route path="messages" element={<Messages />} />
+              
+              {/* Protected Routes */}
+              <Route element={<ProtectedRoute allowedRoles={['student']} />}>
+                <Route path="/student/*" element={<StudentRoutes />} />
               </Route>
 
-              {/* Staff Routes */}
-              <Route
-                path="/staff"
-                element={
-                  <ProtectedRoute>
-                    <Layout role="staff" />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<StaffDashboard />} />
-                <Route path="profile" element={<StaffProfile />} />
-                <Route path="classes" element={<ClassManagement />} />
-                <Route path="assignments" element={<AssignmentManagement />} />
-                <Route path="exams" element={<ExamManagement />} />
-                <Route path="students" element={<StudentManagement />} />
+              <Route element={<ProtectedRoute allowedRoles={['teacher']} />}>
+                <Route path="/teacher/*" element={<TeacherRoutes />} />
               </Route>
 
-              {/* Parent Routes */}
-              <Route
-                path="/parent"
-                element={
-                  <ProtectedRoute>
-                    <Layout role="parent" />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<ParentDashboard />} />
-                <Route path="profile" element={<ParentProfile />} />
-                <Route path="progress" element={<ChildProgress />} />
-                <Route path="fees" element={<FeeManagement />} />
-                <Route path="communication" element={<Communication />} />
+              <Route element={<ProtectedRoute allowedRoles={['AdminStaff']} />}>
+                <Route path="/admin/*" element={<AdminRoutes />} />
               </Route>
 
-              {/* Admin Routes */}
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute>
-                    <Layout role="admin" />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<AdminDashboard />} />
-                <Route path="profile" element={<AdminProfile />} />
-                <Route path="staff" element={<StaffManagement />} />
-                <Route path="students" element={<StudentRecords />} />
-                <Route path="fees" element={<FeeConfiguration />} />
-                <Route path="settings" element={<SystemSettings />} />
-                <Route path="users" element={<UserManagement />} />
-                <Route path="reports" element={<Reports />} />
+              <Route element={<ProtectedRoute allowedRoles={['parent']} />}>
+                <Route path="/parent/*" element={<ParentRoutes />} />
               </Route>
 
-              {/* Redirect root to appropriate dashboard based on role */}
-              <Route path="/" element={<Navigate to="/login" replace />} />
-              <Route path="*" element={<NotFound />} />
+              <Route element={<ProtectedRoute allowedRoles={['hod']} />}>
+                <Route path="/hod/*" element={<HODRoutes />} />
+              </Route>
+
+              <Route element={<ProtectedRoute allowedRoles={['principal']} />}>
+                <Route path="/principal/*" element={<PrincipalRoutes />} />
+              </Route>
+
+              <Route element={<ProtectedRoute allowedRoles={['counselor']} />}>
+                <Route path="/counselor/*" element={<CounselorRoutes />} />
+              </Route>
+
+              {/* Redirect to login if no route matches */}
+              <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
           </AuthProvider>
         </Router>

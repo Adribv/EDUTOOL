@@ -1,333 +1,287 @@
 import { useState, useEffect } from 'react';
 import {
   Box,
+  Paper,
   Typography,
   Grid,
   Card,
   CardContent,
-  CircularProgress,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
+  CircularProgress,
+  Alert,
   Chip,
   Button,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  LinearProgress,
+  TextField,
 } from '@mui/material';
 import {
-  Payment,
-  Receipt,
-  Download,
-  Warning,
-  CheckCircle,
-  Pending,
+  Payment as PaymentIcon,
+  Receipt as ReceiptIcon,
+  History as HistoryIcon,
 } from '@mui/icons-material';
 import { studentAPI } from '../../services/api';
 import { toast } from 'react-toastify';
 
 const Fees = () => {
   const [loading, setLoading] = useState(true);
-  const [feeStructure, setFeeStructure] = useState([]);
-  const [paymentHistory, setPaymentHistory] = useState([]);
-  const [selectedReceipt, setSelectedReceipt] = useState(null);
-  const [receiptDialog, setReceiptDialog] = useState(false);
-  const [stats, setStats] = useState({
-    totalAmount: 0,
-    paidAmount: 0,
-    pendingAmount: 0,
-    dueDate: null,
+  const [error, setError] = useState(null);
+  const [feeData, setFeeData] = useState({
+    currentBalance: 0,
+    dueAmount: 0,
+    paymentHistory: [],
+    upcomingPayments: [],
+  });
+  const [paymentDialog, setPaymentDialog] = useState(false);
+  const [paymentDetails, setPaymentDetails] = useState({
+    amount: '',
+    method: 'online',
+    reference: '',
   });
 
   useEffect(() => {
-    fetchData();
+    fetchFeeData();
   }, []);
 
-  const fetchData = async () => {
+  const fetchFeeData = async () => {
     try {
       setLoading(true);
-      const [structureRes, historyRes] = await Promise.all([
-        studentAPI.getFeeStructure(),
-        studentAPI.getPaymentHistory(),
-      ]);
-
-      setFeeStructure(structureRes.data);
-      setPaymentHistory(historyRes.data.payments);
-      setStats(historyRes.data.stats);
+      const response = await studentAPI.getFees();
+      setFeeData(response.data);
     } catch (error) {
       console.error('Error fetching fee data:', error);
-      toast.error('Failed to load fee information');
+      setError('Failed to load fee data');
+      toast.error('Failed to load fee data');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleViewReceipt = (receipt) => {
-    setSelectedReceipt(receipt);
-    setReceiptDialog(true);
+  const handlePaymentSubmit = async () => {
+    try {
+      await studentAPI.submitPayment(paymentDetails);
+      toast.success('Payment submitted successfully');
+      setPaymentDialog(false);
+      setPaymentDetails({
+        amount: '',
+        method: 'online',
+        reference: '',
+      });
+      fetchFeeData();
+    } catch (error) {
+      console.error('Error submitting payment:', error);
+      toast.error('Failed to submit payment');
+    }
   };
 
   const getStatusColor = (status) => {
-    switch (status) {
-      case 'Paid':
+    switch (status.toLowerCase()) {
+      case 'paid':
         return 'success';
-      case 'Pending':
+      case 'pending':
         return 'warning';
-      case 'Overdue':
+      case 'overdue':
         return 'error';
       default:
         return 'default';
     }
   };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'Paid':
-        return <CheckCircle />;
-      case 'Pending':
-        return <Pending />;
-      case 'Overdue':
-        return <Warning />;
-      default:
-        return null;
-    }
-  };
-
   if (loading) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '60vh',
-        }}
-      >
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
         <CircularProgress />
       </Box>
     );
   }
 
+  if (error) {
+    return (
+      <Box p={3}>
+        <Alert severity="error">{error}</Alert>
+      </Box>
+    );
+  }
+
   return (
-    <Box>
-      <Typography variant="h4" sx={{ mb: 3 }}>
+    <Box sx={{ flexGrow: 1, p: 3 }}>
+      <Typography variant="h4" gutterBottom>
         Fees
       </Typography>
 
-      {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <Payment color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Total Amount</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <PaymentIcon color="primary" sx={{ mr: 1 }} />
+                <Typography variant="h6">Current Balance</Typography>
               </Box>
               <Typography variant="h4" color="primary">
-                ${stats.totalAmount}
+                ${feeData.currentBalance}
               </Typography>
+              <Button
+                variant="contained"
+                color="primary"
+                sx={{ mt: 2 }}
+                onClick={() => setPaymentDialog(true)}
+              >
+                Make Payment
+              </Button>
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+
+        <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <CheckCircle color="success" sx={{ mr: 1 }} />
-                <Typography variant="h6">Paid Amount</Typography>
-              </Box>
-              <Typography variant="h4" color="success">
-                ${stats.paidAmount}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <Warning color="warning" sx={{ mr: 1 }} />
-                <Typography variant="h6">Pending Amount</Typography>
-              </Box>
-              <Typography variant="h4" color="warning">
-                ${stats.pendingAmount}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <Payment color="error" sx={{ mr: 1 }} />
-                <Typography variant="h6">Due Date</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <ReceiptIcon color="error" sx={{ mr: 1 }} />
+                <Typography variant="h6">Due Amount</Typography>
               </Box>
               <Typography variant="h4" color="error">
-                {stats.dueDate
-                  ? new Date(stats.dueDate).toLocaleDateString()
-                  : 'N/A'}
+                ${feeData.dueAmount}
               </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                Due Date: {feeData.dueDate}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12}>
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <HistoryIcon sx={{ mr: 1 }} />
+                <Typography variant="h6">Payment History</Typography>
+              </Box>
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Date</TableCell>
+                      <TableCell>Description</TableCell>
+                      <TableCell>Amount</TableCell>
+                      <TableCell>Method</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell>Reference</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {feeData.paymentHistory.map((payment) => (
+                      <TableRow key={payment.id}>
+                        <TableCell>{payment.date}</TableCell>
+                        <TableCell>{payment.description}</TableCell>
+                        <TableCell>${payment.amount}</TableCell>
+                        <TableCell>{payment.method}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={payment.status}
+                            color={getStatusColor(payment.status)}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>{payment.reference}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Upcoming Payments
+              </Typography>
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Due Date</TableCell>
+                      <TableCell>Description</TableCell>
+                      <TableCell>Amount</TableCell>
+                      <TableCell>Status</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {feeData.upcomingPayments.map((payment) => (
+                      <TableRow key={payment.id}>
+                        <TableCell>{payment.dueDate}</TableCell>
+                        <TableCell>{payment.description}</TableCell>
+                        <TableCell>${payment.amount}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={payment.status}
+                            color={getStatusColor(payment.status)}
+                            size="small"
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
 
-      {/* Payment Progress */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Payment Progress
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-            <Box sx={{ flexGrow: 1, mr: 2 }}>
-              <LinearProgress
-                variant="determinate"
-                value={(stats.paidAmount / stats.totalAmount) * 100}
-                sx={{ height: 10, borderRadius: 5 }}
-              />
-            </Box>
-            <Typography variant="body2" color="text.secondary">
-              {Math.round((stats.paidAmount / stats.totalAmount) * 100)}%
-            </Typography>
-          </Box>
-        </CardContent>
-      </Card>
-
-      {/* Fee Structure */}
-      <Typography variant="h6" sx={{ mb: 2 }}>
-        Fee Structure
-      </Typography>
-      <TableContainer component={Paper} sx={{ mb: 3 }}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Fee Type</TableCell>
-              <TableCell>Amount</TableCell>
-              <TableCell>Due Date</TableCell>
-              <TableCell>Status</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {feeStructure.map((fee) => (
-              <TableRow key={fee.id}>
-                <TableCell>{fee.type}</TableCell>
-                <TableCell>${fee.amount}</TableCell>
-                <TableCell>
-                  {new Date(fee.dueDate).toLocaleDateString()}
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    icon={getStatusIcon(fee.status)}
-                    label={fee.status}
-                    color={getStatusColor(fee.status)}
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {/* Payment History */}
-      <Typography variant="h6" sx={{ mb: 2 }}>
-        Payment History
-      </Typography>
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Date</TableCell>
-              <TableCell>Amount</TableCell>
-              <TableCell>Payment Method</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {paymentHistory.map((payment) => (
-              <TableRow key={payment.id}>
-                <TableCell>
-                  {new Date(payment.date).toLocaleDateString()}
-                </TableCell>
-                <TableCell>${payment.amount}</TableCell>
-                <TableCell>{payment.method}</TableCell>
-                <TableCell>
-                  <Chip
-                    icon={getStatusIcon(payment.status)}
-                    label={payment.status}
-                    color={getStatusColor(payment.status)}
-                  />
-                </TableCell>
-                <TableCell>
-                  {payment.receipt && (
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      startIcon={<Receipt />}
-                      onClick={() => handleViewReceipt(payment.receipt)}
-                    >
-                      View Receipt
-                    </Button>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {/* Receipt Dialog */}
-      <Dialog
-        open={receiptDialog}
-        onClose={() => setReceiptDialog(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>Payment Receipt</DialogTitle>
+      <Dialog open={paymentDialog} onClose={() => setPaymentDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Make Payment</DialogTitle>
         <DialogContent>
-          {selectedReceipt && (
-            <Box sx={{ mt: 2 }}>
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
-                  <Typography variant="subtitle1" gutterBottom>
-                    Receipt Number: {selectedReceipt.receiptNumber}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Date: {new Date(selectedReceipt.date).toLocaleDateString()}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Amount: ${selectedReceipt.amount}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <Typography variant="subtitle1" gutterBottom>
-                    Payment Method: {selectedReceipt.paymentMethod}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Transaction ID: {selectedReceipt.transactionId}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <Button
-                    variant="contained"
-                    startIcon={<Download />}
-                    onClick={() => window.open(selectedReceipt.downloadUrl, '_blank')}
-                  >
-                    Download Receipt
-                  </Button>
-                </Grid>
-              </Grid>
-            </Box>
-          )}
+          <TextField
+            fullWidth
+            type="number"
+            label="Amount"
+            value={paymentDetails.amount}
+            onChange={(e) => setPaymentDetails({ ...paymentDetails, amount: e.target.value })}
+            margin="normal"
+          />
+          <TextField
+            fullWidth
+            select
+            label="Payment Method"
+            value={paymentDetails.method}
+            onChange={(e) => setPaymentDetails({ ...paymentDetails, method: e.target.value })}
+            margin="normal"
+            SelectProps={{
+              native: true,
+            }}
+          >
+            <option value="online">Online Payment</option>
+            <option value="card">Credit/Debit Card</option>
+            <option value="bank">Bank Transfer</option>
+          </TextField>
+          <TextField
+            fullWidth
+            label="Reference Number"
+            value={paymentDetails.reference}
+            onChange={(e) => setPaymentDetails({ ...paymentDetails, reference: e.target.value })}
+            margin="normal"
+          />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setReceiptDialog(false)}>Close</Button>
+          <Button onClick={() => setPaymentDialog(false)}>Cancel</Button>
+          <Button
+            onClick={handlePaymentSubmit}
+            variant="contained"
+            color="primary"
+            disabled={!paymentDetails.amount || !paymentDetails.reference}
+          >
+            Submit Payment
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

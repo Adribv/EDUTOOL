@@ -183,7 +183,7 @@ function StudentRecords() {
       link.click();
       link.remove();
       toast.success('Report downloaded successfully');
-    } catch (error) {
+    } catch {
       toast.error('Failed to download report');
     }
   };
@@ -388,9 +388,9 @@ function StudentRecords() {
                     onChange={handleInputChange}
                     label="Gender"
                   >
-                    <MenuItem value="male">Male</MenuItem>
-                    <MenuItem value="female">Female</MenuItem>
-                    <MenuItem value="other">Other</MenuItem>
+                    <MenuItem value="Male">Male</MenuItem>
+                    <MenuItem value="Female">Female</MenuItem>
+                    <MenuItem value="Other">Other</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
