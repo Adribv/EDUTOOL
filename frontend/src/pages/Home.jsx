@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import {
   Container,
   Box,
@@ -12,7 +12,10 @@ import {
   CardActions,
   useTheme,
   useMediaQuery,
-  Skeleton,
+  Divider,
+  Paper,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import SchoolIcon from '@mui/icons-material/School';
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
@@ -21,15 +24,17 @@ import PersonIcon from '@mui/icons-material/Person';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
 import PsychologyIcon from '@mui/icons-material/Psychology';
+import BusinessIcon from '@mui/icons-material/Business';
+import GroupIcon from '@mui/icons-material/Group';
 import logo from '../assets/logo.jpg';
 
 const Home = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+  const [selectedTab, setSelectedTab] = useState(0);
 
-  const userTypes = useMemo(() => [
+  const studentParentPortals = useMemo(() => [
     {
       title: 'Student Portal',
       description: 'Access your academic dashboard, assignments, and grades',
@@ -46,12 +51,15 @@ const Home = () => {
       path: '/parent-login',
       gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
     },
+  ], []);
+
+  const managementPortals = useMemo(() => [
     {
       title: 'Staff Portal',
       description: 'Manage classes, grades, and academic activities',
       icon: <PersonIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: '#7c3aed' }} />,
       color: '#7c3aed',
-      path: '/login',
+      path: '/management-login',
       gradient: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
     },
     {
@@ -59,7 +67,7 @@ const Home = () => {
       description: 'System administration and management',
       icon: <AdminPanelSettingsIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: '#dc2626' }} />,
       color: '#dc2626',
-      path: '/login',
+      path: '/management-login',
       gradient: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
     },
     {
@@ -67,7 +75,7 @@ const Home = () => {
       description: 'Department management and oversight',
       icon: <SupervisorAccountIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: '#ea580c' }} />,
       color: '#ea580c',
-      path: '/login',
+      path: '/management-login',
       gradient: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
     },
     {
@@ -75,7 +83,7 @@ const Home = () => {
       description: 'Student counseling and support services',
       icon: <PsychologyIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: '#0891b2' }} />,
       color: '#0891b2',
-      path: '/login',
+      path: '/management-login',
       gradient: 'linear-gradient(135deg, #0891b2 0%, #0e7490 100%)',
     },
   ], []);
@@ -83,6 +91,10 @@ const Home = () => {
   const handlePortalClick = useCallback((path) => {
     navigate(path);
   }, [navigate]);
+
+  const handleTabChange = useCallback((event, newValue) => {
+    setSelectedTab(newValue);
+  }, []);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -125,6 +137,104 @@ const Home = () => {
       },
     },
   };
+
+  const PortalCard = ({ portal, index }) => (
+    <Grid item xs={12} sm={6} md={4} key={index}>
+      <motion.div
+        variants={cardVariants}
+        whileHover="hover"
+        initial="hidden"
+        animate="visible"
+        transition={{ delay: index * 0.1 }}
+      >
+        <Card
+          sx={{
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            transition: 'all 0.3s ease-in-out',
+            cursor: 'pointer',
+            '&:hover': {
+              transform: 'translateY(-8px)',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
+              background: 'rgba(255, 255, 255, 0.98)',
+            },
+          }}
+          onClick={() => handlePortalClick(portal.path)}
+        >
+          <CardContent sx={{ 
+            flexGrow: 1, 
+            textAlign: 'center', 
+            p: { xs: 2, sm: 3 },
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <Box sx={{ 
+              mb: 2,
+              p: 2,
+              borderRadius: '50%',
+              background: `linear-gradient(135deg, ${portal.color}15 0%, ${portal.color}25 100%)`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              {portal.icon}
+            </Box>
+            <Typography
+              variant="h5"
+              component="h2"
+              sx={{
+                fontWeight: 700,
+                mb: 1.5,
+                color: portal.color,
+                fontSize: { xs: '1.125rem', sm: '1.25rem' },
+              }}
+            >
+              {portal.title}
+            </Typography>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ 
+                mb: 2,
+                fontSize: { xs: '0.875rem', sm: '0.9rem' },
+                lineHeight: 1.5,
+              }}
+            >
+              {portal.description}
+            </Typography>
+          </CardContent>
+          <CardActions sx={{ p: { xs: 2, sm: 3 }, pt: 0 }}>
+            <Button
+              fullWidth
+              variant="contained"
+              sx={{
+                background: portal.gradient,
+                color: 'white',
+                py: { xs: 1, sm: 1.5 },
+                fontWeight: 600,
+                textTransform: 'none',
+                fontSize: { xs: '0.875rem', sm: '0.9rem' },
+                borderRadius: 2,
+                '&:hover': {
+                  background: portal.gradient,
+                  opacity: 0.9,
+                  transform: 'translateY(-1px)',
+                },
+              }}
+            >
+              Access Portal
+            </Button>
+          </CardActions>
+        </Card>
+      </motion.div>
+    </Grid>
+  );
 
   return (
     <Box
@@ -194,105 +304,124 @@ const Home = () => {
             </Box>
           </motion.div>
 
-          <Grid container spacing={{ xs: 2, sm: 3 }} justifyContent="center">
-            {userTypes.map((userType, index) => (
-              <Grid item xs={12} sm={6} md={4} key={index}>
-                <motion.div
-                  variants={cardVariants}
-                  whileHover="hover"
-                  initial="hidden"
-                  animate="visible"
-                  transition={{ delay: index * 0.1 }}
+          <motion.div variants={itemVariants}>
+            <Paper 
+              sx={{ 
+                background: 'rgba(255, 255, 255, 0.1)', 
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRadius: 3,
+                mb: 4
+              }}
+            >
+              <Tabs 
+                value={selectedTab} 
+                onChange={handleTabChange}
+                variant="fullWidth"
+                sx={{
+                  '& .MuiTab-root': {
+                    color: 'white',
+                    fontSize: { xs: '0.875rem', sm: '1rem' },
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    py: 2,
+                  },
+                  '& .Mui-selected': {
+                    color: 'white',
+                  },
+                  '& .MuiTabs-indicator': {
+                    backgroundColor: 'white',
+                    height: 3,
+                  },
+                }}
+              >
+                <Tab 
+                  icon={<GroupIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />} 
+                  label="Students & Parents" 
+                  iconPosition="start"
+                  sx={{ '&.Mui-selected': { color: '#F9A525' } }}
+                />
+                <Tab 
+                  icon={<BusinessIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />} 
+                  label="Management" 
+                  iconPosition="start"
+                  sx={{ '&.Mui-selected': { color: '#F9A525' } }}
+                />
+              </Tabs>
+            </Paper>
+          </motion.div>
+
+          {selectedTab === 0 && (
+            <motion.div variants={itemVariants}>
+              <Box sx={{ mb: 4 }}>
+                <Typography
+                  variant="h4"
+                  sx={{
+                    textAlign: 'center',
+                    color: 'white',
+                    fontWeight: 600,
+                    mb: 2,
+                    fontSize: { xs: '1.5rem', sm: '2rem' },
+                  }}
                 >
-                  <Card
-                    sx={{
-                      height: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      background: 'rgba(255, 255, 255, 0.95)',
-                      backdropFilter: 'blur(10px)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      transition: 'all 0.3s ease-in-out',
-                      cursor: 'pointer',
-                      '&:hover': {
-                        transform: 'translateY(-8px)',
-                        boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
-                        background: 'rgba(255, 255, 255, 0.98)',
-                      },
-                    }}
-                    onClick={() => handlePortalClick(userType.path)}
-                  >
-                    <CardContent sx={{ 
-                      flexGrow: 1, 
-                      textAlign: 'center', 
-                      p: { xs: 2, sm: 3 },
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}>
-                      <Box sx={{ 
-                        mb: 2,
-                        p: 2,
-                        borderRadius: '50%',
-                        background: `linear-gradient(135deg, ${userType.color}15 0%, ${userType.color}25 100%)`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}>
-                        {userType.icon}
-                      </Box>
-                      <Typography
-                        variant="h5"
-                        component="h2"
-                        sx={{
-                          fontWeight: 700,
-                          mb: 1.5,
-                          color: userType.color,
-                          fontSize: { xs: '1.125rem', sm: '1.25rem' },
-                        }}
-                      >
-                        {userType.title}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{ 
-                          mb: 2,
-                          fontSize: { xs: '0.875rem', sm: '0.9rem' },
-                          lineHeight: 1.5,
-                        }}
-                      >
-                        {userType.description}
-                      </Typography>
-                    </CardContent>
-                    <CardActions sx={{ p: { xs: 2, sm: 3 }, pt: 0 }}>
-                      <Button
-                        fullWidth
-                        variant="contained"
-                        sx={{
-                          background: userType.gradient,
-                          color: 'white',
-                          py: { xs: 1, sm: 1.5 },
-                          fontWeight: 600,
-                          textTransform: 'none',
-                          fontSize: { xs: '0.875rem', sm: '0.9rem' },
-                          borderRadius: 2,
-                          '&:hover': {
-                            background: userType.gradient,
-                            opacity: 0.9,
-                            transform: 'translateY(-1px)',
-                          },
-                        }}
-                      >
-                        Access Portal
-                      </Button>
-                    </CardActions>
-                  </Card>
-                </motion.div>
+                  Student & Parent Portals
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    textAlign: 'center',
+                    color: 'white',
+                    opacity: 0.8,
+                    mb: 4,
+                    fontSize: { xs: '0.875rem', sm: '1rem' },
+                  }}
+                >
+                  Access your educational resources and stay connected with the school community
+                </Typography>
+              </Box>
+              <Grid container spacing={{ xs: 2, sm: 3 }} justifyContent="center">
+                {studentParentPortals.map((portal, index) => (
+                  <PortalCard key={index} portal={portal} index={index} />
+                ))}
               </Grid>
-            ))}
-          </Grid>
+            </motion.div>
+          )}
+
+          {selectedTab === 1 && (
+            <motion.div variants={itemVariants}>
+              <Box sx={{ mb: 4 }}>
+                <Typography
+                  variant="h4"
+                  sx={{
+                    textAlign: 'center',
+                    color: 'white',
+                    fontWeight: 600,
+                    mb: 2,
+                    fontSize: { xs: '1.5rem', sm: '2rem' },
+                  }}
+                >
+                  Management Portals
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    textAlign: 'center',
+                    color: 'white',
+                    opacity: 0.8,
+                    mb: 4,
+                    fontSize: { xs: '0.875rem', sm: '1rem' },
+                  }}
+                >
+                  Administrative tools and management systems for school staff
+                </Typography>
+              </Box>
+              <Grid container spacing={{ xs: 2, sm: 3 }} justifyContent="center">
+                {managementPortals.map((portal, index) => (
+                  <PortalCard key={index} portal={portal} index={index} />
+                ))}
+              </Grid>
+            </motion.div>
+          )}
 
           <motion.div variants={itemVariants}>
             <Box sx={{ textAlign: 'center', mt: { xs: 4, sm: 6 } }}>

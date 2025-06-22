@@ -1,66 +1,56 @@
-import api from './api';
+import { studentAPI } from './api';
 
 const studentService = {
   // Auth
-  login: (credentials) => api.post('/api/student/login', credentials),
-  register: (data) => api.post('/api/student/register', data),
+  login: studentAPI.studentLogin,
+  register: (data) => studentAPI.register(data), // Assuming a common register endpoint
   
   // Profile
-  getProfile: () => api.get('/api/student/profile'),
-  updateProfile: (data) => api.put('/api/student/profile', data),
+  getProfile: studentAPI.getProfile,
+  updateProfile: studentAPI.updateProfile,
   
   // Academic Dashboard
-  getTimetable: () => api.get('/api/student/timetable'),
-  getSubjectsAndTeachers: () => api.get('/api/student/subjects'),
-  getAssignments: () => api.get('/api/student/assignments'),
-  submitAssignment: (assignmentId, data) => 
-    api.post(`/api/student/assignments/${assignmentId}/submit`, data),
-  getSubmissionFeedback: (submissionId) => 
-    api.get(`/api/student/submissions/${submissionId}/feedback`),
+  getTimetable: studentAPI.getTimetable,
+  getSubjectsAndTeachers: studentAPI.getSubjects,
+  getAssignments: studentAPI.getAssignments,
+  submitAssignment: studentAPI.submitAssignment,
+  getSubmissionFeedback: studentAPI.getSubmissionFeedback,
   
   // Attendance
-  getAttendanceRecords: () => api.get('/api/student/attendance'),
-  submitLeaveRequest: (data) => api.post('/api/student/leave-requests', data),
-  getLeaveRequests: () => api.get('/api/student/leave-requests'),
+  getAttendanceRecords: studentAPI.getAttendance,
+  submitLeaveRequest: studentAPI.submitLeaveRequest,
+  getLeaveRequests: studentAPI.getLeaveRequests,
   
   // Examinations
-  getUpcomingExams: () => api.get('/api/student/exams/upcoming'),
-  getAdmitCard: (examId) => api.get(`/api/student/exams/${examId}/admit-card`),
-  getExamResults: () => api.get('/api/student/exam-results'),
-  getReportCards: () => api.get('/api/student/report-cards'),
-  getPerformanceAnalytics: () => api.get('/api/student/performance-analytics'),
+  getUpcomingExams: studentAPI.getExams,
+  getAdmitCard: studentAPI.getAdmitCard,
+  getExamResults: studentAPI.getExamResults,
+  getReportCards: studentAPI.getReportCards,
+  getPerformanceAnalytics: studentAPI.getPerformanceAnalytics,
   
   // Fee Management
-  getFeeStructure: () => api.get('/api/student/fee-structure'),
-  getPaymentStatus: () => api.get('/api/student/payment-status'),
-  getPaymentReceipt: (paymentId) => 
-    api.get(`/api/student/payment-receipts/${paymentId}`),
+  getFeeStructure: studentAPI.getFeeStructure,
+  getPaymentStatus: studentAPI.getFees,
+  getPaymentReceipt: studentAPI.getPaymentReceipt,
   
   // Learning Resources
-  getLearningResources: () => api.get('/api/student/learning-resources'),
-  getResourceDetails: (resourceId) => 
-    api.get(`/api/student/learning-resources/${resourceId}`),
+  getLearningResources: studentAPI.getResources,
+  getResourceDetails: studentAPI.getResourceDetails,
   
   // Communication
-  getAnnouncements: () => api.get('/api/student/announcements'),
-  getMessages: () => api.get('/api/student/messages'),
-  getMessageDetails: (messageId) => 
-    api.get(`/api/student/messages/${messageId}`),
-  sendMessageReply: (messageId, data) => 
-    api.post(`/api/student/messages/${messageId}/reply`, data),
-  getClassDiscussions: () => api.get('/api/student/class-discussions'),
-  getDiscussionDetails: (discussionId) => 
-    api.get(`/api/student/class-discussions/${discussionId}`),
-  postDiscussionComment: (discussionId, data) => 
-    api.post(`/api/student/class-discussions/${discussionId}/comments`, data),
+  getAnnouncements: studentAPI.getAnnouncements,
+  getMessages: studentAPI.getMessages,
+  getMessageDetails: studentAPI.getMessageDetails,
+  sendMessageReply: studentAPI.sendMessageReply,
+  getClassDiscussions: studentAPI.getClassDiscussions,
+  getDiscussionDetails: studentAPI.getDiscussionDetails,
+  postDiscussionComment: studentAPI.postDiscussionComment,
   
   // Homework
-  getHomework: () => api.get('/api/student/homework'),
-  getHomeworkDetails: (homeworkId) => 
-    api.get(`/api/student/homework/${homeworkId}`),
-  submitHomework: (homeworkId, data) => 
-    api.post(`/api/student/homework/${homeworkId}/submit`, data),
-  getHomeworkSubmissions: () => api.get('/api/student/homework-submissions'),
+  getHomework: studentAPI.getHomework,
+  getHomeworkDetails: studentAPI.getHomeworkDetails,
+  submitHomework: studentAPI.submitHomework,
+  getHomeworkSubmissions: studentAPI.getHomeworkSubmissions,
 };
 
 export default studentService; 

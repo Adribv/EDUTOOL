@@ -41,6 +41,7 @@ export const authAPI = {
   studentLogin: (credentials) => api.post('/api/students/login', credentials),
   // Parent login
   parentLogin: (credentials) => api.post('/api/parents/login', credentials),
+  parentRegister: (data) => api.post('/api/parents/register', data),
   // Common endpoints
   getProfile: () => api.get('/api/auth/profile'),
   logout: () => {

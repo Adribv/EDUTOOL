@@ -17,6 +17,11 @@ import {
   Paper,
   Container,
   Alert,
+  IconButton,
+  Badge,
+  Snackbar,
+  Slide,
+  MobileStepper,
 } from '@mui/material';
 import {
   School,
@@ -42,6 +47,18 @@ import {
   Receipt,
   Assessment,
   Timeline,
+  KeyboardArrowLeft,
+  KeyboardArrowRight,
+  PlayArrow,
+  Pause,
+  AccessTime,
+  LocationOn,
+  PersonOutline,
+  Subject,
+  Close,
+  Warning,
+  Info,
+  CheckCircle,
 } from '@mui/icons-material';
 import studentService from '../../services/studentService';
 import { toast } from 'react-toastify';
@@ -61,6 +78,13 @@ const Dashboard = () => {
   const [feeStatus, setFeeStatus] = useState(null);
   const [learningResources, setLearningResources] = useState([]);
   const [leaveRequests, setLeaveRequests] = useState([]);
+  
+  // New state variables for enhanced features
+  const [ongoingLessons, setOngoingLessons] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [activeStep, setActiveStep] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [taskNotifications, setTaskNotifications] = useState([]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -85,6 +109,8 @@ const Dashboard = () => {
         feeRes,
         resourcesRes,
         leaveRes,
+        lessonsRes,
+        notificationsRes,
       ] = await Promise.all([
         studentService.getProfile(),
         studentService.getSubjectsAndTeachers(),
@@ -98,6 +124,8 @@ const Dashboard = () => {
         studentService.getPaymentStatus(),
         studentService.getLearningResources(),
         studentService.getLeaveRequests(),
+        studentService.getOngoingLessons ? studentService.getOngoingLessons() : Promise.resolve({ data: [] }),
+        studentService.getNotifications ? studentService.getNotifications() : Promise.resolve({ data: [] }),
       ]);
 
       setProfile(profileRes.data);
@@ -112,6 +140,25 @@ const Dashboard = () => {
       setFeeStatus(feeRes.data);
       setLearningResources(resourcesRes.data || []);
       setLeaveRequests(leaveRes.data || []);
+      setOngoingLessons(lessonsRes.data || []);
+      setNotifications(notificationsRes.data || []);
+
+      // Generate task notifications from assignments and homework
+      const allTasks = [
+        ...assignmentsRes.data?.filter(a => a.status === 'pending') || [],
+        ...homeworkRes.data?.filter(h => h.status === 'pending') || [],
+      ];
+      
+      const taskNotifs = allTasks.map(task => ({
+        id: task.id,
+        type: task.type || 'assignment',
+        title: task.title || task.name,
+        dueDate: task.dueDate || task.deadline,
+        priority: task.priority || 'medium',
+        message: `New ${task.type || 'assignment'} assigned: ${task.title || task.name}`,
+      }));
+      
+      setTaskNotifications(taskNotifs);
 
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -134,6 +181,70 @@ const Dashboard = () => {
     if (!attendance.length) return 0;
     const present = attendance.filter(record => record.status === 'present').length;
     return Math.round((present / attendance.length) * 100);
+  };
+
+  // Carousel navigation functions
+  const handleNext = () => {
+    setActiveStep((prevActiveStep) => prevActiveStep + 1);
+  };
+
+  const handleBack = () => {
+    setActiveStep((prevActiveStep) => prevActiveStep - 1);
+  };
+
+  // Notification handling
+  const handleNotificationClose = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setShowNotifications(false);
+  };
+
+  const getNotificationIcon = (type) => {
+    switch (type) {
+      case 'assignment':
+        return <Assignment color="primary" />;
+      case 'homework':
+        return <Book color="primary" />;
+      case 'exam':
+        return <School color="primary" />;
+      case 'announcement':
+        return <Notifications color="primary" />;
+      default:
+        return <Info color="primary" />;
+    }
+  };
+
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case 'high':
+        return 'error';
+      case 'medium':
+        return 'warning';
+      case 'low':
+        return 'info';
+      default:
+        return 'primary';
+    }
+  };
+
+  // Mock ongoing lessons data (replace with actual API call)
+  const getMockOngoingLessons = () => {
+    const currentTime = new Date();
+    const currentHour = currentTime.getHours();
+    const currentMinute = currentTime.getMinutes();
+    
+    return subjects.slice(0, 3).map((subject, index) => ({
+      id: index + 1,
+      subject: subject.name || subject.subject,
+      teacher: subject.teacher || 'Teacher Name',
+      room: `Room ${Math.floor(Math.random() * 20) + 1}`,
+      startTime: `${currentHour}:${currentMinute.toString().padStart(2, '0')}`,
+      endTime: `${currentHour + 1}:${currentMinute.toString().padStart(2, '0')}`,
+      status: index === 0 ? 'ongoing' : index === 1 ? 'upcoming' : 'completed',
+      topic: `Chapter ${index + 1}: ${subject.name || subject.subject} Fundamentals`,
+      progress: index === 0 ? 65 : 0,
+    }));
   };
 
   // Navigation cards for different student features
@@ -231,6 +342,72 @@ const Dashboard = () => {
     },
   ];
 
+  // Task notification component
+  const TaskNotifications = ({ notifications }) => {
+    if (notifications.length === 0) return null;
+
+    return (
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+          Recent Task Notifications
+        </Typography>
+        <Grid container spacing={2}>
+          {notifications.slice(0, 3).map((notification) => (
+            <Grid item xs={12} key={notification.id}>
+              <Card sx={{ 
+                border: `1px solid ${getPriorityColor(notification.priority)}.main`,
+                bgcolor: `${getPriorityColor(notification.priority)}.50`,
+                '&:hover': { boxShadow: 2 }
+              }}>
+                <CardContent sx={{ py: 2 }}>
+                  <Box display="flex" alignItems="center" justifyContent="space-between">
+                    <Box display="flex" alignItems="center">
+                      {getNotificationIcon(notification.type)}
+                      <Box sx={{ ml: 2 }}>
+                        <Typography variant="subtitle2" gutterBottom>
+                          {notification.title}
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          Due: {new Date(notification.dueDate).toLocaleDateString()}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Box display="flex" alignItems="center">
+                      <Chip
+                        label={notification.priority}
+                        color={getPriorityColor(notification.priority)}
+                        size="small"
+                        sx={{ mr: 1 }}
+                      />
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => window.location.href = `/student/${notification.type}s`}
+                      >
+                        View
+                      </Button>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+        {notifications.length > 3 && (
+          <Box sx={{ mt: 2, textAlign: 'center' }}>
+            <Button
+              variant="text"
+              size="small"
+              onClick={() => setShowNotifications(true)}
+            >
+              View All Notifications ({notifications.length})
+            </Button>
+          </Box>
+        )}
+      </Box>
+    );
+  };
+
   if (loading) {
     return (
       <Box
@@ -282,7 +459,7 @@ const Dashboard = () => {
     </Card>
   );
 
-  const ListCard = ({ title, items, icon, emptyMessage = "No items to display" }) => (
+  const ListCard = ({ title, items, icon, emptyMessage = "No items to display", emptyAction }) => (
     <Card sx={{ height: '100%' }}>
       <CardContent>
         <Box display="flex" alignItems="center" mb={2}>
@@ -313,9 +490,108 @@ const Dashboard = () => {
             ))}
           </List>
         ) : (
-          <Typography variant="body2" color="textSecondary" sx={{ textAlign: 'center', py: 2 }}>
-            {emptyMessage}
-          </Typography>
+          <Box sx={{ textAlign: 'center', py: 3 }}>
+            <Box sx={{ mb: 2 }}>
+              {icon}
+            </Box>
+            <Typography variant="h6" color="textSecondary" gutterBottom>
+              {emptyMessage}
+            </Typography>
+            {title === "Recent Assignments" && (
+              <>
+                <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                  Great job! You're all caught up with your assignments.
+                </Typography>
+                <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+                  Check back regularly for new assignments from your teachers.
+                </Typography>
+                <Button 
+                  variant="outlined" 
+                  color="primary" 
+                  size="small"
+                  onClick={() => window.location.href = '/student/assignments'}
+                  startIcon={<Assignment />}
+                >
+                  View All Assignments
+                </Button>
+              </>
+            )}
+            {title === "Recent Announcements" && (
+              <>
+                <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                  No announcements at the moment.
+                </Typography>
+                <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+                  Important updates from your school will appear here.
+                </Typography>
+                <Button 
+                  variant="outlined" 
+                  color="primary" 
+                  size="small"
+                  onClick={() => window.location.href = '/student/announcements'}
+                  startIcon={<Notifications />}
+                >
+                  View All Announcements
+                </Button>
+              </>
+            )}
+            {title === "Upcoming Exams" && (
+              <>
+                <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                  No upcoming exams scheduled.
+                </Typography>
+                <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+                  This is a great time to review your study materials and prepare ahead.
+                </Typography>
+                <Button 
+                  variant="outlined" 
+                  color="primary" 
+                  size="small"
+                  onClick={() => window.location.href = '/student/study-materials'}
+                  startIcon={<LibraryBooks />}
+                >
+                  Study Materials
+                </Button>
+              </>
+            )}
+            {title === "Recent Messages" && (
+              <>
+                <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                  No new messages.
+                </Typography>
+                <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+                  Stay connected with your teachers and classmates.
+                </Typography>
+                <Button 
+                  variant="outlined" 
+                  color="primary" 
+                  size="small"
+                  onClick={() => window.location.href = '/student/communication'}
+                  startIcon={<Message />}
+                >
+                  Send Message
+                </Button>
+              </>
+            )}
+            {!["Recent Assignments", "Recent Announcements", "Upcoming Exams", "Recent Messages"].includes(title) && (
+              <>
+                <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                  {emptyMessage}
+                </Typography>
+                {emptyAction && (
+                  <Button 
+                    variant="outlined" 
+                    color="primary" 
+                    size="small"
+                    onClick={emptyAction.onClick}
+                    startIcon={emptyAction.icon}
+                  >
+                    {emptyAction.text}
+                  </Button>
+                )}
+              </>
+            )}
+          </Box>
         )}
       </CardContent>
     </Card>
@@ -365,10 +641,162 @@ const Dashboard = () => {
     </Card>
   );
 
+  // Carousel component for ongoing lessons and student details
+  const LessonCarousel = ({ lessons }) => {
+    const maxSteps = lessons.length;
+    
+    if (maxSteps === 0) {
+      return (
+        <Card sx={{ mb: 3 }}>
+          <CardContent sx={{ textAlign: 'center', py: 4 }}>
+            <Schedule color="primary" sx={{ fontSize: 60, mb: 2 }} />
+            <Typography variant="h6" gutterBottom>
+              No Ongoing Lessons
+            </Typography>
+            <Typography variant="body2" color="textSecondary">
+              Check your timetable for upcoming classes
+            </Typography>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <Card sx={{ mb: 3, position: 'relative' }}>
+        <CardContent sx={{ p: 0 }}>
+          <Box sx={{ p: 3, pb: 1 }}>
+            <Box display="flex" alignItems="center" mb={2}>
+              <Schedule color="primary" />
+              <Typography variant="h6" sx={{ ml: 1 }}>
+                Ongoing Lessons & Schedule
+              </Typography>
+            </Box>
+          </Box>
+          
+          <Box sx={{ position: 'relative', height: 200 }}>
+            {lessons.map((lesson, index) => (
+              <Box
+                key={lesson.id}
+                sx={{
+                  position: 'absolute',
+                  width: '100%',
+                  height: '100%',
+                  display: index === activeStep ? 'block' : 'none',
+                }}
+              >
+                <Box sx={{ p: 3, pt: 0 }}>
+                  <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
+                    <Box>
+                      <Typography variant="h5" gutterBottom>
+                        {lesson.subject}
+                      </Typography>
+                      <Typography variant="body2" color="textSecondary" gutterBottom>
+                        {lesson.topic}
+                      </Typography>
+                    </Box>
+                    <Chip
+                      label={lesson.status}
+                      color={lesson.status === 'ongoing' ? 'success' : lesson.status === 'upcoming' ? 'warning' : 'default'}
+                      size="small"
+                    />
+                  </Box>
+                  
+                  <Grid container spacing={2} sx={{ mb: 2 }}>
+                    <Grid item xs={6}>
+                      <Box display="flex" alignItems="center">
+                        <Teacher sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
+                        <Typography variant="body2">
+                          {lesson.teacher}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Box display="flex" alignItems="center">
+                        <LocationOn sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
+                        <Typography variant="body2">
+                          {lesson.room}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Box display="flex" alignItems="center">
+                        <AccessTime sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
+                        <Typography variant="body2">
+                          {lesson.startTime} - {lesson.endTime}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Box display="flex" alignItems="center">
+                        <Subject sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
+                        <Typography variant="body2">
+                          {lesson.subject}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                  
+                  {lesson.status === 'ongoing' && lesson.progress > 0 && (
+                    <Box sx={{ mt: 2 }}>
+                      <Box display="flex" justifyContent="space-between" mb={1}>
+                        <Typography variant="body2" color="textSecondary">
+                          Progress
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          {lesson.progress}%
+                        </Typography>
+                      </Box>
+                      <Box sx={{ width: '100%', bgcolor: 'grey.200', borderRadius: 1, height: 8 }}>
+                        <Box
+                          sx={{
+                            width: `${lesson.progress}%`,
+                            bgcolor: 'primary.main',
+                            height: 8,
+                            borderRadius: 1,
+                            transition: 'width 0.3s ease',
+                          }}
+                        />
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+              </Box>
+            ))}
+          </Box>
+          
+          <MobileStepper
+            steps={maxSteps}
+            position="static"
+            activeStep={activeStep}
+            sx={{ bgcolor: 'transparent', px: 2, py: 1 }}
+            nextButton={
+              <IconButton
+                size="small"
+                onClick={handleNext}
+                disabled={activeStep === maxSteps - 1}
+              >
+                <KeyboardArrowRight />
+              </IconButton>
+            }
+            backButton={
+              <IconButton
+                size="small"
+                onClick={handleBack}
+                disabled={activeStep === 0}
+              >
+                <KeyboardArrowLeft />
+              </IconButton>
+            }
+          />
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <Container maxWidth="xl">
       <Box sx={{ py: 3 }}>
-        {/* Welcome Section */}
+        {/* Welcome Section with Enhanced Student Details */}
         <Box sx={{ mb: 4 }}>
           <Box display="flex" alignItems="center" mb={2}>
             <Avatar
@@ -377,11 +805,11 @@ const Dashboard = () => {
             >
               {profile?.name?.charAt(0)}
             </Avatar>
-            <Box>
+            <Box sx={{ flex: 1 }}>
               <Typography variant="h4" gutterBottom>
                 Welcome back, {profile?.name || 'Student'}!
               </Typography>
-              <Typography variant="body1" color="textSecondary">
+              <Typography variant="body1" color="textSecondary" gutterBottom>
                 Student ID: {profile?.studentId} | Class: {profile?.class} {profile?.section}
               </Typography>
               {performance?.averageGrade && (
@@ -390,8 +818,25 @@ const Dashboard = () => {
                 </Typography>
               )}
             </Box>
+            <Box sx={{ textAlign: 'right' }}>
+              <IconButton
+                color="primary"
+                onClick={() => setShowNotifications(true)}
+                sx={{ position: 'relative' }}
+              >
+                <Badge badgeContent={taskNotifications.length} color="error">
+                  <Notifications />
+                </Badge>
+              </IconButton>
+            </Box>
           </Box>
         </Box>
+
+        {/* Task Notifications */}
+        <TaskNotifications notifications={taskNotifications} />
+
+        {/* Ongoing Lessons Carousel */}
+        <LessonCarousel lessons={ongoingLessons.length > 0 ? ongoingLessons : getMockOngoingLessons()} />
 
         {/* Statistics Cards */}
         <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
@@ -554,6 +999,72 @@ const Dashboard = () => {
           </Box>
         )}
       </Box>
+
+      {/* Notification Modal */}
+      <Snackbar
+        open={showNotifications}
+        autoHideDuration={6000}
+        onClose={handleNotificationClose}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={handleNotificationClose}
+          severity="info"
+          sx={{ width: '100%' }}
+        >
+          <Typography variant="h6" gutterBottom>
+            All Notifications ({taskNotifications.length})
+          </Typography>
+          <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
+            {taskNotifications.map((notification) => (
+              <Box key={notification.id} sx={{ mb: 2, p: 1, border: '1px solid #e0e0e0', borderRadius: 1 }}>
+                <Box display="flex" alignItems="center" justifyContent="space-between">
+                  <Box display="flex" alignItems="center">
+                    {getNotificationIcon(notification.type)}
+                    <Box sx={{ ml: 1 }}>
+                      <Typography variant="subtitle2">
+                        {notification.title}
+                      </Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        Due: {new Date(notification.dueDate).toLocaleDateString()}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Chip
+                    label={notification.priority}
+                    color={getPriorityColor(notification.priority)}
+                    size="small"
+                  />
+                </Box>
+              </Box>
+            ))}
+          </Box>
+        </Alert>
+      </Snackbar>
+
+      {/* Auto-show notification for new tasks */}
+      {taskNotifications.length > 0 && (
+        <Snackbar
+          open={true}
+          autoHideDuration={4000}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        >
+          <Alert
+            severity="info"
+            action={
+              <IconButton
+                color="inherit"
+                size="small"
+                onClick={() => setShowNotifications(true)}
+              >
+                <Close fontSize="inherit" />
+              </IconButton>
+            }
+          >
+            {taskNotifications.length} new task{taskNotifications.length > 1 ? 's' : ''} assigned!
+          </Alert>
+        </Snackbar>
+      )}
     </Container>
   );
 };

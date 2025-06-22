@@ -1,406 +1,115 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Box,
+  Grid,
+  Paper,
   Typography,
+  CircularProgress,
+  Alert,
+  Button,
   Card,
   CardContent,
-  Grid,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  CircularProgress,
-  Button,
+  List,
+  ListItem,
+  ListItemText,
+  Divider,
   Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  IconButton,
-  Tooltip,
 } from '@mui/material';
-import {
-  Payment as PaymentIcon,
-  Receipt as ReceiptIcon,
-  Download as DownloadIcon,
-  CreditCard as CreditCardIcon,
-  AccountBalance as AccountBalanceIcon,
-} from '@mui/icons-material';
+import { Payment, Receipt, History } from '@mui/icons-material';
 import { parentAPI } from '../../services/api';
-import { toast } from 'react-toastify';
 
 const FeeManagement = () => {
-  const [loading, setLoading] = useState(true);
-  const [children, setChildren] = useState([]);
-  const [selectedChild, setSelectedChild] = useState('');
-  const [feeData, setFeeData] = useState({
-    currentBalance: 0,
-    upcomingPayments: [],
-    paymentHistory: [],
-    paymentMethods: [],
-  });
-  const [paymentDialog, setPaymentDialog] = useState(false);
-  const [selectedPayment, setSelectedPayment] = useState(null);
-  const [paymentForm, setPaymentForm] = useState({
-    amount: '',
-    method: '',
-    cardNumber: '',
-    expiryDate: '',
-    cvv: '',
+  const { data: feeData, isLoading, error } = useQuery({
+    queryKey: ['parent_fees'],
+    queryFn: parentAPI.getFees,
   });
 
-  useEffect(() => {
-    fetchChildren();
-  }, []);
-
-  useEffect(() => {
-    if (selectedChild) {
-      fetchFeeData();
-    }
-  }, [selectedChild]);
-
-  const fetchChildren = async () => {
-    try {
-      setLoading(true);
-      const response = await parentAPI.getChildren();
-      setChildren(response.data);
-      if (response.data.length > 0) {
-        setSelectedChild(response.data[0].id);
-      }
-    } catch (error) {
-      console.error('Error fetching children:', error);
-      toast.error('Failed to load children data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchFeeData = async () => {
-    try {
-      setLoading(true);
-      const [balanceRes, upcomingRes, historyRes, methodsRes] = await Promise.all([
-        parentAPI.getFeeBalance(selectedChild),
-        parentAPI.getUpcomingPayments(selectedChild),
-        parentAPI.getPaymentHistory(selectedChild),
-        parentAPI.getPaymentMethods(),
-      ]);
-
-      setFeeData({
-        currentBalance: balanceRes.data,
-        upcomingPayments: upcomingRes.data,
-        paymentHistory: historyRes.data,
-        paymentMethods: methodsRes.data,
-      });
-    } catch (error) {
-      console.error('Error fetching fee data:', error);
-      toast.error('Failed to load fee data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleChildChange = (event) => {
-    setSelectedChild(event.target.value);
-  };
-
-  const handlePaymentClick = (payment) => {
-    setSelectedPayment(payment);
-    setPaymentForm({
-      amount: payment.amount,
-      method: '',
-      cardNumber: '',
-      expiryDate: '',
-      cvv: '',
-    });
-    setPaymentDialog(true);
-  };
-
-  const handlePaymentFormChange = (e) => {
-    const { name, value } = e.target;
-    setPaymentForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handlePaymentSubmit = async () => {
-    try {
-      await parentAPI.makePayment({
-        childId: selectedChild,
-        paymentId: selectedPayment.id,
-        ...paymentForm,
-      });
-      toast.success('Payment successful');
-      setPaymentDialog(false);
-      fetchFeeData();
-    } catch (error) {
-      console.error('Error making payment:', error);
-      toast.error('Payment failed');
-    }
-  };
-
-  const handleDownloadReceipt = async (paymentId) => {
-    try {
-      const response = await parentAPI.downloadReceipt(paymentId);
-      // Handle file download
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `receipt-${paymentId}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (error) {
-      console.error('Error downloading receipt:', error);
-      toast.error('Failed to download receipt');
-    }
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
         <CircularProgress />
       </Box>
     );
   }
 
+  if (error) {
+    return (
+      <Box>
+        <Alert severity="error">Failed to load fee information: {error.message}</Alert>
+      </Box>
+    );
+  }
+
+  const { summary, upcomingPayments, paymentHistory } = feeData;
+
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
+    <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
+      <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
         Fee Management
       </Typography>
 
-      {/* Child Selection */}
-      <FormControl fullWidth sx={{ mb: 3 }}>
-        <InputLabel>Select Child</InputLabel>
-        <Select
-          value={selectedChild}
-          onChange={handleChildChange}
-          label="Select Child"
-        >
-          {children.map((child) => (
-            <MenuItem key={child.id} value={child.id}>
-              {child.name} - Class {child.class}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-
-      <Grid container spacing={3}>
-        {/* Current Balance */}
+      {/* Fee Summary */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} md={4}>
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Current Balance
-              </Typography>
-              <Typography variant="h4" color="error.main">
-                ${feeData.currentBalance}
-              </Typography>
+              <Typography variant="h6" gutterBottom>Total Outstanding</Typography>
+              <Typography variant="h4" color="error.main">₹{summary.outstanding}</Typography>
             </CardContent>
           </Card>
         </Grid>
-
-        {/* Upcoming Payments */}
-        <Grid item xs={12} md={8}>
+        <Grid item xs={12} md={4}>
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Upcoming Payments
-              </Typography>
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Due Date</TableCell>
-                      <TableCell>Description</TableCell>
-                      <TableCell>Amount</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Action</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {feeData.upcomingPayments.map((payment) => (
-                      <TableRow key={payment.id}>
-                        <TableCell>{new Date(payment.dueDate).toLocaleDateString()}</TableCell>
-                        <TableCell>{payment.description}</TableCell>
-                        <TableCell>${payment.amount}</TableCell>
-                        <TableCell>
-                          <Chip
-                            label={payment.status}
-                            color={payment.status === 'Paid' ? 'success' : 'warning'}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {payment.status !== 'Paid' && (
-                            <Button
-                              variant="contained"
-                              size="small"
-                              startIcon={<PaymentIcon />}
-                              onClick={() => handlePaymentClick(payment)}
-                            >
-                              Pay Now
-                            </Button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+              <Typography variant="h6" gutterBottom>Next Due Date</Typography>
+              <Typography variant="h4">{summary.nextDueDate}</Typography>
             </CardContent>
           </Card>
         </Grid>
-
-        {/* Payment History */}
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Payment History
-              </Typography>
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Date</TableCell>
-                      <TableCell>Description</TableCell>
-                      <TableCell>Amount</TableCell>
-                      <TableCell>Method</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Receipt</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {feeData.paymentHistory.map((payment) => (
-                      <TableRow key={payment.id}>
-                        <TableCell>{new Date(payment.date).toLocaleDateString()}</TableCell>
-                        <TableCell>{payment.description}</TableCell>
-                        <TableCell>${payment.amount}</TableCell>
-                        <TableCell>{payment.method}</TableCell>
-                        <TableCell>
-                          <Chip
-                            label={payment.status}
-                            color={payment.status === 'Completed' ? 'success' : 'error'}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Tooltip title="Download Receipt">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleDownloadReceipt(payment.id)}
-                            >
-                              <DownloadIcon />
-                            </IconButton>
-                          </Tooltip>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </CardContent>
-          </Card>
+        <Grid item xs={12} md={4} sx={{ alignSelf: 'center', textAlign: 'center' }}>
+          <Button variant="contained" size="large" startIcon={<Payment />}>
+            Pay Now
+          </Button>
         </Grid>
       </Grid>
 
-      {/* Payment Dialog */}
-      <Dialog open={paymentDialog} onClose={() => setPaymentDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Make Payment</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Amount"
-                value={paymentForm.amount}
-                disabled
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <FormControl fullWidth>
-                <InputLabel>Payment Method</InputLabel>
-                <Select
-                  value={paymentForm.method}
-                  onChange={handlePaymentFormChange}
-                  name="method"
-                  label="Payment Method"
-                >
-                  {feeData.paymentMethods.map((method) => (
-                    <MenuItem key={method.id} value={method.id}>
-                      {method.type === 'card' ? (
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <CreditCardIcon sx={{ mr: 1 }} />
-                          {method.last4}
-                        </Box>
-                      ) : (
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <AccountBalanceIcon sx={{ mr: 1 }} />
-                          {method.bankName}
-                        </Box>
-                      )}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            {paymentForm.method && (
-              <>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Card Number"
-                    name="cardNumber"
-                    value={paymentForm.cardNumber}
-                    onChange={handlePaymentFormChange}
-                    placeholder="1234 5678 9012 3456"
+      <Grid container spacing={3}>
+        {/* Upcoming Payments */}
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 2 }}>
+            <Typography variant="h6" gutterBottom>Upcoming Payments</Typography>
+            <List>
+              {upcomingPayments.map((payment) => (
+                <ListItem key={payment.id} divider>
+                  <ListItemText
+                    primary={payment.description}
+                    secondary={`Due Date: ${payment.dueDate}`}
                   />
-                </Grid>
-                <Grid item xs={6}>
-                  <TextField
-                    fullWidth
-                    label="Expiry Date"
-                    name="expiryDate"
-                    value={paymentForm.expiryDate}
-                    onChange={handlePaymentFormChange}
-                    placeholder="MM/YY"
+                  <Typography variant="h6">₹{payment.amount}</Typography>
+                </ListItem>
+              ))}
+            </List>
+          </Paper>
+        </Grid>
+
+        {/* Payment History */}
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 2 }}>
+            <Typography variant="h6" gutterBottom>Payment History</Typography>
+            <List>
+              {paymentHistory.map((payment) => (
+                <ListItem key={payment.id} divider>
+                  <ListItemText
+                    primary={payment.description}
+                    secondary={`Paid on: ${payment.date}`}
                   />
-                </Grid>
-                <Grid item xs={6}>
-                  <TextField
-                    fullWidth
-                    label="CVV"
-                    name="cvv"
-                    value={paymentForm.cvv}
-                    onChange={handlePaymentFormChange}
-                    type="password"
-                  />
-                </Grid>
-              </>
-            )}
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setPaymentDialog(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handlePaymentSubmit}
-            disabled={!paymentForm.method}
-          >
-            Pay Now
-          </Button>
-        </DialogActions>
-      </Dialog>
+                  <Chip icon={<Receipt />} label="View Receipt" onClick={() => { /* TODO */ }} />
+                </ListItem>
+              ))}
+            </List>
+          </Paper>
+        </Grid>
+      </Grid>
     </Box>
   );
 };

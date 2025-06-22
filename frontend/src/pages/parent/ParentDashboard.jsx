@@ -1,20 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Box,
   Grid,
   Paper,
   Typography,
+  Avatar,
+  CircularProgress,
+  Alert,
+  Tabs,
+  Tab,
+  Card,
+  CardContent,
+  Chip,
   List,
   ListItem,
   ListItemText,
   ListItemIcon,
   Divider,
-  Card,
-  CardContent,
   Button,
-  Chip,
-  Avatar,
-  CircularProgress,
+  useTheme,
 } from '@mui/material';
 import {
   School,
@@ -22,270 +27,216 @@ import {
   Payment,
   Event,
   Message,
+  Assessment,
+  Timeline,
+  Person,
+  Notifications,
+  CalendarToday,
 } from '@mui/icons-material';
 import { parentAPI } from '../../services/api';
 import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
+
+const StatCard = ({ title, value, icon, color, onClick }) => (
+  <Card 
+    sx={{ 
+      height: '100%', 
+      cursor: onClick ? 'pointer' : 'default',
+      transition: 'transform 0.2s, box-shadow 0.2s',
+      '&:hover': {
+        transform: onClick ? 'translateY(-4px)' : 'none',
+        boxShadow: onClick ? 4 : 1,
+      }
+    }}
+    onClick={onClick}
+  >
+    <CardContent>
+      <Box display="flex" alignItems="center" mb={2}>
+        {icon}
+        <Typography variant="h6" component="div" sx={{ ml: 1 }}>
+          {title}
+        </Typography>
+      </Box>
+      <Typography variant="h4" component="div" color={color}>
+        {value}
+      </Typography>
+    </CardContent>
+  </Card>
+);
 
 const ParentDashboard = () => {
-  const [loading, setLoading] = useState(true);
-  const [children, setChildren] = useState([]);
-  const [stats, setStats] = useState({
-    fees: {
-      paid: 0,
-      pending: 0,
-    },
-    assignments: {
-      completed: 0,
-      pending: 0,
-    },
-    exams: {
-      upcoming: 0,
-      completed: 0,
-    },
+  const [selectedChild, setSelectedChild] = useState(null);
+  const theme = useTheme();
+  const navigate = useNavigate();
+
+  const { data: children, isLoading: childrenLoading, error: childrenError } = useQuery({
+    queryKey: ['parent_children'],
+    queryFn: parentAPI.getChildren,
+    onSuccess: (data) => {
+      if (data && data.length > 0) {
+        setSelectedChild(data[0]);
+      }
+    }
   });
 
-  const [recentActivities, setRecentActivities] = useState([]);
-  const [messages, setMessages] = useState([]);
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      const response = await parentAPI.getDashboard();
-      const {
-        children: childrenData,
-        stats: dashboardStats,
-        recentActivities: activities,
-        messages: msgs,
-      } = response.data;
-      setChildren(childrenData);
-      setStats(dashboardStats);
-      setRecentActivities(activities);
-      setMessages(msgs);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      toast.error('Failed to load dashboard data');
-    } finally {
-      setLoading(false);
-    }
+  const { data: dashboardData, isLoading: dashboardLoading, error: dashboardError } = useQuery({
+    queryKey: ['parent_dashboard', selectedChild?.id],
+    queryFn: () => parentAPI.getDashboard(selectedChild.id),
+    enabled: !!selectedChild,
+  });
+  
+  const handleChildChange = (event, newValue) => {
+    setSelectedChild(children[newValue]);
   };
 
-  const StatCard = ({ title, value, icon, color }) => (
-    <Card>
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          {icon}
-          <Typography variant="h6" sx={{ ml: 1 }}>
-            {title}
-          </Typography>
-        </Box>
-        <Typography variant="h4" color={color}>
-          {value}
-        </Typography>
-      </CardContent>
-    </Card>
-  );
+  const isLoading = childrenLoading || dashboardLoading;
+  const error = childrenError || dashboardError;
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '60vh',
-        }}
-      >
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
         <CircularProgress />
       </Box>
     );
   }
 
+  if (error) {
+    return (
+      <Box>
+        <Alert severity="error">
+          Failed to load dashboard data: {error.message}
+        </Alert>
+      </Box>
+    );
+  }
+
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
+    <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
+      <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 'bold' }}>
         Parent Dashboard
       </Typography>
 
-      {/* Children Overview */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        {children.map((child) => (
-          <Grid item xs={12} md={6} key={child.id}>
-            <Paper sx={{ p: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Avatar sx={{ width: 56, height: 56, mr: 2 }}>
-                  {child.name.charAt(0)}
-                </Avatar>
-                <Box>
-                  <Typography variant="h6">{child.name}</Typography>
-                  <Typography color="text.secondary">
-                    Grade {child.grade}
-                  </Typography>
-                </Box>
-              </Box>
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Attendance
-                  </Typography>
-                  <Typography variant="h6" color="primary">
-                    {child.attendance}%
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Performance
-                  </Typography>
-                  <Typography variant="h6" color="success">
-                    {child.performance}%
-                  </Typography>
-                </Grid>
-              </Grid>
-            </Paper>
+      {/* Child Selector */}
+      {children && children.length > 0 && (
+        <Paper elevation={3} sx={{ mb: 3, p: 2, borderRadius: 2 }}>
+          <Tabs
+            value={children.findIndex(c => c.id === selectedChild?.id)}
+            onChange={handleChildChange}
+            variant="scrollable"
+            scrollButtons="auto"
+            aria-label="child selector"
+          >
+            {children.map(child => (
+              <Tab 
+                key={child.id} 
+                label={
+                  <Box display="flex" alignItems="center">
+                    <Avatar sx={{ width: 32, height: 32, mr: 1 }} src={child.profilePicture}>
+                      {child.name.charAt(0)}
+                    </Avatar>
+                    <Typography>{child.name}</Typography>
+                  </Box>
+                }
+              />
+            ))}
+          </Tabs>
+        </Paper>
+      )}
+
+      {selectedChild && dashboardData && (
+        <Grid container spacing={3}>
+          {/* Quick Stats */}
+          <Grid item xs={12} md={4}>
+            <StatCard
+              title="Attendance"
+              value={`${dashboardData.attendance.rate}%`}
+              icon={<Timeline color="primary" />}
+              color="primary.main"
+              onClick={() => navigate(`/parent/children/${selectedChild.id}/attendance`)}
+            />
           </Grid>
-        ))}
-      </Grid>
+          <Grid item xs={12} md={4}>
+            <StatCard
+              title="Recent Grades"
+              value={`${dashboardData.grades.average || 'N/A'}`}
+              icon={<Assessment color="secondary" />}
+              color="secondary.main"
+              onClick={() => navigate(`/parent/children/${selectedChild.id}/grades`)}
+            />
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <StatCard
+              title="Pending Assignments"
+              value={dashboardData.assignments.pending}
+              icon={<Assignment color="error" />}
+              color="error.main"
+              onClick={() => navigate(`/parent/children/${selectedChild.id}/assignments`)}
+            />
+          </Grid>
 
-      <Grid container spacing={3}>
-        {/* Stats Cards */}
-        <Grid item xs={12} sm={6} md={4}>
-          <StatCard
-            title="Fees Paid"
-            value={`₹${stats.fees.paid}`}
-            icon={<Payment color="success" />}
-            color="success"
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={4}>
-          <StatCard
-            title="Assignments"
-            value={`${stats.assignments.completed}/${stats.assignments.completed + stats.assignments.pending}`}
-            icon={<Assignment color="warning" />}
-            color="warning"
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={4}>
-          <StatCard
-            title="Exams"
-            value={`${stats.exams.completed} completed`}
-            icon={<School color="info" />}
-            color="info"
-          />
-        </Grid>
-
-        {/* Recent Activities */}
-        <Grid item xs={12} md={8}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Recent Activities
-            </Typography>
-            <List>
-              {recentActivities.map((activity, index) => (
-                <Box key={index}>
-                  <ListItem>
+          {/* Fee Information */}
+          <Grid item xs={12}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Fee Status</Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={4}>
+                    <Typography variant="body2" color="text.secondary">Total Due</Typography>
+                    <Typography variant="h5" color="error.main">₹{dashboardData.fees.due}</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <Typography variant="body2" color="text.secondary">Next Due Date</Typography>
+                    <Typography variant="h5">{dashboardData.fees.dueDate}</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={4} sx={{ textAlign: 'right', alignSelf: 'center' }}>
+                    <Button variant="contained" onClick={() => navigate('/parent/fees')}>
+                      Pay Now
+                    </Button>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          {/* Recent Activity */}
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ p: 2, height: '100%' }}>
+              <Typography variant="h6" gutterBottom>Recent Activity</Typography>
+              <List>
+                {dashboardData.recentActivities.slice(0, 5).map((activity, index) => (
+                  <ListItem key={index} divider={index < dashboardData.recentActivities.length - 1}>
                     <ListItemIcon>
                       {activity.type === 'exam' && <School />}
                       {activity.type === 'assignment' && <Assignment />}
-                      {activity.type === 'payment' && <Payment />}
+                      {activity.type === 'event' && <Event />}
                     </ListItemIcon>
-                    <ListItemText
-                      primary={activity.title}
-                      secondary={activity.date}
-                    />
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {activity.score && (
-                        <Typography variant="body2" color="primary">
-                          {activity.score}
-                        </Typography>
-                      )}
-                      {activity.amount && (
-                        <Typography variant="body2" color="error">
-                          {activity.amount}
-                        </Typography>
-                      )}
-                      <Chip
-                        label={activity.status}
-                        color={
-                          activity.status === 'completed'
-                            ? 'success'
-                            : activity.status === 'pending'
-                            ? 'warning'
-                            : 'info'
-                        }
-                        size="small"
-                      />
-                    </Box>
+                    <ListItemText primary={activity.title} secondary={activity.date} />
+                    <Chip label={activity.status || activity.grade} size="small" />
                   </ListItem>
-                  {index < recentActivities.length - 1 && <Divider />}
-                </Box>
-              ))}
-            </List>
-          </Paper>
-        </Grid>
-
-        {/* Messages */}
-        <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Messages
-            </Typography>
-            <List>
-              {messages.map((message, index) => (
-                <Box key={index}>
-                  <ListItem>
+                ))}
+              </List>
+            </Paper>
+          </Grid>
+          
+          {/* Upcoming Events */}
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ p: 2, height: '100%' }}>
+              <Typography variant="h6" gutterBottom>Upcoming Events</Typography>
+              <List>
+                {dashboardData.upcomingEvents.slice(0, 5).map((event, index) => (
+                  <ListItem key={index} divider={index < dashboardData.upcomingEvents.length - 1}>
                     <ListItemIcon>
-                      <Message color={message.unread ? 'primary' : 'action'} />
+                      <CalendarToday />
                     </ListItemIcon>
-                    <ListItemText
-                      primary={
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <Typography
-                            variant="body1"
-                            sx={{
-                              fontWeight: message.unread ? 'bold' : 'normal',
-                            }}
-                          >
-                            {message.from}
-                          </Typography>
-                          {message.unread && (
-                            <Chip
-                              label="New"
-                              color="primary"
-                              size="small"
-                              sx={{ ml: 1 }}
-                            />
-                          )}
-                        </Box>
-                      }
-                      secondary={
-                        <>
-                          <Typography variant="body2">{message.subject}</Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {message.date}
-                          </Typography>
-                        </>
-                      }
-                    />
+                    <ListItemText primary={event.title} secondary={event.date} />
                   </ListItem>
-                  {index < messages.length - 1 && <Divider />}
-                </Box>
-              ))}
-            </List>
-            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-              <Button
-                variant="text"
-                startIcon={<Message />}
-                onClick={() => {/* Handle view all messages */}}
-              >
-                View All Messages
-              </Button>
-            </Box>
-          </Paper>
+                ))}
+              </List>
+            </Paper>
+          </Grid>
+
         </Grid>
-      </Grid>
+      )}
     </Box>
   );
 };

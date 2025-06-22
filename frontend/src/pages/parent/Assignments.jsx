@@ -1,68 +1,37 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
-  Grid,
-  Paper,
   Typography,
   CircularProgress,
   Alert,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
+  Paper,
+  List,
+  ListItem,
+  ListItemText,
+  Divider,
   Chip,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
+  Button,
+  Tabs,
+  Tab,
+  Card,
+  CardContent,
 } from '@mui/material';
-import parentService from '../../services/parentService';
+import { ArrowBack, Assignment, CheckCircle, HourglassEmpty, Grade } from '@mui/icons-material';
+import { parentAPI } from '../../services/api';
+import { useState } from 'react';
 
 const Assignments = () => {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [students, setStudents] = useState([]);
-  const [assignments, setAssignments] = useState([]);
-  const [selectedStudent, setSelectedStudent] = useState('all');
-  const [selectedStatus, setSelectedStatus] = useState('all');
+  const { childId } = useParams();
+  const navigate = useNavigate();
+  const [tabIndex, setTabIndex] = useState(0);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      const [studentsRes, assignmentsRes] = await Promise.all([
-        parentService.getStudents(),
-        parentService.getStudentAssignments(),
-      ]);
-
-      setStudents(studentsRes.data);
-      setAssignments(assignmentsRes.data);
-    } catch {
-      setError('Failed to load assignments data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleStudentChange = (event) => {
-    setSelectedStudent(event.target.value);
-  };
-
-  const handleStatusChange = (event) => {
-    setSelectedStatus(event.target.value);
-  };
-
-  const filteredAssignments = assignments.filter((assignment) => {
-    const studentMatch = selectedStudent === 'all' || assignment.studentId === selectedStudent;
-    const statusMatch = selectedStatus === 'all' || assignment.status === selectedStatus;
-    return studentMatch && statusMatch;
+  const { data: assignments, isLoading, error } = useQuery({
+    queryKey: ['child_assignments', childId],
+    queryFn: () => parentAPI.getChildAssignments(childId),
   });
 
-  if (loading) {
+  if (isLoading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
         <CircularProgress />
@@ -72,102 +41,75 @@ const Assignments = () => {
 
   if (error) {
     return (
-      <Box p={3}>
-        <Alert severity="error">{error}</Alert>
+      <Box>
+        <Alert severity="error">Failed to load assignments: {error.message}</Alert>
       </Box>
     );
   }
 
-  const getStatusColor = (status) => {
-    switch (status.toLowerCase()) {
-      case 'completed':
-        return 'success';
-      case 'pending':
-        return 'warning';
-      case 'overdue':
-        return 'error';
-      default:
-        return 'default';
-    }
+  const handleTabChange = (event, newValue) => {
+    setTabIndex(newValue);
   };
 
+  const filteredAssignments = assignments.filter(assignment => {
+    if (tabIndex === 1) return assignment.status === 'Submitted';
+    if (tabIndex === 2) return assignment.status === 'Graded';
+    return assignment.status === 'Pending';
+  });
+
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
+    <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
+      <Button startIcon={<ArrowBack />} onClick={() => navigate(-1)} sx={{ mb: 2 }}>
+        Back to Progress
+      </Button>
+      <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
         Assignments
       </Typography>
-
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
-            <FormControl fullWidth>
-              <InputLabel>Select Student</InputLabel>
-              <Select
-                value={selectedStudent}
-                label="Select Student"
-                onChange={handleStudentChange}
-              >
-                <MenuItem value="all">All Students</MenuItem>
-                {students.map((student) => (
-                  <MenuItem key={student.id} value={student.id}>
-                    {student.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <FormControl fullWidth>
-              <InputLabel>Status</InputLabel>
-              <Select
-                value={selectedStatus}
-                label="Status"
-                onChange={handleStatusChange}
-              >
-                <MenuItem value="all">All Status</MenuItem>
-                <MenuItem value="pending">Pending</MenuItem>
-                <MenuItem value="completed">Completed</MenuItem>
-                <MenuItem value="overdue">Overdue</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
-      </Paper>
-
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Title</TableCell>
-              <TableCell>Student</TableCell>
-              <TableCell>Subject</TableCell>
-              <TableCell>Due Date</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Score</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredAssignments.map((assignment) => (
-              <TableRow key={assignment.id}>
-                <TableCell>{assignment.title}</TableCell>
-                <TableCell>
-                  {students.find((s) => s.id === assignment.studentId)?.name}
-                </TableCell>
-                <TableCell>{assignment.subject}</TableCell>
-                <TableCell>{assignment.dueDate}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={assignment.status}
-                    color={getStatusColor(assignment.status)}
-                    size="small"
+      
+      <Paper>
+        <Tabs value={tabIndex} onChange={handleTabChange} centered>
+          <Tab label="Pending" />
+          <Tab label="Submitted" />
+          <Tab label="Graded" />
+        </Tabs>
+        <List>
+          {filteredAssignments.map((assignment, index) => (
+            <Card sx={{ m: 2 }} key={assignment.id}>
+              <CardContent>
+                <ListItem>
+                  <ListItemText
+                    primary={assignment.title}
+                    secondary={`Subject: ${assignment.subject} | Due: ${new Date(assignment.dueDate).toLocaleDateString()}`}
                   />
-                </TableCell>
-                <TableCell>{assignment.score || '-'}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    {assignment.status === 'Graded' && (
+                      <Chip
+                        icon={<Grade />}
+                        label={`${assignment.grade}%`}
+                        color="success"
+                      />
+                    )}
+                    <Chip
+                      icon={
+                        assignment.status === 'Pending' ? <HourglassEmpty /> : <CheckCircle />
+                      }
+                      label={assignment.status}
+                      color={
+                        assignment.status === 'Pending' ? 'warning' : 'success'
+                      }
+                    />
+                  </Box>
+                </ListItem>
+              </CardContent>
+            </Card>
+          ))}
+        </List>
+        {filteredAssignments.length === 0 && (
+          <Typography sx={{ textAlign: 'center', p: 3 }}>
+            No assignments in this category.
+          </Typography>
+        )}
+      </Paper>
     </Box>
   );
 };

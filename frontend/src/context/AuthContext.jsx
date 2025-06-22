@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import api from '../services/api';
+import { authAPI } from '../services/api';
 import { toast } from 'react-toastify';
 
 const AuthContext = createContext(null);
@@ -14,13 +14,14 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       const token = localStorage.getItem('token');
       if (token) {
-        const response = await api.get('/api/staffs/profile');
+        // This should be a generic endpoint that resolves the user's role
+        const response = await authAPI.getProfile(); 
         setUser(response.data);
       }
     } catch (err) {
       console.error('Auth check failed:', err);
       localStorage.removeItem('token');
-      setError(err.response?.data?.message || 'Authentication failed');
+      // No need to set an error here, as it might show up on public pages
     } finally {
       setLoading(false);
     }
@@ -30,15 +31,23 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, [checkAuth]);
 
-  const login = useCallback(async (credentials) => {
+  const login = useCallback(async (credentials, userType = 'staff') => {
     try {
       setError(null);
       setLoading(true);
-      const response = await api.post('/api/staffs/login', credentials);
-      const { token, role } = response.data;
+      
+      let response;
+      if (userType === 'student') {
+        response = await authAPI.studentLogin(credentials);
+      } else if (userType === 'parent') {
+        response = await authAPI.parentLogin(credentials);
+      } else {
+        response = await authAPI.staffLogin(credentials);
+      }
+      
+      const { token, user: userData } = response.data;
       
       localStorage.setItem('token', token);
-      const userData = { ...response.data, role: (role || '').toLowerCase() };
       setUser(userData);
       
       toast.success('Login successful!');
@@ -53,9 +62,9 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
     try {
-      localStorage.removeItem('token');
+      await authAPI.logout();
       setUser(null);
       setError(null);
       toast.success('Logged out successfully');

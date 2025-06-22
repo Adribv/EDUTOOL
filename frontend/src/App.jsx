@@ -22,6 +22,8 @@ const Register = lazy(() => import('./pages/auth/Register'));
 const StudentLogin = lazy(() => import('./pages/auth/StudentLogin'));
 const StudentRegister = lazy(() => import('./pages/auth/StudentRegister'));
 const ParentLogin = lazy(() => import('./pages/auth/ParentLogin'));
+const ParentRegister = lazy(() => import('./pages/auth/ParentRegister'));
+const ManagementLogin = lazy(() => import('./pages/auth/ManagementLogin'));
 const Home = lazy(() => import('./pages/Home'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
@@ -124,6 +126,8 @@ function App() {
                   <Route path="/student-login" element={<StudentLogin />} />
                   <Route path="/student-register" element={<StudentRegister />} />
                   <Route path="/parent-login" element={<ParentLogin />} />
+                  <Route path="/parent-register" element={<ParentRegister />} />
+                  <Route path="/management-login" element={<ManagementLogin />} />
                   
                   {/* Protected Routes */}
                   <Route element={<ProtectedRoute allowedRoles={['student']} />}>
@@ -134,6 +138,7 @@ function App() {
                     <Route path="/parent/*" element={<ParentRoutes />} />
                   </Route>
 
+                  {/* Management Routes */}
                   <Route element={<ProtectedRoute allowedRoles={['teacher']} />}>
                     <Route path="/teacher/*" element={<TeacherRoutes />} />
                   </Route>

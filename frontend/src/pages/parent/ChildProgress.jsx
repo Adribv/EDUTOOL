@@ -1,323 +1,165 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
+  Grid,
+  Paper,
   Typography,
+  CircularProgress,
+  Alert,
+  Button,
   Card,
   CardContent,
-  Grid,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  CircularProgress,
-  Tabs,
-  Tab,
-  LinearProgress,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
+  List,
+  ListItem,
+  ListItemText,
+  Divider,
+  Chip,
+  Avatar,
 } from '@mui/material';
 import {
-  School as SchoolIcon,
-  TrendingUp as TrendingUpIcon,
-  Assignment as AssignmentIcon,
-  Event as EventIcon,
+  ArrowBack,
+  Assessment,
+  Timeline,
+  BarChart,
+  Grade,
 } from '@mui/icons-material';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { parentAPI } from '../../services/api';
-import { toast } from 'react-toastify';
 
 const ChildProgress = () => {
-  const [loading, setLoading] = useState(true);
-  const [children, setChildren] = useState([]);
-  const [selectedChild, setSelectedChild] = useState('');
-  const [selectedTab, setSelectedTab] = useState(0);
-  const [academicData, setAcademicData] = useState({
-    grades: [],
-    attendance: {},
-    assignments: [],
-    exams: [],
+  const { childId } = useParams();
+  const navigate = useNavigate();
+
+  const { data: progressData, isLoading, error } = useQuery({
+    queryKey: ['child_progress', childId],
+    queryFn: () => parentAPI.getChildProgress(childId),
   });
 
-  useEffect(() => {
-    fetchChildren();
-  }, []);
-
-  useEffect(() => {
-    if (selectedChild) {
-      fetchChildProgress();
-    }
-  }, [selectedChild]);
-
-  const fetchChildren = async () => {
-    try {
-      setLoading(true);
-      const response = await parentAPI.getChildren();
-      setChildren(response.data);
-      if (response.data.length > 0) {
-        setSelectedChild(response.data[0].id);
-      }
-    } catch (error) {
-      console.error('Error fetching children:', error);
-      toast.error('Failed to load children data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchChildProgress = async () => {
-    try {
-      setLoading(true);
-      const [gradesRes, attendanceRes, assignmentsRes, examsRes] = await Promise.all([
-        parentAPI.getChildGrades(selectedChild),
-        parentAPI.getChildAttendance(selectedChild),
-        parentAPI.getChildAssignments(selectedChild),
-        parentAPI.getChildExams(selectedChild),
-      ]);
-
-      setAcademicData({
-        grades: gradesRes.data,
-        attendance: attendanceRes.data,
-        assignments: assignmentsRes.data,
-        exams: examsRes.data,
-      });
-    } catch (error) {
-      console.error('Error fetching child progress:', error);
-      toast.error('Failed to load progress data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleChildChange = (event) => {
-    setSelectedChild(event.target.value);
-  };
-
-  const handleTabChange = (event, newValue) => {
-    setSelectedTab(newValue);
-  };
-
-  const getGradeColor = (grade) => {
-    if (grade >= 90) return 'success.main';
-    if (grade >= 70) return 'warning.main';
-    return 'error.main';
-  };
-
-  const getAttendanceColor = (percentage) => {
-    if (percentage >= 90) return 'success.main';
-    if (percentage >= 75) return 'warning.main';
-    return 'error.main';
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
         <CircularProgress />
       </Box>
     );
   }
 
+  if (error) {
+    return (
+      <Box>
+        <Alert severity="error">Failed to load progress data: {error.message}</Alert>
+      </Box>
+    );
+  }
+
+  const { child, summary, recentGrades, attendance, performanceChartData } = progressData;
+
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
-        Child Progress
-      </Typography>
-
-      {/* Child Selection */}
-      <FormControl fullWidth sx={{ mb: 3 }}>
-        <InputLabel>Select Child</InputLabel>
-        <Select
-          value={selectedChild}
-          onChange={handleChildChange}
-          label="Select Child"
-        >
-          {children.map((child) => (
-            <MenuItem key={child.id} value={child.id}>
-              {child.name} - Class {child.class}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-
-      {/* Progress Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs value={selectedTab} onChange={handleTabChange}>
-          <Tab icon={<SchoolIcon />} label="Academic Performance" />
-          <Tab icon={<TrendingUpIcon />} label="Attendance" />
-          <Tab icon={<AssignmentIcon />} label="Assignments" />
-          <Tab icon={<EventIcon />} label="Exams" />
-        </Tabs>
+    <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
+      <Button startIcon={<ArrowBack />} onClick={() => navigate('/parent/children')} sx={{ mb: 2 }}>
+        Back to My Children
+      </Button>
+      <Box display="flex" alignItems="center" mb={3}>
+        <Avatar src={child.profilePicture} sx={{ width: 64, height: 64, mr: 2 }}>
+          {child.name.charAt(0)}
+        </Avatar>
+        <Box>
+          <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
+            {child.name}'s Progress
+          </Typography>
+          <Typography color="text.secondary">
+            Class: {child.class} | Roll No: {child.rollNumber}
+          </Typography>
+        </Box>
       </Box>
 
-      {/* Academic Performance Tab */}
-      {selectedTab === 0 && (
-        <Grid container spacing={3}>
-          {academicData.grades.map((subject) => (
-            <Grid item xs={12} sm={6} md={4} key={subject.name}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    {subject.name}
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <Typography variant="h4" sx={{ color: getGradeColor(subject.grade) }}>
-                      {subject.grade}%
-                    </Typography>
-                  </Box>
-                  <LinearProgress
-                    variant="determinate"
-                    value={subject.grade}
-                    sx={{
-                      height: 10,
-                      borderRadius: 5,
-                      backgroundColor: 'grey.200',
-                      '& .MuiLinearProgress-bar': {
-                        backgroundColor: getGradeColor(subject.grade),
-                      },
-                    }}
+      <Grid container spacing={3}>
+        {/* Summary Cards */}
+        <Grid item xs={12} sm={4}>
+          <Card>
+            <CardContent>
+              <Box display="flex" alignItems="center" mb={1}>
+                <Grade color="primary" sx={{ mr: 1 }} />
+                <Typography variant="h6">Overall Grade</Typography>
+              </Box>
+              <Typography variant="h4" color="primary.main">{summary.overallGrade}%</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <Card>
+            <CardContent>
+              <Box display="flex" alignItems="center" mb={1}>
+                <Timeline color="secondary" sx={{ mr: 1 }} />
+                <Typography variant="h6">Attendance</Typography>
+              </Box>
+              <Typography variant="h4" color="secondary.main">{summary.attendanceRate}%</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <Card>
+            <CardContent>
+              <Box display="flex" alignItems="center" mb={1}>
+                <Assessment color="error" sx={{ mr: 1 }} />
+                <Typography variant="h6">Assignments</Typography>
+              </Box>
+              <Typography variant="h4" color="error.main">{summary.assignmentsCompleted}/{summary.assignmentsTotal}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Performance Chart */}
+        <Grid item xs={12}>
+          <Paper sx={{ p: 2 }}>
+            <Typography variant="h6" gutterBottom>Performance Over Time</Typography>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={performanceChartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="grade" stroke="#8884d8" activeDot={{ r: 8 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </Paper>
+        </Grid>
+
+        {/* Recent Grades */}
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 2, height: '100%' }}>
+            <Typography variant="h6" gutterBottom>Recent Grades</Typography>
+            <List>
+              {recentGrades.map((grade, index) => (
+                <ListItem key={index} divider={index < recentGrades.length - 1}>
+                  <ListItemText primary={grade.subject} secondary={`Exam: ${grade.examName}`} />
+                  <Chip label={`${grade.score}%`} color={grade.score >= 75 ? 'success' : grade.score >= 60 ? 'warning' : 'error'} />
+                </ListItem>
+              ))}
+            </List>
+          </Paper>
+        </Grid>
+
+        {/* Attendance Records */}
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 2, height: '100%' }}>
+            <Typography variant="h6" gutterBottom>Recent Attendance</Typography>
+            <List>
+              {attendance.slice(0, 5).map((record, index) => (
+                <ListItem key={index} divider={index < attendance.length - 1}>
+                  <ListItemText primary={new Date(record.date).toLocaleDateString()} />
+                  <Chip 
+                    label={record.status} 
+                    color={record.status === 'Present' ? 'success' : 'error'} 
+                    size="small"
                   />
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      )}
-
-      {/* Attendance Tab */}
-      {selectedTab === 1 && (
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Overall Attendance
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <Typography
-                    variant="h4"
-                    sx={{ color: getAttendanceColor(academicData.attendance.overall) }}
-                  >
-                    {academicData.attendance.overall}%
-                  </Typography>
-                </Box>
-                <LinearProgress
-                  variant="determinate"
-                  value={academicData.attendance.overall}
-                  sx={{
-                    height: 10,
-                    borderRadius: 5,
-                    backgroundColor: 'grey.200',
-                    '& .MuiLinearProgress-bar': {
-                      backgroundColor: getAttendanceColor(academicData.attendance.overall),
-                    },
-                  }}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Monthly Attendance
-                </Typography>
-                <TableContainer>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Month</TableCell>
-                        <TableCell align="right">Present</TableCell>
-                        <TableCell align="right">Absent</TableCell>
-                        <TableCell align="right">Percentage</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {academicData.attendance.monthly.map((month) => (
-                        <TableRow key={month.month}>
-                          <TableCell>{month.month}</TableCell>
-                          <TableCell align="right">{month.present}</TableCell>
-                          <TableCell align="right">{month.absent}</TableCell>
-                          <TableCell
-                            align="right"
-                            sx={{ color: getAttendanceColor(month.percentage) }}
-                          >
-                            {month.percentage}%
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-      )}
-
-      {/* Assignments Tab */}
-      {selectedTab === 2 && (
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Subject</TableCell>
-                <TableCell>Title</TableCell>
-                <TableCell>Due Date</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Grade</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {academicData.assignments.map((assignment) => (
-                <TableRow key={assignment.id}>
-                  <TableCell>{assignment.subject}</TableCell>
-                  <TableCell>{assignment.title}</TableCell>
-                  <TableCell>{new Date(assignment.dueDate).toLocaleDateString()}</TableCell>
-                  <TableCell>{assignment.status}</TableCell>
-                  <TableCell sx={{ color: getGradeColor(assignment.grade) }}>
-                    {assignment.grade}%
-                  </TableCell>
-                </TableRow>
+                </ListItem>
               ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
-
-      {/* Exams Tab */}
-      {selectedTab === 3 && (
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Subject</TableCell>
-                <TableCell>Exam Type</TableCell>
-                <TableCell>Date</TableCell>
-                <TableCell>Total Marks</TableCell>
-                <TableCell>Obtained Marks</TableCell>
-                <TableCell>Percentage</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {academicData.exams.map((exam) => (
-                <TableRow key={exam.id}>
-                  <TableCell>{exam.subject}</TableCell>
-                  <TableCell>{exam.type}</TableCell>
-                  <TableCell>{new Date(exam.date).toLocaleDateString()}</TableCell>
-                  <TableCell>{exam.totalMarks}</TableCell>
-                  <TableCell>{exam.obtainedMarks}</TableCell>
-                  <TableCell sx={{ color: getGradeColor(exam.percentage) }}>
-                    {exam.percentage}%
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+            </List>
+          </Paper>
+        </Grid>
+      </Grid>
     </Box>
   );
 };
