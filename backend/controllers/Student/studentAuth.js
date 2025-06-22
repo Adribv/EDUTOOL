@@ -1,4 +1,3 @@
-
 const Student = require('../../models/Student/studentModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -14,7 +13,10 @@ exports.login = async (req, res) => {
 };
 
 exports.register = async (req, res) => {
+  console.log('Registration request body:', req.body);
   const { name, rollNumber, password, class: cls, section } = req.body;
+  console.log('Destructured values:', { name, rollNumber, class: cls, section });
+  
   const hashedPassword = await bcrypt.hash(password, 10);
   const student = await Student.create({ 
     name, 

@@ -164,84 +164,27 @@ function StudentRecords() {
     }
   };
 
-  const handleFilterChange = (event) => {
-    const { name, value } = event.target;
-    setFilters(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const handleDownloadReport = async () => {
+    try {
+      const response = await adminAPI.generateStudentReport();
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'student-report.pdf');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Report downloaded successfully');
+    } catch {
+      toast.error('Failed to download report');
+    }
   };
 
-  const filteredStudents = students?.filter(student => {
-    return (
-      (!filters.grade || student.grade === filters.grade) &&
-      (!filters.section || student.section === filters.section) &&
-      (!filters.gender || student.gender === filters.gender)
-    );
-  });
-
-  const columns = [
-    { field: 'rollNumber', headerName: 'Roll Number', width: 130 },
-    { field: 'name', headerName: 'Name', width: 180 },
-    { field: 'grade', headerName: 'Grade', width: 100 },
-    { field: 'section', headerName: 'Section', width: 100 },
-    { field: 'gender', headerName: 'Gender', width: 100 },
-    { 
-      field: 'dateOfBirth', 
-      headerName: 'Date of Birth', 
-      width: 130,
-      valueFormatter: (params) => new Date(params.value).toLocaleDateString(),
-    },
-    { field: 'parentName', headerName: 'Parent Name', width: 180 },
-    {
-      field: 'contact',
-      headerName: 'Contact',
-      width: 200,
-      renderCell: (params) => (
-        <Box>
-          <IconButton
-            size="small"
-            onClick={() => window.location.href = `mailto:${params.row.email}`}
-            sx={{ color: theme.palette.info.main }}
-          >
-            <MailIcon />
-          </IconButton>
-          <IconButton
-            size="small"
-            onClick={() => window.location.href = `tel:${params.row.parentPhone}`}
-            sx={{ color: theme.palette.success.main }}
-          >
-            <PhoneIcon />
-          </IconButton>
-          {params.row.parentPhone}
-        </Box>
-      ),
-    },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 120,
-      sortable: false,
-      renderCell: (params) => (
-        <Box>
-          <IconButton
-            size="small"
-            onClick={() => handleEdit(params.row)}
-            sx={{ color: theme.palette.primary.main }}
-          >
-            <EditIcon />
-          </IconButton>
-          <IconButton
-            size="small"
-            onClick={() => handleDelete(params.row._id)}
-            sx={{ color: theme.palette.error.main }}
-          >
-            <DeleteIcon />
-          </IconButton>
-        </Box>
-      ),
-    },
-  ];
+  const filteredStudents = students?.filter((student) =>
+    Object.values(student).some((value) =>
+      value.toString().toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  );
 
   if (isLoading) {
     return (
@@ -476,83 +419,58 @@ function StudentRecords() {
                     select
                     name="gender"
                     label="Gender"
-                    value={formik.values.gender}
-                    onChange={formik.handleChange}
-                    error={formik.touched.gender && Boolean(formik.errors.gender)}
-                    helperText={formik.touched.gender && formik.errors.gender}
                   >
-                    {genders.map((gender) => (
-                      <MenuItem key={gender} value={gender}>
-                        {gender.charAt(0).toUpperCase() + gender.slice(1)}
-                      </MenuItem>
-                    ))}
+                    <MenuItem value="Male">Male</MenuItem>
+                    <MenuItem value="Female">Female</MenuItem>
+                    <MenuItem value="Other">Other</MenuItem>
                   </TextField>
                 </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    name="parentName"
-                    label="Parent Name"
-                    value={formik.values.parentName}
-                    onChange={formik.handleChange}
-                    error={formik.touched.parentName && Boolean(formik.errors.parentName)}
-                    helperText={formik.touched.parentName && formik.errors.parentName}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    name="parentPhone"
-                    label="Parent Phone"
-                    value={formik.values.parentPhone}
-                    onChange={formik.handleChange}
-                    error={formik.touched.parentPhone && Boolean(formik.errors.parentPhone)}
-                    helperText={formik.touched.parentPhone && formik.errors.parentPhone}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    name="address"
-                    label="Address"
-                    multiline
-                    rows={2}
-                    value={formik.values.address}
-                    onChange={formik.handleChange}
-                    error={formik.touched.address && Boolean(formik.errors.address)}
-                    helperText={formik.touched.address && formik.errors.address}
-                  />
-                </Grid>
               </Grid>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={handleClose}>Cancel</Button>
-              <Button
-                type="submit"
-                variant="contained"
-                disabled={mutation.isPending}
-              >
-                {mutation.isPending ? 'Saving...' : 'Save'}
-              </Button>
-            </DialogActions>
-          </form>
-        </Dialog>
-
-        {/* Snackbar for notifications */}
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-        >
-          <Alert
-            onClose={() => setSnackbar({ ...snackbar, open: false })}
-            severity={snackbar.severity}
-            sx={{ width: '100%' }}
-          >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
-      </motion.div>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Parent Name"
+                  name="parentName"
+                  value={formData.parentName}
+                  onChange={handleInputChange}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Parent Phone"
+                  name="parentPhone"
+                  value={formData.parentPhone}
+                  onChange={handleInputChange}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Address"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleInputChange}
+                  multiline
+                  rows={2}
+                />
+              </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClose}>Cancel</Button>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={createMutation.isPending || updateMutation.isPending}
+            >
+              {selectedStudent ? 'Update' : 'Add'}
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+    </motion.div>
     </Container>
   );
 }

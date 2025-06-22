@@ -87,7 +87,7 @@ function AdminDashboard() {
 
       {/* Statistics Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -100,7 +100,7 @@ function AdminDashboard() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -113,7 +113,7 @@ function AdminDashboard() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -126,7 +126,7 @@ function AdminDashboard() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -143,14 +143,14 @@ function AdminDashboard() {
 
       {/* Quick Actions */}
       <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+        <Grid xs={12} md={6}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
                 Quick Actions
               </Typography>
               <Grid container spacing={2}>
-                <Grid item xs={6}>
+                <Grid xs={6}>
                   <Button
                     fullWidth
                     variant="outlined"
@@ -160,7 +160,7 @@ function AdminDashboard() {
                     Manage Staff
                   </Button>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid xs={6}>
                   <Button
                     fullWidth
                     variant="outlined"
@@ -170,7 +170,7 @@ function AdminDashboard() {
                     Manage Students
                   </Button>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid xs={6}>
                   <Button
                     fullWidth
                     variant="outlined"
@@ -180,7 +180,7 @@ function AdminDashboard() {
                     Fee Configuration
                   </Button>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid xs={6}>
                   <Button
                     fullWidth
                     variant="outlined"
@@ -194,7 +194,7 @@ function AdminDashboard() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid xs={12} md={6}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>

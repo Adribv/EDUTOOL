@@ -63,10 +63,15 @@ function StaffManagement() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    password: '',
     role: '',
     department: '',
-    phone: '',
+    contactNumber: '',
     address: '',
+    employeeId: '',
+    joiningDate: new Date().toISOString().split('T')[0],
+    qualification: '',
+    experience: ''
   });
 
   const queryClient = useQueryClient();
@@ -122,18 +127,27 @@ function StaffManagement() {
         email: staff.email,
         role: staff.role,
         department: staff.department,
-        phone: staff.phone,
+        contactNumber: staff.phone,
         address: staff.address,
+        employeeId: staff.employeeId,
+        joiningDate: staff.joiningDate,
+        qualification: staff.qualification,
+        experience: staff.experience,
       });
     } else {
       setSelectedStaff(null);
       setFormData({
         name: '',
         email: '',
+        password: '',
         role: '',
         department: '',
-        phone: '',
+        contactNumber: '',
         address: '',
+        employeeId: '',
+        joiningDate: new Date().toISOString().split('T')[0],
+        qualification: '',
+        experience: ''
       });
     }
     setOpen(true);
@@ -145,10 +159,15 @@ function StaffManagement() {
     setFormData({
       name: '',
       email: '',
+      password: '',
       role: '',
       department: '',
-      phone: '',
+      contactNumber: '',
       address: '',
+      employeeId: '',
+      joiningDate: new Date().toISOString().split('T')[0],
+      qualification: '',
+      experience: ''
     });
   };
 
@@ -162,6 +181,48 @@ function StaffManagement() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Validate required fields based on whether it's a create or update operation
+    if (selectedStaff) {
+      // For updates, only validate name, email, and role
+      if (!formData.name || !formData.email || !formData.role) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+    } else {
+      // For new staff, validate all required fields including password
+      if (!formData.name || !formData.email || !formData.password || !formData.role) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+
+      // Validate password length only for new staff
+      if (formData.password.length < 6) {
+        toast.error('Password must be at least 6 characters long');
+        return;
+      }
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    // Validate role
+    if (!roles.includes(formData.role)) {
+      toast.error('Please select a valid role');
+      return;
+    }
+
+    // Generate employee ID if not provided
+    if (!formData.employeeId) {
+      const timestamp = new Date().getTime();
+      const randomNum = Math.floor(Math.random() * 1000);
+      formData.employeeId = `EMP${timestamp}${randomNum}`;
+    }
+
     if (selectedStaff) {
       updateMutation.mutate({ id: selectedStaff._id, data: formData });
     } else {
@@ -171,22 +232,62 @@ function StaffManagement() {
 
   const handleDelete = (id) => {
     if (window.confirm('Are you sure you want to delete this staff member?')) {
-      deleteMutation.mutate(id);
+      deleteMutation.mutate(id, {
+        onSuccess: () => {
+          queryClient.invalidateQueries(['staff']);
+          toast.success('Staff member deleted successfully');
+        },
+        onError: (error) => {
+          console.error('Error deleting staff:', error);
+          toast.error(error.response?.data?.message || 'Failed to delete staff member');
+        }
+      });
     }
   };
 
   const handleDownloadReport = async () => {
     try {
       const response = await adminAPI.generateStaffReport();
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const reportData = response.data;
+      
+      // Convert the report data to a formatted string
+      const reportContent = `
+Staff Report
+Generated on: ${new Date(reportData.generatedAt).toLocaleString()}
+
+Total Staff: ${reportData.totalStaff}
+
+Department Distribution:
+${Object.entries(reportData.departmentCounts)
+  .map(([dept, count]) => `${dept}: ${count}`)
+  .join('\n')}
+
+Role Distribution:
+${Object.entries(reportData.roleCounts)
+  .map(([role, count]) => `${role}: ${count}`)
+  .join('\n')}
+
+Filters Applied:
+${Object.entries(reportData.filters)
+  .filter(([_, value]) => value)
+  .map(([key, value]) => `${key}: ${value}`)
+  .join('\n')}
+      `;
+
+      // Create a blob with the formatted content
+      const blob = new Blob([reportContent], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'staff-report.pdf');
+      link.setAttribute('download', 'staff-report.txt');
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
+      
       toast.success('Report downloaded successfully');
     } catch (error) {
+      console.error('Error downloading report:', error);
       toast.error('Failed to download report');
     }
   };
@@ -309,101 +410,123 @@ function StaffManagement() {
       </TableContainer>
 
       <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-        <DialogTitle>
-          {selectedStaff ? 'Edit Staff Member' : 'Add New Staff Member'}
-        </DialogTitle>
-        <form onSubmit={handleSubmit}>
-          <DialogContent>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  select
-                  label="Role"
-                  name="role"
-                  value={formData.role}
-                  onChange={handleInputChange}
-                  required
-                >
-                  {roles.map((role) => (
-                    <MenuItem key={role} value={role}>
-                      {role}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  select
-                  label="Department"
-                  name="department"
-                  value={formData.department}
-                  onChange={handleInputChange}
-                  required
-                >
-                  {departments.map((dept) => (
-                    <MenuItem key={dept} value={dept}>
-                      {dept}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Phone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Address"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  multiline
-                  rows={2}
-                />
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={createMutation.isPending || updateMutation.isPending}
+        <DialogTitle>{selectedStaff ? 'Edit Staff Member' : 'Add Staff Member'}</DialogTitle>
+        <DialogContent>
+          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+            <TextField
+              fullWidth
+              label="Name"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              required
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              fullWidth
+              label="Email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              required
+              sx={{ mb: 2 }}
+            />
+            {!selectedStaff && (
+              <TextField
+                fullWidth
+                label="Password"
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                required
+                sx={{ mb: 2 }}
+              />
+            )}
+            <TextField
+              fullWidth
+              select
+              label="Role"
+              name="role"
+              value={formData.role}
+              onChange={handleInputChange}
+              required
+              sx={{ mb: 2 }}
             >
-              {selectedStaff ? 'Update' : 'Add'}
-            </Button>
-          </DialogActions>
-        </form>
+              {roles.map((role) => (
+                <MenuItem key={role} value={role}>
+                  {role}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              fullWidth
+              select
+              label="Department"
+              name="department"
+              value={formData.department}
+              onChange={handleInputChange}
+              sx={{ mb: 2 }}
+            >
+              {departments.map((dept) => (
+                <MenuItem key={dept} value={dept}>
+                  {dept}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              fullWidth
+              label="Contact Number"
+              name="contactNumber"
+              value={formData.contactNumber}
+              onChange={handleInputChange}
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              fullWidth
+              label="Address"
+              name="address"
+              value={formData.address}
+              onChange={handleInputChange}
+              multiline
+              rows={3}
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              fullWidth
+              label="Qualification"
+              name="qualification"
+              value={formData.qualification}
+              onChange={handleInputChange}
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              fullWidth
+              label="Experience"
+              name="experience"
+              value={formData.experience}
+              onChange={handleInputChange}
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              fullWidth
+              label="Joining Date"
+              name="joiningDate"
+              type="date"
+              value={formData.joiningDate}
+              onChange={handleInputChange}
+              InputLabelProps={{ shrink: true }}
+              sx={{ mb: 2 }}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose}>Cancel</Button>
+          <Button onClick={handleSubmit} variant="contained">
+            {selectedStaff ? 'Update' : 'Add'}
+          </Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );

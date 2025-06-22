@@ -16,9 +16,8 @@ import {
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { useMutation } from '@tanstack/react-query';
-import axios from 'axios';
 import { toast } from 'react-toastify';
-import SchoolIcon from '@mui/icons-material/School';
+import { useAuth } from '../../context/AuthContext';
 
 const validationSchema = yup.object({
   email: yup
@@ -52,31 +51,38 @@ const itemVariants = {
 function Login() {
   const navigate = useNavigate();
   const [error, setError] = useState('');
-  const theme = useTheme();
+  const { login } = useAuth();
 
   const loginMutation = useMutation({
     mutationFn: async (values) => {
-      const response = await axios.post('http://localhost:5000/api/staffs/login', values);
-      return response.data;
+      const user = await login(values);
+      return user;
     },
-    onSuccess: (data) => {
-      localStorage.setItem('token', data.token);
-      toast.success('Login successful!');
-      if (data.role === 'AdminStaff') {
-        navigate('/admin');
-      } else if (data.role === "Teacher") {
-        navigate('/staff');
-      } else if (data.role === 'student') {
-        navigate('/student');
-      } else if (data.role === 'parent') {
-        navigate('/parent');
-      } else {
-        navigate('/');
+    onSuccess: (user) => {
+      // Navigate based on role
+      switch (user.role) {
+        case 'AdminStaff':
+          navigate('/admin');
+          break;
+        case 'Teacher':
+          navigate('/teacher');
+          break;
+        case 'HOD':
+          navigate('/hod');
+          break;
+        case 'Principal':
+          navigate('/principal');
+          break;
+        case 'Counsellor':
+          navigate('/counselor');
+          break;
+        default:
+          navigate('/');
       }
     },
     onError: (error) => {
       console.error('Login failed:', error);
-      toast.error(error.response?.data?.message || 'Login failed');
+      setError(error.response?.data?.message || 'Login failed');
     },
   });
 
@@ -328,10 +334,34 @@ function Login() {
                       borderColor: '#0d47a1',
                       backgroundColor: 'rgba(13, 71, 161, 0.04)',
                     },
-                    mb: 3,
+                    mb: 2,
                   }}
                 >
                   Student Login
+                </Button>
+              </motion.div>
+
+              <motion.div variants={itemVariants}>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  onClick={() => navigate('/parent-login')}
+                  sx={{
+                    py: 1.8,
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    borderRadius: 1.5,
+                    borderColor: '#2e7d32',
+                    color: '#2e7d32',
+                    '&:hover': {
+                      borderColor: '#1b5e20',
+                      backgroundColor: 'rgba(27, 94, 32, 0.04)',
+                    },
+                    mb: 3,
+                  }}
+                >
+                  Parent Login
                 </Button>
               </motion.div>
 

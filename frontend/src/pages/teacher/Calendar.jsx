@@ -34,7 +34,7 @@ import {
   Event,
   Class,
   Assignment,
-  Exam,
+  Assessment,
   Sports,
   LocationOn,
   AccessTime,
@@ -157,7 +157,7 @@ const Calendar = () => {
       case 'Assignment':
         return <Assignment />;
       case 'Exam':
-        return <Exam />;
+        return <Assessment />;
       case 'Sports':
         return <Sports />;
       default:

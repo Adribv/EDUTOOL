@@ -1,52 +1,40 @@
 import { useState, useEffect } from 'react';
 import {
   Box,
+  Paper,
   Typography,
-  Card,
-  CardContent,
   Grid,
   TextField,
   Button,
-  Avatar,
-  IconButton,
-  Divider,
-  Switch,
-  FormControlLabel,
-  FormGroup,
-  Paper,
   CircularProgress,
+  Alert,
+  Divider,
 } from '@mui/material';
-import {
-  Edit as EditIcon,
-  Save as SaveIcon,
-  Cancel as CancelIcon,
-  PhotoCamera as PhotoCameraIcon,
-} from '@mui/icons-material';
-import { parentAPI } from '../../services/api';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
 import { toast } from 'react-toastify';
+import parentService from '../../services/parentService';
 
-const ParentProfile = () => {
+const validationSchema = Yup.object({
+  name: Yup.string().required('Name is required'),
+  email: Yup.string().email('Invalid email').required('Email is required'),
+  phone: Yup.string()
+    .matches(/^[0-9]{10}$/, 'Phone number must be 10 digits')
+    .required('Phone number is required'),
+  address: Yup.string().required('Address is required'),
+  emergencyContact: Yup.string()
+    .matches(/^[0-9]{10}$/, 'Emergency contact must be 10 digits')
+    .required('Emergency contact is required'),
+  occupation: Yup.string().required('Occupation is required'),
+  workAddress: Yup.string().required('Work address is required'),
+  workPhone: Yup.string()
+    .matches(/^[0-9]{10}$/, 'Work phone must be 10 digits')
+    .required('Work phone is required'),
+});
+
+const Profile = () => {
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(false);
-  const [profile, setProfile] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    address: '',
-    occupation: '',
-    emergencyContact: '',
-    profileImage: '',
-    notificationPreferences: {
-      email: true,
-      sms: true,
-      push: true,
-      assignments: true,
-      events: true,
-      attendance: true,
-      grades: true,
-    },
-  });
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchProfile();
@@ -54,69 +42,50 @@ const ParentProfile = () => {
 
   const fetchProfile = async () => {
     try {
-      setLoading(true);
-      const response = await parentAPI.getProfile();
-      setProfile(response.data);
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      toast.error('Failed to load profile');
+      const response = await parentService.getProfile();
+      formik.setValues(response.data);
+    } catch {
+      setError('Failed to load profile');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setProfile((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleNotificationChange = (name) => (event) => {
-    setProfile((prev) => ({
-      ...prev,
-      notificationPreferences: {
-        ...prev.notificationPreferences,
-        [name]: event.target.checked,
-      },
-    }));
-  };
-
-  const handleImageUpload = async (event) => {
-    const file = event.target.files[0];
-    if (file) {
+  const formik = useFormik({
+    initialValues: {
+      name: '',
+      email: '',
+      phone: '',
+      address: '',
+      emergencyContact: '',
+      occupation: '',
+      workAddress: '',
+      workPhone: '',
+    },
+    validationSchema,
+    onSubmit: async (values) => {
       try {
-        const formData = new FormData();
-        formData.append('profileImage', file);
-        const response = await parentAPI.uploadProfileImage(formData);
-        setProfile((prev) => ({
-          ...prev,
-          profileImage: response.data.imageUrl,
-        }));
-        toast.success('Profile image updated successfully');
-      } catch (error) {
-        console.error('Error uploading image:', error);
-        toast.error('Failed to upload profile image');
+        await parentService.updateProfile(values);
+        toast.success('Profile updated successfully');
+        fetchProfile();
+      } catch {
+        toast.error('Failed to update profile');
       }
-    }
-  };
-
-  const handleSave = async () => {
-    try {
-      await parentAPI.updateProfile(profile);
-      toast.success('Profile updated successfully');
-      setEditing(false);
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      toast.error('Failed to update profile');
-    }
-  };
+    },
+  });
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
         <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box p={3}>
+        <Alert severity="error">{error}</Alert>
       </Box>
     );
   }
@@ -124,254 +93,158 @@ const ParentProfile = () => {
   return (
     <Box>
       <Typography variant="h4" gutterBottom>
-        My Profile
+        Parent Profile
       </Typography>
 
-      <Grid container spacing={3}>
-        {/* Profile Image and Basic Info */}
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent sx={{ textAlign: 'center' }}>
-              <Box sx={{ position: 'relative', display: 'inline-block' }}>
-                <Avatar
-                  src={profile.profileImage}
-                  sx={{ width: 150, height: 150, mb: 2 }}
-                />
-                {editing && (
-                  <IconButton
-                    component="label"
-                    sx={{
-                      position: 'absolute',
-                      bottom: 0,
-                      right: 0,
-                      backgroundColor: 'background.paper',
-                    }}
-                  >
-                    <input
-                      type="file"
-                      hidden
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                    />
-                    <PhotoCameraIcon />
-                  </IconButton>
-                )}
-              </Box>
+      <Paper sx={{ p: 3 }}>
+        <form onSubmit={formik.handleSubmit}>
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
               <Typography variant="h6" gutterBottom>
-                {`${profile.firstName} ${profile.lastName}`}
+                Personal Information
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {profile.occupation}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
+            </Grid>
 
-        {/* Personal Information */}
-        <Grid item xs={12} md={8}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="h6">Personal Information</Typography>
-                <IconButton onClick={() => setEditing(!editing)}>
-                  {editing ? <CancelIcon /> : <EditIcon />}
-                </IconButton>
-              </Box>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="First Name"
-                    name="firstName"
-                    value={profile.firstName}
-                    onChange={handleInputChange}
-                    disabled={!editing}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Last Name"
-                    name="lastName"
-                    value={profile.lastName}
-                    onChange={handleInputChange}
-                    disabled={!editing}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Email"
-                    name="email"
-                    type="email"
-                    value={profile.email}
-                    onChange={handleInputChange}
-                    disabled={!editing}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Phone"
-                    name="phone"
-                    value={profile.phone}
-                    onChange={handleInputChange}
-                    disabled={!editing}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Address"
-                    name="address"
-                    value={profile.address}
-                    onChange={handleInputChange}
-                    multiline
-                    rows={2}
-                    disabled={!editing}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Occupation"
-                    name="occupation"
-                    value={profile.occupation}
-                    onChange={handleInputChange}
-                    disabled={!editing}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Emergency Contact"
-                    name="emergencyContact"
-                    value={profile.emergencyContact}
-                    onChange={handleInputChange}
-                    disabled={!editing}
-                  />
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Name"
+                name="name"
+                value={formik.values.name}
+                onChange={formik.handleChange}
+                error={formik.touched.name && Boolean(formik.errors.name)}
+                helperText={formik.touched.name && formik.errors.name}
+              />
+            </Grid>
 
-        {/* Notification Preferences */}
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Email"
+                name="email"
+                value={formik.values.email}
+                onChange={formik.handleChange}
+                error={formik.touched.email && Boolean(formik.errors.email)}
+                helperText={formik.touched.email && formik.errors.email}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Phone"
+                name="phone"
+                value={formik.values.phone}
+                onChange={formik.handleChange}
+                error={formik.touched.phone && Boolean(formik.errors.phone)}
+                helperText={formik.touched.phone && formik.errors.phone}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Emergency Contact"
+                name="emergencyContact"
+                value={formik.values.emergencyContact}
+                onChange={formik.handleChange}
+                error={
+                  formik.touched.emergencyContact &&
+                  Boolean(formik.errors.emergencyContact)
+                }
+                helperText={
+                  formik.touched.emergencyContact && formik.errors.emergencyContact
+                }
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Address"
+                name="address"
+                multiline
+                rows={3}
+                value={formik.values.address}
+                onChange={formik.handleChange}
+                error={formik.touched.address && Boolean(formik.errors.address)}
+                helperText={formik.touched.address && formik.errors.address}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <Divider sx={{ my: 2 }} />
+            </Grid>
+
+            <Grid item xs={12}>
               <Typography variant="h6" gutterBottom>
-                Notification Preferences
+                Professional Information
               </Typography>
-              <FormGroup>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6} md={3}>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={profile.notificationPreferences.email}
-                          onChange={handleNotificationChange('email')}
-                          disabled={!editing}
-                        />
-                      }
-                      label="Email Notifications"
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={profile.notificationPreferences.sms}
-                          onChange={handleNotificationChange('sms')}
-                          disabled={!editing}
-                        />
-                      }
-                      label="SMS Notifications"
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={profile.notificationPreferences.push}
-                          onChange={handleNotificationChange('push')}
-                          disabled={!editing}
-                        />
-                      }
-                      label="Push Notifications"
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={profile.notificationPreferences.assignments}
-                          onChange={handleNotificationChange('assignments')}
-                          disabled={!editing}
-                        />
-                      }
-                      label="Assignment Updates"
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={profile.notificationPreferences.events}
-                          onChange={handleNotificationChange('events')}
-                          disabled={!editing}
-                        />
-                      }
-                      label="Event Reminders"
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={profile.notificationPreferences.attendance}
-                          onChange={handleNotificationChange('attendance')}
-                          disabled={!editing}
-                        />
-                      }
-                      label="Attendance Updates"
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={profile.notificationPreferences.grades}
-                          onChange={handleNotificationChange('grades')}
-                          disabled={!editing}
-                        />
-                      }
-                      label="Grade Updates"
-                    />
-                  </Grid>
-                </Grid>
-              </FormGroup>
-            </CardContent>
-          </Card>
-        </Grid>
+            </Grid>
 
-        {/* Save Button */}
-        {editing && (
-          <Grid item xs={12}>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <Button
-                variant="contained"
-                startIcon={<SaveIcon />}
-                onClick={handleSave}
-              >
-                Save Changes
-              </Button>
-            </Box>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Occupation"
+                name="occupation"
+                value={formik.values.occupation}
+                onChange={formik.handleChange}
+                error={
+                  formik.touched.occupation && Boolean(formik.errors.occupation)
+                }
+                helperText={formik.touched.occupation && formik.errors.occupation}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Work Phone"
+                name="workPhone"
+                value={formik.values.workPhone}
+                onChange={formik.handleChange}
+                error={
+                  formik.touched.workPhone && Boolean(formik.errors.workPhone)
+                }
+                helperText={formik.touched.workPhone && formik.errors.workPhone}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Work Address"
+                name="workAddress"
+                multiline
+                rows={3}
+                value={formik.values.workAddress}
+                onChange={formik.handleChange}
+                error={
+                  formik.touched.workAddress && Boolean(formik.errors.workAddress)
+                }
+                helperText={
+                  formik.touched.workAddress && formik.errors.workAddress
+                }
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <Box display="flex" justifyContent="flex-end">
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  disabled={formik.isSubmitting}
+                >
+                  Update Profile
+                </Button>
+              </Box>
+            </Grid>
           </Grid>
-        )}
-      </Grid>
+        </form>
+      </Paper>
     </Box>
   );
 };
 
-export default ParentProfile; 
+export default Profile; 

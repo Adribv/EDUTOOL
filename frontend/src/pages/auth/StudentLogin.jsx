@@ -62,7 +62,7 @@ function StudentLogin() {
     onSuccess: (data) => {
       localStorage.setItem('studentToken', data.token);
       toast.success('Login successful!');
-      navigate('/Student');
+      navigate('/student');
     },
     onError: (error) => {
       console.error('Login failed:', error);

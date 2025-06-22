@@ -13,11 +13,14 @@ const profileController = require('../../controllers/Student/profileController')
 const { verifyToken } = require('../../middlewares/authMiddleware');
 const studentAuthController = require('../../controllers/Student/studentAuth');
 
+// Public routes (no authentication required)
 router.post('/login', studentAuthController.login);
+router.post('/register', studentAuthController.register);
 
+// Apply authentication middleware to all routes below this line
 router.use(verifyToken);
 
-router.post('/register', studentAuthController.register);
+// Protected routes (authentication required)
 // Profile routes
 router.get('/profile', profileController.getProfile);
 router.put('/profile', profileController.updateProfile);

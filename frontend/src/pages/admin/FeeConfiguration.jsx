@@ -24,13 +24,7 @@ import {
   FormControl,
   InputLabel,
   Select,
-  Tabs,
-  Tab,
-  CircularProgress,
-  Chip,
-  Alert,
-  Snackbar,
-  Stack,
+  InputAdornment,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -119,134 +113,11 @@ function FeeConfiguration() {
       document.body.appendChild(link);
       link.click();
       link.remove();
-      setSnackbar({
-        open: true,
-        message: 'Receipt downloaded successfully',
-        severity: 'success'
-      });
-    } catch (error) {
-      setSnackbar({
-        open: true,
-        message: 'Failed to download receipt',
-        severity: 'error'
-      });
+      toast.success('Report downloaded successfully');
+    } catch {
+      toast.error('Failed to download report');
     }
   };
-
-  // Student Fee Records columns
-  const studentFeeColumns = [
-    { field: 'studentName', headerName: 'Student Name', width: 180 },
-    { field: 'grade', headerName: 'Grade', width: 100 },
-    { field: 'feeType', headerName: 'Fee Type', width: 130 },
-    { 
-      field: 'amount', 
-      headerName: 'Amount', 
-      width: 120,
-      valueFormatter: (params) => `$${params.value}`,
-    },
-    { 
-      field: 'dueDate', 
-      headerName: 'Due Date', 
-      width: 120,
-      valueFormatter: (params) => new Date(params.value).toLocaleDateString(),
-    },
-    {
-      field: 'status',
-      headerName: 'Status',
-      width: 120,
-      renderCell: (params) => (
-        <Chip
-          label={params.value}
-          color={
-            params.value === 'Paid' 
-              ? 'success' 
-              : params.value === 'Pending' 
-              ? 'warning' 
-              : 'error'
-          }
-          size="small"
-        />
-      ),
-    },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 180,
-      sortable: false,
-      renderCell: (params) => (
-        <Stack direction="row" spacing={1}>
-          <IconButton
-            size="small"
-            onClick={() => downloadReceipt(params.row._id)}
-            color="primary"
-          >
-            <ReceiptIcon />
-          </IconButton>
-          <IconButton
-            size="small"
-            onClick={() => handleEdit(params.row)}
-          >
-            <EditIcon />
-          </IconButton>
-          <IconButton
-            size="small"
-            onClick={() => handleDelete(params.row._id)}
-            color="error"
-          >
-            <DeleteIcon />
-          </IconButton>
-        </Stack>
-      ),
-    },
-  ];
-
-  // Staff Salary columns
-  const staffSalaryColumns = [
-    { field: 'staffName', headerName: 'Staff Name', width: 180 },
-    { field: 'designation', headerName: 'Designation', width: 150 },
-    { 
-      field: 'basicSalary', 
-      headerName: 'Basic Salary', 
-      width: 130,
-      valueFormatter: (params) => `$${params.value}`,
-    },
-    { 
-      field: 'allowances', 
-      headerName: 'Allowances', 
-      width: 130,
-      valueFormatter: (params) => `$${params.value}`,
-    },
-    { 
-      field: 'deductions', 
-      headerName: 'Deductions', 
-      width: 130,
-      valueFormatter: (params) => `$${params.value}`,
-    },
-    { 
-      field: 'netSalary', 
-      headerName: 'Net Salary', 
-      width: 130,
-      valueFormatter: (params) => `$${params.value}`,
-    },
-    { 
-      field: 'paymentDate', 
-      headerName: 'Payment Date', 
-      width: 130,
-      valueFormatter: (params) => new Date(params.value).toLocaleDateString(),
-    },
-    {
-      field: 'status',
-      headerName: 'Status',
-      width: 120,
-      renderCell: (params) => (
-        <Chip
-          label={params.value}
-          color={params.value === 'Paid' ? 'success' : 'warning'}
-          size="small"
-        />
-      ),
-    },
-  ];
 
   if (isLoadingStructures || isLoadingStudentFees || isLoadingStaffSalaries) {
     return (
@@ -266,11 +137,10 @@ function FeeConfiguration() {
 
   return (
     <Box>
-      <motion.div
+      <motion.div>
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-      >
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
           <Tabs value={tabValue} onChange={handleTabChange}>
             <Tab label="Fee Structure" />
@@ -292,212 +162,146 @@ function FeeConfiguration() {
             </Button>
           </Box>
 
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Grade</TableCell>
-                  <TableCell>Fee Type</TableCell>
-                  <TableCell>Amount</TableCell>
-                  <TableCell>Due Date</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {feeStructures?.map((fee) => (
-                  <TableRow key={fee._id}>
-                    <TableCell>{fee.grade}</TableCell>
-                    <TableCell>{fee.feeType}</TableCell>
-                    <TableCell>${fee.amount}</TableCell>
-                    <TableCell>{new Date(fee.dueDate).toLocaleDateString()}</TableCell>
-                    <TableCell>{fee.description}</TableCell>
-                    <TableCell>
-                      <IconButton size="small" onClick={() => handleEdit(fee)}>
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton size="small" color="error" onClick={() => handleDelete(fee._id)}>
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </TabPanel>
-
-        {/* Student Fee Records Tab */}
-        <TabPanel value={tabValue} index={1}>
-          <Box sx={{ mb: 4 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-              <Typography variant="h5">Student Fee Records</Typography>
-              <Box>
-                <Button
-                  variant="outlined"
-                  startIcon={<FileDownloadIcon />}
-                  onClick={() => exportToExcel(studentFees, 'student-fee-records')}
-                  sx={{ mr: 2 }}
-                >
-                  Export Records
-                </Button>
-                <Button
-                  variant="contained"
-                  startIcon={<WarningIcon />}
-                  color="warning"
-                  onClick={() => exportToExcel(
-                    studentFees.filter(fee => fee.status === 'Pending' || fee.status === 'Overdue'),
-                    'pending-fees'
-                  )}
-                >
-                  Export Pending Fees
-                </Button>
-              </Box>
-            </Box>
-
-            {/* Filters */}
-            <Card sx={{ mb: 3 }}>
-              <CardContent>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6} md={3}>
-                    <FormControl fullWidth size="small">
-                      <InputLabel>Grade</InputLabel>
-                      <Select
-                        name="grade"
-                        value={filters.grade}
-                        onChange={handleFilterChange}
-                        label="Grade"
-                      >
-                        <MenuItem value="">All Grades</MenuItem>
-                        {grades.map((grade) => (
-                          <MenuItem key={grade} value={grade}>
-                            Grade {grade}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
-                    <FormControl fullWidth size="small">
-                      <InputLabel>Fee Type</InputLabel>
-                      <Select
-                        name="feeType"
-                        value={filters.feeType}
-                        onChange={handleFilterChange}
-                        label="Fee Type"
-                      >
-                        <MenuItem value="">All Types</MenuItem>
-                        {feeTypes.map((type) => (
-                          <MenuItem key={type} value={type}>
-                            {type}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
-                    <FormControl fullWidth size="small">
-                      <InputLabel>Status</InputLabel>
-                      <Select
-                        name="status"
-                        value={filters.status}
-                        onChange={handleFilterChange}
-                        label="Status"
-                      >
-                        <MenuItem value="">All Status</MenuItem>
-                        {paymentStatus.map((status) => (
-                          <MenuItem key={status} value={status}>
-                            {status}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
-                    <Button
-                      fullWidth
-                      variant="outlined"
-                      startIcon={<FilterListIcon />}
-                      onClick={() => setFilters({ grade: '', feeType: '', status: '', month: '' })}
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Grade</TableCell>
+              <TableCell>Fee Type</TableCell>
+              <TableCell>Amount</TableCell>
+              <TableCell>Due Date</TableCell>
+              <TableCell>Description</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {feeStructures?.map((fee) => (
+              <TableRow key={fee._id}>
+                <TableCell>{fee.grade || fee.class}</TableCell>
+                <TableCell>{fee.feeType || (fee.components?.[0]?.name)}</TableCell>
+                <TableCell>₹{fee.amount || fee.totalAmount}</TableCell>
+                <TableCell>{fee.dueDate ? new Date(fee.dueDate).toLocaleDateString() : ''}</TableCell>
+                <TableCell>{fee.description || fee.components?.[0]?.description}</TableCell>
+                <TableCell>
+                  <Tooltip title="Edit">
+                    <IconButton
+                      size="small"
+                      onClick={() => handleOpen(fee)}
+                      sx={{ mr: 1 }}
                     >
-                      Clear Filters
-                    </Button>
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
+                      <EditIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Delete">
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => handleDelete(fee._id)}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </Tooltip>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
-            <Box sx={{ height: 600 }}>
-              <DataGrid
-                rows={filteredStudentFees || []}
-                columns={studentFeeColumns}
-                pageSize={10}
-                rowsPerPageOptions={[10, 25, 50]}
-                checkboxSelection
-                disableSelectionOnClick
-                components={{ Toolbar: GridToolbar }}
-                getRowId={(row) => row._id}
-                componentsProps={{
-                  toolbar: {
-                    showQuickFilter: true,
-                    quickFilterProps: { debounceMs: 500 },
-                  },
-                }}
-              />
-            </Box>
-          </Box>
-        </TabPanel>
-
-        {/* Staff Salary Records Tab */}
-        <TabPanel value={tabValue} index={2}>
-          <Box sx={{ mb: 4 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-              <Typography variant="h5">Staff Salary Records</Typography>
-              <Button
-                variant="outlined"
-                startIcon={<FileDownloadIcon />}
-                onClick={() => exportToExcel(staffSalaries, 'staff-salary-records')}
-              >
-                Export Records
-              </Button>
-            </Box>
-
-            <Box sx={{ height: 600 }}>
-              <DataGrid
-                rows={staffSalaries || []}
-                columns={staffSalaryColumns}
-                pageSize={10}
-                rowsPerPageOptions={[10, 25, 50]}
-                checkboxSelection
-                disableSelectionOnClick
-                components={{ Toolbar: GridToolbar }}
-                getRowId={(row) => row._id}
-                componentsProps={{
-                  toolbar: {
-                    showQuickFilter: true,
-                    quickFilterProps: { debounceMs: 500 },
-                  },
-                }}
-              />
-            </Box>
-          </Box>
-        </TabPanel>
-
-        {/* Snackbar for notifications */}
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-        >
-          <Alert
-            onClose={() => setSnackbar({ ...snackbar, open: false })}
-            severity={snackbar.severity}
-            sx={{ width: '100%' }}
-          >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
-      </motion.div>
+      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+        <DialogTitle>
+          {selectedFee ? 'Edit Fee Structure' : 'Add New Fee Structure'}
+        </DialogTitle>
+        <form onSubmit={handleSubmit}>
+          <DialogContent>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Grade"
+                  name="grade"
+                  value={formData.grade}
+                  onChange={handleInputChange}
+                  required
+                >
+                  {grades.map((grade) => (
+                    <MenuItem key={grade} value={grade}>
+                      {grade}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Fee Type"
+                  name="feeType"
+                  value={formData.feeType}
+                  onChange={handleInputChange}
+                  required
+                >
+                  {feeTypes.map((type) => (
+                    <MenuItem key={type} value={type}>
+                      {type}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Amount"
+                  name="amount"
+                  type="number"
+                  value={formData.amount}
+                  onChange={handleInputChange}
+                  required
+                  InputProps={{
+                    startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Due Date"
+                  name="dueDate"
+                  type="date"
+                  value={formData.dueDate}
+                  onChange={handleInputChange}
+                  InputLabelProps={{ shrink: true }}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  multiline
+                  rows={2}
+                />
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClose}>Cancel</Button>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={createMutation.isPending || updateMutation.isPending}
+            >
+              {selectedFee ? 'Update' : 'Add'}
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+      </TabPanel>
+    </motion.div>
     </Box>
   );
 }

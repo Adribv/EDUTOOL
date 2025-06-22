@@ -8,6 +8,12 @@ const Visitor = require('../../../models/Admin/visitorModel');
 const Event = require('../../../models/Admin/eventModel');
 const Communication = require('../../../models/Communication/communicationModel');
 const Calendar = require('../../../models/Academic/calendarModel');
+const path = require('path');
+const fs = require('fs');
+const PDFDocument = require('pdfkit');
+const ClassModel = require('../../../models/Admin/classModel');
+const SubjectModel = require('../../../models/Admin/subjectModel');
+const ScheduleModel = require('../../../models/Admin/scheduleModel');
 
 // 1. Student Records Management
 exports.getAllStudents = async (req, res) => {
@@ -40,6 +46,7 @@ exports.registerStudent = async (req, res) => {
       rollNumber,
       password,
       class: studentClass,
+      grade,
       section,
       dateOfBirth,
       gender,
@@ -48,6 +55,17 @@ exports.registerStudent = async (req, res) => {
       email,
       parentInfo
     } = req.body;
+
+    const finalClass = studentClass || grade;
+    let finalPassword = password;
+    if (!finalPassword) {
+      finalPassword = rollNumber ? `${rollNumber}@123` : Math.random().toString(36).slice(-8);
+    }
+    let finalGender = gender;
+    if (gender) {
+      const cap = gender.charAt(0).toUpperCase() + gender.slice(1).toLowerCase();
+      finalGender = cap;
+    }
 
     // Check if student with roll number already exists
     const existingStudent = await Student.findOne({ rollNumber });
@@ -58,11 +76,11 @@ exports.registerStudent = async (req, res) => {
     const newStudent = new Student({
       name,
       rollNumber,
-      password,
-      class: studentClass,
+      password: finalPassword,
+      class: finalClass,
       section,
       dateOfBirth,
-      gender,
+      gender: finalGender,
       address,
       contactNumber,
       email,
@@ -213,6 +231,13 @@ exports.registerStaff = async (req, res) => {
       email,
       password,
       role,
+      department,
+      employeeId,
+      joiningDate,
+      qualification,
+      experience,
+      contactNumber,
+      address,
       assignedSubjects: []
     });
 
@@ -247,6 +272,23 @@ exports.updateStaff = async (req, res) => {
     res.json({ message: 'Staff updated successfully', staff: updatedStaff });
   } catch (error) {
     console.error('Error updating staff:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.deleteStaff = async (req, res) => {
+  try {
+    const staffId = req.params.id;
+    
+    const deletedStaff = await Staff.findByIdAndDelete(staffId);
+    
+    if (!deletedStaff) {
+      return res.status(404).json({ message: 'Staff not found' });
+    }
+
+    res.json({ message: 'Staff deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting staff:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -316,49 +358,95 @@ exports.trackStaffAttendance = async (req, res) => {
 };
 
 // 3. Fee Management System
+exports.getFeeStructures = async (req, res) => {
+  try {
+    const feeStructures = await FeeStructure.find();
+    // Transform to simple format expected by frontend
+    const simplified = feeStructures.map(fs => {
+      const comps = fs.components?.length ? fs.components : fs.feeComponents;
+      const first = comps && comps.length ? comps[0] : {};
+      return {
+        _id: fs._id,
+        grade: fs.class,
+        feeType: first.name,
+        amount: fs.totalAmount || first.amount,
+        dueDate: fs.dueDate,
+        description: first.description || '',
+      };
+    });
+    res.json(simplified);
+  } catch (error) {
+    console.error('Error fetching fee structures:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 exports.configureFeeStructure = async (req, res) => {
   try {
-    const {
+    // Support both detailed and simple payloads
+    let {
       academicYear,
       class: studentClass,
+      term,
       feeComponents,
       dueDate,
-      latePaymentCharges
+      latePaymentCharges,
+      grade,
+      feeType,
+      amount,
+      description
     } = req.body;
 
-    // Check if fee structure for this class and academic year already exists
+    // Map simple payload to detailed structure
+    if (!academicYear) {
+      academicYear = `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`;
+    }
+    if (!studentClass && grade) studentClass = grade;
+    if (!term) term = 'Annual';
+
+    // Build feeComponents if not provided but feeType & amount exist
+    if (!feeComponents && feeType && amount) {
+      feeComponents = [{ name: feeType, amount, description }];
+    }
+
+    if (!feeComponents || feeComponents.length === 0) {
+      return res.status(400).json({ message: 'Fee components are required' });
+    }
+
+    // Calculate total amount
+    const totalAmount = feeComponents.reduce((sum, c) => sum + c.amount, 0);
+
+    // Check existing
     const existingFeeStructure = await FeeStructure.findOne({
       academicYear,
-      class: studentClass
+      class: studentClass,
+      term
     });
 
     if (existingFeeStructure) {
-      // Update existing fee structure
       existingFeeStructure.feeComponents = feeComponents;
+      existingFeeStructure.components = feeComponents;
+      existingFeeStructure.totalAmount = totalAmount;
       existingFeeStructure.dueDate = dueDate;
-      existingFeeStructure.latePaymentCharges = latePaymentCharges;
-      
+      existingFeeStructure.latePaymentFee = latePaymentCharges;
       await existingFeeStructure.save();
-      return res.json({ 
-        message: 'Fee structure updated successfully', 
-        feeStructure: existingFeeStructure 
-      });
+      return res.json({ message: 'Fee structure updated successfully', feeStructure: existingFeeStructure });
     }
 
-    // Create new fee structure
     const newFeeStructure = new FeeStructure({
       academicYear,
       class: studentClass,
+      term,
       feeComponents,
+      components: feeComponents,
+      totalAmount,
       dueDate,
-      latePaymentCharges
+      latePaymentFee: latePaymentCharges,
+      createdBy: req.user.id
     });
 
     await newFeeStructure.save();
-    res.status(201).json({ 
-      message: 'Fee structure created successfully', 
-      feeStructure: newFeeStructure 
-    });
+    res.status(201).json({ message: 'Fee structure created successfully', feeStructure: newFeeStructure });
   } catch (error) {
     console.error('Error configuring fee structure:', error);
     res.status(500).json({ message: 'Server error' });
@@ -384,9 +472,8 @@ exports.generateFeeInvoice = async (req, res) => {
     }
 
     // Calculate total fee amount
-    const totalAmount = feeStructure.feeComponents.reduce(
-      (total, component) => total + component.amount, 0
-    );
+    const componentList = feeStructure.feeComponents?.length ? feeStructure.feeComponents : feeStructure.components;
+    const totalAmount = componentList.reduce((total, component) => total + component.amount, 0);
 
     // Create fee invoice
     const invoice = {
@@ -399,7 +486,7 @@ exports.generateFeeInvoice = async (req, res) => {
       term,
       issueDate: new Date(),
       dueDate: feeStructure.dueDate,
-      feeComponents: feeStructure.feeComponents,
+      feeComponents: componentList,
       totalAmount,
       status: 'Pending'
     };
@@ -485,9 +572,8 @@ exports.getFeeDefaulters = async (req, res) => {
     }
 
     // Calculate total fee amount
-    const totalFeeAmount = feeStructure.feeComponents.reduce(
-      (total, component) => total + component.amount, 0
-    );
+    const componentListDef = feeStructure.feeComponents?.length ? feeStructure.feeComponents : feeStructure.components;
+    const totalFeeAmount = componentListDef.reduce((total, component) => total + component.amount, 0);
 
     // Identify defaulters
     const defaulters = students.map(student => {
@@ -527,39 +613,13 @@ exports.getFeeDefaulters = async (req, res) => {
 // 4. Inventory Control
 exports.addInventoryItem = async (req, res) => {
   try {
-    const {
-      name,
-      category,
-      quantity,
-      unit,
-      unitPrice,
-      supplier,
-      purchaseDate,
-      location,
-      minimumStockLevel,
-      description
-    } = req.body;
-
-    const newItem = new Inventory({
-      name,
-      category,
-      quantity,
-      unit,
-      unitPrice,
-      supplier,
-      purchaseDate,
-      location,
-      minimumStockLevel,
-      description,
-      status: 'Available'
-    });
-
-    await newItem.save();
-    
-    res.status(201).json({ 
-      message: 'Inventory item added successfully', 
-      item: newItem 
-    });
+    const data = req.body;
+    if (data.category) {
+      const cap = data.category.charAt(0).toUpperCase() + data.category.slice(1).toLowerCase();
+      data.category = cap;
+    }
+    const item = await Inventory.create(data);
+    res.status(201).json(item);
   } catch (error) {
     console.error('Error adding inventory item:', error);
     res.status(500).json({ message: 'Server error' });
@@ -656,6 +716,28 @@ exports.getLowStockItems = async (req, res) => {
     res.json(lowStockItems);
   } catch (error) {
     console.error('Error getting low stock items:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.getInventory = async (req, res) => {
+  try {
+    const items = await Inventory.find();
+    res.json(items);
+  } catch (error) {
+    console.error('Error fetching inventory:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.deleteInventoryItem = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const item = await Inventory.findByIdAndDelete(id);
+    if (!item) return res.status(404).json({ message: 'Item not found' });
+    res.json({ message: 'Inventory item deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting inventory item:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -1148,10 +1230,52 @@ exports.updateCommunicationStatus = async (req, res) => {
   }
 };
 
+exports.updateCommunication = async (req, res) => {
+  try {
+    const communicationId = req.params.id;
+    const updateData = req.body;
+
+    const allowedFields = [
+      'subject',
+      'content',
+      'recipients',
+      'communicationType',
+      'scheduledDate',
+      'attachments',
+      'status',
+      'sentDate',
+      'priority',
+      'endDate'
+    ];
+
+    const sanitizedData = {};
+    allowedFields.forEach((field) => {
+      if (updateData[field] !== undefined) {
+        sanitizedData[field] = updateData[field];
+      }
+    });
+
+    const updatedComm = await Communication.findByIdAndUpdate(
+      communicationId,
+      { $set: sanitizedData },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedComm) {
+      return res.status(404).json({ message: 'Communication not found' });
+    }
+
+    res.json({ message: 'Communication updated successfully', communication: updatedComm });
+  } catch (error) {
+    console.error('Error updating communication:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // 9. Reporting and Records
 exports.generateEnrollmentReport = async (req, res) => {
   try {
-    const { academicYear, class: studentClass, section, gender, status } = req.query;
+    const { academicYear, class: studentClass, section, gender, status, format } = req.query;
     
     const query = { status: 'Active' };
     
@@ -1211,7 +1335,40 @@ exports.generateEnrollmentReport = async (req, res) => {
       }
     };
     
-    res.json(report);
+    if (format === 'pdf') {
+      const doc = new PDFDocument();
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename="student-enrollment-report.pdf"');
+      doc.pipe(res);
+
+      doc.fontSize(18).text('Student Enrollment Report', { align: 'center' });
+      doc.moveDown();
+      doc.fontSize(12);
+      doc.text(`Generated At: ${new Date().toLocaleString()}`);
+      if (academicYear) doc.text(`Academic Year: ${academicYear}`);
+      if (studentClass) doc.text(`Class: ${studentClass}`);
+      if (section) doc.text(`Section: ${section}`);
+      if (gender) doc.text(`Gender: ${gender}`);
+      doc.moveDown();
+
+      doc.text(`Total Students: ${totalStudents}`);
+      doc.moveDown();
+
+      doc.fontSize(14).text('Students by Class');
+      Object.entries(classCounts).forEach(([cls, count]) => {
+        doc.fontSize(12).text(`${cls}: ${count}`);
+      });
+      doc.moveDown();
+
+      doc.fontSize(14).text('Gender Distribution');
+      Object.entries(genderCounts).forEach(([g, count]) => {
+        doc.fontSize(12).text(`${g}: ${count}`);
+      });
+
+      doc.end();
+    } else {
+      res.json(report);
+    }
   } catch (error) {
     console.error('Error generating enrollment report:', error);
     res.status(500).json({ message: 'Server error' });
@@ -1282,7 +1439,7 @@ exports.generateStaffReport = async (req, res) => {
 
 exports.generateFeeCollectionReport = async (req, res) => {
   try {
-    const { academicYear, term, startDate, endDate, class: studentClass } = req.query;
+    const { academicYear, term, startDate, endDate, class: studentClass, format } = req.query;
     
     const query = {};
     
@@ -1349,7 +1506,42 @@ exports.generateFeeCollectionReport = async (req, res) => {
       }
     };
     
-    res.json(report);
+    if (format === 'pdf') {
+      // Generate PDF on the fly
+      const doc = new PDFDocument();
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename="fee-collection-report.pdf"');
+      doc.pipe(res);
+
+      doc.fontSize(18).text('Fee Collection Report', { align: 'center' });
+      doc.moveDown();
+      doc.fontSize(12);
+      doc.text(`Generated At: ${new Date().toLocaleString()}`);
+      if (academicYear) doc.text(`Academic Year: ${academicYear}`);
+      if (term) doc.text(`Term: ${term}`);
+      if (studentClass) doc.text(`Class: ${studentClass}`);
+      if (startDate && endDate) doc.text(`From ${startDate} to ${endDate}`);
+      doc.moveDown();
+
+      doc.text(`Total Collection: ₹${totalCollection}`);
+      doc.text(`Total Payments: ${payments.length}`);
+      doc.moveDown();
+
+      doc.fontSize(14).text('Collection by Payment Method');
+      Object.entries(paymentMethodCounts).forEach(([method, info]) => {
+        doc.fontSize(12).text(`${method}: ₹${info.amount} (${info.count} payments)`);
+      });
+      doc.moveDown();
+
+      doc.fontSize(14).text('Collection by Class');
+      Object.entries(classCollection).forEach(([cls, amount]) => {
+        doc.fontSize(12).text(`${cls}: ₹${amount}`);
+      });
+
+      doc.end();
+    } else {
+      res.json(report);
+    }
   } catch (error) {
     console.error('Error generating fee collection report:', error);
     res.status(500).json({ message: 'Server error' });
@@ -1531,3 +1723,172 @@ exports.getDashboardStats = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+exports.getProfile = async (req, res) => {
+  try {
+    const staff = await Staff.findById(req.user.id).select('-password');
+    if (!staff) {
+      return res.status(404).json({ message: 'Staff not found' });
+    }
+    res.json(staff);
+  } catch (error) {
+    console.error('Error fetching staff profile:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const { name, email, contactNumber, address } = req.body;
+    
+    // Find staff by ID
+    const staff = await Staff.findById(req.user.id);
+    if (!staff) {
+      return res.status(404).json({ message: 'Staff not found' });
+    }
+
+    // Update fields
+    if (name) staff.name = name;
+    if (email) staff.email = email;
+    if (contactNumber) staff.contactNumber = contactNumber;
+    if (address) staff.address = address;
+
+    // Save changes
+    await staff.save();
+
+    // Return updated staff without password
+    const updatedStaff = await Staff.findById(req.user.id).select('-password');
+    res.json(updatedStaff);
+  } catch (error) {
+    console.error('Error updating staff profile:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.updateProfileImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No image file provided' });
+    }
+
+    const staff = await Staff.findById(req.user.id);
+    if (!staff) {
+      return res.status(404).json({ message: 'Staff not found' });
+    }
+
+    // Update profile image path
+    const relativePath = path.relative(path.join(__dirname, '..', '..', '..'), req.file.path);
+    staff.profileImage = relativePath.replace(/\\/g, '/');
+    await staff.save();
+
+    res.json({ 
+      message: 'Profile image updated successfully',
+      profileImage: staff.profileImage
+    });
+  } catch (error) {
+    console.error('Error updating profile image:', error);
+    res.status(500).json({ message: 'Server error while updating profile image' });
+  }
+};
+
+exports.updatePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Please provide both current and new password' });
+    }
+
+    const staff = await Staff.findById(req.user.id);
+    if (!staff) {
+      return res.status(404).json({ message: 'Staff not found' });
+    }
+
+    // Verify current password
+    const isMatch = await staff.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Current password is incorrect' });
+    }
+
+    // Update password (will be hashed by the pre-save middleware)
+    staff.password = newPassword;
+    await staff.save();
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Error updating password:', error);
+    res.status(500).json({ message: 'Server error while updating password' });
+  }
+};
+
+exports.deleteFeeStructure = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const feeStructure = await FeeStructure.findByIdAndDelete(id);
+    if (!feeStructure) {
+      return res.status(404).json({ message: 'Fee structure not found' });
+    }
+    res.json({ message: 'Fee structure deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting fee structure:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Class Management
+exports.getClasses = async (req,res)=>{
+  try{
+    const classes=await ClassModel.find();
+    res.json(classes);
+  }catch(err){
+    console.error('Error fetching classes:',err);
+    res.status(500).json({message:'Server error'});
+  }
+};
+
+exports.createClass = async(req,res)=>{
+  try{
+    const newClass = await ClassModel.create(req.body);
+    res.status(201).json(newClass);
+  }catch(err){
+    console.error('Error creating class:',err);
+    res.status(500).json({message:'Server error'});
+  }
+};
+
+exports.updateClass = async(req,res)=>{
+  try{
+    const {id}=req.params;
+    const updated=await ClassModel.findByIdAndUpdate(id,{$set:req.body},{new:true,runValidators:true});
+    if(!updated) return res.status(404).json({message:'Class not found'});
+    res.json(updated);
+  }catch(err){
+    console.error('Error updating class:',err);
+    res.status(500).json({message:'Server error'});
+  }
+};
+
+exports.deleteClass = async(req,res)=>{
+  try{
+    const {id}=req.params;
+    const del=await ClassModel.findByIdAndDelete(id);
+    if(!del) return res.status(404).json({message:'Class not found'});
+    res.json({message:'Class deleted'});
+  }catch(err){
+    console.error('Error deleting class:',err);
+    res.status(500).json({message:'Server error'});
+  }
+};
+
+// Subject Management
+exports.getSubjects=async(req,res)=>{
+  try{const subs=await SubjectModel.find();res.json(subs);}catch(e){console.error(e);res.status(500).json({message:'Server error'});} };
+exports.createSubject=async(req,res)=>{try{const s=await SubjectModel.create(req.body);res.status(201).json(s);}catch(e){console.error(e);res.status(500).json({message:'Server error'});} };
+exports.updateSubject=async(req,res)=>{try{const s=await SubjectModel.findByIdAndUpdate(req.params.id,{$set:req.body},{new:true,runValidators:true});if(!s)return res.status(404).json({message:'Subject not found'});res.json(s);}catch(e){console.error(e);res.status(500).json({message:'Server error'});} };
+exports.deleteSubject=async(req,res)=>{try{const s=await SubjectModel.findByIdAndDelete(req.params.id);if(!s)return res.status(404).json({message:'Subject not found'});res.json({message:'Subject deleted'});}catch(e){console.error(e);res.status(500).json({message:'Server error'});} };
+
+// Schedule Management
+exports.getSchedules=async(req,res)=>{try{const list=await ScheduleModel.find();res.json(list);}catch(e){console.error(e);res.status(500).json({message:'Server error'});} };
+exports.createSchedule=async(req,res)=>{try{const sch=await ScheduleModel.create(req.body);res.status(201).json(sch);}catch(e){console.error(e);res.status(500).json({message:'Server error'});} };
+exports.updateSchedule=async(req,res)=>{try{const sch=await ScheduleModel.findByIdAndUpdate(req.params.id,{$set:req.body},{new:true,runValidators:true});if(!sch)return res.status(404).json({message:'Schedule not found'});res.json(sch);}catch(e){console.error(e);res.status(500).json({message:'Server error'});} };
+exports.deleteSchedule=async(req,res)=>{try{const sch=await ScheduleModel.findByIdAndDelete(req.params.id);if(!sch)return res.status(404).json({message:'Schedule not found'});res.json({message:'Schedule deleted'});}catch(e){console.error(e);res.status(500).json({message:'Server error'});} };

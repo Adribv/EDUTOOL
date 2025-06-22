@@ -30,7 +30,7 @@ const communicationSchema = new mongoose.Schema({
   },
   communicationType: {
     type: String,
-    enum: ['Email', 'SMS', 'Notice', 'Circular', 'Announcement'],
+    enum: ['Email', 'SMS', 'Notice', 'Circular', 'Announcement', 'Message'],
     required: true
   },
   scheduledDate: {
@@ -50,7 +50,7 @@ const communicationSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Draft', 'Scheduled', 'Sent', 'Failed'],
+    enum: ['Draft', 'Scheduled', 'Sent', 'Failed', 'Deleted'],
     default: 'Draft'
   },
   deliveryStats: {

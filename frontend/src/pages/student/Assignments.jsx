@@ -1,46 +1,44 @@
 import { useState, useEffect } from 'react';
 import {
   Box,
+  Paper,
   Typography,
   Grid,
   Card,
   CardContent,
-  CircularProgress,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  Chip,
   Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   TextField,
-  MenuItem,
-  IconButton,
-  Tooltip,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import {
-  Assignment,
-  CheckCircle,
-  Warning,
-  Description,
-  AttachFile,
-  Download,
-  Upload,
+  Assignment as AssignmentIcon,
+  Upload as UploadIcon,
+  CheckCircle as CheckCircleIcon,
+  Warning as WarningIcon,
+  Schedule as ScheduleIcon,
 } from '@mui/icons-material';
 import { studentAPI } from '../../services/api';
 import { toast } from 'react-toastify';
 
 const Assignments = () => {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [assignments, setAssignments] = useState([]);
   const [selectedAssignment, setSelectedAssignment] = useState(null);
-  const [submissionDialog, setSubmissionDialog] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
   const [submissionFile, setSubmissionFile] = useState(null);
-  const [submissionComment, setSubmissionComment] = useState('');
-  const [filter, setFilter] = useState('all');
 
   useEffect(() => {
     fetchAssignments();
@@ -53,13 +51,29 @@ const Assignments = () => {
       setAssignments(response.data);
     } catch (error) {
       console.error('Error fetching assignments:', error);
+      setError('Failed to load assignments');
       toast.error('Failed to load assignments');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmission = async () => {
+  const handleOpenDialog = (assignment) => {
+    setSelectedAssignment(assignment);
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setSelectedAssignment(null);
+    setSubmissionFile(null);
+  };
+
+  const handleFileChange = (event) => {
+    setSubmissionFile(event.target.files[0]);
+  };
+
+  const handleSubmit = async () => {
     if (!submissionFile) {
       toast.error('Please select a file to submit');
       return;
@@ -68,11 +82,11 @@ const Assignments = () => {
     try {
       const formData = new FormData();
       formData.append('file', submissionFile);
-      formData.append('comment', submissionComment);
+      formData.append('assignmentId', selectedAssignment.id);
 
-      await studentAPI.submitAssignment(selectedAssignment.id, formData);
+      await studentAPI.submitAssignment(formData);
       toast.success('Assignment submitted successfully');
-      setSubmissionDialog(false);
+      handleCloseDialog();
       fetchAssignments();
     } catch (error) {
       console.error('Error submitting assignment:', error);
@@ -84,7 +98,7 @@ const Assignments = () => {
     switch (status) {
       case 'Submitted':
         return 'success';
-      case 'Not Submitted':
+      case 'Pending':
         return 'warning';
       case 'Late':
         return 'error';
@@ -93,156 +107,126 @@ const Assignments = () => {
     }
   };
 
-  const filteredAssignments = assignments.filter(assignment => {
-    if (filter === 'all') return true;
-    if (filter === 'pending') return assignment.submissionStatus === 'Not Submitted';
-    if (filter === 'submitted') return assignment.submissionStatus === 'Submitted';
-    return true;
-  });
-
   if (loading) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '60vh',
-        }}
-      >
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
         <CircularProgress />
       </Box>
     );
   }
 
-  return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Typography variant="h4">Assignments</Typography>
-        <TextField
-          select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          size="small"
-          sx={{ width: 200 }}
-        >
-          <MenuItem value="all">All Assignments</MenuItem>
-          <MenuItem value="pending">Pending</MenuItem>
-          <MenuItem value="submitted">Submitted</MenuItem>
-        </TextField>
+  if (error) {
+    return (
+      <Box p={3}>
+        <Alert severity="error">{error}</Alert>
       </Box>
+    );
+  }
+
+  return (
+    <Box sx={{ flexGrow: 1, p: 3 }}>
+      <Typography variant="h4" gutterBottom>
+        Assignments
+      </Typography>
 
       <Grid container spacing={3}>
-        {filteredAssignments.map((assignment) => (
-          <Grid item xs={12} key={assignment.id}>
-            <Card>
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <Box>
-                    <Typography variant="h6" sx={{ mb: 1 }}>
-                      {assignment.title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      Subject: {assignment.subject}
-                    </Typography>
-                    <Typography variant="body2" sx={{ mb: 1 }}>
-                      {assignment.description}
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                      <Chip
-                        icon={<Assignment />}
-                        label={`Due: ${new Date(assignment.dueDate).toLocaleDateString()}`}
-                        size="small"
-                      />
-                      <Chip
-                        icon={assignment.submissionStatus === 'Submitted' ? <CheckCircle /> : <Warning />}
-                        label={assignment.submissionStatus}
-                        color={getStatusColor(assignment.submissionStatus)}
-                        size="small"
-                      />
-                    </Box>
-                  </Box>
-                  <Box>
-                    {assignment.attachment && (
-                      <Tooltip title="Download Assignment">
-                        <IconButton
-                          onClick={() => window.open(assignment.attachment, '_blank')}
-                          color="primary"
-                        >
-                          <Download />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                    {assignment.submissionStatus !== 'Submitted' && (
-                      <Button
-                        variant="contained"
-                        startIcon={<Upload />}
-                        onClick={() => {
-                          setSelectedAssignment(assignment);
-                          setSubmissionDialog(true);
-                        }}
-                      >
-                        Submit
-                      </Button>
-                    )}
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
+        <Grid item xs={12}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Upcoming Assignments
+              </Typography>
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Title</TableCell>
+                      <TableCell>Subject</TableCell>
+                      <TableCell>Due Date</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {assignments.map((assignment) => (
+                      <TableRow key={assignment.id}>
+                        <TableCell>{assignment.title}</TableCell>
+                        <TableCell>{assignment.subject}</TableCell>
+                        <TableCell>{assignment.dueDate}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={assignment.status}
+                            color={getStatusColor(assignment.status)}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="contained"
+                            size="small"
+                            startIcon={<UploadIcon />}
+                            onClick={() => handleOpenDialog(assignment)}
+                            disabled={assignment.status === 'Submitted'}
+                          >
+                            Submit
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
+        </Grid>
       </Grid>
 
-      {/* Submission Dialog */}
-      <Dialog
-        open={submissionDialog}
-        onClose={() => setSubmissionDialog(false)}
-        maxWidth="sm"
-        fullWidth
-      >
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <DialogTitle>Submit Assignment</DialogTitle>
         <DialogContent>
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle1" sx={{ mb: 1 }}>
-              {selectedAssignment?.title}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Due: {selectedAssignment?.dueDate && new Date(selectedAssignment.dueDate).toLocaleDateString()}
-            </Typography>
-            <TextField
-              fullWidth
-              multiline
-              rows={4}
-              label="Comments (Optional)"
-              value={submissionComment}
-              onChange={(e) => setSubmissionComment(e.target.value)}
-              sx={{ mb: 2 }}
-            />
-            <Button
-              variant="outlined"
-              component="label"
-              startIcon={<AttachFile />}
-              fullWidth
-            >
-              Upload File
-              <input
-                type="file"
-                hidden
-                onChange={(e) => setSubmissionFile(e.target.files[0])}
-              />
-            </Button>
-            {submissionFile && (
-              <Typography variant="body2" sx={{ mt: 1 }}>
-                Selected file: {submissionFile.name}
+          {selectedAssignment && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle1" gutterBottom>
+                {selectedAssignment.title}
               </Typography>
-            )}
-          </Box>
+              <Typography variant="body2" color="textSecondary" gutterBottom>
+                Due Date: {selectedAssignment.dueDate}
+              </Typography>
+              <Typography variant="body2" color="textSecondary" gutterBottom>
+                Instructions: {selectedAssignment.instructions}
+              </Typography>
+              <Box sx={{ mt: 2 }}>
+                <input
+                  accept=".pdf,.doc,.docx"
+                  style={{ display: 'none' }}
+                  id="assignment-file"
+                  type="file"
+                  onChange={handleFileChange}
+                />
+                <label htmlFor="assignment-file">
+                  <Button
+                    variant="outlined"
+                    component="span"
+                    startIcon={<UploadIcon />}
+                  >
+                    Choose File
+                  </Button>
+                </label>
+                {submissionFile && (
+                  <Typography variant="body2" sx={{ mt: 1 }}>
+                    Selected file: {submissionFile.name}
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+          )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setSubmissionDialog(false)}>Cancel</Button>
+          <Button onClick={handleCloseDialog}>Cancel</Button>
           <Button
+            onClick={handleSubmit}
             variant="contained"
-            onClick={handleSubmission}
+            color="primary"
             disabled={!submissionFile}
           >
             Submit

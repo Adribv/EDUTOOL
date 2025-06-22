@@ -44,10 +44,13 @@ const validationSchema = yup.object({
 });
 
 const roles = [
-  { value: 'student', label: 'Student' },
   { value: 'Teacher', label: 'Teacher' },
-  { value: 'parent', label: 'Parent' },
-  { value: 'AdminStaff', label: 'Admin' },
+  { value: 'HOD', label: 'Head of Department' },
+  { value: 'VicePrincipal', label: 'Vice Principal' },
+  { value: 'Principal', label: 'Principal' },
+  { value: 'AdminStaff', label: 'Admin Staff' },
+  { value: 'ITAdmin', label: 'IT Admin' },
+  { value: 'Counsellor', label: 'Counsellor' }
 ];
 
 // Animation variants

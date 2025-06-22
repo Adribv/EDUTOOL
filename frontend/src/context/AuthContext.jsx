@@ -1,97 +1,91 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import api from '../services/api';
 import { toast } from 'react-toastify';
-import { authAPI } from '../services/api';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [error, setError] = useState(null);
+
+  const checkAuth = useCallback(async () => {
+    try {
+      setError(null);
+      const token = localStorage.getItem('token');
+      if (token) {
+        const response = await api.get('/api/staffs/profile');
+        setUser(response.data);
+      }
+    } catch (err) {
+      console.error('Auth check failed:', err);
+      localStorage.removeItem('token');
+      setError(err.response?.data?.message || 'Authentication failed');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     checkAuth();
+  }, [checkAuth]);
+
+  const login = useCallback(async (credentials) => {
+    try {
+      setError(null);
+      setLoading(true);
+      const response = await api.post('/api/staffs/login', credentials);
+      const { token, role } = response.data;
+      
+      localStorage.setItem('token', token);
+      const userData = { ...response.data, role: (role || '').toLowerCase() };
+      setUser(userData);
+      
+      toast.success('Login successful!');
+      return userData;
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Login failed. Please check your credentials.';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const checkAuth = async () => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const response = await authAPI.getProfile();
-        setUser(response.data);
-      } catch (error) {
-        console.error('Auth check failed:', error);
-        localStorage.removeItem('token');
-      }
-    }
-    setLoading(false);
-  };
-
-  const login = async (credentials) => {
+  const logout = useCallback(() => {
     try {
-      const response = await authAPI.login(credentials);
-      const { token, user } = response.data;
-      localStorage.setItem('token', token);
-      setUser(user);
-      toast.success('Login successful!');
-      navigate(`/${user.role}`);
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Login failed');
-      throw error;
+      localStorage.removeItem('token');
+      setUser(null);
+      setError(null);
+      toast.success('Logged out successfully');
+    } catch (err) {
+      console.error('Logout error:', err);
+      toast.error('Error during logout');
     }
-  };
+  }, []);
 
-  const register = async (userData) => {
-    try {
-      const response = await authAPI.register(userData);
-      const { token, user } = response.data;
-      localStorage.setItem('token', token);
-      setUser(user);
-      toast.success('Registration successful!');
-      navigate(`/${user.role}`);
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Registration failed');
-      throw error;
-    }
-  };
+  const updateUser = useCallback((userData) => {
+    setUser(prevUser => ({ ...prevUser, ...userData }));
+  }, []);
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
-    navigate('/login');
-    toast.success('Logged out successfully');
-  };
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
 
-  const updateProfile = async (data) => {
-    try {
-      const response = await authAPI.updateProfile(data);
-      setUser(response.data);
-      toast.success('Profile updated successfully');
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Profile update failed');
-      throw error;
-    }
-  };
+  const value = useMemo(() => ({
+    user,
+    loading,
+    error,
+    login,
+    logout,
+    updateUser,
+    clearError,
+    isAuthenticated: !!user,
+    checkAuth,
+  }), [user, loading, error, login, logout, updateUser, clearError, checkAuth]);
 
-  if (loading) {
-    return <div>Loading...</div>; // You can replace this with a proper loading component
-  }
-
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        login,
-        register,
-        logout,
-        updateProfile,
-        isAuthenticated: !!user,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {

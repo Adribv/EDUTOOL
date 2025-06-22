@@ -1,7 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, CssBaseline } from '@mui/material';
+import { ThemeProvider, CssBaseline, CircularProgress, Box, useTheme } from '@mui/material';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastContainer } from 'react-toastify';
+import { lazy, Suspense } from 'react';
 import 'react-toastify/dist/ReactToastify.css';
 
 // Theme
@@ -13,153 +14,167 @@ import { AuthProvider } from './context/AuthContext';
 // Components
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 
-// Auth Pages
-import Login from './pages/auth/Login';
-import Register from './pages/auth/Register';
-import StudentLogin from './pages/auth/StudentLogin';
-import StudentRegister from './pages/auth/StudentRegister';
-import NotFound from './pages/NotFound';
+// Lazy load all pages for better performance
+const Login = lazy(() => import('./pages/auth/Login'));
+const Register = lazy(() => import('./pages/auth/Register'));
+const StudentLogin = lazy(() => import('./pages/auth/StudentLogin'));
+const StudentRegister = lazy(() => import('./pages/auth/StudentRegister'));
+const ParentLogin = lazy(() => import('./pages/auth/ParentLogin'));
+const Home = lazy(() => import('./pages/Home'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Student Pages
-import StudentDashboard from './pages/student/Dashboard';
-import StudentProfile from './pages/student/Profile';
-import Assignments from './pages/student/Assignments';
-import Attendance from './pages/student/Attendance';
-import Exams from './pages/student/Exams';
-import Fees from './pages/student/Fees';
-import Resources from './pages/student/Resources';
-import Messages from './pages/student/Messages';
-import Courses from './pages/student/Courses';
-import Timetable from './pages/student/Timetable';
-import Results from './pages/student/Results';
-import Notifications from './pages/student/Notifications';
-import Calendar from './pages/student/Calendar';
-import Transport from './pages/student/Transport';
-import StudyMaterials from './pages/student/StudyMaterials';
-import Settings from './pages/student/Settings';
+const StudentDashboard = lazy(() => import('./pages/student/Dashboard'));
+const StudentProfile = lazy(() => import('./pages/student/Profile'));
+const Assignments = lazy(() => import('./pages/student/Assignments'));
+const Attendance = lazy(() => import('./pages/student/Attendance'));
+const Exams = lazy(() => import('./pages/student/Exams'));
+const Fees = lazy(() => import('./pages/student/Fees'));
+const Resources = lazy(() => import('./pages/student/Resources'));
+const Messages = lazy(() => import('./pages/student/Messages'));
+const Courses = lazy(() => import('./pages/student/Courses'));
+const Timetable = lazy(() => import('./pages/student/Timetable'));
+const Results = lazy(() => import('./pages/student/Results'));
+const Notifications = lazy(() => import('./pages/student/Notifications'));
+const Calendar = lazy(() => import('./pages/student/Calendar'));
+const Transport = lazy(() => import('./pages/student/Transport'));
+const StudyMaterials = lazy(() => import('./pages/student/StudyMaterials'));
+const Settings = lazy(() => import('./pages/student/Settings'));
 
 // Staff Pages
-import StaffDashboard from './pages/staff/Dashboard';
-import StaffProfile from './pages/staff/Profile';
-import ClassManagement from './pages/staff/ClassManagement';
-import AssignmentManagement from './pages/staff/AssignmentManagement';
-import ExamManagement from './pages/staff/ExamManagement';
-import StudentManagement from './pages/staff/StudentManagement';
+const StaffDashboard = lazy(() => import('./pages/staff/Dashboard'));
+const StaffProfile = lazy(() => import('./pages/staff/Profile'));
+const ClassManagement = lazy(() => import('./pages/staff/ClassManagement'));
+const AssignmentManagement = lazy(() => import('./pages/staff/AssignmentManagement'));
+const ExamManagement = lazy(() => import('./pages/staff/ExamManagement'));
+const StudentManagement = lazy(() => import('./pages/staff/StudentManagement'));
 
 // Parent Pages
-import ParentDashboard from './pages/parent/Dashboard';
-import ParentProfile from './pages/parent/Profile';
-import ChildProgress from './pages/parent/ChildProgress';
-import FeeManagement from './pages/parent/FeeManagement';
-import Communication from './pages/parent/Communication';
+const ParentDashboard = lazy(() => import('./pages/parent/Dashboard'));
+const ParentProfile = lazy(() => import('./pages/parent/Profile'));
+const ChildProgress = lazy(() => import('./pages/parent/ChildProgress'));
+const FeeManagement = lazy(() => import('./pages/parent/FeeManagement'));
+const Communication = lazy(() => import('./pages/parent/Communication'));
 
 // Admin Pages
-import AdminDashboard from './pages/admin/Dashboard';
-import AdminProfile from './pages/admin/Profile';
-import StaffManagement from './pages/admin/StaffManagement';
-import StudentRecords from './pages/admin/StudentRecords';
-import FeeConfiguration from './pages/admin/FeeConfiguration';
-import SystemSettings from './pages/admin/SystemSettings';
-import UserManagement from './pages/admin/UserManagement';
-import Reports from './pages/admin/Reports';
+const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
+const AdminProfile = lazy(() => import('./pages/admin/Profile'));
+const StaffManagement = lazy(() => import('./pages/admin/StaffManagement'));
+const StudentRecords = lazy(() => import('./pages/admin/StudentRecords'));
+const FeeConfiguration = lazy(() => import('./pages/admin/FeeConfiguration'));
+const SystemSettings = lazy(() => import('./pages/admin/SystemSettings'));
+const UserManagement = lazy(() => import('./pages/admin/UserManagement'));
+const Reports = lazy(() => import('./pages/admin/Reports'));
 
-// Create a client
-const queryClient = new QueryClient();
+// Role-based Components
+const StudentRoutes = lazy(() => import('./routes/StudentRoutes'));
+const TeacherRoutes = lazy(() => import('./routes/TeacherRoutes'));
+const AdminRoutes = lazy(() => import('./routes/AdminRoutes'));
+const ParentRoutes = lazy(() => import('./routes/ParentRoutes'));
+const HODRoutes = lazy(() => import('./routes/HODRoutes'));
+const PrincipalRoutes = lazy(() => import('./routes/PrincipalRoutes'));
+const CounselorRoutes = lazy(() => import('./routes/CounselorRoutes'));
+
+// Loading component
+const LoadingSpinner = () => {
+  const theme = useTheme();
+  return (
+    <Box 
+      display="flex" 
+      justifyContent="center" 
+      alignItems="center" 
+      minHeight="100vh"
+      sx={{ background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)` }}
+    >
+      <CircularProgress size={60} sx={{ color: 'white' }} />
+    </Box>
+  );
+};
+
+// Create a client with optimized settings
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Router>
-          <AuthProvider>
-            <Routes>
-              {/* Auth Routes */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/student-login" element={<StudentLogin />} />
-              <Route path="/student-register" element={<StudentRegister />} />
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <Router>
+            <AuthProvider>
+              <Suspense fallback={<LoadingSpinner />}>
+                <Routes>
+                  {/* Public Routes */}
+                  <Route path="/" element={<Home />} />
+                  
+                  {/* Public Auth Routes */}
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/student-login" element={<StudentLogin />} />
+                  <Route path="/student-register" element={<StudentRegister />} />
+                  <Route path="/parent-login" element={<ParentLogin />} />
+                  
+                  {/* Protected Routes */}
+                  <Route element={<ProtectedRoute allowedRoles={['student']} />}>
+                    <Route path="/student/*" element={<StudentRoutes />} />
+                  </Route>
 
-              {/* Student Routes */}
-              <Route
-                path="/student"
-                element={
-                 <Layout role="student" />
-                }
-              >
-                <Route index element={<StudentDashboard />} />
-                <Route path="courses" element={<Courses />} />
-                <Route path="timetable" element={<Timetable />} />
-                <Route path="results" element={<Results />} />
-                <Route path="notifications" element={<Notifications />} />
-                <Route path="calendar" element={<Calendar />} />
-                <Route path="transport" element={<Transport />} />
-                <Route path="materials" element={<StudyMaterials />} />
-                <Route path="settings" element={<Settings />} />
-              </Route>
+                  <Route element={<ProtectedRoute allowedRoles={['parent']} />}>
+                    <Route path="/parent/*" element={<ParentRoutes />} />
+                  </Route>
 
-              {/* Staff Routes */}
-              <Route
-                path="/staff"
-                element={
-                  <ProtectedRoute>
-                    <Layout role="staff" />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<StaffDashboard />} />
-                <Route path="profile" element={<StaffProfile />} />
-                <Route path="classes" element={<ClassManagement />} />
-                <Route path="assignments" element={<AssignmentManagement />} />
-                <Route path="exams" element={<ExamManagement />} />
-                <Route path="students" element={<StudentManagement />} />
-              </Route>
+                  <Route element={<ProtectedRoute allowedRoles={['teacher']} />}>
+                    <Route path="/teacher/*" element={<TeacherRoutes />} />
+                  </Route>
 
-              {/* Parent Routes */}
-              <Route
-                path="/parent"
-                element={
-                  <ProtectedRoute>
-                    <Layout role="parent" />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<ParentDashboard />} />
-                <Route path="profile" element={<ParentProfile />} />
-                <Route path="progress" element={<ChildProgress />} />
-                <Route path="fees" element={<FeeManagement />} />
-                <Route path="communication" element={<Communication />} />
-              </Route>
+                  <Route element={<ProtectedRoute allowedRoles={['AdminStaff']} />}>
+                    <Route path="/admin/*" element={<AdminRoutes />} />
+                  </Route>
 
-              {/* Admin Routes */}
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute>
-                    <Layout role="admin" />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<AdminDashboard />} />
-                <Route path="profile" element={<AdminProfile />} />
-                <Route path="staff" element={<StaffManagement />} />
-                <Route path="students" element={<StudentRecords />} />
-                <Route path="fees" element={<FeeConfiguration />} />
-                <Route path="settings" element={<SystemSettings />} />
-                <Route path="users" element={<UserManagement />} />
-                <Route path="reports" element={<Reports />} />
-              </Route>
+                  <Route element={<ProtectedRoute allowedRoles={['hod']} />}>
+                    <Route path="/hod/*" element={<HODRoutes />} />
+                  </Route>
 
-              {/* Redirect root to appropriate dashboard based on role */}
-              <Route path="/" element={<Navigate to="/login" replace />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AuthProvider>
-        </Router>
-        <ToastContainer />
-      </ThemeProvider>
-    </QueryClientProvider>
+                  <Route element={<ProtectedRoute allowedRoles={['principal']} />}>
+                    <Route path="/principal/*" element={<PrincipalRoutes />} />
+                  </Route>
+
+                  <Route element={<ProtectedRoute allowedRoles={['counselor']} />}>
+                    <Route path="/counselor/*" element={<CounselorRoutes />} />
+                  </Route>
+
+                  {/* 404 Route */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+            </AuthProvider>
+          </Router>
+          <ToastContainer 
+            position="top-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="light"
+          />
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

@@ -19,6 +19,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Alert,
 } from '@mui/material';
 import {
   Person,
@@ -36,9 +37,23 @@ import {
 } from '@mui/icons-material';
 import { studentAPI } from '../../services/api';
 import { toast } from 'react-toastify';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+import studentService from '../../services/studentService';
+
+const validationSchema = Yup.object({
+  name: Yup.string().required('Name is required'),
+  email: Yup.string().email('Invalid email').required('Email is required'),
+  phone: Yup.string().matches(/^[0-9]{10}$/, 'Invalid phone number'),
+  address: Yup.string(),
+  parentName: Yup.string(),
+  parentPhone: Yup.string().matches(/^[0-9]{10}$/, 'Invalid phone number'),
+  emergencyContact: Yup.string().matches(/^[0-9]{10}$/, 'Invalid phone number'),
+});
 
 const Profile = () => {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [profile, setProfile] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [editedProfile, setEditedProfile] = useState(null);
@@ -55,17 +70,42 @@ const Profile = () => {
 
   const fetchProfile = async () => {
     try {
-      setLoading(true);
-      const response = await studentAPI.getProfile();
+      const response = await studentService.getProfile();
       setProfile(response.data);
       setEditedProfile(response.data);
+      formik.setValues(response.data);
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      setError('Failed to load profile');
       toast.error('Failed to load profile');
     } finally {
       setLoading(false);
     }
   };
+
+  const formik = useFormik({
+    initialValues: {
+      name: '',
+      email: '',
+      phone: '',
+      address: '',
+      parentName: '',
+      parentPhone: '',
+      emergencyContact: '',
+    },
+    validationSchema,
+    onSubmit: async (values) => {
+      try {
+        setLoading(true);
+        await studentService.updateProfile(values);
+        toast.success('Profile updated successfully');
+        fetchProfile();
+      } catch (error) {
+        toast.error('Failed to update profile');
+      } finally {
+        setLoading(false);
+      }
+    },
+  });
 
   const handleEdit = () => {
     setEditMode(true);
@@ -109,273 +149,197 @@ const Profile = () => {
     }
   };
 
-  if (loading) {
+  if (loading && !profile) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '60vh',
-        }}
-      >
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
         <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box p={3}>
+        <Alert severity="error">{error}</Alert>
       </Box>
     );
   }
 
   return (
     <Box>
-      <Typography variant="h4" sx={{ mb: 3 }}>
-        Profile
+      <Typography variant="h4" gutterBottom>
+        Student Profile
       </Typography>
 
-      <Grid container spacing={3}>
-        {/* Profile Information */}
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  mb: 3,
-                }}
-              >
-                <Avatar
-                  sx={{ width: 120, height: 120, mb: 2 }}
-                  src={profile?.avatar}
+      <Card>
+        <CardContent>
+          <Box display="flex" alignItems="center" mb={4}>
+            <Avatar
+              sx={{ width: 100, height: 100, mr: 3 }}
+              src={profile?.profilePicture}
+            >
+              {profile?.name?.charAt(0)}
+            </Avatar>
+            <Box>
+              <Typography variant="h5">{profile?.name}</Typography>
+              <Typography color="textSecondary">
+                Student ID: {profile?.studentId}
+              </Typography>
+              <Typography color="textSecondary">
+                Class: {profile?.class} {profile?.section}
+              </Typography>
+            </Box>
+          </Box>
+
+          <form onSubmit={formik.handleSubmit}>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  name="name"
+                  label="Full Name"
+                  value={formik.values.name}
+                  onChange={formik.handleChange}
+                  error={formik.touched.name && Boolean(formik.errors.name)}
+                  helperText={formik.touched.name && formik.errors.name}
                 />
-                <Typography variant="h5" gutterBottom>
-                  {profile?.name}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Roll Number: {profile?.rollNumber}
-                </Typography>
-              </Box>
-
-              <List>
-                <ListItem>
-                  <ListItemIcon>
-                    <School />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary="Class"
-                    secondary={`${profile?.class} ${profile?.section}`}
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemIcon>
-                    <Email />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary="Email"
-                    secondary={profile?.email}
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemIcon>
-                    <Phone />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary="Phone"
-                    secondary={profile?.phone}
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemIcon>
-                    <LocationOn />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary="Address"
-                    secondary={profile?.address}
-                  />
-                </ListItem>
-              </List>
-
-              <Box sx={{ mt: 2 }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<Edit />}
-                  onClick={handleEdit}
-                  sx={{ mr: 1 }}
-                >
-                  Edit Profile
-                </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<Security />}
-                  onClick={() => setPasswordDialog(true)}
-                >
-                  Change Password
-                </Button>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Edit Profile Form */}
-        <Grid item xs={12} md={8}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                {editMode ? 'Edit Profile' : 'Personal Information'}
-              </Typography>
-              <Divider sx={{ mb: 3 }} />
-
-              <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Name"
-                    value={editedProfile?.name || ''}
-                    onChange={(e) =>
-                      setEditedProfile({ ...editedProfile, name: e.target.value })
-                    }
-                    disabled={!editMode}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Email"
-                    value={editedProfile?.email || ''}
-                    onChange={(e) =>
-                      setEditedProfile({
-                        ...editedProfile,
-                        email: e.target.value,
-                      })
-                    }
-                    disabled={!editMode}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Phone"
-                    value={editedProfile?.phone || ''}
-                    onChange={(e) =>
-                      setEditedProfile({
-                        ...editedProfile,
-                        phone: e.target.value,
-                      })
-                    }
-                    disabled={!editMode}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Date of Birth"
-                    type="date"
-                    value={editedProfile?.dateOfBirth || ''}
-                    onChange={(e) =>
-                      setEditedProfile({
-                        ...editedProfile,
-                        dateOfBirth: e.target.value,
-                      })
-                    }
-                    disabled={!editMode}
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Address"
-                    multiline
-                    rows={3}
-                    value={editedProfile?.address || ''}
-                    onChange={(e) =>
-                      setEditedProfile({
-                        ...editedProfile,
-                        address: e.target.value,
-                      })
-                    }
-                    disabled={!editMode}
-                  />
-                </Grid>
               </Grid>
-
-              {editMode && (
-                <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-                  <Button
-                    variant="contained"
-                    startIcon={<Save />}
-                    onClick={handleSave}
-                  >
-                    Save Changes
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    startIcon={<Cancel />}
-                    onClick={handleCancel}
-                  >
-                    Cancel
-                  </Button>
-                </Box>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Medical Information */}
-          <Card sx={{ mt: 3 }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Medical Information
-              </Typography>
-              <Divider sx={{ mb: 3 }} />
-
-              <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Blood Group"
-                    value={profile?.bloodGroup || ''}
-                    disabled
-                    InputProps={{
-                      startAdornment: <Bloodtype sx={{ mr: 1 }} />,
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Height"
-                    value={profile?.height || ''}
-                    disabled
-                    InputProps={{
-                      startAdornment: <MedicalServices sx={{ mr: 1 }} />,
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Weight"
-                    value={profile?.weight || ''}
-                    disabled
-                    InputProps={{
-                      startAdornment: <MedicalServices sx={{ mr: 1 }} />,
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Medical Conditions"
-                    multiline
-                    rows={2}
-                    value={profile?.medicalConditions || ''}
-                    disabled
-                  />
-                </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  name="email"
+                  label="Email"
+                  value={formik.values.email}
+                  onChange={formik.handleChange}
+                  error={formik.touched.email && Boolean(formik.errors.email)}
+                  helperText={formik.touched.email && formik.errors.email}
+                />
               </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  name="phone"
+                  label="Phone Number"
+                  value={formik.values.phone}
+                  onChange={formik.handleChange}
+                  error={formik.touched.phone && Boolean(formik.errors.phone)}
+                  helperText={formik.touched.phone && formik.errors.phone}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  name="address"
+                  label="Address"
+                  value={formik.values.address}
+                  onChange={formik.handleChange}
+                  error={formik.touched.address && Boolean(formik.errors.address)}
+                  helperText={formik.touched.address && formik.errors.address}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  name="parentName"
+                  label="Parent/Guardian Name"
+                  value={formik.values.parentName}
+                  onChange={formik.handleChange}
+                  error={formik.touched.parentName && Boolean(formik.errors.parentName)}
+                  helperText={formik.touched.parentName && formik.errors.parentName}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  name="parentPhone"
+                  label="Parent/Guardian Phone"
+                  value={formik.values.parentPhone}
+                  onChange={formik.handleChange}
+                  error={formik.touched.parentPhone && Boolean(formik.errors.parentPhone)}
+                  helperText={formik.touched.parentPhone && formik.errors.parentPhone}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  name="emergencyContact"
+                  label="Emergency Contact"
+                  value={formik.values.emergencyContact}
+                  onChange={formik.handleChange}
+                  error={formik.touched.emergencyContact && Boolean(formik.errors.emergencyContact)}
+                  helperText={formik.touched.emergencyContact && formik.errors.emergencyContact}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  disabled={loading}
+                >
+                  {loading ? <CircularProgress size={24} /> : 'Update Profile'}
+                </Button>
+              </Grid>
+            </Grid>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Medical Information */}
+      <Card sx={{ mt: 3 }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            Medical Information
+          </Typography>
+          <Divider sx={{ mb: 3 }} />
+
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Blood Group"
+                value={profile?.bloodGroup || ''}
+                disabled
+                InputProps={{
+                  startAdornment: <Bloodtype sx={{ mr: 1 }} />,
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Height"
+                value={profile?.height || ''}
+                disabled
+                InputProps={{
+                  startAdornment: <MedicalServices sx={{ mr: 1 }} />,
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Weight"
+                value={profile?.weight || ''}
+                disabled
+                InputProps={{
+                  startAdornment: <MedicalServices sx={{ mr: 1 }} />,
+                }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Medical Conditions"
+                multiline
+                rows={2}
+                value={profile?.medicalConditions || ''}
+                disabled
+              />
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
 
       {/* Change Password Dialog */}
       <Dialog
