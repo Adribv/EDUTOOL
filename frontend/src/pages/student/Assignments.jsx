@@ -30,6 +30,7 @@ import {
   Schedule as ScheduleIcon,
 } from '@mui/icons-material';
 import { studentAPI } from '../../services/api';
+import { placeholderData, createMockResponse } from '../../services/placeholderData';
 import { toast } from 'react-toastify';
 
 const Assignments = () => {
@@ -47,12 +48,17 @@ const Assignments = () => {
   const fetchAssignments = async () => {
     try {
       setLoading(true);
-      const response = await studentAPI.getAssignments();
+      const response = await studentAPI.getAssignments().catch(() => {
+        console.warn('Using placeholder data for assignments');
+        toast.info('Using demo data - some features may be limited');
+        return createMockResponse(placeholderData.assignments);
+      });
       setAssignments(response.data);
     } catch (error) {
       console.error('Error fetching assignments:', error);
-      setError('Failed to load assignments');
-      toast.error('Failed to load assignments');
+      setError('Failed to load assignments. Using demo data instead.');
+      setAssignments(placeholderData.assignments);
+      toast.info('Using demo data - some features may be limited');
     } finally {
       setLoading(false);
     }

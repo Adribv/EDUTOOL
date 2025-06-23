@@ -26,6 +26,7 @@ const TeacherRoutes = () => {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<Dashboard />} />
+        <Route path="dashboard" element={<Dashboard />} />
         <Route path="profile" element={<Profile />} />
         <Route path="classes" element={<ClassManagement />} />
         <Route path="assignments" element={<AssignmentManagement />} />

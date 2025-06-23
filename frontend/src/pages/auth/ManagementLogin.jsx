@@ -53,30 +53,51 @@ const ManagementLogin = () => {
 
   const loginMutation = useMutation({
     mutationFn: async (values) => {
-      const user = await login(values);
+      const user = await login(values, 'staff');
       return user;
     },
     onSuccess: (user) => {
       // Navigate based on role
-      console.log(user);
-      switch (user.role) {
+      console.log('Login successful, user data:', user);
+      
+      if (!user) {
+        console.error('User data is undefined after login');
+        setError('Login successful but user data is missing');
+        return;
+      }
+      
+      // Store the role in localStorage for consistency
+      if (user.role) {
+        localStorage.setItem('userRole', user.role);
+      }
+      
+      // Normalize role to lowercase for comparison
+      const userRole = (user.role || '').toLowerCase();
+      console.log('User role:', userRole);
+      
+      switch (userRole) {
         case "adminstaff":
-          navigate('/admin');
+        case "admin_staff":
+        case "admin staff":
+          navigate('/admin/dashboard');
           break;
         case 'teacher':
-          navigate('/teacher');
+          navigate('/teacher/dashboard');
           break;
-        case 'HOD':
-          navigate('/hod');
+        case 'hod':
+        case 'head of department':
+          navigate('/hod/dashboard');
           break;
-        case 'Principal':
-          navigate('/principal');
+        case 'principal':
+          navigate('/principal/dashboard');
           break;
-        case 'Counsellor':
-          navigate('/counselor');
+        case 'counsellor':
+        case 'counselor':
+          navigate('/counselor/dashboard');
           break;
-        // default:
-        //   navigate('/');
+        default:
+          console.warn('Unknown role:', userRole, 'Navigating to home');
+          navigate('/');
       }
     },
     onError: (error) => {

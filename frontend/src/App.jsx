@@ -143,7 +143,7 @@ function App() {
                     <Route path="/teacher/*" element={<TeacherRoutes />} />
                   </Route>
 
-                  <Route element={<ProtectedRoute allowedRoles={['AdminStaff']} />}>
+                  <Route element={<ProtectedRoute allowedRoles={['adminstaff']} />}>
                     <Route path="/admin/*" element={<AdminRoutes />} />
                   </Route>
 
@@ -155,7 +155,7 @@ function App() {
                     <Route path="/principal/*" element={<PrincipalRoutes />} />
                   </Route>
 
-                  <Route element={<ProtectedRoute allowedRoles={['counselor']} />}>
+                  <Route element={<ProtectedRoute allowedRoles={['counsellor']} />}>
                     <Route path="/counselor/*" element={<CounselorRoutes />} />
                   </Route>
 

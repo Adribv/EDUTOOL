@@ -40,6 +40,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import Logo from './Logo';
+import DemoModeToggle from '../DemoModeToggle';
 
 const drawerWidth = 280;
 
@@ -76,35 +77,58 @@ const Layout = () => {
   }, [drawerCollapsed]);
 
   const getMenuItems = useMemo(() => {
+    const getBasePath = () => {
+      switch (user?.role) {
+        case 'AdminStaff':
+          return '/admin';
+        case 'Teacher':
+          return '/teacher';
+        case 'Student':
+          return '/student';
+        case 'Parent':
+          return '/parent';
+        case 'HOD':
+          return '/hod';
+        case 'Principal':
+          return '/principal';
+        case 'Counsellor':
+          return '/counselor';
+        default:
+          return '';
+      }
+    };
+
+    const basePath = getBasePath();
+    
     const commonItems = [
-      { text: 'Dashboard', icon: <Dashboard />, path: '' },
-      { text: 'Profile', icon: <Person />, path: 'profile' },
+      { text: 'Dashboard', icon: <Dashboard />, path: `${basePath}/dashboard` },
+      { text: 'Profile', icon: <Person />, path: `${basePath}/profile` },
     ];
 
     const roleSpecificItems = {
       AdminStaff: [
-        { text: 'Staff Management', icon: <People />, path: 'staff' },
-        { text: 'Student Records', icon: <School />, path: 'students' },
-        { text: 'Fee Configuration', icon: <Payment />, path: 'fees' },
-        { text: 'Inventory', icon: <Inventory />, path: 'inventory' },
-        { text: 'Events', icon: <CalendarToday />, path: 'events' },
-        { text: 'Communications', icon: <Notifications />, path: 'communications' },
-        { text: 'Classes', icon: <School />, path: 'classes' },
-        { text: 'Subjects', icon: <Assignment />, path: 'subjects' },
-        { text: 'Schedules', icon: <CalendarToday />, path: 'schedules' },
-        { text: 'System Settings', icon: <Settings />, path: 'settings' },
-        { text: 'User Management', icon: <People />, path: 'users' },
-        { text: 'Reports', icon: <Assessment />, path: 'reports' },
+        { text: 'Staff Management', icon: <People />, path: '/admin/staff' },
+        { text: 'Student Records', icon: <School />, path: '/admin/students' },
+        { text: 'Fee Configuration', icon: <Payment />, path: '/admin/fees' },
+        { text: 'Inventory', icon: <Inventory />, path: '/admin/inventory' },
+        { text: 'Events', icon: <CalendarToday />, path: '/admin/events' },
+        { text: 'Communications', icon: <Notifications />, path: '/admin/communications' },
+        { text: 'Classes', icon: <School />, path: '/admin/classes' },
+        { text: 'Subjects', icon: <Assignment />, path: '/admin/subjects' },
+        { text: 'Schedules', icon: <CalendarToday />, path: '/admin/schedules' },
+        { text: 'System Settings', icon: <Settings />, path: '/admin/settings' },
+        { text: 'User Management', icon: <People />, path: '/admin/users' },
+        { text: 'Reports', icon: <Assessment />, path: '/admin/reports' },
       ],
       Teacher: [
-        { text: 'Classes', icon: <School />, path: 'classes' },
-        { text: 'Assignments', icon: <Assignment />, path: 'assignments' },
-        { text: 'Calendar', icon: <CalendarToday />, path: 'calendar' },
+        { text: 'Classes', icon: <School />, path: '/teacher/classes' },
+        { text: 'Assignments', icon: <Assignment />, path: '/teacher/assignments' },
+        { text: 'Calendar', icon: <CalendarToday />, path: '/teacher/calendar' },
       ],
       Student: [
-        { text: 'Courses', icon: <School />, path: 'courses' },
-        { text: 'Assignments', icon: <Assignment />, path: 'assignments' },
-        { text: 'Calendar', icon: <CalendarToday />, path: 'calendar' },
+        { text: 'Courses', icon: <School />, path: '/student/courses' },
+        { text: 'Assignments', icon: <Assignment />, path: '/student/assignments' },
+        { text: 'Calendar', icon: <CalendarToday />, path: '/student/calendar' },
       ],
     };
 
@@ -119,10 +143,10 @@ const Layout = () => {
   }, [navigate, isMobile]);
 
   const isActiveRoute = useCallback((path) => {
-    if (path === '') {
-      return location.pathname.endsWith('/dashboard') || location.pathname.endsWith('/student') || location.pathname.endsWith('/admin') || location.pathname.endsWith('/teacher') || location.pathname.endsWith('/parent');
+    if (path.endsWith('/dashboard')) {
+      return location.pathname === path || location.pathname.endsWith('/dashboard');
     }
-    return location.pathname.includes(path);
+    return location.pathname === path || location.pathname.startsWith(path);
   }, [location.pathname]);
 
   const drawer = (
@@ -390,6 +414,9 @@ const Layout = () => {
           Logout
         </MenuItem>
       </Menu>
+
+      {/* Demo Mode Toggle */}
+      <DemoModeToggle />
     </Box>
   );
 };

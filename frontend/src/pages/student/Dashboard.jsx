@@ -61,6 +61,7 @@ import {
   CheckCircle,
 } from '@mui/icons-material';
 import studentService from '../../services/studentService';
+import { placeholderData, getPlaceholderData, createMockResponse, simulateApiDelay } from '../../services/placeholderData';
 import { toast } from 'react-toastify';
 
 const Dashboard = () => {
@@ -95,7 +96,7 @@ const Dashboard = () => {
       setLoading(true);
       setError(null);
 
-      // Fetch all dashboard data in parallel
+      // Fetch all dashboard data in parallel with fallback to placeholder data
       const [
         profileRes,
         subjectsRes,
@@ -111,42 +112,58 @@ const Dashboard = () => {
         leaveRes,
         lessonsRes,
         notificationsRes,
-      ] = await Promise.all([
-        studentService.getProfile(),
-        studentService.getSubjectsAndTeachers(),
-        studentService.getAssignments(),
-        studentService.getAnnouncements(),
-        studentService.getPerformanceAnalytics(),
-        studentService.getAttendanceRecords(),
-        studentService.getUpcomingExams(),
-        studentService.getMessages(),
-        studentService.getHomework(),
-        studentService.getPaymentStatus(),
-        studentService.getLearningResources(),
-        studentService.getLeaveRequests(),
-        studentService.getOngoingLessons ? studentService.getOngoingLessons() : Promise.resolve({ data: [] }),
-        studentService.getNotifications ? studentService.getNotifications() : Promise.resolve({ data: [] }),
+      ] = await Promise.allSettled([
+        studentService.getProfile().catch(() => createMockResponse(placeholderData.studentProfile)),
+        studentService.getSubjectsAndTeachers().catch(() => createMockResponse({ subjects: placeholderData.subjects })),
+        studentService.getAssignments().catch(() => createMockResponse(placeholderData.assignments)),
+        studentService.getAnnouncements().catch(() => createMockResponse(placeholderData.announcements)),
+        studentService.getPerformanceAnalytics().catch(() => createMockResponse(placeholderData.performance)),
+        studentService.getAttendanceRecords().catch(() => createMockResponse(placeholderData.attendance)),
+        studentService.getUpcomingExams().catch(() => createMockResponse(placeholderData.upcomingExams)),
+        studentService.getMessages().catch(() => createMockResponse(placeholderData.messages)),
+        studentService.getHomework().catch(() => createMockResponse(placeholderData.homework)),
+        studentService.getPaymentStatus().catch(() => createMockResponse(placeholderData.feeStatus)),
+        studentService.getLearningResources().catch(() => createMockResponse(placeholderData.learningResources)),
+        studentService.getLeaveRequests().catch(() => createMockResponse(placeholderData.leaveRequests)),
+        studentService.getOngoingLessons ? studentService.getOngoingLessons().catch(() => createMockResponse(placeholderData.ongoingLessons)) : Promise.resolve(createMockResponse(placeholderData.ongoingLessons)),
+        studentService.getNotifications ? studentService.getNotifications().catch(() => createMockResponse(placeholderData.notifications)) : Promise.resolve(createMockResponse(placeholderData.notifications)),
       ]);
 
-      setProfile(profileRes.data);
-      setSubjects(subjectsRes.data?.subjects || []);
-      setAssignments(assignmentsRes.data || []);
-      setAnnouncements(announcementsRes.data || []);
-      setPerformance(performanceRes.data);
-      setAttendance(attendanceRes.data || []);
-      setUpcomingExams(examsRes.data || []);
-      setMessages(messagesRes.data || []);
-      setHomework(homeworkRes.data || []);
-      setFeeStatus(feeRes.data);
-      setLearningResources(resourcesRes.data || []);
-      setLeaveRequests(leaveRes.data || []);
-      setOngoingLessons(lessonsRes.data || []);
-      setNotifications(notificationsRes.data || []);
+      // Extract data from resolved promises, using placeholder data if rejected
+      const profile = profileRes.status === 'fulfilled' ? profileRes.value.data : placeholderData.studentProfile;
+      const subjects = subjectsRes.status === 'fulfilled' ? (subjectsRes.value.data?.subjects || []) : placeholderData.subjects;
+      const assignments = assignmentsRes.status === 'fulfilled' ? (assignmentsRes.value.data || []) : placeholderData.assignments;
+      const announcements = announcementsRes.status === 'fulfilled' ? (announcementsRes.value.data || []) : placeholderData.announcements;
+      const performance = performanceRes.status === 'fulfilled' ? performanceRes.value.data : placeholderData.performance;
+      const attendance = attendanceRes.status === 'fulfilled' ? (attendanceRes.value.data || []) : placeholderData.attendance;
+      const upcomingExams = examsRes.status === 'fulfilled' ? (examsRes.value.data || []) : placeholderData.upcomingExams;
+      const messages = messagesRes.status === 'fulfilled' ? (messagesRes.value.data || []) : placeholderData.messages;
+      const homework = homeworkRes.status === 'fulfilled' ? (homeworkRes.value.data || []) : placeholderData.homework;
+      const feeStatus = feeRes.status === 'fulfilled' ? feeRes.value.data : placeholderData.feeStatus;
+      const learningResources = resourcesRes.status === 'fulfilled' ? (resourcesRes.value.data || []) : placeholderData.learningResources;
+      const leaveRequests = leaveRes.status === 'fulfilled' ? (leaveRes.value.data || []) : placeholderData.leaveRequests;
+      const ongoingLessons = lessonsRes.status === 'fulfilled' ? (lessonsRes.value.data || []) : placeholderData.ongoingLessons;
+      const notifications = notificationsRes.status === 'fulfilled' ? (notificationsRes.value.data || []) : placeholderData.notifications;
+
+      setProfile(profile);
+      setSubjects(subjects);
+      setAssignments(assignments);
+      setAnnouncements(announcements);
+      setPerformance(performance);
+      setAttendance(attendance);
+      setUpcomingExams(upcomingExams);
+      setMessages(messages);
+      setHomework(homework);
+      setFeeStatus(feeStatus);
+      setLearningResources(learningResources);
+      setLeaveRequests(leaveRequests);
+      setOngoingLessons(ongoingLessons);
+      setNotifications(notifications);
 
       // Generate task notifications from assignments and homework
       const allTasks = [
-        ...assignmentsRes.data?.filter(a => a.status === 'pending') || [],
-        ...homeworkRes.data?.filter(h => h.status === 'pending') || [],
+        ...assignments.filter(a => a.status === 'pending'),
+        ...homework.filter(h => h.status === 'pending'),
       ];
       
       const taskNotifs = allTasks.map(task => ({
@@ -160,10 +177,65 @@ const Dashboard = () => {
       
       setTaskNotifications(taskNotifs);
 
+      // Show info toast if using placeholder data
+      const usingPlaceholder = [
+        profileRes.status === 'rejected',
+        subjectsRes.status === 'rejected',
+        assignmentsRes.status === 'rejected',
+        announcementsRes.status === 'rejected',
+        performanceRes.status === 'rejected',
+        attendanceRes.status === 'rejected',
+        examsRes.status === 'rejected',
+        messagesRes.status === 'rejected',
+        homeworkRes.status === 'rejected',
+        feeRes.status === 'rejected',
+        resourcesRes.status === 'rejected',
+        leaveRes.status === 'rejected',
+        lessonsRes.status === 'rejected',
+        notificationsRes.status === 'rejected',
+      ].some(Boolean);
+
+      if (usingPlaceholder) {
+        toast.info('Using demo data - some features may be limited');
+      }
+
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
-      setError('Failed to load dashboard data. Please try again.');
-      toast.error('Failed to load dashboard data');
+      setError('Failed to load dashboard data. Using demo data instead.');
+      
+      // Set all placeholder data as fallback
+      setProfile(placeholderData.studentProfile);
+      setSubjects(placeholderData.subjects);
+      setAssignments(placeholderData.assignments);
+      setAnnouncements(placeholderData.announcements);
+      setPerformance(placeholderData.performance);
+      setAttendance(placeholderData.attendance);
+      setUpcomingExams(placeholderData.upcomingExams);
+      setMessages(placeholderData.messages);
+      setHomework(placeholderData.homework);
+      setFeeStatus(placeholderData.feeStatus);
+      setLearningResources(placeholderData.learningResources);
+      setLeaveRequests(placeholderData.leaveRequests);
+      setOngoingLessons(placeholderData.ongoingLessons);
+      setNotifications(placeholderData.notifications);
+      
+      const allTasks = [
+        ...placeholderData.assignments.filter(a => a.status === 'pending'),
+        ...placeholderData.homework.filter(h => h.status === 'pending'),
+      ];
+      
+      const taskNotifs = allTasks.map(task => ({
+        id: task.id,
+        type: task.type || 'assignment',
+        title: task.title || task.name,
+        dueDate: task.dueDate || task.deadline,
+        priority: task.priority || 'medium',
+        message: `New ${task.type || 'assignment'} assigned: ${task.title || task.name}`,
+      }));
+      
+      setTaskNotifications(taskNotifs);
+      
+      toast.info('Using demo data - some features may be limited');
     } finally {
       setLoading(false);
     }

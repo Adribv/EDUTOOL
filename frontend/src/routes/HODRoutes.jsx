@@ -12,6 +12,7 @@ const HODRoutes = () => {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<Dashboard />} />
+        <Route path="dashboard" element={<Dashboard />} />
         <Route path="profile" element={<Profile />} />
         <Route path="department" element={<DepartmentManagement />} />
         <Route path="staff" element={<StaffManagement />} />

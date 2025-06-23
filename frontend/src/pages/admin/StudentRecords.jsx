@@ -68,6 +68,10 @@ function StudentRecords() {
     gender: '',
   });
 
+  const handleFilterChange = (e) => {
+    setFilters((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
   // Fetch students data
   const { data: students, isLoading } = useQuery({
     queryKey: ['students'],
@@ -180,11 +184,39 @@ function StudentRecords() {
     }
   };
 
-  const filteredStudents = students?.filter((student) =>
-    Object.values(student).some((value) =>
-      value.toString().toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
+  const filteredStudents = students?.filter((student) => {
+    return (
+      (!filters.grade || student.grade === filters.grade) &&
+      (!filters.section || student.section === filters.section) &&
+      (!filters.gender || student.gender.toLowerCase() === filters.gender)
+    );
+  });
+
+  const columns = [
+    { field: 'name', headerName: 'Name', flex: 1, minWidth: 150 },
+    { field: 'email', headerName: 'Email', flex: 1, minWidth: 200 },
+    { field: 'grade', headerName: 'Grade', width: 100 },
+    { field: 'section', headerName: 'Section', width: 100 },
+    { field: 'rollNumber', headerName: 'Roll No.', width: 120 },
+    { field: 'parentPhone', headerName: "Parent's Phone", flex: 1, minWidth: 150 },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 120,
+      sortable: false,
+      disableColumnMenu: true,
+      renderCell: (params) => (
+        <Box>
+          <IconButton onClick={() => handleEdit(params.row)} size="small">
+            <EditIcon />
+          </IconButton>
+          <IconButton onClick={() => handleDelete(params.row._id)} size="small">
+            <DeleteIcon />
+          </IconButton>
+        </Box>
+      ),
+    },
+  ];
 
   if (isLoading) {
     return (
@@ -419,10 +451,14 @@ function StudentRecords() {
                     select
                     name="gender"
                     label="Gender"
+                    value={formik.values.gender}
+                    onChange={formik.handleChange}
+                    error={formik.touched.gender && Boolean(formik.errors.gender)}
+                    helperText={formik.touched.gender && formik.errors.gender}
                   >
-                    <MenuItem value="Male">Male</MenuItem>
-                    <MenuItem value="Female">Female</MenuItem>
-                    <MenuItem value="Other">Other</MenuItem>
+                    <MenuItem value="male">Male</MenuItem>
+                    <MenuItem value="female">Female</MenuItem>
+                    <MenuItem value="other">Other</MenuItem>
                   </TextField>
                 </Grid>
               </Grid>
@@ -431,9 +467,10 @@ function StudentRecords() {
                   fullWidth
                   label="Parent Name"
                   name="parentName"
-                  value={formData.parentName}
-                  onChange={handleInputChange}
-                  required
+                  value={formik.values.parentName}
+                  onChange={formik.handleChange}
+                  error={formik.touched.parentName && Boolean(formik.errors.parentName)}
+                  helperText={formik.touched.parentName && formik.errors.parentName}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -441,9 +478,10 @@ function StudentRecords() {
                   fullWidth
                   label="Parent Phone"
                   name="parentPhone"
-                  value={formData.parentPhone}
-                  onChange={handleInputChange}
-                  required
+                  value={formik.values.parentPhone}
+                  onChange={formik.handleChange}
+                  error={formik.touched.parentPhone && Boolean(formik.errors.parentPhone)}
+                  helperText={formik.touched.parentPhone && formik.errors.parentPhone}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -451,26 +489,28 @@ function StudentRecords() {
                   fullWidth
                   label="Address"
                   name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
+                  value={formik.values.address}
+                  onChange={formik.handleChange}
+                  error={formik.touched.address && Boolean(formik.errors.address)}
+                  helperText={formik.touched.address && formik.errors.address}
                   multiline
                   rows={2}
                 />
               </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={createMutation.isPending || updateMutation.isPending}
-            >
-              {selectedStudent ? 'Update' : 'Add'}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
-    </motion.div>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleClose}>Cancel</Button>
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={mutation.isPending}
+              >
+                {selectedStudent ? 'Update' : 'Add'}
+              </Button>
+            </DialogActions>
+          </form>
+        </Dialog>
+      </motion.div>
     </Container>
   );
 }

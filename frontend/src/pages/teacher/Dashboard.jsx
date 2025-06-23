@@ -34,6 +34,7 @@ import {
   Warning,
 } from '@mui/icons-material';
 import { teacherAPI } from '../../services/api';
+import { placeholderData, createMockResponse } from '../../services/placeholderData';
 import { toast } from 'react-toastify';
 
 const Dashboard = () => {
@@ -51,28 +52,59 @@ const Dashboard = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      
+      // Fetch data with fallback to placeholder data
       const [
         profileRes,
         classesRes,
         assignmentsRes,
         announcementsRes,
         performanceRes,
-      ] = await Promise.all([
-        teacherAPI.getProfile(),
-        teacherAPI.getClasses(),
-        teacherAPI.getAssignments(),
-        teacherAPI.getAnnouncements(),
-        teacherAPI.getPerformanceAnalytics(),
+      ] = await Promise.allSettled([
+        teacherAPI.getProfile().catch(() => createMockResponse(placeholderData.teacherProfile)),
+        teacherAPI.getClasses().catch(() => createMockResponse([])),
+        teacherAPI.getAssignments().catch(() => createMockResponse(placeholderData.assignments)),
+        teacherAPI.getAnnouncements().catch(() => createMockResponse(placeholderData.announcements)),
+        teacherAPI.getPerformanceAnalytics().catch(() => createMockResponse(placeholderData.performance)),
       ]);
 
-      setProfile(profileRes.data);
-      setClasses(classesRes.data);
-      setAssignments(assignmentsRes.data);
-      setAnnouncements(announcementsRes.data);
-      setPerformance(performanceRes.data);
+      // Extract data from resolved promises, using placeholder data if rejected
+      const profile = profileRes.status === 'fulfilled' ? profileRes.value.data : placeholderData.teacherProfile;
+      const classes = classesRes.status === 'fulfilled' ? (classesRes.value.data || []) : [];
+      const assignments = assignmentsRes.status === 'fulfilled' ? (assignmentsRes.value.data || []) : placeholderData.assignments;
+      const announcements = announcementsRes.status === 'fulfilled' ? (announcementsRes.value.data || []) : placeholderData.announcements;
+      const performance = performanceRes.status === 'fulfilled' ? performanceRes.value.data : placeholderData.performance;
+
+      setProfile(profile);
+      setClasses(classes);
+      setAssignments(assignments);
+      setAnnouncements(announcements);
+      setPerformance(performance);
+
+      // Show info toast if using placeholder data
+      const usingPlaceholder = [
+        profileRes.status === 'rejected',
+        classesRes.status === 'rejected',
+        assignmentsRes.status === 'rejected',
+        announcementsRes.status === 'rejected',
+        performanceRes.status === 'rejected',
+      ].some(Boolean);
+
+      if (usingPlaceholder) {
+        toast.info('Using demo data - some features may be limited');
+      }
+
     } catch (error) {
       console.error('Error fetching data:', error);
-      toast.error('Failed to load dashboard data');
+      
+      // Set placeholder data as fallback
+      setProfile(placeholderData.teacherProfile);
+      setClasses([]);
+      setAssignments(placeholderData.assignments);
+      setAnnouncements(placeholderData.announcements);
+      setPerformance(placeholderData.performance);
+      
+      toast.info('Using demo data - some features may be limited');
     } finally {
       setLoading(false);
     }

@@ -25,6 +25,9 @@ import {
   InputLabel,
   Select,
   InputAdornment,
+  CircularProgress,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -47,6 +50,7 @@ import * as XLSX from 'xlsx';
 const grades = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
 const feeTypes = ['Tuition', 'Transportation', 'Library', 'Laboratory', 'Sports', 'Other'];
 const paymentStatus = ['Paid', 'Pending', 'Overdue'];
+const initialFormData = { grade: '', feeType: '', amount: '', dueDate: '', description: '' };
 
 function TabPanel({ children, value, index }) {
   return value === index && <Box sx={{ py: 3 }}>{children}</Box>;
@@ -56,7 +60,7 @@ function FeeConfiguration() {
   const [tabValue, setTabValue] = useState(0);
   const [open, setOpen] = useState(false);
   const [selectedFee, setSelectedFee] = useState(null);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [formData, setFormData] = useState(initialFormData);
   const [filters, setFilters] = useState({
     grade: '',
     feeType: '',
@@ -84,6 +88,34 @@ function FeeConfiguration() {
     queryFn: () => adminAPI.getStaffSalaries(),
   });
 
+  const mutation = useMutation({
+    mutationFn: async (values) => {
+      const apiCall = selectedFee
+        ? adminAPI.updateFeeStructure(selectedFee._id, values)
+        : adminAPI.createFeeStructure(values);
+      return apiCall;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['feeStructures']);
+      handleClose();
+      toast.success(`Fee structure ${selectedFee ? 'updated' : 'added'} successfully`);
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'An error occurred');
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => adminAPI.deleteFeeStructure(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['feeStructures']);
+      toast.success('Fee structure deleted successfully');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'An error occurred');
+    }
+  });
+
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
@@ -94,6 +126,46 @@ function FeeConfiguration() {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAddNew = () => {
+    setSelectedFee(null);
+    setFormData(initialFormData);
+    setOpen(true);
+  };
+
+  const handleOpen = (fee) => {
+    setSelectedFee(fee);
+    setFormData({
+      grade: fee.grade || fee.class || '',
+      feeType: fee.feeType || fee.components?.[0]?.name || '',
+      amount: fee.amount || fee.totalAmount || '',
+      dueDate: fee.dueDate ? new Date(fee.dueDate).toISOString().split('T')[0] : '',
+      description: fee.description || fee.components?.[0]?.description || '',
+    });
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    setSelectedFee(null);
+    setFormData(initialFormData);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    mutation.mutate(formData);
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm('Are you sure you want to delete this fee structure?')) {
+      deleteMutation.mutate(id);
+    }
   };
 
   const exportToExcel = (data, filename) => {
@@ -137,10 +209,11 @@ function FeeConfiguration() {
 
   return (
     <Box>
-      <motion.div>
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
+      >
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
           <Tabs value={tabValue} onChange={handleTabChange}>
             <Tab label="Fee Structure" />
@@ -156,7 +229,7 @@ function FeeConfiguration() {
             <Button
               variant="contained"
               startIcon={<AddIcon />}
-              onClick={() => setOpen(true)}
+              onClick={handleAddNew}
             >
               Add Fee Structure
             </Button>
@@ -293,7 +366,7 @@ function FeeConfiguration() {
             <Button
               type="submit"
               variant="contained"
-              disabled={createMutation.isPending || updateMutation.isPending}
+              disabled={mutation.isPending}
             >
               {selectedFee ? 'Update' : 'Add'}
             </Button>

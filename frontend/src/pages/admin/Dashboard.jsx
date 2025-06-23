@@ -21,12 +21,21 @@ import {
 } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { adminAPI } from '../../services/api';
+import { placeholderData, createMockResponse } from '../../services/placeholderData';
 import { toast } from 'react-toastify';
 
 function AdminDashboard() {
   const { data: stats, isLoading, refetch } = useQuery({
     queryKey: ['adminDashboard'],
-    queryFn: adminAPI.getDashboardStats,
+    queryFn: async () => {
+      try {
+        return await adminAPI.getDashboardStats();
+      } catch (error) {
+        console.warn('Using placeholder data for admin dashboard:', error);
+        toast.info('Using demo data - some features may be limited');
+        return createMockResponse(placeholderData.adminStats);
+      }
+    },
   });
 
   const handleRefresh = () => {

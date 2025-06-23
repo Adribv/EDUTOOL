@@ -32,8 +32,20 @@ const ProtectedRoute = ({ allowedRoles }) => {
 
       // Check for staff token for other roles
       if (isAuthenticated && user) {
-        const hasRole = allowedRoles.includes(user.role);
+        // Normalize user role to lowercase for comparison
+        const userRole = (user.role || '').toLowerCase();
+        
+        // Check if any of the allowed roles match (case-insensitive)
+        const hasRole = allowedRoles.some(allowedRole => 
+          allowedRole.toLowerCase() === userRole
+        );
+        
         setIsAuthorized(hasRole);
+        
+        // Store the role in localStorage for consistency
+        if (user.role) {
+          localStorage.setItem('userRole', user.role);
+        }
       } else {
         setIsAuthorized(false);
       }
@@ -68,7 +80,7 @@ const ProtectedRoute = ({ allowedRoles }) => {
     } else if (allowedRoles.includes('parent')) {
       return <Navigate to="/parent-login" replace />;
     } else {
-      return <Navigate to="/login" replace />;
+      return <Navigate to="/management-login" replace />;
     }
   }
 
