@@ -47,6 +47,7 @@ function UserManagement() {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
+    password: '',
     role: '',
     status: 'active',
     firstName: '',
@@ -112,6 +113,7 @@ function UserManagement() {
       setFormData({
         username: user.username,
         email: user.email,
+        password: '',
         role: user.role,
         status: user.status,
         firstName: user.firstName,
@@ -123,6 +125,7 @@ function UserManagement() {
       setFormData({
         username: '',
         email: '',
+        password: '',
         role: '',
         status: 'active',
         firstName: '',
@@ -139,6 +142,7 @@ function UserManagement() {
     setFormData({
       username: '',
       email: '',
+      password: '',
       role: '',
       status: 'active',
       firstName: '',
@@ -352,6 +356,18 @@ function UserManagement() {
                   value={formData.lastName}
                   onChange={handleInputChange}
                   required
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Password"
+                  name="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  required={!selectedUser}
+                  helperText={selectedUser ? "Leave blank to keep existing password" : "Required for new user"}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>

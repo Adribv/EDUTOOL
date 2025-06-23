@@ -99,25 +99,40 @@ export const staffAPI = {
 
 // Parent endpoints
 export const parentAPI = {
-  getDashboard: () => api.get('/parent/dashboard'),
-  getChildren: () => api.get('/parent/children'),
-  getChildProgress: (childId) => api.get(`/parent/children/${childId}/progress`),
-  getFees: () => api.get('/parent/fees'),
-  getMessages: () => api.get('/parent/messages'),
-  payFees: (data) => api.post('/parent/fees/pay', data),
-  getProfile: () => api.get('/parent/profile'),
-  updateProfile: (data) => api.put('/parent/profile', data),
-  uploadProfileImage: (formData) => api.post('/parent/profile/image', formData),
-  getChildGrades: (childId) => api.get(`/parent/children/${childId}/grades`),
-  getChildAttendance: (childId) => api.get(`/parent/children/${childId}/attendance`),
-  getChildAssignments: (childId) => api.get(`/parent/children/${childId}/assignments`),
-  getChildExams: (childId) => api.get(`/parent/children/${childId}/exams`),
-  getFeeBalance: (childId) => api.get(`/parent/children/${childId}/fees/balance`),
-  getUpcomingPayments: (childId) => api.get(`/parent/children/${childId}/fees/upcoming`),
-  getPaymentHistory: (childId) => api.get(`/parent/children/${childId}/fees/history`),
-  getPaymentMethods: () => api.get('/parent/payment-methods'),
-  makePayment: (data) => api.post('/parent/payments', data),
-  downloadReceipt: (paymentId) => api.get(`/parent/payments/${paymentId}/receipt`, { responseType: 'blob' }),
+  getDashboard: () => api.get('/api/parents/dashboard'),
+  getChildren: () => api.get('/api/parents/children').then(res => res.data),
+  getChildProfile: (childId) => api.get(`/api/parents/children/${childId}`),
+  getChildProgress: (childId) => api.get(`/api/parents/children/${childId}/performance`),
+  getFees: (childId, params) => api.get(`/api/parents/children/${childId}/fee-structure`, { params }),
+  getMessages: () => api.get('/api/parents/messages/received'),
+  getSentMessages: () => api.get('/api/parents/messages/sent'),
+  payFees: (data) => api.post('/api/parents/payments', data),
+  getProfile: () => api.get('/api/auth/profile'),
+  updateProfile: (data) => api.put('/api/parents/profile', data),
+  uploadProfileImage: (formData) => api.post('/api/parents/profile/image', formData),
+  getChildGrades: (childId) => api.get(`/api/parents/children/${childId}/exam-results`),
+  getChildAttendance: (childId, params) => api.get(`/api/parents/children/${childId}/attendance`, { params }),
+  getChildAssignments: (childId) => api.get(`/api/parents/children/${childId}/assignments`),
+  getChildExams: (childId) => api.get(`/api/parents/children/${childId}/exams`),
+  getFeeBalance: (childId) => api.get(`/api/parents/children/${childId}/payment-status`),
+  getUpcomingPayments: (childId) => api.get(`/api/parents/children/${childId}/payment-status`),
+  getPaymentHistory: (childId) => api.get(`/api/parents/children/${childId}/payment-status`),
+  getPaymentMethods: () => api.get('/api/parents/payment-methods'),
+  makePayment: (data) => api.post('/api/parents/payments', data),
+  downloadReceipt: (childId, paymentId) => api.get(`/api/parents/children/${childId}/payment-receipts/${paymentId}`, { responseType: 'blob' }),
+  getChildTransport: (childId) => api.get(`/api/parents/children/${childId}/transport`),
+  getChildHealth: (childId) => api.get(`/api/parents/children/${childId}/health`),
+  getChildSubjects: (childId) => api.get(`/api/parents/children/${childId}/subjects`),
+  getChildTimetable: (childId) => api.get(`/api/parents/children/${childId}/timetable`),
+  getChildReportCards: (childId) => api.get(`/api/parents/children/${childId}/report-cards`),
+  getChildLeaveApplications: (childId) => api.get(`/api/parents/children/${childId}/leave-applications`),
+  submitLeaveRequest: (childId, data) => api.post(`/api/parents/children/${childId}/leave-application`, data),
+  sendMessage: (data) => api.post('/api/parents/messages', data),
+  submitComplaint: (data) => api.post('/api/parents/complaints', data),
+  scheduleMeeting: (data) => api.post('/api/parents/meetings', data),
+  getAnnouncements: () => api.get('/api/parents/announcements'),
+  getSchoolCalendar: (params) => api.get('/api/parents/calendar', { params }),
+  linkStudent: (rollNumber) => api.post('/api/parents/link-student', { rollNumber }),
 };
 
 // Admin endpoints
@@ -191,6 +206,20 @@ export const adminAPI = {
       };
     } else if (role === 'parent') {
       endpoint = '/api/admin-staff/parents';
+      dataToSend = {
+        name: `${payload.firstName || ''} ${payload.lastName || ''}`.trim(),
+        email: payload.email,
+        password: payload.password || 'defaultPassword123', // Generate default password if not provided
+        contactNumber: payload.phone || payload.contactNumber,
+        address: {
+          street: payload.address?.street || '',
+          city: payload.address?.city || '',
+          state: payload.address?.state || '',
+          postalCode: payload.address?.postalCode || '',
+          country: payload.address?.country || ''
+        },
+        childRollNumbers: payload.childRollNumbers || []
+      };
     } else {
       // staff / teacher
       if (role === 'teacher') {
@@ -224,6 +253,19 @@ export const adminAPI = {
       };
     } else if (role === 'parent') {
       endpoint = `/api/admin-staff/parents/${userId}`;
+      dataToSend = {
+        name: `${payload.firstName || ''} ${payload.lastName || ''}`.trim(),
+        email: payload.email,
+        contactNumber: payload.phone || payload.contactNumber,
+        address: {
+          street: payload.address?.street || '',
+          city: payload.address?.city || '',
+          state: payload.address?.state || '',
+          postalCode: payload.address?.postalCode || '',
+          country: payload.address?.country || ''
+        },
+        childRollNumbers: payload.childRollNumbers || []
+      };
     } else {
       if (role === 'teacher') {
         dataToSend.role = 'Teacher';

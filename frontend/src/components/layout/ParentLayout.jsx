@@ -23,7 +23,6 @@ import {
   Dashboard,
   Person,
   Payment,
-  Assessment,
   Event,
   Message,
   Logout,
@@ -38,7 +37,6 @@ const navItems = [
   { text: 'Dashboard', icon: <Dashboard />, path: '/parent/dashboard' },
   { text: 'My Children', icon: <Person />, path: '/parent/children' },
   { text: 'Fees', icon: <Payment />, path: '/parent/fees' },
-  { text: 'Progress', icon: <Assessment />, path: '/parent/progress' },
   { text: 'Events', icon: <Event />, path: '/parent/events' },
   { text: 'Messages', icon: <Message />, path: '/parent/messages' },
 ];

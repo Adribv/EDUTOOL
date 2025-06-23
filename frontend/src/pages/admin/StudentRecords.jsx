@@ -14,7 +14,6 @@ import {
   Alert,
   Snackbar,
   Chip,
-  useTheme,
   MenuItem,
   Grid,
   Card,
@@ -37,7 +36,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
-import { motion } from 'framer-motion';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const grades = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
 const sections = ['A', 'B', 'C', 'D', 'E'];
@@ -57,69 +57,60 @@ const validationSchema = yup.object({
 });
 
 function StudentRecords() {
-  const theme = useTheme();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [filters, setFilters] = useState({
     grade: '',
     section: '',
     gender: '',
   });
 
-  const handleFilterChange = (e) => {
-    setFilters((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleFilterChange = (event) => {
+    const { name, value } = event.target;
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      [name]: value,
+    }));
   };
 
   // Fetch students data
   const { data: students, isLoading } = useQuery({
-    queryKey: ['students'],
+    queryKey: ['students', filters],
     queryFn: async () => {
-      const response = await axios.get('http://localhost:5000/api/admin/students');
+      const response = await axios.get('http://localhost:5000/api/admin-staff/students', { params: filters });
       return response.data;
-    }
+    },
+    keepPreviousData: true,
   });
 
   // Add/Edit student mutation
   const mutation = useMutation({
     mutationFn: async (values) => {
       if (selectedStudent) {
-        await axios.put(`http://localhost:5000/api/admin/students/${selectedStudent._id}`, values);
+        await axios.put(`http://localhost:5000/api/admin-staff/students/${selectedStudent._id}`, values);
       } else {
-        await axios.post('http://localhost:5000/api/admin/students', values);
+        await axios.post('http://localhost:5000/api/admin-staff/students', values);
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['students']);
       handleClose();
-      setSnackbar({
-        open: true,
-        message: `Student ${selectedStudent ? 'updated' : 'added'} successfully`,
-        severity: 'success'
-      });
+      toast.success(`Student ${selectedStudent ? 'updated' : 'added'} successfully`);
     },
     onError: (error) => {
-      setSnackbar({
-        open: true,
-        message: error.response?.data?.message || 'An error occurred',
-        severity: 'error'
-      });
+      toast.error(error.response?.data?.message || 'An error occurred');
     }
   });
 
   // Delete student mutation
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
-      await axios.delete(`http://localhost:5000/api/admin/students/${id}`);
+      await axios.delete(`http://localhost:5000/api/admin-staff/students/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['students']);
-      setSnackbar({
-        open: true,
-        message: 'Student deleted successfully',
-        severity: 'success'
-      });
+      toast.success('Student deleted successfully');
     }
   });
 
@@ -152,7 +143,7 @@ function StudentRecords() {
     setSelectedStudent(student);
     formik.setValues({
       ...student,
-      dateOfBirth: student.dateOfBirth.split('T')[0], // Format date for input
+      dateOfBirth: student.dateOfBirth ? new Date(student.dateOfBirth).toISOString().split('T')[0] : '',
     });
     setOpen(true);
   };
@@ -169,42 +160,35 @@ function StudentRecords() {
   };
 
   const handleDownloadReport = async () => {
-    try {
-      const response = await adminAPI.generateStudentReport();
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'student-report.pdf');
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      toast.success('Report downloaded successfully');
-    } catch {
-      toast.error('Failed to download report');
-    }
+    toast.info('Exporting records...');
+    // Mock functionality, replace with actual API call
+    // try {
+    //   const response = await adminAPI.generateStudentReport();
+    //   const url = window.URL.createObjectURL(new Blob([response.data]));
+    //   const link = document.createElement('a');
+    //   link.href = url;
+    //   link.setAttribute('download', 'student-report.pdf');
+    //   document.body.appendChild(link);
+    //   link.click();
+    //   link.remove();
+    //   toast.success('Report downloaded successfully');
+    // } catch {
+    //   toast.error('Failed to download report');
+    // }
   };
 
-  const filteredStudents = students?.filter((student) => {
-    return (
-      (!filters.grade || student.grade === filters.grade) &&
-      (!filters.section || student.section === filters.section) &&
-      (!filters.gender || student.gender.toLowerCase() === filters.gender)
-    );
-  });
-
   const columns = [
-    { field: 'name', headerName: 'Name', flex: 1, minWidth: 150 },
-    { field: 'email', headerName: 'Email', flex: 1, minWidth: 200 },
+    { field: 'name', headerName: 'Name', flex: 1 },
+    { field: 'email', headerName: 'Email', flex: 1 },
     { field: 'grade', headerName: 'Grade', width: 100 },
     { field: 'section', headerName: 'Section', width: 100 },
-    { field: 'rollNumber', headerName: 'Roll No.', width: 120 },
-    { field: 'parentPhone', headerName: "Parent's Phone", flex: 1, minWidth: 150 },
+    { field: 'rollNumber', headerName: 'Roll No', width: 100 },
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 120,
       sortable: false,
-      disableColumnMenu: true,
+      filterable: false,
+      width: 150,
       renderCell: (params) => (
         <Box>
           <IconButton onClick={() => handleEdit(params.row)} size="small">
@@ -218,6 +202,14 @@ function StudentRecords() {
     },
   ];
 
+  const filteredStudents = students?.filter(student => {
+    return (
+      (filters.grade ? student.grade === filters.grade : true) &&
+      (filters.section ? student.section === filters.section : true) &&
+      (filters.gender ? student.gender === filters.gender : true)
+    );
+  });
+
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
@@ -228,11 +220,6 @@ function StudentRecords() {
 
   return (
     <Container maxWidth="xl">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
         <Box sx={{ py: 4 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
             <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
@@ -243,7 +230,7 @@ function StudentRecords() {
                 variant="contained"
                 startIcon={<DownloadIcon />}
                 sx={{ mr: 2 }}
-                onClick={() => {/* Handle export */}}
+                onClick={handleDownloadReport}
               >
                 Export Records
               </Button>
@@ -306,20 +293,18 @@ function StudentRecords() {
                       onChange={handleFilterChange}
                       label="Gender"
                     >
-                      <MenuItem value="">All</MenuItem>
+                      <MenuItem value="">All Genders</MenuItem>
                       {genders.map((gender) => (
-                        <MenuItem key={gender} value={gender}>
-                          {gender.charAt(0).toUpperCase() + gender.slice(1)}
+                        <MenuItem key={gender} value={gender} sx={{ textTransform: 'capitalize' }}>
+                          {gender}
                         </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} sm={6} md={3}>
+                 <Grid item xs={12} sm={6} md={3}>
                   <Button
-                    fullWidth
                     variant="outlined"
-                    startIcon={<FilterListIcon />}
                     onClick={() => setFilters({ grade: '', section: '', gender: '' })}
                   >
                     Clear Filters
@@ -329,144 +314,149 @@ function StudentRecords() {
             </CardContent>
           </Card>
 
-          {/* Data Grid */}
-          <Box sx={{ height: 600, width: '100%', bgcolor: 'background.paper' }}>
+          <Box sx={{ height: 650, width: '100%' }}>
             <DataGrid
               rows={filteredStudents || []}
               columns={columns}
-              pageSize={10}
-              rowsPerPageOptions={[10, 25, 50]}
-              checkboxSelection
-              disableSelectionOnClick
+              loading={isLoading}
               getRowId={(row) => row._id}
-              components={{ Toolbar: GridToolbar }}
-              componentsProps={{
+              pageSizeOptions={[10, 25, 50]}
+              initialState={{
+                pagination: {
+                  paginationModel: { pageSize: 10, page: 0 },
+                },
+              }}
+              slots={{ toolbar: GridToolbar }}
+              slotProps={{
                 toolbar: {
                   showQuickFilter: true,
                   quickFilterProps: { debounceMs: 500 },
                 },
               }}
-              sx={{
-                '& .MuiDataGrid-cell:hover': {
-                  color: 'primary.main',
-                },
-              }}
+              autoHeight
             />
           </Box>
         </Box>
 
-        {/* Add/Edit Student Dialog */}
-        <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-          <DialogTitle>
-            {selectedStudent ? 'Edit Student Record' : 'Add New Student Record'}
-          </DialogTitle>
-          <form onSubmit={formik.handleSubmit}>
-            <DialogContent>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    name="name"
-                    label="Full Name"
-                    value={formik.values.name}
-                    onChange={formik.handleChange}
-                    error={formik.touched.name && Boolean(formik.errors.name)}
-                    helperText={formik.touched.name && formik.errors.name}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    name="email"
-                    label="Email"
-                    value={formik.values.email}
-                    onChange={formik.handleChange}
-                    error={formik.touched.email && Boolean(formik.errors.email)}
-                    helperText={formik.touched.email && formik.errors.email}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    fullWidth
-                    select
-                    name="grade"
-                    label="Grade"
-                    value={formik.values.grade}
-                    onChange={formik.handleChange}
-                    error={formik.touched.grade && Boolean(formik.errors.grade)}
-                    helperText={formik.touched.grade && formik.errors.grade}
-                  >
-                    {grades.map((grade) => (
-                      <MenuItem key={grade} value={grade}>
-                        Grade {grade}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    fullWidth
-                    select
-                    name="section"
-                    label="Section"
-                    value={formik.values.section}
-                    onChange={formik.handleChange}
-                    error={formik.touched.section && Boolean(formik.errors.section)}
-                    helperText={formik.touched.section && formik.errors.section}
-                  >
-                    {sections.map((section) => (
-                      <MenuItem key={section} value={section}>
-                        Section {section}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    fullWidth
-                    name="rollNumber"
-                    label="Roll Number"
-                    value={formik.values.rollNumber}
-                    onChange={formik.handleChange}
-                    error={formik.touched.rollNumber && Boolean(formik.errors.rollNumber)}
-                    helperText={formik.touched.rollNumber && formik.errors.rollNumber}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    name="dateOfBirth"
-                    label="Date of Birth"
-                    type="date"
-                    value={formik.values.dateOfBirth}
-                    onChange={formik.handleChange}
-                    InputLabelProps={{ shrink: true }}
-                    error={formik.touched.dateOfBirth && Boolean(formik.errors.dateOfBirth)}
-                    helperText={formik.touched.dateOfBirth && formik.errors.dateOfBirth}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    select
-                    name="gender"
-                    label="Gender"
-                    value={formik.values.gender}
-                    onChange={formik.handleChange}
-                    error={formik.touched.gender && Boolean(formik.errors.gender)}
-                    helperText={formik.touched.gender && formik.errors.gender}
-                  >
-                    <MenuItem value="male">Male</MenuItem>
-                    <MenuItem value="female">Female</MenuItem>
-                    <MenuItem value="other">Other</MenuItem>
-                  </TextField>
-                </Grid>
+      {/* Add/Edit Dialog */}
+      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+        <DialogTitle>{selectedStudent ? 'Edit Student' : 'Add New Student'}</DialogTitle>
+        <form onSubmit={formik.handleSubmit}>
+          <DialogContent>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  id="name"
+                  name="name"
+                  label="Full Name"
+                  value={formik.values.name}
+                  onChange={formik.handleChange}
+                  error={formik.touched.name && Boolean(formik.errors.name)}
+                  helperText={formik.touched.name && formik.errors.name}
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Parent Name"
+                  id="email"
+                  name="email"
+                  label="Email Address"
+                  value={formik.values.email}
+                  onChange={formik.handleChange}
+                  error={formik.touched.email && Boolean(formik.errors.email)}
+                  helperText={formik.touched.email && formik.errors.email}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  select
+                  id="grade"
+                  name="grade"
+                  label="Grade"
+                  value={formik.values.grade}
+                  onChange={formik.handleChange}
+                  error={formik.touched.grade && Boolean(formik.errors.grade)}
+                  helperText={formik.touched.grade && formik.errors.grade}
+                >
+                  {grades.map((grade) => (
+                    <MenuItem key={grade} value={grade}>
+                      Grade {grade}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  select
+                  id="section"
+                  name="section"
+                  label="Section"
+                  value={formik.values.section}
+                  onChange={formik.handleChange}
+                  error={formik.touched.section && Boolean(formik.errors.section)}
+                  helperText={formik.touched.section && formik.errors.section}
+                >
+                  {sections.map((section) => (
+                    <MenuItem key={section} value={section}>
+                      Section {section}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  id="rollNumber"
+                  name="rollNumber"
+                  label="Roll Number"
+                  value={formik.values.rollNumber}
+                  onChange={formik.handleChange}
+                  error={formik.touched.rollNumber && Boolean(formik.errors.rollNumber)}
+                  helperText={formik.touched.rollNumber && formik.errors.rollNumber}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  id="dateOfBirth"
+                  name="dateOfBirth"
+                  label="Date of Birth"
+                  type="date"
+                  InputLabelProps={{ shrink: true }}
+                  value={formik.values.dateOfBirth}
+                  onChange={formik.handleChange}
+                  error={formik.touched.dateOfBirth && Boolean(formik.errors.dateOfBirth)}
+                  helperText={formik.touched.dateOfBirth && formik.errors.dateOfBirth}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  select
+                  id="gender"
+                  name="gender"
+                  label="Gender"
+                  value={formik.values.gender}
+                  onChange={formik.handleChange}
+                  error={formik.touched.gender && Boolean(formik.errors.gender)}
+                  helperText={formik.touched.gender && formik.errors.gender}
+                >
+                  {genders.map((gender) => (
+                    <MenuItem key={gender} value={gender} sx={{ textTransform: 'capitalize' }}>
+                      {gender}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  id="parentName"
                   name="parentName"
+                  label="Parent Name"
                   value={formik.values.parentName}
                   onChange={formik.handleChange}
                   error={formik.touched.parentName && Boolean(formik.errors.parentName)}
@@ -476,8 +466,9 @@ function StudentRecords() {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Parent Phone"
+                  id="parentPhone"
                   name="parentPhone"
+                  label="Parent Phone"
                   value={formik.values.parentPhone}
                   onChange={formik.handleChange}
                   error={formik.touched.parentPhone && Boolean(formik.errors.parentPhone)}
@@ -487,30 +478,27 @@ function StudentRecords() {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Address"
+                  id="address"
                   name="address"
+                  label="Address"
+                  multiline
+                  rows={3}
                   value={formik.values.address}
                   onChange={formik.handleChange}
                   error={formik.touched.address && Boolean(formik.errors.address)}
                   helperText={formik.touched.address && formik.errors.address}
-                  multiline
-                  rows={2}
                 />
               </Grid>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={handleClose}>Cancel</Button>
-              <Button
-                type="submit"
-                variant="contained"
-                disabled={mutation.isPending}
-              >
-                {selectedStudent ? 'Update' : 'Add'}
-              </Button>
-            </DialogActions>
-          </form>
-        </Dialog>
-      </motion.div>
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClose}>Cancel</Button>
+            <Button type="submit" variant="contained" disabled={mutation.isLoading}>
+              {mutation.isLoading ? <CircularProgress size={24} /> : (selectedStudent ? 'Update' : 'Add')}
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
     </Container>
   );
 }

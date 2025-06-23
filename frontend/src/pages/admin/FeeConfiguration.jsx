@@ -44,8 +44,8 @@ import { DataGrid, GridToolbar } from '@mui/x-data-grid';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminAPI } from '../../services/api';
 import { toast } from 'react-toastify';
-import { motion } from 'framer-motion';
 import * as XLSX from 'xlsx';
+import { motion } from 'framer-motion';
 
 const grades = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
 const feeTypes = ['Tuition', 'Transportation', 'Library', 'Laboratory', 'Sports', 'Other'];
@@ -64,8 +64,9 @@ function FeeConfiguration() {
   const [filters, setFilters] = useState({
     grade: '',
     feeType: '',
-    status: '',
-    month: '',
+    amount: '',
+    dueDate: '',
+    description: '',
   });
 
   const queryClient = useQueryClient();
@@ -118,14 +119,6 @@ function FeeConfiguration() {
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
-  };
-
-  const handleFilterChange = (event) => {
-    const { name, value } = event.target;
-    setFilters(prev => ({
-      ...prev,
-      [name]: value
-    }));
   };
 
   const handleInputChange = (e) => {
@@ -199,14 +192,6 @@ function FeeConfiguration() {
     );
   }
 
-  const filteredStudentFees = studentFees?.filter(fee => {
-    return (
-      (!filters.grade || fee.grade === filters.grade) &&
-      (!filters.feeType || fee.feeType === filters.feeType) &&
-      (!filters.status || fee.status === filters.status)
-    );
-  });
-
   return (
     <Box>
       <motion.div
@@ -235,146 +220,146 @@ function FeeConfiguration() {
             </Button>
           </Box>
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Grade</TableCell>
-              <TableCell>Fee Type</TableCell>
-              <TableCell>Amount</TableCell>
-              <TableCell>Due Date</TableCell>
-              <TableCell>Description</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {feeStructures?.map((fee) => (
-              <TableRow key={fee._id}>
-                <TableCell>{fee.grade || fee.class}</TableCell>
-                <TableCell>{fee.feeType || (fee.components?.[0]?.name)}</TableCell>
-                <TableCell>₹{fee.amount || fee.totalAmount}</TableCell>
-                <TableCell>{fee.dueDate ? new Date(fee.dueDate).toLocaleDateString() : ''}</TableCell>
-                <TableCell>{fee.description || fee.components?.[0]?.description}</TableCell>
-                <TableCell>
-                  <Tooltip title="Edit">
-                    <IconButton
-                      size="small"
-                      onClick={() => handleOpen(fee)}
-                      sx={{ mr: 1 }}
-                    >
-                      <EditIcon />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Delete">
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => handleDelete(fee._id)}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Tooltip>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Grade</TableCell>
+                  <TableCell>Fee Type</TableCell>
+                  <TableCell>Amount</TableCell>
+                  <TableCell>Due Date</TableCell>
+                  <TableCell>Description</TableCell>
+                  <TableCell>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {feeStructures?.map((fee) => (
+                  <TableRow key={fee._id}>
+                    <TableCell>{fee.grade || fee.class}</TableCell>
+                    <TableCell>{fee.feeType || (fee.components?.[0]?.name)}</TableCell>
+                    <TableCell>₹{fee.amount || fee.totalAmount}</TableCell>
+                    <TableCell>{fee.dueDate ? new Date(fee.dueDate).toLocaleDateString() : ''}</TableCell>
+                    <TableCell>{fee.description || fee.components?.[0]?.description}</TableCell>
+                    <TableCell>
+                      <Tooltip title="Edit">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleOpen(fee)}
+                          sx={{ mr: 1 }}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete">
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => handleDelete(fee._id)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
 
-      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-        <DialogTitle>
-          {selectedFee ? 'Edit Fee Structure' : 'Add New Fee Structure'}
-        </DialogTitle>
-        <form onSubmit={handleSubmit}>
-          <DialogContent>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  select
-                  label="Grade"
-                  name="grade"
-                  value={formData.grade}
-                  onChange={handleInputChange}
-                  required
+          <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+            <DialogTitle>
+              {selectedFee ? 'Edit Fee Structure' : 'Add New Fee Structure'}
+            </DialogTitle>
+            <form onSubmit={handleSubmit}>
+              <DialogContent>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      select
+                      label="Grade"
+                      name="grade"
+                      value={formData.grade}
+                      onChange={handleInputChange}
+                      required
+                    >
+                      {grades.map((grade) => (
+                        <MenuItem key={grade} value={grade}>
+                          {grade}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      select
+                      label="Fee Type"
+                      name="feeType"
+                      value={formData.feeType}
+                      onChange={handleInputChange}
+                      required
+                    >
+                      {feeTypes.map((type) => (
+                        <MenuItem key={type} value={type}>
+                          {type}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Amount"
+                      name="amount"
+                      type="number"
+                      value={formData.amount}
+                      onChange={handleInputChange}
+                      required
+                      InputProps={{
+                        startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Due Date"
+                      name="dueDate"
+                      type="date"
+                      value={formData.dueDate}
+                      onChange={handleInputChange}
+                      InputLabelProps={{ shrink: true }}
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Description"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleInputChange}
+                      multiline
+                      rows={2}
+                    />
+                  </Grid>
+                </Grid>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={handleClose}>Cancel</Button>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={mutation.isPending}
                 >
-                  {grades.map((grade) => (
-                    <MenuItem key={grade} value={grade}>
-                      {grade}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  select
-                  label="Fee Type"
-                  name="feeType"
-                  value={formData.feeType}
-                  onChange={handleInputChange}
-                  required
-                >
-                  {feeTypes.map((type) => (
-                    <MenuItem key={type} value={type}>
-                      {type}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Amount"
-                  name="amount"
-                  type="number"
-                  value={formData.amount}
-                  onChange={handleInputChange}
-                  required
-                  InputProps={{
-                    startAdornment: <InputAdornment position="start">₹</InputAdornment>,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Due Date"
-                  name="dueDate"
-                  type="date"
-                  value={formData.dueDate}
-                  onChange={handleInputChange}
-                  InputLabelProps={{ shrink: true }}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  multiline
-                  rows={2}
-                />
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={mutation.isPending}
-            >
-              {selectedFee ? 'Update' : 'Add'}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
-      </TabPanel>
-    </motion.div>
+                  {selectedFee ? 'Update' : 'Add'}
+                </Button>
+              </DialogActions>
+            </form>
+          </Dialog>
+        </TabPanel>
+      </motion.div>
     </Box>
   );
 }

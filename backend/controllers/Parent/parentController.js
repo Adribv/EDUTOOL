@@ -10,25 +10,51 @@ const ExamResult = require('../../models/Staff/Teacher/examResult.model');
 const ReportCard = require('../../models/Student/reportCardModel');
 const FeeStructure = require('../../models/Finance/feeStructureModel');
 const FeePayment = require('../../models/Finance/feePaymentModel');
+const HealthRecord = require('../../models/Student/healthRecordModel');
+const Announcement = require('../../models/Communication/announcementModel');
+const Event = require('../../models/Admin/eventModel');
+const SchoolDocument = require('../../models/Admin/schoolDocumentModel');
+const Message = require('../../models/Communication/messageModel');
+const Complaint = require('../../models/Communication/communicationModel');
+const Meeting = require('../../models/Staff/Teacher/meeting.model');
+const Transport = require('../../models/Admin/transportModel');
+const Calendar = require('../../models/Academic/calendarModel');
 
 // 1. Child Profile Access
 
 // Get all children profiles
 exports.getChildrenProfiles = async (req, res) => {
   try {
+    console.log('👨‍👩‍👧‍👦 Getting children for parent ID:', req.user.id);
+    
     const parent = await Parent.findById(req.user.id);
     if (!parent) {
+      console.log('❌ Parent not found:', req.user.id);
       return res.status(404).json({ message: 'Parent not found' });
     }
+
+    console.log('✅ Parent found:', { 
+      name: parent.name, 
+      email: parent.email, 
+      childRollNumbers: parent.childRollNumbers 
+    });
 
     // Get all children based on roll numbers
     const children = await Student.find({
       rollNumber: { $in: parent.childRollNumbers }
     }).select('-password');
 
+    console.log('📊 Found children:', children.length, 'children');
+    console.log('👶 Children data:', children.map(c => ({ 
+      name: c.name, 
+      rollNumber: c.rollNumber, 
+      class: c.class, 
+      section: c.section 
+    })));
+
     res.json(children);
   } catch (error) {
-    console.error('Error fetching children profiles:', error);
+    console.error('❌ Error fetching children profiles:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -37,26 +63,43 @@ exports.getChildrenProfiles = async (req, res) => {
 exports.getChildProfile = async (req, res) => {
   try {
     const { rollNumber } = req.params;
+    console.log('🔍 Getting child profile for rollNumber:', rollNumber);
+    
     const parent = await Parent.findById(req.user.id);
     
     if (!parent) {
+      console.log('❌ Parent not found:', req.user.id);
       return res.status(404).json({ message: 'Parent not found' });
     }
     
     // Check if child belongs to parent
     if (!parent.childRollNumbers.includes(rollNumber)) {
+      console.log('❌ Child not authorized for parent. Child roll:', rollNumber, 'Parent children:', parent.childRollNumbers);
       return res.status(403).json({ message: 'Not authorized to view this child\'s profile' });
     }
     
     const child = await Student.findOne({ rollNumber }).select('-password');
     
     if (!child) {
+      console.log('❌ Child not found:', rollNumber);
       return res.status(404).json({ message: 'Child not found' });
     }
     
+    console.log('✅ Child found:', { 
+      _id: child._id, 
+      name: child.name, 
+      class: child.class, 
+      section: child.section,
+      rollNumber: child.rollNumber 
+    });
+    
+    // Log the full child object to see all available fields
+    console.log('📋 Full child object:', JSON.stringify(child.toObject(), null, 2));
+    
+    console.log('✅ Authorization successful, returning child data');
     res.json(child);
   } catch (error) {
-    console.error('Error fetching child profile:', error);
+    console.error('❌ Error fetching child profile:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -178,26 +221,35 @@ exports.getChildSubjects = async (req, res) => {
 exports.getChildAssignments = async (req, res) => {
   try {
     const { rollNumber } = req.params;
+    console.log('🔍 Getting assignments for rollNumber:', rollNumber);
+    
     const parent = await Parent.findById(req.user.id);
     
     if (!parent) {
+      console.log('❌ Parent not found:', req.user.id);
       return res.status(404).json({ message: 'Parent not found' });
     }
     
     // Check if child belongs to parent
     if (!parent.childRollNumbers.includes(rollNumber)) {
+      console.log('❌ Child not authorized for parent. Child roll:', rollNumber, 'Parent children:', parent.childRollNumbers);
       return res.status(403).json({ message: 'Not authorized to view this child\'s assignments' });
     }
     
     const child = await Student.findOne({ rollNumber });
     if (!child) {
+      console.log('❌ Child not found:', rollNumber);
       return res.status(404).json({ message: 'Child not found' });
     }
+    
+    console.log('✅ Child found:', { name: child.name, class: child.class, section: child.section });
     
     const assignments = await Assignment.find({
       class: child.class,
       section: child.section
     }).sort({ dueDate: 1 });
+    
+    console.log('📚 Found assignments:', assignments.length);
     
     // Get submission status for each assignment
     const assignmentsWithStatus = await Promise.all(assignments.map(async (assignment) => {
@@ -206,16 +258,20 @@ exports.getChildAssignments = async (req, res) => {
         studentId: child._id
       });
       
-      return {
+      const result = {
         ...assignment.toObject(),
         submissionStatus: submission ? submission.status : 'Not Submitted',
         submissionId: submission ? submission._id : null
       };
+      
+      console.log('📝 Assignment:', assignment.title, 'Status:', result.submissionStatus);
+      return result;
     }));
     
+    console.log('✅ Returning assignments with status:', assignmentsWithStatus.length);
     res.json(assignmentsWithStatus);
   } catch (error) {
-    console.error('Error fetching child assignments:', error);
+    console.error('❌ Error fetching child assignments:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -236,6 +292,7 @@ exports.getChildPerformance = async (req, res) => {
     }
     
     const child = await Student.findOne({ rollNumber });
+    
     if (!child) {
       return res.status(404).json({ message: 'Child not found' });
     }
@@ -318,7 +375,7 @@ exports.getChildAttendance = async (req, res) => {
     
     // Build query based on provided filters
     const query = {
-      studentRollNumber: rollNumber
+      studentRollNumber: child.rollNumber
     };
     
     if (month && year) {
@@ -684,13 +741,6 @@ exports.getChildPaymentReceipt = async (req, res) => {
   }
 };
 
-const Message = require('../../models/Communication/messageModel');
-const Announcement = require('../../models/Communication/announcementModel');
-const Transport = require('../../models/Admin/transportModel');
-const Calendar = require('../../models/Academic/calendarModel');
-const HealthRecord = require('../../models/Student/healthRecordModel');
-const SchoolDocument = require('../../models/Admin/schoolDocumentModel');
-
 // 6. Communication Tools
 
 // Send message to teacher or admin
@@ -994,7 +1044,6 @@ exports.getChildExamSchedule = async (req, res) => {
       return res.status(404).json({ message: 'Parent not found' });
     }
     
-    // Check if child belongs to parent
     if (!parent.childRollNumbers.includes(rollNumber)) {
       return res.status(403).json({ message: 'Not authorized to view this child\'s exam schedule' });
     }
@@ -1004,8 +1053,13 @@ exports.getChildExamSchedule = async (req, res) => {
       return res.status(404).json({ message: 'Child not found' });
     }
     
-    // Get upcoming exams (reusing existing function)
-    return await exports.getChildUpcomingExams(req, res);
+    const exams = await Exam.find({
+      class: child.class,
+      section: child.section,
+      date: { $gte: new Date() }
+    }).sort({ date: 1 });
+    
+    res.json(exams);
   } catch (error) {
     console.error('Error fetching child exam schedule:', error);
     res.status(500).json({ message: 'Server error' });
@@ -1221,6 +1275,274 @@ exports.getChildCertificates = async (req, res) => {
     res.json(certificates);
   } catch (error) {
     console.error('Error fetching child certificates:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Dashboard
+exports.getDashboard = async (req, res) => {
+  try {
+    const parent = await Parent.findById(req.user.id);
+    if (!parent) {
+      return res.status(404).json({ message: 'Parent not found' });
+    }
+
+    // Get children
+    const children = await Student.find({
+      rollNumber: { $in: parent.childRollNumbers }
+    }).select('name rollNumber class section');
+
+    // Get recent announcements
+    const announcements = await Announcement.find({
+      targetAudience: { $in: ['Parents', 'All'] }
+    }).sort({ createdAt: -1 }).limit(5);
+
+    // Get upcoming events
+    const upcomingEvents = await Event.find({
+      startDate: { $gte: new Date() },
+      audience: { $in: ['Parents', 'All'] }
+    }).sort({ startDate: 1 }).limit(5);
+
+    res.json({
+      children,
+      announcements,
+      upcomingEvents,
+      totalChildren: children.length
+    });
+  } catch (error) {
+    console.error('Error fetching parent dashboard:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Profile
+exports.getProfile = async (req, res) => {
+  try {
+    const parent = await Parent.findById(req.user.id).select('-password');
+    if (!parent) {
+      return res.status(404).json({ message: 'Parent not found' });
+    }
+    res.json(parent);
+  } catch (error) {
+    console.error('Error fetching parent profile:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const { name, contactNumber, address, emergencyContact } = req.body;
+    
+    const parent = await Parent.findById(req.user.id);
+    if (!parent) {
+      return res.status(404).json({ message: 'Parent not found' });
+    }
+
+    // Update fields
+    if (name) parent.name = name;
+    if (contactNumber) parent.contactNumber = contactNumber;
+    if (address) parent.address = address;
+    if (emergencyContact) parent.emergencyContact = emergencyContact;
+
+    await parent.save();
+    
+    res.json({ message: 'Profile updated successfully', parent });
+  } catch (error) {
+    console.error('Error updating parent profile:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.uploadProfileImage = async (req, res) => {
+  try {
+    // This would typically handle file upload
+    // For now, return a success message
+    res.json({ message: 'Profile image uploaded successfully' });
+  } catch (error) {
+    console.error('Error uploading profile image:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Payment methods
+exports.getPaymentMethods = async (req, res) => {
+  try {
+    // Return available payment methods
+    res.json([
+      { id: 'online', name: 'Online Payment', description: 'Credit/Debit Card or Net Banking' },
+      { id: 'cash', name: 'Cash Payment', description: 'Pay at school office' },
+      { id: 'cheque', name: 'Cheque Payment', description: 'Pay by cheque' }
+    ]);
+  } catch (error) {
+    console.error('Error fetching payment methods:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Make payment
+exports.makePayment = async (req, res) => {
+  try {
+    const { studentId, amount, paymentMethod, components } = req.body;
+    
+    const parent = await Parent.findById(req.user.id);
+    if (!parent) {
+      return res.status(404).json({ message: 'Parent not found' });
+    }
+    
+    const student = await Student.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+    
+    // Check if student belongs to parent
+    if (!parent.childRollNumbers.includes(student.rollNumber)) {
+      return res.status(403).json({ message: 'Not authorized to make payment for this student' });
+    }
+    
+    // Create payment record
+    const payment = new FeePayment({
+      studentId: student._id,
+      amount,
+      paymentMethod,
+      components,
+      status: 'Completed',
+      paymentDate: new Date(),
+      transactionId: `TXN${Date.now()}`,
+      receiptNumber: `RCP${Date.now()}`
+    });
+    
+    await payment.save();
+    
+    res.status(201).json({ 
+      message: 'Payment successful', 
+      payment,
+      receiptUrl: `/api/parents/children/${student.rollNumber}/payment-receipts/${payment._id}`
+    });
+  } catch (error) {
+    console.error('Error making payment:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Link student to parent
+exports.linkStudent = async (req, res) => {
+  try {
+    const { rollNumber } = req.body;
+    
+    console.log('🔗 Link request received:', { rollNumber, parentId: req.user.id });
+    
+    if (!rollNumber) {
+      return res.status(400).json({ message: 'Roll number is required' });
+    }
+
+    const parent = await Parent.findById(req.user.id);
+    if (!parent) {
+      console.log('❌ Parent not found:', req.user.id);
+      return res.status(404).json({ message: 'Parent not found' });
+    }
+
+    console.log('✅ Parent found:', { name: parent.name, email: parent.email, childRollNumbers: parent.childRollNumbers });
+
+    // Find student by roll number
+    const student = await Student.findOne({ rollNumber });
+    if (!student) {
+      console.log('❌ Student not found with roll number:', rollNumber);
+      return res.status(404).json({ message: 'Student not found with this roll number' });
+    }
+
+    console.log('✅ Student found:', { name: student.name, rollNumber: student.rollNumber, parentId: student.parentId });
+
+    // Check if student is already linked to this parent
+    if (parent.childRollNumbers.includes(rollNumber)) {
+      console.log('❌ Student already linked to this parent');
+      return res.status(400).json({ message: 'Student is already linked to your account' });
+    }
+
+    // Check if student is already linked to another parent
+    if (student.parentId) {
+      console.log('❌ Student already linked to another parent:', student.parentId);
+      return res.status(400).json({ message: 'This student is already linked to another parent account' });
+    }
+
+    // Link student to parent
+    parent.childRollNumbers.push(rollNumber);
+    await parent.save();
+    console.log('✅ Parent updated with new child:', parent.childRollNumbers);
+
+    // Update student's parentId
+    student.parentId = parent._id;
+    await student.save();
+    console.log('✅ Student updated with parent ID:', student.parentId);
+
+    res.json({ 
+      message: 'Student linked successfully',
+      student: {
+        _id: student._id,
+        name: student.name,
+        rollNumber: student.rollNumber,
+        class: student.class,
+        section: student.section
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error linking student:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Debug endpoint to check parent and student data
+exports.debugParentData = async (req, res) => {
+  try {
+    console.log('🔍 Debug request for parent ID:', req.user.id);
+    
+    const parent = await Parent.findById(req.user.id);
+    if (!parent) {
+      return res.status(404).json({ message: 'Parent not found' });
+    }
+
+    console.log('📊 Parent data:', {
+      _id: parent._id,
+      name: parent.name,
+      email: parent.email,
+      childRollNumbers: parent.childRollNumbers
+    });
+
+    // Find all students with these roll numbers
+    const students = await Student.find({
+      rollNumber: { $in: parent.childRollNumbers }
+    });
+
+    console.log('👶 Students found:', students.map(s => ({
+      _id: s._id,
+      name: s.name,
+      rollNumber: s.rollNumber,
+      parentId: s.parentId
+    })));
+
+    // Find all students that have this parent as parentId
+    const studentsByParentId = await Student.find({
+      parentId: parent._id
+    });
+
+    console.log('👶 Students by parentId:', studentsByParentId.map(s => ({
+      _id: s._id,
+      name: s.name,
+      rollNumber: s.rollNumber,
+      parentId: s.parentId
+    })));
+
+    res.json({
+      parent: {
+        _id: parent._id,
+        name: parent.name,
+        email: parent.email,
+        childRollNumbers: parent.childRollNumbers
+      },
+      studentsByRollNumbers: students,
+      studentsByParentId: studentsByParentId
+    });
+  } catch (error) {
+    console.error('❌ Debug error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

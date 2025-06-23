@@ -8,7 +8,7 @@ exports.login = async (req, res) => {
   if (!parent || !(await bcrypt2.compare(password, parent.password)))
     return res.status(401).json({ message: 'Invalid credentials' });
 
-  const token = jwt2.sign({ id: parent._id, type: 'Parent' }, process.env.JWT_SECRET);
+  const token = jwt2.sign({ id: parent._id, role: 'Parent' }, process.env.JWT_SECRET);
   res.json({ token , childRollNumbers: parent.childRollNumbers });
 };
 
