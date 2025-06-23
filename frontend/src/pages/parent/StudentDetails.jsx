@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
   Grid,
@@ -18,43 +18,79 @@ import {
   TableRow,
   Card,
   CardContent,
+  Button,
+  Avatar,
+  Chip,
 } from '@mui/material';
 import {
   School as SchoolIcon,
   Assignment as AssignmentIcon,
   Event as EventIcon,
   TrendingUp as TrendingUpIcon,
+  ArrowBack,
+  Person,
+  Email,
+  Phone,
+  LocationOn,
 } from '@mui/icons-material';
 import parentService from '../../services/parentService';
 
 const StudentDetails = () => {
-  const { studentId } = useParams();
+  const { rollNumber } = useParams();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [student, setStudent] = useState(null);
   const [attendance, setAttendance] = useState([]);
-  const [progress, setProgress] = useState({});
   const [assignments, setAssignments] = useState([]);
   const [selectedTab, setSelectedTab] = useState(0);
 
   useEffect(() => {
     fetchStudentData();
-  }, [studentId]);
+  }, [rollNumber]);
 
   const fetchStudentData = async () => {
     try {
-      const [studentRes, attendanceRes, progressRes, assignmentsRes] = await Promise.all([
-        parentService.getStudentDetails(studentId),
-        parentService.getStudentAttendance(studentId),
-        parentService.getStudentProgress(studentId),
-        parentService.getStudentAssignments(studentId),
-      ]);
+      console.log('🔍 Fetching student data for rollNumber:', rollNumber);
+      
+      // Get student profile
+      const studentRes = await parentService.getChildDetails(rollNumber);
+      console.log('✅ Student data:', studentRes);
+      console.log('✅ Student name:', studentRes?.name);
+      console.log('✅ Student object keys:', Object.keys(studentRes || {}));
+      console.log('✅ Student data type:', typeof studentRes);
+      console.log('✅ Is studentRes an object:', studentRes && typeof studentRes === 'object');
+      
+      // Check if the response has a data property (common API pattern)
+      const actualStudentData = studentRes?.data || studentRes;
+      console.log('✅ Actual student data:', actualStudentData);
+      console.log('✅ Actual student name:', actualStudentData?.name);
+      
+      setStudent(actualStudentData);
 
-      setStudent(studentRes.data);
-      setAttendance(attendanceRes.data);
-      setProgress(progressRes.data);
-      setAssignments(assignmentsRes.data);
-    } catch {
+      // Get attendance data
+      try {
+        const attendanceRes = await parentService.getChildAttendance(rollNumber);
+        console.log('✅ Attendance data:', attendanceRes);
+        setAttendance(attendanceRes.records || []);
+      } catch {
+        console.log('⚠️ No attendance data available');
+        setAttendance([]);
+      }
+
+      // Get assignments data
+      try {
+        const assignmentsRes = await parentService.getChildAssignments(rollNumber);
+        console.log('✅ Assignments data:', assignmentsRes);
+        setAssignments(assignmentsRes || []);
+      } catch {
+        console.log('⚠️ No assignments data available');
+        setAssignments([]);
+      }
+
+    } catch (err) {
+      console.error('❌ Error fetching student data:', err);
+      console.error('❌ Error response:', err.response?.data);
       setError('Failed to load student data');
     } finally {
       setLoading(false);
@@ -81,178 +117,208 @@ const StudentDetails = () => {
     );
   }
 
+  if (!student) {
+    return (
+      <Box p={3}>
+        <Alert severity="error">Student not found</Alert>
+      </Box>
+    );
+  }
+
+  // Ensure student has required fields
+  if (!student.name) {
+    return (
+      <Box p={3}>
+        <Alert severity="error">Student data is incomplete - name is missing</Alert>
+      </Box>
+    );
+  }
+
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
-        {student.name}
+    <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
+      <Button startIcon={<ArrowBack />} onClick={() => navigate(-1)} sx={{ mb: 2 }}>
+        Back
+      </Button>
+      
+      <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
+        Student Details
       </Typography>
 
       <Paper sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={4}>
+            <Box display="flex" alignItems="center" mb={2}>
+              <Avatar sx={{ width: 80, height: 80, mr: 2 }} src={student.profilePhoto}>
+                {student.name ? student.name.charAt(0) : '?'}
+              </Avatar>
+              <Box>
+                <Typography variant="h5" gutterBottom>
+                  {student.name || 'Unknown Student'}
+                </Typography>
+                <Chip 
+                  label={student.status || 'Active'} 
+                  color={student.status === 'Active' ? 'success' : 'default'}
+                  size="small"
+                />
+              </Box>
+            </Box>
+          </Grid>
+          
+          <Grid item xs={12} md={4}>
             <Typography variant="h6" gutterBottom>
-              Basic Information
+              Academic Information
             </Typography>
-            <Typography variant="body1">
-              Class: {student.class}
+            <Typography variant="body1" gutterBottom>
+              <strong>Class:</strong> {student.class}
             </Typography>
-            <Typography variant="body1">
-              Roll Number: {student.rollNumber}
+            <Typography variant="body1" gutterBottom>
+              <strong>Section:</strong> {student.section}
             </Typography>
-            <Typography variant="body1">
-              Section: {student.section}
+            <Typography variant="body1" gutterBottom>
+              <strong>Roll Number:</strong> {student.rollNumber}
+            </Typography>
+            <Typography variant="body1" gutterBottom>
+              <strong>Admission Date:</strong> {student.admissionDate ? new Date(student.admissionDate).toLocaleDateString() : 'N/A'}
             </Typography>
           </Grid>
-          <Grid item xs={12} md={6}>
+          
+          <Grid item xs={12} md={4}>
             <Typography variant="h6" gutterBottom>
-              Academic Overview
+              Personal Information
             </Typography>
-            <Box mb={2}>
-              <Typography variant="body2" gutterBottom>
-                Overall Performance
+            {student.email && (
+              <Typography variant="body1" gutterBottom>
+                <strong>Email:</strong> {student.email}
               </Typography>
-              <LinearProgress
-                variant="determinate"
-                value={student.performance}
-                color={student.performance >= 80 ? 'success' : 'warning'}
-                sx={{ height: 10, borderRadius: 5 }}
-              />
-              <Typography variant="body2" color="text.secondary" mt={1}>
-                {student.performance}%
+            )}
+            {student.contactNumber && (
+              <Typography variant="body1" gutterBottom>
+                <strong>Contact:</strong> {student.contactNumber}
               </Typography>
-            </Box>
-            <Box>
-              <Typography variant="body2" gutterBottom>
-                Attendance
+            )}
+            {student.gender && (
+              <Typography variant="body1" gutterBottom>
+                <strong>Gender:</strong> {student.gender}
               </Typography>
-              <LinearProgress
-                variant="determinate"
-                value={student.attendance}
-                color={student.attendance >= 75 ? 'success' : 'warning'}
-                sx={{ height: 10, borderRadius: 5 }}
-              />
-              <Typography variant="body2" color="text.secondary" mt={1}>
-                {student.attendance}%
+            )}
+            {student.dateOfBirth && (
+              <Typography variant="body1" gutterBottom>
+                <strong>Date of Birth:</strong> {new Date(student.dateOfBirth).toLocaleDateString()}
               </Typography>
-            </Box>
+            )}
           </Grid>
         </Grid>
+
+        {student.address && (
+          <Box mt={3}>
+            <Typography variant="h6" gutterBottom>
+              Address
+            </Typography>
+            <Typography variant="body1">
+              {student.address.street && `${student.address.street}, `}
+              {student.address.city && `${student.address.city}, `}
+              {student.address.state && `${student.address.state}, `}
+              {student.address.postalCode && `${student.address.postalCode}, `}
+              {student.address.country}
+            </Typography>
+          </Box>
+        )}
+
+        {student.emergencyContact && (
+          <Box mt={3}>
+            <Typography variant="h6" gutterBottom>
+              Emergency Contact
+            </Typography>
+            <Typography variant="body1" gutterBottom>
+              <strong>Name:</strong> {student.emergencyContact.name}
+            </Typography>
+            <Typography variant="body1" gutterBottom>
+              <strong>Relationship:</strong> {student.emergencyContact.relationship}
+            </Typography>
+            <Typography variant="body1" gutterBottom>
+              <strong>Contact:</strong> {student.emergencyContact.contactNumber}
+            </Typography>
+          </Box>
+        )}
       </Paper>
 
       <Paper sx={{ p: 3 }}>
         <Tabs value={selectedTab} onChange={handleTabChange} sx={{ mb: 3 }}>
           <Tab icon={<SchoolIcon />} label="Attendance" />
-          <Tab icon={<TrendingUpIcon />} label="Progress" />
           <Tab icon={<AssignmentIcon />} label="Assignments" />
-          <Tab icon={<EventIcon />} label="Events" />
         </Tabs>
 
         {selectedTab === 0 && (
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Remarks</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {attendance.map((record) => (
-                  <TableRow key={record.id}>
-                    <TableCell>{record.date}</TableCell>
-                    <TableCell>{record.status}</TableCell>
-                    <TableCell>{record.remarks}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <Box>
+            {attendance.length > 0 ? (
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Date</TableCell>
+                      <TableCell>Status</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {attendance.slice(0, 10).map((record, index) => (
+                      <TableRow key={record._id || index}>
+                        <TableCell>{new Date(record.date).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={record.status} 
+                            color={record.status === 'Present' ? 'success' : 'error'}
+                            size="small"
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <Typography sx={{ textAlign: 'center', p: 3 }}>
+                No attendance records available
+              </Typography>
+            )}
+          </Box>
         )}
 
         {selectedTab === 1 && (
-          <Grid container spacing={3}>
-            {Object.entries(progress).map(([subject, data]) => (
-              <Grid item xs={12} md={6} key={subject}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      {subject}
-                    </Typography>
-                    <Box mb={2}>
-                      <Typography variant="body2" gutterBottom>
-                        Performance
-                      </Typography>
-                      <LinearProgress
-                        variant="determinate"
-                        value={data.performance}
-                        color={data.performance >= 80 ? 'success' : 'warning'}
-                        sx={{ height: 10, borderRadius: 5 }}
-                      />
-                      <Typography variant="body2" color="text.secondary" mt={1}>
-                        {data.performance}%
-                      </Typography>
-                    </Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Last Assessment: {data.lastAssessment}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        )}
-
-        {selectedTab === 2 && (
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Title</TableCell>
-                  <TableCell>Subject</TableCell>
-                  <TableCell>Due Date</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Score</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {assignments.map((assignment) => (
-                  <TableRow key={assignment.id}>
-                    <TableCell>{assignment.title}</TableCell>
-                    <TableCell>{assignment.subject}</TableCell>
-                    <TableCell>{assignment.dueDate}</TableCell>
-                    <TableCell>{assignment.status}</TableCell>
-                    <TableCell>{assignment.score || '-'}</TableCell>
-                  </TableRow>
+          <Box>
+            {assignments.length > 0 ? (
+              <Grid container spacing={2}>
+                {assignments.slice(0, 6).map((assignment, index) => (
+                  <Grid item xs={12} sm={6} md={4} key={assignment._id || index}>
+                    <Card variant="outlined">
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom>
+                          {assignment.title}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          Subject: {assignment.subject}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          Due: {new Date(assignment.dueDate).toLocaleDateString()}
+                        </Typography>
+                        <Chip 
+                          label={assignment.submissionStatus || 'Not Submitted'} 
+                          color={
+                            assignment.submissionStatus === 'Not Submitted' ? 'warning' :
+                            assignment.submissionStatus === 'Late' ? 'error' : 'success'
+                          }
+                          size="small"
+                        />
+                      </CardContent>
+                    </Card>
+                  </Grid>
                 ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-
-        {selectedTab === 3 && (
-          <Grid container spacing={3}>
-            {student.events.map((event) => (
-              <Grid item xs={12} md={6} key={event.id}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      {event.title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Date: {event.date}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Time: {event.time}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Location: {event.location}
-                    </Typography>
-                  </CardContent>
-                </Card>
               </Grid>
-            ))}
-          </Grid>
+            ) : (
+              <Typography sx={{ textAlign: 'center', p: 3 }}>
+                No assignments available
+              </Typography>
+            )}
+          </Box>
         )}
       </Paper>
     </Box>

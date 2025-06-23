@@ -25,6 +25,9 @@ import {
   InputLabel,
   Select,
   InputAdornment,
+  CircularProgress,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -41,12 +44,10 @@ import { DataGrid, GridToolbar } from '@mui/x-data-grid';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminAPI } from '../../services/api';
 import { toast } from 'react-toastify';
-import { motion } from 'framer-motion';
 import * as XLSX from 'xlsx';
 
 const grades = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
 const feeTypes = ['Tuition', 'Transportation', 'Library', 'Laboratory', 'Sports', 'Other'];
-const paymentStatus = ['Paid', 'Pending', 'Overdue'];
 
 function TabPanel({ children, value, index }) {
   return value === index && <Box sx={{ py: 3 }}>{children}</Box>;
@@ -56,12 +57,12 @@ function FeeConfiguration() {
   const [tabValue, setTabValue] = useState(0);
   const [open, setOpen] = useState(false);
   const [selectedFee, setSelectedFee] = useState(null);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  const [filters, setFilters] = useState({
+  const [formData, setFormData] = useState({
     grade: '',
     feeType: '',
-    status: '',
-    month: '',
+    amount: '',
+    dueDate: '',
+    description: '',
   });
 
   const queryClient = useQueryClient();
@@ -72,54 +73,83 @@ function FeeConfiguration() {
     queryFn: () => adminAPI.getFeeStructures(),
   });
 
-  // Fetch student fee records
-  const { data: studentFees, isLoading: isLoadingStudentFees } = useQuery({
-    queryKey: ['studentFees'],
-    queryFn: () => adminAPI.getStudentFees(),
+  const createMutation = useMutation({
+    mutationFn: (newData) => adminAPI.createFeeStructure(newData),
+    onSuccess: () => {
+      toast.success('Fee structure created successfully');
+      queryClient.invalidateQueries(['feeStructures']);
+      handleClose();
+    },
+    onError: () => {
+      toast.error('Failed to create fee structure');
+    }
   });
 
-  // Fetch staff salary records
-  const { data: staffSalaries, isLoading: isLoadingStaffSalaries } = useQuery({
-    queryKey: ['staffSalaries'],
-    queryFn: () => adminAPI.getStaffSalaries(),
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => adminAPI.updateFeeStructure(id, data),
+    onSuccess: () => {
+      toast.success('Fee structure updated successfully');
+      queryClient.invalidateQueries(['feeStructures']);
+      handleClose();
+    },
+    onError: () => {
+      toast.error('Failed to update fee structure');
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => adminAPI.deleteFeeStructure(id),
+    onSuccess: () => {
+      toast.success('Fee structure deleted successfully');
+      queryClient.invalidateQueries(['feeStructures']);
+    },
+    onError: () => {
+      toast.error('Failed to delete fee structure');
+    }
   });
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
 
-  const handleFilterChange = (event) => {
+  const handleOpen = (fee = null) => {
+    setSelectedFee(fee);
+    setFormData(fee ? { ...fee, dueDate: fee.dueDate.split('T')[0] } : {
+      grade: '',
+      feeType: '',
+      amount: '',
+      dueDate: '',
+      description: '',
+    });
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    setSelectedFee(null);
+  };
+
+  const handleInputChange = (event) => {
     const { name, value } = event.target;
-    setFilters(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const exportToExcel = (data, filename) => {
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-    XLSX.writeFile(wb, `${filename}.xlsx`);
-  };
-
-  const downloadReceipt = async (id) => {
-    try {
-      const response = await adminAPI.generateFeeReceipt(id);
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `fee-receipt-${id}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      toast.success('Report downloaded successfully');
-    } catch {
-      toast.error('Failed to download report');
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    if (selectedFee) {
+      updateMutation.mutate({ id: selectedFee._id, data: formData });
+    } else {
+      createMutation.mutate(formData);
     }
   };
 
-  if (isLoadingStructures || isLoadingStudentFees || isLoadingStaffSalaries) {
+  const handleDelete = (id) => {
+    if (window.confirm('Are you sure you want to delete this fee structure?')) {
+      deleteMutation.mutate(id);
+    }
+  };
+
+  if (isLoadingStructures) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
         <CircularProgress />
@@ -127,22 +157,10 @@ function FeeConfiguration() {
     );
   }
 
-  const filteredStudentFees = studentFees?.filter(fee => {
-    return (
-      (!filters.grade || fee.grade === filters.grade) &&
-      (!filters.feeType || fee.feeType === filters.feeType) &&
-      (!filters.status || fee.status === filters.status)
-    );
-  });
-
   return (
     <Box>
-      <motion.div>
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-          <Tabs value={tabValue} onChange={handleTabChange}>
+        <Tabs value={tabValue} onChange={handleTabChange}>
             <Tab label="Fee Structure" />
             <Tab label="Student Fee Records" />
             <Tab label="Staff Salary Records" />
@@ -156,7 +174,7 @@ function FeeConfiguration() {
             <Button
               variant="contained"
               startIcon={<AddIcon />}
-              onClick={() => setOpen(true)}
+              onClick={() => handleOpen()}
             >
               Add Fee Structure
             </Button>
@@ -301,7 +319,6 @@ function FeeConfiguration() {
         </form>
       </Dialog>
       </TabPanel>
-    </motion.div>
     </Box>
   );
 }

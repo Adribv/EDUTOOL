@@ -24,16 +24,16 @@ import {
   BarChart,
   Grade,
 } from '@mui/icons-material';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { parentAPI } from '../../services/api';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart as RechartsBarChart, Bar } from 'recharts';
+import parentService from '../../services/parentService';
 
 const ChildProgress = () => {
-  const { childId } = useParams();
+  const { rollNumber } = useParams();
   const navigate = useNavigate();
 
-  const { data: progressData, isLoading, error } = useQuery({
-    queryKey: ['child_progress', childId],
-    queryFn: () => parentAPI.getChildProgress(childId),
+  const { data: performanceData, isLoading, error } = useQuery({
+    queryKey: ['child_performance', rollNumber],
+    queryFn: () => parentService.getChildProgress(rollNumber),
   });
 
   if (isLoading) {
@@ -47,31 +47,31 @@ const ChildProgress = () => {
   if (error) {
     return (
       <Box>
-        <Alert severity="error">Failed to load progress data: {error.message}</Alert>
+        <Alert severity="error">Failed to load performance data: {error.message}</Alert>
       </Box>
     );
   }
 
-  const { child, summary, recentGrades, attendance, performanceChartData } = progressData;
+  // Transform the data for display
+  const { subjectPerformance, overallPerformance } = performanceData || {};
+
+  // Create chart data from subject performance
+  const chartData = subjectPerformance ? Object.keys(subjectPerformance).map(subject => ({
+    subject,
+    average: subjectPerformance[subject].average,
+    highest: subjectPerformance[subject].highest,
+    lowest: subjectPerformance[subject].lowest,
+  })) : [];
 
   return (
     <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
       <Button startIcon={<ArrowBack />} onClick={() => navigate('/parent/children')} sx={{ mb: 2 }}>
         Back to My Children
       </Button>
-      <Box display="flex" alignItems="center" mb={3}>
-        <Avatar src={child.profilePicture} sx={{ width: 64, height: 64, mr: 2 }}>
-          {child.name.charAt(0)}
-        </Avatar>
-        <Box>
-          <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
-            {child.name}'s Progress
-          </Typography>
-          <Typography color="text.secondary">
-            Class: {child.class} | Roll No: {child.rollNumber}
-          </Typography>
-        </Box>
-      </Box>
+      
+      <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
+        Child Performance Analytics
+      </Typography>
 
       <Grid container spacing={3}>
         {/* Summary Cards */}
@@ -80,9 +80,11 @@ const ChildProgress = () => {
             <CardContent>
               <Box display="flex" alignItems="center" mb={1}>
                 <Grade color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Overall Grade</Typography>
+                <Typography variant="h6">Overall Average</Typography>
               </Box>
-              <Typography variant="h4" color="primary.main">{summary.overallGrade}%</Typography>
+              <Typography variant="h4" color="primary.main">
+                {overallPerformance?.averageScore?.toFixed(1) || 0}%
+              </Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -90,10 +92,12 @@ const ChildProgress = () => {
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" mb={1}>
-                <Timeline color="secondary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Attendance</Typography>
+                <Assessment color="secondary" sx={{ mr: 1 }} />
+                <Typography variant="h6">Exams Taken</Typography>
               </Box>
-              <Typography variant="h4" color="secondary.main">{summary.attendanceRate}%</Typography>
+              <Typography variant="h4" color="secondary.main">
+                {overallPerformance?.examsTaken || 0}
+              </Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -101,64 +105,128 @@ const ChildProgress = () => {
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" mb={1}>
-                <Assessment color="error" sx={{ mr: 1 }} />
-                <Typography variant="h6">Assignments</Typography>
+                <BarChart color="error" sx={{ mr: 1 }} />
+                <Typography variant="h6">Subjects</Typography>
               </Box>
-              <Typography variant="h4" color="error.main">{summary.assignmentsCompleted}/{summary.assignmentsTotal}</Typography>
+              <Typography variant="h4" color="error.main">
+                {Object.keys(subjectPerformance || {}).length}
+              </Typography>
             </CardContent>
           </Card>
         </Grid>
 
         {/* Performance Chart */}
+        {chartData.length > 0 && (
+          <Grid item xs={12}>
+            <Paper sx={{ p: 2 }}>
+              <Typography variant="h6" gutterBottom>Subject Performance Overview</Typography>
+              <ResponsiveContainer width="100%" height={300}>
+                <RechartsBarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="subject" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="average" fill="#8884d8" name="Average Score" />
+                  <Bar dataKey="highest" fill="#82ca9d" name="Highest Score" />
+                </RechartsBarChart>
+              </ResponsiveContainer>
+            </Paper>
+          </Grid>
+        )}
+
+        {/* Subject Performance Details */}
         <Grid item xs={12}>
           <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>Performance Over Time</Typography>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={performanceChartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="grade" stroke="#8884d8" activeDot={{ r: 8 }} />
-              </LineChart>
-            </ResponsiveContainer>
+            <Typography variant="h6" gutterBottom>Subject-wise Performance</Typography>
+            {subjectPerformance && Object.keys(subjectPerformance).length > 0 ? (
+              <Grid container spacing={2}>
+                {Object.keys(subjectPerformance).map((subject) => {
+                  const data = subjectPerformance[subject];
+                  return (
+                    <Grid item xs={12} sm={6} md={4} key={subject}>
+                      <Card variant="outlined">
+                        <CardContent>
+                          <Typography variant="h6" gutterBottom>{subject}</Typography>
+                          <Box display="flex" justifyContent="space-between" mb={1}>
+                            <Typography variant="body2">Average:</Typography>
+                            <Typography variant="body2" fontWeight="bold">
+                              {data.average.toFixed(1)}%
+                            </Typography>
+                          </Box>
+                          <Box display="flex" justifyContent="space-between" mb={1}>
+                            <Typography variant="body2">Highest:</Typography>
+                            <Typography variant="body2" color="success.main" fontWeight="bold">
+                              {data.highest}%
+                            </Typography>
+                          </Box>
+                          <Box display="flex" justifyContent="space-between" mb={1}>
+                            <Typography variant="body2">Lowest:</Typography>
+                            <Typography variant="body2" color="error.main" fontWeight="bold">
+                              {data.lowest}%
+                            </Typography>
+                          </Box>
+                          <Box display="flex" justifyContent="space-between">
+                            <Typography variant="body2">Exams:</Typography>
+                            <Typography variant="body2" fontWeight="bold">
+                              {data.scores.length}
+                            </Typography>
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            ) : (
+              <Box textAlign="center" py={4}>
+                <Typography color="text.secondary">No performance data available</Typography>
+              </Box>
+            )}
           </Paper>
         </Grid>
 
-        {/* Recent Grades */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2, height: '100%' }}>
-            <Typography variant="h6" gutterBottom>Recent Grades</Typography>
-            <List>
-              {recentGrades.map((grade, index) => (
-                <ListItem key={index} divider={index < recentGrades.length - 1}>
-                  <ListItemText primary={grade.subject} secondary={`Exam: ${grade.examName}`} />
-                  <Chip label={`${grade.score}%`} color={grade.score >= 75 ? 'success' : grade.score >= 60 ? 'warning' : 'error'} />
-                </ListItem>
-              ))}
-            </List>
-          </Paper>
-        </Grid>
-
-        {/* Attendance Records */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2, height: '100%' }}>
-            <Typography variant="h6" gutterBottom>Recent Attendance</Typography>
-            <List>
-              {attendance.slice(0, 5).map((record, index) => (
-                <ListItem key={index} divider={index < attendance.length - 1}>
-                  <ListItemText primary={new Date(record.date).toLocaleDateString()} />
-                  <Chip 
-                    label={record.status} 
-                    color={record.status === 'Present' ? 'success' : 'error'} 
-                    size="small"
-                  />
-                </ListItem>
-              ))}
-            </List>
-          </Paper>
-        </Grid>
+        {/* Performance Insights */}
+        {overallPerformance && overallPerformance.examsTaken > 0 && (
+          <Grid item xs={12}>
+            <Paper sx={{ p: 2 }}>
+              <Typography variant="h6" gutterBottom>Performance Insights</Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body1" gutterBottom>
+                    <strong>Total Exams Taken:</strong> {overallPerformance.examsTaken}
+                  </Typography>
+                  <Typography variant="body1" gutterBottom>
+                    <strong>Overall Average:</strong> {overallPerformance.averageScore.toFixed(1)}%
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body1" gutterBottom>
+                    <strong>Subjects Covered:</strong> {Object.keys(subjectPerformance || {}).length}
+                  </Typography>
+                  <Typography variant="body1" gutterBottom>
+                    <strong>Performance Level:</strong> 
+                    <Chip 
+                      label={
+                        overallPerformance.averageScore >= 90 ? 'Excellent' :
+                        overallPerformance.averageScore >= 80 ? 'Very Good' :
+                        overallPerformance.averageScore >= 70 ? 'Good' :
+                        overallPerformance.averageScore >= 60 ? 'Average' : 'Needs Improvement'
+                      }
+                      color={
+                        overallPerformance.averageScore >= 90 ? 'success' :
+                        overallPerformance.averageScore >= 80 ? 'primary' :
+                        overallPerformance.averageScore >= 70 ? 'warning' : 'error'
+                      }
+                      size="small"
+                      sx={{ ml: 1 }}
+                    />
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Paper>
+          </Grid>
+        )}
       </Grid>
     </Box>
   );

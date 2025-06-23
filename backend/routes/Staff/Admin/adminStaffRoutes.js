@@ -4,12 +4,55 @@ const adminStaffController = require('../../../controllers/Staff/Admin/adminStaf
 const { permit } = require('../../../middlewares/roleMiddleware');
 const { verifyToken } = require('../../../middlewares/authMiddleware');
 const uploadProfileImage = require('../../../middlewares/uploadProfileImageMiddleware');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
-// Apply authentication middleware to all routes
+// Import models
+const Staff = require('../../../models/Staff/staffModel');
+const Student = require('../../../models/Student/studentModel');
+const Parent = require('../../../models/Parent/parentModel');
+
+// Admin/Staff Authentication (Public route - no auth required)
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    const staff = await Staff.findOne({ email });
+    if (!staff) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+    
+    const isPasswordValid = await bcrypt.compare(password, staff.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+    
+    const token = jwt.sign(
+      { id: staff._id, role: staff.role, email: staff.email },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+    
+    res.json({
+      token,
+      user: {
+        id: staff._id,
+        name: staff.name,
+        email: staff.email,
+        role: staff.role
+      }
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Apply authentication middleware to all routes below this line
 router.use(verifyToken);
-router.use(permit('AdminStaff'))
+router.use(permit('AdminStaff'));
 
-// Profile route
+// Profile Management
 router.get('/profile', adminStaffController.getProfile);
 router.put('/profile', adminStaffController.updateProfile);
 router.post('/profile/image', uploadProfileImage.single('image'), adminStaffController.updateProfileImage);
@@ -18,7 +61,7 @@ router.put('/profile/password', adminStaffController.updatePassword);
 // Dashboard
 router.get('/dashboard', adminStaffController.getDashboardStats);
 
-// 1. Student Records Management
+// Student Records Management
 router.get('/students', adminStaffController.getAllStudents);
 router.get('/students/:id', adminStaffController.getStudentById);
 router.post('/students', adminStaffController.registerStudent);
@@ -26,7 +69,14 @@ router.put('/students/:id', adminStaffController.updateStudent);
 router.get('/students/:id/id-card', adminStaffController.generateStudentID);
 router.post('/students/transfer', adminStaffController.processTransfer);
 
-// 2. Staff Records Administration
+// Parent Records Management
+router.get('/parents', adminStaffController.getAllParents);
+router.get('/parents/:id', adminStaffController.getParentById);
+router.post('/parents', adminStaffController.registerParent);
+router.put('/parents/:id', adminStaffController.updateParent);
+router.delete('/parents/:id', adminStaffController.deleteParent);
+
+// Staff Records Administration
 router.get('/staff', adminStaffController.getAllStaff);
 router.get('/staff/:id', adminStaffController.getStaffById);
 router.post('/staff', adminStaffController.registerStaff);
@@ -35,7 +85,7 @@ router.delete('/staff/:id', adminStaffController.deleteStaff);
 router.get('/staff/:id/id-card', adminStaffController.generateStaffID);
 router.post('/staff/attendance', adminStaffController.trackStaffAttendance);
 
-// 3. Fee Management System
+// Fee Management System
 router.post('/fee-structure', adminStaffController.configureFeeStructure);
 router.post('/fee-invoice', adminStaffController.generateFeeInvoice);
 router.post('/fee-payment', adminStaffController.processFeePayment);
@@ -43,7 +93,7 @@ router.get('/fee-defaulters', adminStaffController.getFeeDefaulters);
 router.get('/fee-structure', adminStaffController.getFeeStructures);
 router.delete('/fee-structure/:id', adminStaffController.deleteFeeStructure);
 
-// 4. Inventory Control
+// Inventory Control
 router.post('/inventory', adminStaffController.addInventoryItem);
 router.put('/inventory/:id', adminStaffController.updateInventoryItem);
 router.post('/inventory/issue', adminStaffController.issueInventoryItem);
@@ -51,34 +101,34 @@ router.get('/inventory/low-stock', adminStaffController.getLowStockItems);
 router.get('/inventory', adminStaffController.getInventory);
 router.delete('/inventory/:id', adminStaffController.deleteInventoryItem);
 
-// 5. Transport Management
+// Transport Management
 router.post('/transport/vehicles', adminStaffController.addTransportVehicle);
 router.put('/transport/vehicles/:id', adminStaffController.updateTransportVehicle);
 router.post('/transport/assign-student', adminStaffController.assignStudentToTransport);
 router.post('/transport/maintenance', adminStaffController.scheduleVehicleMaintenance);
 
-// 6. Visitor Management
+// Visitor Management
 router.post('/visitors', adminStaffController.recordVisitor);
 router.put('/visitors/:id/exit', adminStaffController.updateVisitorExit);
 router.get('/visitors', adminStaffController.getVisitorLog);
 
-// 7. Event and Facility Coordination
+// Event and Facility Coordination
 router.post('/events', adminStaffController.createEvent);
 router.put('/events/:id', adminStaffController.updateEvent);
 router.post('/facilities/book', adminStaffController.bookFacility);
 
-// 8. Communication Support
+// Communication Support
 router.post('/communications', adminStaffController.sendBulkCommunication);
 router.get('/communications', adminStaffController.getCommunicationHistory);
 router.put('/communications/:id/status', adminStaffController.updateCommunicationStatus);
 router.put('/communications/:id', adminStaffController.updateCommunication);
 
-// 9. Reporting and Records
+// Reporting and Records
 router.get('/reports/enrollment', adminStaffController.generateEnrollmentReport);
 router.get('/reports/staff', adminStaffController.generateStaffReport);
 router.get('/reports/fee-collection', adminStaffController.generateFeeCollectionReport);
 
-// 10. Calendar Management
+// Calendar Management
 router.post('/calendar', adminStaffController.addCalendarEvent);
 router.put('/calendar/:id', adminStaffController.updateCalendarEvent);
 router.get('/calendar', adminStaffController.getCalendarEvents);

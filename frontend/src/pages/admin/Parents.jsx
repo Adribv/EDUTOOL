@@ -47,6 +47,7 @@ const Parents = () => {
     firstName: '',
     lastName: '',
     email: '',
+    password: '',
     phone: '',
     address: '',
     occupation: '',
@@ -61,12 +62,8 @@ const Parents = () => {
   const fetchParents = async () => {
     try {
       setLoading(true);
-      const response = await adminAPI.getParents({
-        page: page + 1,
-        limit: rowsPerPage,
-        search: searchQuery,
-      });
-      setParents(response.data);
+      const response = await adminAPI.getUsers('parent');
+      setParents(response.data || response);
     } catch (error) {
       console.error('Error fetching parents:', error);
       toast.error('Failed to load parents');
@@ -97,6 +94,7 @@ const Parents = () => {
         firstName: parent.firstName,
         lastName: parent.lastName,
         email: parent.email,
+        password: '',
         phone: parent.phone,
         address: parent.address,
         occupation: parent.occupation,
@@ -109,6 +107,7 @@ const Parents = () => {
         firstName: '',
         lastName: '',
         email: '',
+        password: '',
         phone: '',
         address: '',
         occupation: '',
@@ -135,11 +134,15 @@ const Parents = () => {
   const handleSubmit = async () => {
     try {
       if (selectedParent) {
-        await adminAPI.updateParent(selectedParent.id, formData);
+        await adminAPI.updateUser(selectedParent.id, { ...formData, role: 'parent' });
         toast.success('Parent updated successfully');
       } else {
-        await adminAPI.createParent(formData);
-        toast.success('Parent added successfully');
+        await adminAPI.createUser({ ...formData, role: 'parent' });
+        const password = formData.password || 'defaultPassword123';
+        toast.success(`Parent added successfully! Password: ${password}`, {
+          autoClose: 8000, // Show for 8 seconds
+          position: "top-center"
+        });
       }
       handleCloseDialog();
       fetchParents();
@@ -152,7 +155,7 @@ const Parents = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this parent?')) {
       try {
-        await adminAPI.deleteParent(id);
+        await adminAPI.deleteUser(id, 'parent');
         toast.success('Parent deleted successfully');
         fetchParents();
       } catch (error) {
@@ -317,6 +320,18 @@ const Parents = () => {
                 value={formData.email}
                 onChange={handleInputChange}
                 required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Password"
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                required={!selectedParent}
+                helperText={selectedParent ? "Leave blank to keep existing password" : "Required for new parent"}
               />
             </Grid>
             <Grid item xs={12} sm={6}>

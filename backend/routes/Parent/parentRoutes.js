@@ -11,6 +11,14 @@ router.post('/login', parentAuthController.login);
 // Protected routes
 router.use(verifyToken);
 
+// Dashboard
+router.get('/dashboard', parentController.getDashboard);
+
+// Profile
+router.get('/profile', parentController.getProfile);
+router.put('/profile', parentController.updateProfile);
+router.post('/profile/image', parentController.uploadProfileImage);
+
 // 1. Child Profile Access
 router.get('/children', parentController.getChildrenProfiles);
 router.get('/children/:rollNumber', parentController.getChildProfile);
@@ -31,11 +39,14 @@ router.get('/children/:rollNumber/leave-applications', parentController.getChild
 router.get('/children/:rollNumber/exams', parentController.getChildUpcomingExams);
 router.get('/children/:rollNumber/exam-results', parentController.getChildExamResults);
 router.get('/children/:rollNumber/report-cards', parentController.getChildReportCards);
+router.get('/children/:rollNumber/exam-schedule', parentController.getChildExamSchedule);
 
 // 5. Fee Management
 router.get('/children/:rollNumber/fee-structure', parentController.getChildFeeStructure);
 router.get('/children/:rollNumber/payment-status', parentController.getChildPaymentStatus);
 router.get('/children/:rollNumber/payment-receipts/:paymentId', parentController.getChildPaymentReceipt);
+router.post('/payments', parentController.makePayment);
+router.get('/payment-methods', parentController.getPaymentMethods);
 
 // 6. Communication Tools
 router.post('/messages', parentController.sendMessage);
@@ -51,7 +62,6 @@ router.post('/transport/contact', parentController.contactTransportCoordinator);
 
 // 8. Calendar Access
 router.get('/calendar', parentController.getSchoolCalendar);
-router.get('/children/:rollNumber/exam-schedule', parentController.getChildExamSchedule);
 
 // 9. Health and Wellness
 router.get('/children/:rollNumber/health', parentController.getChildHealthInfo);
@@ -62,6 +72,12 @@ router.get('/children/:rollNumber/health/counselor-recommendations', parentContr
 router.get('/children/:rollNumber/fee-receipts', parentController.getChildFeeReceipts);
 router.get('/school-documents', parentController.getSchoolDocuments);
 router.get('/children/:rollNumber/certificates', parentController.getChildCertificates);
+
+// Student Linking
+router.post('/link-student', parentController.linkStudent);
+
+// Debug endpoint
+router.get('/debug', parentController.debugParentData);
 
 // Add/remove students under a parent
 router.put('/:parentId/add-student', parentAuthController.addStudent);

@@ -50,6 +50,7 @@ const A_Users = () => {
     firstName: '',
     lastName: '',
     email: '',
+    password: '',
     phone: '',
     role: '',
     status: 'active',
@@ -95,6 +96,7 @@ const A_Users = () => {
         firstName: userData.firstName,
         lastName: userData.lastName,
         email: userData.email,
+        password: '', // Don't show existing password for security
         phone: userData.phone,
         role: userData.role,
         status: userData.status,
@@ -106,6 +108,7 @@ const A_Users = () => {
         firstName: '',
         lastName: '',
         email: '',
+        password: '',
         phone: '',
         role: ['student', 'parent', 'teacher'][activeTab],
         status: 'active',
@@ -137,12 +140,18 @@ const A_Users = () => {
     try {
       if (editingUser) {
         await adminAPI.updateUser(editingUser.id, formData);
+        // Show success message for update
+        alert('User updated successfully');
       } else {
         await adminAPI.createUser(formData);
+        // Show success message with password for new user
+        const password = formData.password || 'defaultPassword123';
+        alert(`User created successfully!\n\nLogin Details:\nEmail: ${formData.email}\nPassword: ${password}\n\nPlease share these credentials with the user.`);
       }
       handleCloseDialog();
       fetchUsers();
-    } catch {
+    } catch (error) {
+      console.error('Error saving user:', error);
       setError('Failed to save user');
     }
   };
@@ -351,6 +360,18 @@ const A_Users = () => {
                 onChange={handleChange}
                 fullWidth
                 required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="password"
+                label="Password"
+                type="password"
+                value={formData.password}
+                onChange={handleChange}
+                fullWidth
+                required={!editingUser}
+                helperText={editingUser ? "Leave blank to keep existing password" : "Required for new user"}
               />
             </Grid>
             <Grid item xs={12} sm={6}>

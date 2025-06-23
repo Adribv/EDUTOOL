@@ -61,7 +61,7 @@ function ParentLogin() {
       return response.data;
     },
     onSuccess: (data) => {
-      localStorage.setItem('parentToken', data.token);
+      localStorage.setItem('token', data.token);
       toast.success('Login successful!');
       navigate('/parent');
     },

@@ -1,53 +1,46 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Box,
   Grid,
   Paper,
   Typography,
+  Card,
+  CardContent,
+  CircularProgress,
+  Alert,
+  Button,
+  Avatar,
+  Chip,
+  Divider,
   List,
   ListItem,
   ListItemText,
-  ListItemIcon,
-  Divider,
-  CircularProgress,
-  Alert,
-  Card,
-  CardContent,
+  ListItemAvatar,
 } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { parentAPI } from '../../services/api';
 import {
-  School as SchoolIcon,
-  Assignment as AssignmentIcon,
-  Event as EventIcon,
-  Notifications as NotificationsIcon,
+  Person,
+  School,
+  Assignment,
+  Event,
+  Notifications,
+  Assessment,
+  Add,
+  TrendingUp,
+  Schedule,
+  Payment,
 } from '@mui/icons-material';
-import parentService from '../../services/parentService';
 
 const Dashboard = () => {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [dashboardData, setDashboardData] = useState({
-    students: [],
-    upcomingEvents: [],
-    notifications: [],
-    recentAssignments: [],
+  const navigate = useNavigate();
+
+  const { data: dashboardData, isLoading, error } = useQuery({
+    queryKey: ['parent_dashboard'],
+    queryFn: parentAPI.getDashboard,
   });
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
-    try {
-      const response = await parentService.getDashboard();
-      setDashboardData(response.data);
-    } catch {
-      setError('Failed to load dashboard data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
         <CircularProgress />
@@ -58,110 +51,252 @@ const Dashboard = () => {
   if (error) {
     return (
       <Box p={3}>
-        <Alert severity="error">{error}</Alert>
+        <Alert severity="error">
+          Failed to load dashboard data. Please try again.
+        </Alert>
       </Box>
     );
   }
 
+  const data = dashboardData || {
+    children: [],
+    upcomingEvents: [],
+    recentAssignments: [],
+    notifications: [],
+    feeStatus: [],
+    attendanceSummary: [],
+  };
+
+  const hasChildren = data.children && data.children.length > 0;
+
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
+    <Box p={3}>
+      <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 'bold' }}>
         Parent Dashboard
       </Typography>
 
-      <Grid container spacing={3}>
-        {/* Students Overview */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              My Children
-            </Typography>
-            <List>
-              {dashboardData.students.map((student) => (
-                <Card key={student.id} sx={{ mb: 2 }}>
+      {!hasChildren ? (
+        <Paper sx={{ p: 4, textAlign: 'center', mb: 3 }}>
+          <School sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+          <Typography variant="h5" gutterBottom>
+            Welcome to Your Parent Portal
+          </Typography>
+          <Typography variant="body1" color="text.secondary" paragraph>
+            To get started, you need to link your child(ren) to your account.
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            size="large"
+            startIcon={<Add />}
+            onClick={() => navigate('/parent/children')}
+            sx={{ mt: 2 }}
+          >
+            Link Your Child
+          </Button>
+        </Paper>
+      ) : (
+        <>
+          {/* Children Overview */}
+          <Grid container spacing={3} sx={{ mb: 3 }}>
+            <Grid item xs={12}>
+              <Typography variant="h6" gutterBottom>
+                My Children
+              </Typography>
+            </Grid>
+            {data.children.map((child) => (
+              <Grid item xs={12} sm={6} md={4} key={child._id}>
+                <Card>
                   <CardContent>
-                    <Typography variant="subtitle1">
-                      {student.name} - {student.grade}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Class: {student.class}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Roll Number: {student.rollNumber}
-                    </Typography>
+                    <Box display="flex" alignItems="center" mb={2}>
+                      <Avatar sx={{ mr: 2, bgcolor: 'primary.main' }}>
+                        <Person />
+                      </Avatar>
+                      <Box>
+                        <Typography variant="h6">{child.name}</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Class {child.class}-{child.section}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Divider sx={{ my: 1 }} />
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                      <Typography variant="body2">
+                        Roll No: {child.rollNumber}
+                      </Typography>
+                      <Chip 
+                        label="Active" 
+                        color="success" 
+                        size="small" 
+                      />
+                    </Box>
                   </CardContent>
                 </Card>
-              ))}
-            </List>
-          </Paper>
-        </Grid>
+              </Grid>
+            ))}
+          </Grid>
 
-        {/* Upcoming Events */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Upcoming Events
-            </Typography>
-            <List>
-              {dashboardData.upcomingEvents.map((event) => (
-                <ListItem key={event.id}>
-                  <ListItemIcon>
-                    <EventIcon />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={event.title}
-                    secondary={`${event.date} - ${event.time}`}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          </Paper>
-        </Grid>
+          {/* Quick Stats */}
+          <Grid container spacing={3} sx={{ mb: 3 }}>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card>
+                <CardContent>
+                  <Box display="flex" alignItems="center">
+                    <Assignment sx={{ fontSize: 40, color: 'primary.main', mr: 2 }} />
+                    <Box>
+                      <Typography variant="h4">
+                        {data.recentAssignments?.length || 0}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Pending Assignments
+                      </Typography>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card>
+                <CardContent>
+                  <Box display="flex" alignItems="center">
+                    <Event sx={{ fontSize: 40, color: 'secondary.main', mr: 2 }} />
+                    <Box>
+                      <Typography variant="h4">
+                        {data.upcomingEvents?.length || 0}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Upcoming Events
+                      </Typography>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card>
+                <CardContent>
+                  <Box display="flex" alignItems="center">
+                    <Notifications sx={{ fontSize: 40, color: 'warning.main', mr: 2 }} />
+                    <Box>
+                      <Typography variant="h4">
+                        {data.notifications?.length || 0}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        New Notifications
+                      </Typography>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card>
+                <CardContent>
+                  <Box display="flex" alignItems="center">
+                    <Payment sx={{ fontSize: 40, color: 'error.main', mr: 2 }} />
+                    <Box>
+                      <Typography variant="h4">
+                        {data.feeStatus?.filter(f => f.status === 'Pending').length || 0}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Pending Fees
+                      </Typography>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
 
-        {/* Recent Assignments */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Recent Assignments
-            </Typography>
-            <List>
-              {dashboardData.recentAssignments.map((assignment) => (
-                <ListItem key={assignment.id}>
-                  <ListItemIcon>
-                    <AssignmentIcon />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={assignment.title}
-                    secondary={`Due: ${assignment.dueDate}`}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          </Paper>
-        </Grid>
+          {/* Recent Activities */}
+          <Grid container spacing={3}>
+            {/* Recent Assignments */}
+            <Grid item xs={12} md={6}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Recent Assignments
+                  </Typography>
+                  {data.recentAssignments && data.recentAssignments.length > 0 ? (
+                    <List>
+                      {data.recentAssignments.slice(0, 5).map((assignment) => (
+                        <ListItem key={assignment._id} divider>
+                          <ListItemAvatar>
+                            <Avatar sx={{ bgcolor: 'primary.main' }}>
+                              <Assignment />
+                            </Avatar>
+                          </ListItemAvatar>
+                          <ListItemText
+                            primary={assignment.title}
+                            secondary={`${assignment.subject} - Due: ${new Date(assignment.dueDate).toLocaleDateString()}`}
+                          />
+                          <Chip 
+                            label={assignment.status} 
+                            color={assignment.status === 'Submitted' ? 'success' : 'warning'}
+                            size="small"
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
+                      No recent assignments
+                    </Typography>
+                  )}
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    onClick={() => navigate('/parent/assignments')}
+                    sx={{ mt: 2 }}
+                  >
+                    View All Assignments
+                  </Button>
+                </CardContent>
+              </Card>
+            </Grid>
 
-        {/* Notifications */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Notifications
-            </Typography>
-            <List>
-              {dashboardData.notifications.map((notification) => (
-                <ListItem key={notification.id}>
-                  <ListItemIcon>
-                    <NotificationsIcon />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={notification.title}
-                    secondary={notification.message}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          </Paper>
-        </Grid>
-      </Grid>
+            {/* Upcoming Events */}
+            <Grid item xs={12} md={6}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Upcoming Events
+                  </Typography>
+                  {data.upcomingEvents && data.upcomingEvents.length > 0 ? (
+                    <List>
+                      {data.upcomingEvents.slice(0, 5).map((event) => (
+                        <ListItem key={event._id} divider>
+                          <ListItemAvatar>
+                            <Avatar sx={{ bgcolor: 'secondary.main' }}>
+                              <Event />
+                            </Avatar>
+                          </ListItemAvatar>
+                          <ListItemText
+                            primary={event.title}
+                            secondary={`${new Date(event.startDate).toLocaleDateString()} - ${event.venue}`}
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
+                      No upcoming events
+                    </Typography>
+                  )}
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    onClick={() => navigate('/parent/calendar')}
+                    sx={{ mt: 2 }}
+                  >
+                    View Calendar
+                  </Button>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </>
+      )}
     </Box>
   );
 };

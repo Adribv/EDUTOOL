@@ -14,6 +14,7 @@ const PDFDocument = require('pdfkit');
 const ClassModel = require('../../../models/Admin/classModel');
 const SubjectModel = require('../../../models/Admin/subjectModel');
 const ScheduleModel = require('../../../models/Admin/scheduleModel');
+const Parent = require('../../../models/Parent/parentModel');
 
 // 1. Student Records Management
 exports.getAllStudents = async (req, res) => {
@@ -1892,3 +1893,112 @@ exports.getSchedules=async(req,res)=>{try{const list=await ScheduleModel.find();
 exports.createSchedule=async(req,res)=>{try{const sch=await ScheduleModel.create(req.body);res.status(201).json(sch);}catch(e){console.error(e);res.status(500).json({message:'Server error'});} };
 exports.updateSchedule=async(req,res)=>{try{const sch=await ScheduleModel.findByIdAndUpdate(req.params.id,{$set:req.body},{new:true,runValidators:true});if(!sch)return res.status(404).json({message:'Schedule not found'});res.json(sch);}catch(e){console.error(e);res.status(500).json({message:'Server error'});} };
 exports.deleteSchedule=async(req,res)=>{try{const sch=await ScheduleModel.findByIdAndDelete(req.params.id);if(!sch)return res.status(404).json({message:'Schedule not found'});res.json({message:'Schedule deleted'});}catch(e){console.error(e);res.status(500).json({message:'Server error'});} };
+
+// Parent Management
+exports.getAllParents = async (req, res) => {
+  try {
+    const parents = await Parent.find().populate('children', 'name rollNumber class section');
+    res.json(parents);
+  } catch (error) {
+    console.error('Error fetching parents:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.getParentById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const parent = await Parent.findById(id).populate('children', 'name rollNumber class section');
+    if (!parent) {
+      return res.status(404).json({ message: 'Parent not found' });
+    }
+    res.json(parent);
+  } catch (error) {
+    console.error('Error fetching parent:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.registerParent = async (req, res) => {
+  try {
+    const { name, email, password, contactNumber, address, childRollNumbers } = req.body;
+    
+    // Validate required fields
+    if (!name || !email || !password) {
+      return res.status(400).json({ 
+        message: 'Name, email, and password are required fields' 
+      });
+    }
+    
+    // Check if parent already exists
+    const existingParent = await Parent.findOne({ email });
+    if (existingParent) {
+      return res.status(400).json({ message: 'Parent with this email already exists' });
+    }
+    
+    // Hash password
+    const bcrypt = require('bcryptjs');
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Create parent
+    const parent = new Parent({
+      name,
+      email,
+      password: hashedPassword,
+      contactNumber: contactNumber || '',
+      address: address || {},
+      childRollNumbers: childRollNumbers || []
+    });
+    
+    await parent.save();
+    
+    // Return parent without password
+    const parentResponse = await Parent.findById(parent._id).select('-password');
+    res.status(201).json(parentResponse);
+  } catch (error) {
+    console.error('Error registering parent:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.updateParent = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, contactNumber, address, childRollNumbers } = req.body;
+    
+    const parent = await Parent.findById(id);
+    if (!parent) {
+      return res.status(404).json({ message: 'Parent not found' });
+    }
+    
+    // Update fields
+    if (name) parent.name = name;
+    if (email) parent.email = email;
+    if (contactNumber) parent.contactNumber = contactNumber;
+    if (address) parent.address = address;
+    if (childRollNumbers) parent.childRollNumbers = childRollNumbers;
+    
+    await parent.save();
+    
+    // Return updated parent without password
+    const updatedParent = await Parent.findById(id).select('-password').populate('children', 'name rollNumber class section');
+    res.json(updatedParent);
+  } catch (error) {
+    console.error('Error updating parent:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.deleteParent = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const parent = await Parent.findByIdAndDelete(id);
+    if (!parent) {
+      return res.status(404).json({ message: 'Parent not found' });
+    }
+    res.json({ message: 'Parent deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting parent:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
