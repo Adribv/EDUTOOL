@@ -13,4 +13,11 @@ const verifyToken = (req, res, next) => {
   }
 };
 
-module.exports = { verifyToken };
+const isVicePrincipal = (req, res, next) => {
+  if (req.user && req.user.role === 'VicePrincipal') {
+    return next();
+  }
+  return res.status(403).json({ message: 'Access denied: Vice Principal only' });
+};
+
+module.exports = { verifyToken, isVicePrincipal };

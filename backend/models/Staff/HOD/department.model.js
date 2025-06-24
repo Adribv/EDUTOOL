@@ -5,19 +5,10 @@ const departmentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  email: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  password: {
-    type: String,
-    required: true
-  },
   role: {
     type: String,
     enum: ['Teacher', 'HOD', 'Admin'],
-    required: true
+    required: false
   },
   department: {
     type: String
@@ -40,7 +31,17 @@ const departmentSchema = new mongoose.Schema({
   teacherProfile: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'TeacherProfile' // 👈 should match the model name you create
-  }
+  },
+  // Add for Vice Principal
+  vicePrincipal: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Staff'
+  },
+  // Add teachers array for department
+  teachers: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Staff'
+  }]
 
 }, { timestamps: true });
 

@@ -15,16 +15,16 @@ import {
   Alert,
   useTheme,
   useMediaQuery,
+  Chip,
 } from '@mui/material';
 import {
-  Business as BusinessIcon,
   Lock as LockIcon,
   Email as EmailIcon,
+  Security as SecurityIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
 import logo from '../../assets/logo.jpg';
-import { roleConfig } from '../admin/roleConfig';
 
 const validationSchema = Yup.object({
   email: Yup.string()
@@ -35,7 +35,7 @@ const validationSchema = Yup.object({
     .required('Password is required'),
 });
 
-const StaffLogin = () => {
+const OfficialsLogin = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const theme = useTheme();
@@ -44,69 +44,41 @@ const StaffLogin = () => {
 
   const loginMutation = useMutation({
     mutationFn: async (values) => {
-      // Remove role from values since it will be detected from user data
       const { role, ...loginValues } = values;
       const user = await login(loginValues, 'staff');
       return user;
     },
     onSuccess: (user) => {
-      // Navigate based on automatically detected role
-      console.log('Login successful, user data:', user);
       if (!user) {
-        console.error('User data is undefined after login');
         setError('Login successful but user data is missing');
         return;
       }
-      
-      // Store the role in localStorage for consistency
       if (user.role) {
         localStorage.setItem('userRole', user.role);
       }
-      
-      // Auto-detect role from user data (role or designation field)
       const userRole = user.role || user.designation || '';
       console.log('Auto-detected role:', userRole);
       
-      // Route to dashboard based on roleConfig
-      if (roleConfig[userRole]) {
-        navigate('/admin');
-        return;
-      }
-      
-      // Fallback for other roles
-      // Check if role exists in roleConfig
-      if (roleConfig[userRole]) {
-        navigate('/admin/dashboard');
-      } else {
-        // For other roles, use base path from Layout.jsx
-        switch ((userRole || '').toLowerCase()) {
-          case 'teacher':
-            navigate('/teacher/dashboard');
-            break;
-          case 'hod':
-            navigate('/hod/dashboard');
-            break;
-          case 'viceprincipal':
-            navigate('/viceprincipal/dashboard');
-            break;
-          case 'principal':
-            navigate('/principal/dashboard');
-            break;
-          case 'counsellor':
-          case 'counselor':
-            navigate('/counselor/dashboard');
-            break;
-          case 'itadmin':
-            navigate('/admin');
-            break;
-          default:
-            console.warn('Unknown role:', userRole, 'Navigating to home');
-            navigate('/');
-        }
+      switch (userRole) {
+        case 'Principal':
+          navigate('/principal/dashboard');
+          break;
+        case 'Vice Principal':
+          navigate('/viceprincipal/dashboard');
+          break;
+        case 'HOD':
+          navigate('/hod/dashboard');
+          break;
+        case 'Counsellor':
+        case 'Counselor':
+          navigate('/counselor/dashboard');
+          break;
+        default:
+          toast.warn('Unknown role, navigating to home');
+          navigate('/');
       }
     },
     onError: (error) => {
-      console.error('Login failed:', error);
       setError(error.response?.data?.message || 'Login failed');
     },
   });
@@ -144,13 +116,12 @@ const StaffLogin = () => {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url("https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=1470&auto=format&fit=crop")',
+          backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url("https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=1470&auto=format&fit=crop")',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           zIndex: 0,
         }}
       />
-
       {/* Left side - Branding */}
       <Box
         sx={{
@@ -182,30 +153,22 @@ const StaffLogin = () => {
               }} 
             />
           </Box>
-          <Typography
-            variant="h1"
-            sx={{
-              fontSize: { xs: '2.5rem', sm: '3rem', md: '3.5rem', lg: '4rem' },
-              fontWeight: 700,
-              mb: 3,
-              letterSpacing: '-0.02em',
-              color: 'white',
-            }}
-          >
-            EDURAYS
-          </Typography>
-          <Typography
-            variant="h2"
-            sx={{
-              fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem', lg: '2.5rem' },
-              fontWeight: 600,
-              mb: 4,
-              letterSpacing: '-0.01em',
-              color: 'white',
-            }}
-          >
-            MANAGEMENT PORTAL
-          </Typography>
+          <Box display="flex" alignItems="center" justifyContent="center" mb={2}>
+            <SecurityIcon sx={{ fontSize: 40, color: 'white', mr: 1 }} />
+            <Typography
+              variant="h2"
+              sx={{
+                fontWeight: 700,
+                color: 'white',
+                mb: 0,
+                letterSpacing: '-0.01em',
+                fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
+              }}
+            >
+              Officials Login
+            </Typography>
+            <Chip label="Secured" color="success" sx={{ ml: 2, fontWeight: 600 }} />
+          </Box>
           <Typography
             variant="h5"
             sx={{
@@ -216,11 +179,10 @@ const StaffLogin = () => {
               color: 'white',
             }}
           >
-            Administrative Access for School Management
+            Secure access for Principal, Vice Principal, HOD, and Counselor. Your role will be automatically detected.
           </Typography>
         </motion.div>
       </Box>
-
       {/* Right side - Login Form */}
       <Box
         sx={{
@@ -250,16 +212,7 @@ const StaffLogin = () => {
               }}
             >
               <Box sx={{ textAlign: 'center', mb: 4 }}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    mb: 2,
-                  }}
-                >
-                  <BusinessIcon sx={{ fontSize: 40, color: 'primary.main', mr: 1 }} />
-                </Box>
+                <LockIcon color="primary" sx={{ fontSize: 40, mb: 1 }} />
                 <Typography
                   variant="h4"
                   sx={{
@@ -268,7 +221,7 @@ const StaffLogin = () => {
                     mb: 1,
                   }}
                 >
-                  Staff Login
+                  Secure Officials Login
                 </Typography>
                 <Typography
                   variant="body1"
@@ -277,16 +230,14 @@ const StaffLogin = () => {
                     fontSize: '1rem',
                   }}
                 >
-                  Login for all teaching and non-teaching staff. Your role and department will be automatically detected.
+                  Please enter your credentials to access your dashboard
                 </Typography>
               </Box>
-
               {error && (
                 <Alert severity="error" sx={{ mb: 3 }}>
                   {error}
                 </Alert>
               )}
-
               <Box component="form" onSubmit={formik.handleSubmit}>
                 <TextField
                   fullWidth
@@ -324,24 +275,7 @@ const StaffLogin = () => {
                   sx={{ mt: 3, mb: 2 }}
                   disabled={loginMutation.isLoading}
                 >
-                  {loginMutation.isLoading ? <CircularProgress size={24} /> : 'Sign In to Staff Portal'}
-                </Button>
-              </Box>
-
-              <Box sx={{ textAlign: 'center', mt: 3 }}>
-                <Button
-                  variant="text"
-                  onClick={() => navigate('/')}
-                  sx={{
-                    color: 'text.secondary',
-                    textTransform: 'none',
-                    fontSize: '0.9rem',
-                    '&:hover': {
-                      color: 'primary.main',
-                    },
-                  }}
-                >
-                  ← Back to Portal Selection
+                  {loginMutation.isLoading ? <CircularProgress size={24} /> : 'Sign In to Officials Portal'}
                 </Button>
               </Box>
             </Paper>
@@ -352,4 +286,4 @@ const StaffLogin = () => {
   );
 };
 
-export default StaffLogin; 
+export default OfficialsLogin; 

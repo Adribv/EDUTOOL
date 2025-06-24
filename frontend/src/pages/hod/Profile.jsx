@@ -1,72 +1,99 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Box,
-  Container,
-  Grid,
-  Paper,
   Typography,
-  TextField,
+  Card,
+  CardContent,
   Button,
+  TextField,
+  Grid,
   Avatar,
   IconButton,
   Divider,
   Alert,
-  CircularProgress,
 } from '@mui/material';
-import {
-  Edit as EditIcon,
-  Save as SaveIcon,
-  Cancel as CancelIcon,
-  PhotoCamera as PhotoCameraIcon,
-} from '@mui/icons-material';
-import { toast } from 'react-toastify';
+import { PhotoCamera as PhotoCameraIcon } from '@mui/icons-material';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { hodAPI } from '../../services/api';
+import { toast } from 'react-toastify';
 
-const Profile = () => {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [profile, setProfile] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+function HODProfile() {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     phone: '',
-    department: '',
+    address: '',
     designation: '',
+    department: '',
     qualification: '',
     experience: '',
     bio: '',
   });
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
 
-  const fetchProfile = async () => {
-    try {
-      setLoading(true);
-      const response = await hodAPI.getProfile();
-      setProfile(response.data);
+  const queryClient = useQueryClient();
+
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ['hodProfile'],
+    queryFn: () => hodAPI.getProfile(),
+    onSuccess: (data) => {
       setFormData({
-        firstName: response.data.firstName,
-        lastName: response.data.lastName,
-        email: response.data.email,
-        phone: response.data.phone,
-        department: response.data.department,
-        designation: response.data.designation,
-        qualification: response.data.qualification,
-        experience: response.data.experience,
-        bio: response.data.bio,
+        firstName: data.name?.split(' ')[0] || '',
+        lastName: data.name?.split(' ').slice(1).join(' ') || '',
+        email: data.email || '',
+        phone: data.contactNumber || data.phone || '',
+        address: data.address || '',
+        designation: data.role || data.designation || '',
+        department: data.department || '',
+        qualification: data.qualification || '',
+        experience: data.experience || '',
+        bio: data.bio || '',
       });
-      setError(null);
-    } catch (err) {
-      setError('Failed to load profile data');
-      toast.error('Failed to load profile data');
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
+
+  const updateProfileMutation = useMutation({
+    mutationFn: hodAPI.updateProfile,
+    onSuccess: () => {
+      queryClient.invalidateQueries(['hodProfile']);
+      toast.success('Profile updated successfully');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to update profile');
+    },
+  });
+
+  const updatePasswordMutation = useMutation({
+    mutationFn: hodAPI.updatePassword,
+    onSuccess: () => {
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
+      toast.success('Password updated successfully');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to update password');
+    },
+  });
+
+  const uploadImageMutation = useMutation({
+    mutationFn: hodAPI.uploadProfileImage,
+    onSuccess: () => {
+      queryClient.invalidateQueries(['hodProfile']);
+      toast.success('Profile image updated successfully');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to update profile image');
+    },
+  });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -76,261 +103,284 @@ const Profile = () => {
     }));
   };
 
-  const handleEdit = () => {
-    setIsEditing(true);
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  const handleCancel = () => {
-    setIsEditing(false);
-    setFormData({
-      firstName: profile.firstName,
-      lastName: profile.lastName,
-      email: profile.email,
-      phone: profile.phone,
-      department: profile.department,
-      designation: profile.designation,
-      qualification: profile.qualification,
-      experience: profile.experience,
-      bio: profile.bio,
-    });
-  };
-
-  const handleSubmit = async (e) => {
+  const handleProfileSubmit = (e) => {
     e.preventDefault();
-    try {
-      setLoading(true);
-      await hodAPI.updateProfile(formData);
-      await fetchProfile();
-      setIsEditing(false);
-      toast.success('Profile updated successfully');
-    } catch (err) {
-      setError('Failed to update profile');
-      toast.error('Failed to update profile');
-    } finally {
-      setLoading(false);
-    }
+    updateProfileMutation.mutate(formData);
   };
 
-  const handleImageUpload = async (e) => {
+  const handlePasswordSubmit = (e) => {
+    e.preventDefault();
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
+    updatePasswordMutation.mutate(passwordData);
+  };
+
+  const handleImageUpload = (e) => {
     const file = e.target.files[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append('image', file);
-
-    try {
-      setLoading(true);
-      await hodAPI.uploadProfileImage(formData);
-      await fetchProfile();
-      toast.success('Profile image updated successfully');
-    } catch (err) {
-      setError('Failed to update profile image');
-      toast.error('Failed to update profile image');
-    } finally {
-      setLoading(false);
+    if (file) {
+      const formData = new FormData();
+      formData.append('image', file);
+      uploadImageMutation.mutate(formData);
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-        <CircularProgress />
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '60vh',
+        }}
+      >
+        <Typography>Loading...</Typography>
       </Box>
     );
   }
 
-  if (error) {
-    return (
-      <Container maxWidth="lg" sx={{ mt: 4 }}>
-        <Alert severity="error">{error}</Alert>
-      </Container>
-    );
-  }
-
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Box>
+      <Typography variant="h4" sx={{ mb: 3 }}>
+        Profile Settings
+      </Typography>
+
       <Grid container spacing={3}>
-        {/* Profile Header */}
-        <Grid item xs={12}>
-          <Paper sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 3 }}>
-            <Box position="relative">
-              <Avatar
-                src={profile?.profileImage}
-                alt={`${profile?.firstName} ${profile?.lastName}`}
-                sx={{ width: 120, height: 120 }}
-              />
-              <input
-                accept="image/*"
-                style={{ display: 'none' }}
-                id="profile-image-upload"
-                type="file"
-                onChange={handleImageUpload}
-              />
-              <label htmlFor="profile-image-upload">
-                <IconButton
-                  component="span"
-                  sx={{
-                    position: 'absolute',
-                    bottom: 0,
-                    right: 0,
-                    bgcolor: 'primary.main',
-                    color: 'white',
-                    '&:hover': { bgcolor: 'primary.dark' },
-                  }}
-                >
-                  <PhotoCameraIcon />
-                </IconButton>
-              </label>
-            </Box>
-            <Box flex={1}>
-              <Typography variant="h4" gutterBottom>
-                {profile?.firstName} {profile?.lastName}
+        <Grid item xs={12} md={4}>
+          <Card>
+            <CardContent sx={{ textAlign: 'center' }}>
+              <Box sx={{ position: 'relative', display: 'inline-block' }}>
+                <Avatar
+                  src={profile?.profileImage ? `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/${profile.profileImage}` : undefined}
+                  sx={{ width: 120, height: 120, mb: 2 }}
+                />
+                <input
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  id="icon-button-file"
+                  type="file"
+                  onChange={handleImageUpload}
+                />
+                <label htmlFor="icon-button-file">
+                  <IconButton
+                    color="primary"
+                    aria-label="upload picture"
+                    component="span"
+                    sx={{
+                      position: 'absolute',
+                      bottom: 0,
+                      right: 0,
+                      bgcolor: 'background.paper',
+                    }}
+                  >
+                    <PhotoCameraIcon />
+                  </IconButton>
+                </label>
+              </Box>
+              <Typography variant="h6" gutterBottom>
+                {profile?.name || 'No Name'}
               </Typography>
-              <Typography variant="subtitle1" color="text.secondary">
-                {profile?.designation}
+              <Typography color="textSecondary" gutterBottom>
+                {profile?.role || profile?.designation || 'No Role'}
               </Typography>
-              <Typography variant="body1" color="text.secondary">
-                {profile?.department}
+              <Typography color="textSecondary">
+                {profile?.department || 'No Department'}
               </Typography>
-            </Box>
-            {!isEditing && (
-              <Button
-                variant="contained"
-                startIcon={<EditIcon />}
-                onClick={handleEdit}
-              >
-                Edit Profile
-              </Button>
-            )}
-          </Paper>
+            </CardContent>
+          </Card>
         </Grid>
 
-        {/* Profile Details */}
-        <Grid item xs={12}>
-          <Paper sx={{ p: 3 }}>
-            <form onSubmit={handleSubmit}>
-              <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="First Name"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                  />
+        <Grid item xs={12} md={8}>
+          <Card sx={{ mb: 3 }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                Personal Information
+              </Typography>
+              <form onSubmit={handleProfileSubmit}>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="First Name"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Last Name"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Email"
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Phone"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Address"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      multiline
+                      rows={2}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Department"
+                      name="department"
+                      value={formData.department}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Designation"
+                      name="designation"
+                      value={formData.designation}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Qualification"
+                      name="qualification"
+                      value={formData.qualification}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Experience (years)"
+                      name="experience"
+                      type="number"
+                      value={formData.experience}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Bio"
+                      name="bio"
+                      value={formData.bio}
+                      onChange={handleInputChange}
+                      multiline
+                      rows={3}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      disabled={updateProfileMutation.isPending}
+                    >
+                      Update Profile
+                    </Button>
+                  </Grid>
                 </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Last Name"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Email"
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Phone"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Department"
-                    name="department"
-                    value={formData.department}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Designation"
-                    name="designation"
-                    value={formData.designation}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Qualification"
-                    name="qualification"
-                    value={formData.qualification}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Experience (years)"
-                    name="experience"
-                    type="number"
-                    value={formData.experience}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Bio"
-                    name="bio"
-                    multiline
-                    rows={4}
-                    value={formData.bio}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                  />
-                </Grid>
-              </Grid>
+              </form>
+            </CardContent>
+          </Card>
 
-              {isEditing && (
-                <Box sx={{ mt: 3, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                  <Button
-                    variant="outlined"
-                    startIcon={<CancelIcon />}
-                    onClick={handleCancel}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    startIcon={<SaveIcon />}
-                    disabled={loading}
-                  >
-                    Save Changes
-                  </Button>
-                </Box>
-              )}
-            </form>
-          </Paper>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                Change Password
+              </Typography>
+              <form onSubmit={handlePasswordSubmit}>
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Current Password"
+                      name="currentPassword"
+                      type="password"
+                      value={passwordData.currentPassword}
+                      onChange={handlePasswordChange}
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="New Password"
+                      name="newPassword"
+                      type="password"
+                      value={passwordData.newPassword}
+                      onChange={handlePasswordChange}
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Confirm New Password"
+                      name="confirmPassword"
+                      type="password"
+                      value={passwordData.confirmPassword}
+                      onChange={handlePasswordChange}
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      disabled={updatePasswordMutation.isPending}
+                    >
+                      Update Password
+                    </Button>
+                  </Grid>
+                </Grid>
+              </form>
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
-    </Container>
+    </Box>
   );
-};
+}
 
-export default Profile; 
+export default HODProfile; 

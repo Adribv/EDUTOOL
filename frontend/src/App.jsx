@@ -79,6 +79,9 @@ const HODRoutes = lazy(() => import('./routes/HODRoutes'));
 const PrincipalRoutes = lazy(() => import('./routes/PrincipalRoutes'));
 const CounselorRoutes = lazy(() => import('./routes/CounselorRoutes'));
 
+// Vice Principal Pages
+const VicePrincipalDashboard = lazy(() => import('./pages/viceprincipal/VicePrincipalDashboard'));
+
 // Loading component
 const LoadingSpinner = () => {
   const theme = useTheme();
@@ -157,6 +160,10 @@ function App() {
 
                   <Route element={<ProtectedRoute allowedRoles={['counsellor']} />}>
                     <Route path="/counselor/*" element={<CounselorRoutes />} />
+                  </Route>
+
+                  <Route element={<ProtectedRoute allowedRoles={['viceprincipal']} />}>
+                    <Route path="/viceprincipal/dashboard" element={<VicePrincipalDashboard />} />
                   </Route>
 
                   {/* 404 Route */}

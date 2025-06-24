@@ -37,12 +37,51 @@ import {
   Inventory,
   ChevronLeft,
   ChevronRight,
+  Event,
+  Message,
+  SupervisorAccount,
+  TrendingUp,
+  Approval,
+  Schedule,
+  Book,
+  Psychology,
+  Security,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import Logo from './Logo';
-import DemoModeToggle from '../DemoModeToggle';
+import { roleConfig } from '../../pages/admin/roleConfig';
 
 const drawerWidth = 280;
+
+// HOD-specific role configuration for sidebar
+const hodRoleConfig = {
+  'HOD': {
+    sidebar: [
+      'Teachers',
+      'Students',
+      'Courses',
+      'Evaluations',
+      'Reports',
+      'Settings',
+    ],
+  },
+  'Class Coordinator': {
+    sidebar: [
+      'Attendance',
+      'Classes',
+      'Students',
+      'Reports',
+    ],
+  },
+  'Examination Controller': {
+    sidebar: [
+      'Exams',
+      'Results',
+      'Reports',
+      'Schedules',
+    ],
+  },
+};
 
 const Layout = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -77,6 +116,47 @@ const Layout = () => {
   }, [drawerCollapsed]);
 
   const getMenuItems = useMemo(() => {
+    // If user is admin type and has a designation in roleConfig, use that
+    if (user?.role === 'AdminStaff' && roleConfig[user?.designation]) {
+      return [
+        { text: 'Dashboard', icon: <Dashboard />, path: '/admin/dashboard' },
+        { text: 'Profile', icon: <Person />, path: '/admin/profile' },
+        ...roleConfig[user.designation].sidebar.map((item) => {
+          // Map sidebar item to path and icon
+          const iconMap = {
+            'Attendance': <Assignment />, 
+            'Classes': <School />, 
+            'Students': <People />, 
+            'Reports': <Assessment />,
+            'FeeConfiguration': <Payment />, 
+            'Inventory_Management': <Inventory />, 
+            'UserManagement': <People />,
+            'A_Reports': <Assessment />, 
+            'A_Events': <Event />, 
+            'A_Communication': <Message />, 
+            'A_Settings': <Settings />,
+            'A_Users': <People />, 
+            'A_Classes': <School />, 
+            'A_Subjects': <Assignment />, 
+            'A_Schedules': <CalendarToday />,
+            'Exams': <Assignment />, 
+            'Results': <Assessment />, 
+            'SystemSettings': <Settings />
+          };
+          return {
+            text: item.replace(/_/g, ' '),
+            icon: iconMap[item] || <Assignment />,
+            path: `/admin/${item}`,
+          };
+        })
+      ].flat();
+    }
+
+    // For HOD users, return empty array to hide sidebar
+    if (user?.role === 'HOD') {
+      return [];
+    }
+
     const getBasePath = () => {
       switch (user?.role) {
         case 'AdminStaff':
@@ -120,6 +200,13 @@ const Layout = () => {
         { text: 'User Management', icon: <People />, path: '/admin/users' },
         { text: 'Reports', icon: <Assessment />, path: '/admin/reports' },
       ],
+      ITAdmin: [
+        { text: 'IT Admin Dashboard', icon: <Dashboard />, path: '/itadmin/dashboard' },
+        { text: 'Profile', icon: <Person />, path: '/itadmin/profile' },
+        { text: 'User Management', icon: <People />, path: '/itadmin/users' },
+        { text: 'Reports', icon: <Assessment />, path: '/itadmin/reports' },
+        { text: 'System Settings', icon: <Settings />, path: '/itadmin/settings' },
+      ],
       Teacher: [
         { text: 'Classes', icon: <School />, path: '/teacher/classes' },
         { text: 'Assignments', icon: <Assignment />, path: '/teacher/assignments' },
@@ -133,7 +220,7 @@ const Layout = () => {
     };
 
     return [...commonItems, ...(roleSpecificItems[user?.role] || [])];
-  }, [user?.role]);
+  }, [user?.role, user?.designation]);
 
   const handleNavigation = useCallback((path) => {
     navigate(path);
@@ -142,12 +229,23 @@ const Layout = () => {
     }
   }, [navigate, isMobile]);
 
+  const handleProfileClick = useCallback(() => {
+    // Navigate to appropriate profile page based on user role
+    const profilePath = user?.role === 'HOD' ? '/hod/profile' : 'profile';
+    handleNavigation(profilePath);
+    handleProfileMenuClose();
+  }, [user?.role, handleNavigation, handleProfileMenuClose]);
+
   const isActiveRoute = useCallback((path) => {
     if (path.endsWith('/dashboard')) {
       return location.pathname === path || location.pathname.endsWith('/dashboard');
     }
     return location.pathname === path || location.pathname.startsWith(path);
   }, [location.pathname]);
+
+  // Check if user is HOD to determine layout
+  const isHOD = user?.role === 'HOD';
+  const currentDrawerWidth = isHOD ? 0 : (drawerCollapsed && !isMobile ? 80 : drawerWidth);
 
   const drawer = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -248,16 +346,14 @@ const Layout = () => {
     </Box>
   );
 
-  const currentDrawerWidth = drawerCollapsed && !isMobile ? 80 : drawerWidth;
-
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
       <AppBar
         position="fixed"
         sx={{
-          width: { md: `calc(100% - ${currentDrawerWidth}px)` },
-          ml: { md: `${currentDrawerWidth}px` },
+          width: { md: isHOD ? '100%' : `calc(100% - ${currentDrawerWidth}px)` },
+          ml: { md: isHOD ? 0 : `${currentDrawerWidth}px` },
           bgcolor: 'white',
           color: 'text.primary',
           boxShadow: '0px 1px 3px rgba(0, 0, 0, 0.1), 0px 1px 2px rgba(0, 0, 0, 0.06)',
@@ -274,7 +370,7 @@ const Layout = () => {
             aria-label="open drawer"
             edge="start"
             onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { md: 'none' } }}
+            sx={{ mr: 2, display: { md: isHOD ? 'none' : 'block' } }}
           >
             <MenuIcon />
           </IconButton>
@@ -288,7 +384,11 @@ const Layout = () => {
               color: '#1e293b'
             }}
           >
-            {user?.role ? `${user.role} Dashboard` : 'Dashboard'}
+            {user?.role === 'AdminStaff' && user?.designation 
+              ? `${user.designation} Dashboard` 
+              : user?.role === 'HOD' && user?.designation
+              ? `${user.designation} Dashboard`
+              : user?.role ? `${user.role} Dashboard` : 'Dashboard'}
           </Typography>
           
           <IconButton color="inherit" sx={{ mr: 1 }}>
@@ -315,66 +415,69 @@ const Layout = () => {
         </Toolbar>
       </AppBar>
 
-      <Box
-        component="nav"
-        sx={{ 
-          width: { md: currentDrawerWidth }, 
-          flexShrink: { md: 0 },
-          transition: theme.transitions.create('width', {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.enteringScreen,
-          }),
-        }}
-      >
-        {/* Mobile drawer */}
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{
-            keepMounted: true,
-          }}
-          sx={{
-            display: { xs: 'block', md: 'none' },
-            '& .MuiDrawer-paper': {
-              boxSizing: 'border-box',
-              width: drawerWidth,
-              bgcolor: '#0f172a',
-              borderRight: 'none',
-            },
+      {/* Only show navigation drawer if not HOD */}
+      {!isHOD && (
+        <Box
+          component="nav"
+          sx={{ 
+            width: { md: currentDrawerWidth }, 
+            flexShrink: { md: 0 },
+            transition: theme.transitions.create('width', {
+              easing: theme.transitions.easing.sharp,
+              duration: theme.transitions.duration.enteringScreen,
+            }),
           }}
         >
-          {drawer}
-        </Drawer>
-        
-        {/* Desktop drawer */}
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: 'none', md: 'block' },
-            '& .MuiDrawer-paper': {
-              boxSizing: 'border-box',
-              width: currentDrawerWidth,
-              bgcolor: '#0f172a',
-              border: 'none',
-              transition: theme.transitions.create('width', {
-                easing: theme.transitions.easing.sharp,
-                duration: theme.transitions.duration.enteringScreen,
-              }),
-            },
-          }}
-          open
-        >
-          {drawer}
-        </Drawer>
-      </Box>
+          {/* Mobile drawer */}
+          <Drawer
+            variant="temporary"
+            open={mobileOpen}
+            onClose={handleDrawerToggle}
+            ModalProps={{
+              keepMounted: true,
+            }}
+            sx={{
+              display: { xs: 'block', md: 'none' },
+              '& .MuiDrawer-paper': {
+                boxSizing: 'border-box',
+                width: drawerWidth,
+                bgcolor: '#0f172a',
+                borderRight: 'none',
+              },
+            }}
+          >
+            {drawer}
+          </Drawer>
+          
+          {/* Desktop drawer */}
+          <Drawer
+            variant="permanent"
+            sx={{
+              display: { xs: 'none', md: 'block' },
+              '& .MuiDrawer-paper': {
+                boxSizing: 'border-box',
+                width: currentDrawerWidth,
+                bgcolor: '#0f172a',
+                border: 'none',
+                transition: theme.transitions.create('width', {
+                  easing: theme.transitions.easing.sharp,
+                  duration: theme.transitions.duration.enteringScreen,
+                }),
+              },
+            }}
+            open
+          >
+            {drawer}
+          </Drawer>
+        </Box>
+      )}
 
       <Box
         component="main"
         sx={{
           flexGrow: 1,
           p: { xs: 2, md: 3 },
-          width: { md: `calc(100% - ${currentDrawerWidth}px)` },
+          width: { md: isHOD ? '100%' : `calc(100% - ${currentDrawerWidth}px)` },
           transition: theme.transitions.create(['width', 'margin'], {
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.leavingScreen,
@@ -401,7 +504,7 @@ const Layout = () => {
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
-        <MenuItem onClick={() => handleNavigation('profile')}>
+        <MenuItem onClick={handleProfileClick}>
           <ListItemIcon>
             <Person fontSize="small" />
           </ListItemIcon>
@@ -414,9 +517,6 @@ const Layout = () => {
           Logout
         </MenuItem>
       </Menu>
-
-      {/* Demo Mode Toggle */}
-      <DemoModeToggle />
     </Box>
   );
 };

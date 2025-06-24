@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { color, motion } from 'framer-motion';
 import { useMemo, useCallback, useState } from 'react';
 import {
   Container,
@@ -34,7 +34,7 @@ const Home = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [selectedTab, setSelectedTab] = useState(0);
 
-  const studentParentPortals = useMemo(() => [
+  const studentParentPortals = [
     {
       title: 'Student Portal',
       description: 'Access your academic dashboard, assignments, and grades',
@@ -51,40 +51,16 @@ const Home = () => {
       path: '/parent-login',
       gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
     },
-  ], []);
+  ];
 
   const managementPortals = useMemo(() => [
     {
-      title: 'Staff Portal',
-      description: 'Manage classes, grades, and academic activities',
-      icon: <PersonIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: '#7c3aed' }} />,
+      title: 'Staff Login',
+      description: 'Login for all teaching and non-teaching staff, principals, HODs, and officials',
+      icon: <BusinessIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: '#7c3aed' }} />,
       color: '#7c3aed',
       path: '/management-login',
       gradient: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
-    },
-    {
-      title: 'Admin Portal',
-      description: 'System administration and management',
-      icon: <AdminPanelSettingsIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: '#dc2626' }} />,
-      color: '#dc2626',
-      path: '/management-login',
-      gradient: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
-    },
-    {
-      title: 'HOD Portal',
-      description: 'Department management and oversight',
-      icon: <SupervisorAccountIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: '#ea580c' }} />,
-      color: '#ea580c',
-      path: '/management-login',
-      gradient: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
-    },
-    {
-      title: 'Counselor Portal',
-      description: 'Student counseling and support services',
-      icon: <PsychologyIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: '#0891b2' }} />,
-      color: '#0891b2',
-      path: '/management-login',
-      gradient: 'linear-gradient(135deg, #0891b2 0%, #0e7490 100%)',
     },
   ], []);
 
@@ -339,13 +315,13 @@ const Home = () => {
                   icon={<GroupIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />} 
                   label="Students & Parents" 
                   iconPosition="start"
-                  sx={{ '&.Mui-selected': { color: '#F9A525' } }}
+                  sx={{ '&.Mui-selected': { color: 'gray' } }}
                 />
                 <Tab 
                   icon={<BusinessIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />} 
-                  label="Management" 
+                  label="Staff & Management" 
                   iconPosition="start"
-                  sx={{ '&.Mui-selected': { color: '#F9A525' } }}
+                  sx={{ '&.Mui-selected': { color: 'gray' } }}
                 />
               </Tabs>
             </Paper>
@@ -365,18 +341,6 @@ const Home = () => {
                   }}
                 >
                   Student & Parent Portals
-                </Typography>
-                <Typography
-                  variant="body1"
-                  sx={{
-                    textAlign: 'center',
-                    color: 'white',
-                    opacity: 0.8,
-                    mb: 4,
-                    fontSize: { xs: '0.875rem', sm: '1rem' },
-                  }}
-                >
-                  Access your educational resources and stay connected with the school community
                 </Typography>
               </Box>
               <Grid container spacing={{ xs: 2, sm: 3 }} justifyContent="center">
@@ -400,19 +364,7 @@ const Home = () => {
                     fontSize: { xs: '1.5rem', sm: '2rem' },
                   }}
                 >
-                  Management Portals
-                </Typography>
-                <Typography
-                  variant="body1"
-                  sx={{
-                    textAlign: 'center',
-                    color: 'white',
-                    opacity: 0.8,
-                    mb: 4,
-                    fontSize: { xs: '0.875rem', sm: '1rem' },
-                  }}
-                >
-                  Administrative tools and management systems for school staff
+                  Staff & Management Portal
                 </Typography>
               </Box>
               <Grid container spacing={{ xs: 2, sm: 3 }} justifyContent="center">

@@ -47,5 +47,6 @@ router.use('/teachers', require('../routes/Staff/teacherRoutes'));
 // Add HOD routes
 router.use('/hod', require('../routes/Staff/hodRoutes'));
 router.use('/admin-staff',require('../routes/Staff/Admin/adminStaffRoutes'))
+router.use('/vp', require('../routes/Staff/VP/vicePrincipalRoutes'));
 
 module.exports = router;
