@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { authAPI, api } from '../services/api';
-import { placeholderData, getPlaceholderData, createMockResponse } from '../services/placeholderData';
+import { getPlaceholderData } from '../services/placeholderData';
 import { toast } from 'react-toastify';
 
 const AuthContext = createContext(null);
@@ -15,28 +15,39 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       const token = localStorage.getItem('token');
       if (token) {
-        // Try to get profile from staff endpoint first (most common case)
-        try {
-          const response = await api.get('/api/staffs/profile');
-          setUser(response.data);
-        } catch (staffError) {
-          // If staff profile fails, try other endpoints
+        const storedRole = localStorage.getItem('userRole');
+        // Determine primary endpoint based on stored role
+        const endpointOrder = storedRole === 'Student' ? [
+          '/api/students/profile',
+          '/api/parents/profile',
+          '/api/staffs/profile',
+        ] : storedRole === 'Parent' ? [
+          '/api/parents/profile',
+          '/api/students/profile',
+          '/api/staffs/profile',
+        ] : [
+          '/api/staffs/profile',
+          '/api/students/profile',
+          '/api/parents/profile',
+        ];
+
+        let fetched = false;
+        for (const ep of endpointOrder) {
+          if (fetched) break;
           try {
-            const response = await api.get('/api/students/profile');
-            setUser(response.data);
-          } catch (studentError) {
-            try {
-              const response = await api.get('/api/parents/profile');
-              setUser(response.data);
-            } catch (parentError) {
-              // If all fail, use placeholder data based on stored role or default to staff
-              const storedRole = localStorage.getItem('userRole') || 'adminstaff';
-              const placeholderProfile = getPlaceholderData(storedRole, 'profile');
-              setUser(placeholderProfile);
-              console.warn('Using placeholder profile data');
-              toast.info('Using demo data - some features may be limited');
-            }
+            const res = await api.get(ep);
+            setUser(res.data);
+            fetched = true;
+          } catch (_err) { // eslint-disable-line no-unused-vars
+            // continue
           }
+        }
+        if (!fetched) {
+          const fallbackRole = storedRole || 'adminstaff';
+          const placeholderProfile = getPlaceholderData(fallbackRole, 'profile');
+          setUser(placeholderProfile);
+          console.warn('Using placeholder profile data');
+          toast.info('Using demo data - some features may be limited');
         }
       }
     } catch (err) {
@@ -78,7 +89,7 @@ export const AuthProvider = ({ children }) => {
         try {
           const profileResponse = await api.get('/api/staffs/profile');
           userProfile = profileResponse.data;
-        } catch (profileError) {
+        } catch (_profileError) { // eslint-disable-line no-unused-vars
           // If profile fetch fails, use placeholder data
           const userRole = role || 'adminstaff';
           userProfile = getPlaceholderData(userRole, 'profile');

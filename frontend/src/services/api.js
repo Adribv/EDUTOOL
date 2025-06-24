@@ -54,15 +54,63 @@ export const authAPI = {
 
 // Student endpoints
 export const studentAPI = {
-  getDashboard: () => api.get('/student/dashboard'),
-  getAssignments: () => api.get('/student/assignments'),
-  getAttendance: () => api.get('/student/attendance'),
-  getExams: () => api.get('/student/exams'),
-  getFees: () => api.get('/student/fees'),
-  getResources: () => api.get('/student/resources'),
-  getMessages: () => api.get('/student/messages'),
-  submitAssignment: (assignmentId, data) => 
-    api.post(`/student/assignments/${assignmentId}/submit`, data),
+  // Auth
+  studentLogin: (credentials) => api.post('/api/students/login', credentials),
+  register: (data) => api.post('/api/students/register', data),
+  
+  // Profile
+  getProfile: () => api.get('/api/students/profile'),
+  updateProfile: (data) => api.put('/api/students/profile', data),
+  changePassword: (data) => api.put('/api/students/change-password', data),
+  
+  // Academic Dashboard
+  getTimetable: () => api.get('/api/students/timetable'),
+  getSubjects: () => api.get('/api/students/subjects'),
+  getAssignments: () => api.get('/api/students/assignments'),
+  submitAssignment: (assignmentId, data) => api.post(`/api/students/assignments/${assignmentId}/submit`, data),
+  getSubmissionFeedback: (submissionId) => api.get(`/api/students/submissions/${submissionId}`),
+  
+  // Attendance
+  getAttendance: (params) => api.get('/api/students/attendance', { params }),
+  submitLeaveRequest: (data) => api.post('/api/students/leave-requests', data),
+  getLeaveRequests: () => api.get('/api/students/leave-requests'),
+  
+  // Examinations
+  getExams: () => api.get('/api/students/exams/upcoming'),
+  getAdmitCard: (examId) => api.get(`/api/students/exams/${examId}/admit-card`),
+  getExamResults: () => api.get('/api/students/exam-results'),
+  getReportCards: () => api.get('/api/students/report-cards'),
+  getPerformanceAnalytics: () => api.get('/api/students/performance-analytics'),
+  
+  // Fee Management
+  getFeeStructure: (params) => api.get('/api/students/fee-structure', { params }),
+  getFees: (params) => api.get('/api/students/payment-status', { params }),
+  getPaymentReceipt: (paymentId) => api.get(`/api/students/payment-receipts/${paymentId}`),
+  
+  // Learning Resources
+  getResources: (params) => api.get('/api/students/learning-resources', { params }),
+  getResourceDetails: (resourceId) => api.get(`/api/students/learning-resources/${resourceId}`),
+  
+  // Communication
+  getAnnouncements: () => api.get('/api/students/announcements'),
+  getMessages: () => api.get('/api/students/messages'),
+  getMessageDetails: (messageId) => api.get(`/api/students/messages/${messageId}`),
+  sendMessageReply: (messageId, data) => api.post(`/api/students/messages/${messageId}/reply`, data),
+  getClassDiscussions: () => api.get('/api/students/class-discussions'),
+  getDiscussionDetails: (discussionId) => api.get(`/api/students/class-discussions/${discussionId}`),
+  postDiscussionComment: (discussionId, data) => api.post(`/api/students/class-discussions/${discussionId}/comments`, data),
+  
+  // Homework
+  getHomework: () => api.get('/api/students/homework'),
+  getHomeworkDetails: (homeworkId) => api.get(`/api/students/homework/${homeworkId}`),
+  submitHomework: (homeworkId, data) => api.post(`/api/students/homework/${homeworkId}/submit`, data),
+  getHomeworkSubmissions: () => api.get('/api/students/homework-submissions'),
+  
+  // Documents
+  getDocuments: () => api.get('/api/students/documents'),
+  
+  // Legacy endpoints for backward compatibility
+  getDashboard: () => api.get('/api/students/profile'),
 };
 
 // Staff endpoints
@@ -99,13 +147,13 @@ export const staffAPI = {
 
 // Parent endpoints
 export const parentAPI = {
-  getDashboard: () => api.get('/api/parents/dashboard'),
+  getDashboard: () => api.get('/api/parents/dashboard').then(res=>res.data),
   getChildren: () => api.get('/api/parents/children').then(res => res.data),
   getChildProfile: (childId) => api.get(`/api/parents/children/${childId}`),
   getChildProgress: (childId) => api.get(`/api/parents/children/${childId}/performance`),
   getFees: (childId, params) => api.get(`/api/parents/children/${childId}/fee-structure`, { params }),
-  getMessages: () => api.get('/api/parents/messages/received'),
-  getSentMessages: () => api.get('/api/parents/messages/sent'),
+  getMessages: () => api.get('/api/parents/messages/received').then(res=>res.data),
+  getSentMessages: () => api.get('/api/parents/messages/sent').then(res=>res.data),
   payFees: (data) => api.post('/api/parents/payments', data),
   getProfile: () => api.get('/api/auth/profile'),
   updateProfile: (data) => api.put('/api/parents/profile', data),

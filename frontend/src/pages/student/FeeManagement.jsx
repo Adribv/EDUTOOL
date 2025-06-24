@@ -46,8 +46,12 @@ const FeeManagement = () => {
         studentService.getFeeStructure(),
         studentService.getPaymentStatus(),
       ]);
-      setFeeStructure(structureResponse.data);
-      setPaymentStatus(statusResponse.data);
+      const structure = structureResponse.data;
+      const components = Array.isArray(structure) ? structure : (structure.components || []);
+      setFeeStructure(components);
+      const paymentsData = statusResponse.data;
+      const payments = Array.isArray(paymentsData) ? paymentsData : (paymentsData.paymentHistory || []);
+      setPaymentStatus(payments);
     } catch {
       toast.error('Failed to load fee data');
     } finally {

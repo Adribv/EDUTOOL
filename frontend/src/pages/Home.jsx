@@ -139,7 +139,7 @@ const Home = () => {
   };
 
   const PortalCard = ({ portal, index }) => (
-    <Grid item xs={12} sm={6} md={4} key={index}>
+    <Grid item xs={12} key={index} sx={{ flexBasis: { xs: '100%', sm: '50%', md: '33.3333%' } }}>
       <motion.div
         variants={cardVariants}
         whileHover="hover"

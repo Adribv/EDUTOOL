@@ -20,11 +20,23 @@ const feePaymentSchema = new mongoose.Schema({
     enum: ['Term 1', 'Term 2', 'Term 3', 'Annual'],
     required: true
   },
+  amount: {
+    type: Number,
+    required: true
+  },
   amountPaid: {
     type: Number,
     required: true
   },
+  components: [{
+    name: String,
+    amount: Number
+  }],
   paymentDate: {
+    type: Date,
+    default: Date.now
+  },
+  date: {
     type: Date,
     default: Date.now
   },

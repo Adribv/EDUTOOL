@@ -19,6 +19,7 @@ const Complaint = require('../../models/Communication/communicationModel');
 const Meeting = require('../../models/Staff/Teacher/meeting.model');
 const Transport = require('../../models/Admin/transportModel');
 const Calendar = require('../../models/Academic/calendarModel');
+const Subject = require('../../models/Admin/subjectModel');
 
 // 1. Child Profile Access
 
@@ -170,7 +171,8 @@ exports.getChildTimetable = async (req, res) => {
     });
     
     if (!timetable) {
-      return res.status(404).json({ message: 'Timetable not found for this class' });
+      // Return an empty timetable structure instead of 404 to avoid UI errors
+      return res.json({ periods: [] });
     }
     
     res.json(timetable);
@@ -200,16 +202,16 @@ exports.getChildSubjects = async (req, res) => {
       return res.status(404).json({ message: 'Child not found' });
     }
     
-    // This would typically query a class-subject-teacher mapping model
-    // For now, return a placeholder response
+    // Fetch subjects for the child's grade/class and populate teacher names
+    const subjects = await Subject.find({ grade: child.class }).populate('teacher', 'name');
+
     res.json({
       class: child.class,
       section: child.section,
-      subjects: [
-        { name: 'Mathematics', teacher: 'Mr. John Smith' },
-        { name: 'Science', teacher: 'Ms. Jane Doe' },
-        { name: 'English', teacher: 'Mrs. Emily Johnson' }
-      ]
+      subjects: subjects.map((subj) => ({
+        name: subj.name,
+        teacher: subj.teacher ? subj.teacher.name : null,
+      }))
     });
   } catch (error) {
     console.error('Error fetching child subjects:', error);
@@ -614,7 +616,11 @@ exports.getChildFeeStructure = async (req, res) => {
     });
     
     if (!feeStructure) {
-      return res.status(404).json({ message: 'Fee structure not found' });
+      return res.json({
+        class: child.class,
+        academicYear: academicYear || new Date().getFullYear().toString(),
+        components: []
+      });
     }
     
     res.json(feeStructure);
@@ -655,7 +661,13 @@ exports.getChildPaymentStatus = async (req, res) => {
     });
     
     if (!feeStructure) {
-      return res.status(404).json({ message: 'Fee structure not found' });
+      return res.json({
+        academicYear: currentAcademicYear,
+        totalFees: 0,
+        totalPaid: 0,
+        pendingAmount: 0,
+        paymentHistory: []
+      });
     }
     
     // Get payments made by student
@@ -1450,7 +1462,7 @@ exports.linkStudent = async (req, res) => {
       return res.status(404).json({ message: 'Student not found with this roll number' });
     }
 
-    console.log('✅ Student found:', { name: student.name, rollNumber: student.rollNumber, parentId: student.parentId });
+    console.log('✅ Student found:', { name: student.name, rollNumber: student.rollNumber, parents: student.parents });
 
     // Check if student is already linked to this parent
     if (parent.childRollNumbers.includes(rollNumber)) {
@@ -1458,21 +1470,24 @@ exports.linkStudent = async (req, res) => {
       return res.status(400).json({ message: 'Student is already linked to your account' });
     }
 
-    // Check if student is already linked to another parent
-    if (student.parentId) {
-      console.log('❌ Student already linked to another parent:', student.parentId);
+    // Check if student already has any parents linked (optional single-parent rule)
+    if (student.parents && student.parents.length > 0) {
+      console.log('❌ Student already linked to other parent accounts:', student.parents);
       return res.status(400).json({ message: 'This student is already linked to another parent account' });
     }
 
     // Link student to parent
     parent.childRollNumbers.push(rollNumber);
+    if (!parent.children) parent.children = [];
+    parent.children.push(student._id);
     await parent.save();
     console.log('✅ Parent updated with new child:', parent.childRollNumbers);
 
-    // Update student's parentId
-    student.parentId = parent._id;
+    // Update student's parents array
+    if (!student.parents) student.parents = [];
+    student.parents.push(parent._id);
     await student.save();
-    console.log('✅ Student updated with parent ID:', student.parentId);
+    console.log('✅ Student updated with parent reference:', student.parents);
 
     res.json({ 
       message: 'Student linked successfully',
@@ -1519,16 +1534,16 @@ exports.debugParentData = async (req, res) => {
       parentId: s.parentId
     })));
 
-    // Find all students that have this parent as parentId
-    const studentsByParentId = await Student.find({
-      parentId: parent._id
+    // Find all students that reference this parent in their parents array
+    const studentsByParentRef = await Student.find({
+      parents: parent._id
     });
 
-    console.log('👶 Students by parentId:', studentsByParentId.map(s => ({
+    console.log('👶 Students by parent ref:', studentsByParentRef.map(s => ({
       _id: s._id,
       name: s.name,
       rollNumber: s.rollNumber,
-      parentId: s.parentId
+      parents: s.parents
     })));
 
     res.json({
@@ -1539,7 +1554,7 @@ exports.debugParentData = async (req, res) => {
         childRollNumbers: parent.childRollNumbers
       },
       studentsByRollNumbers: students,
-      studentsByParentId: studentsByParentId
+      studentsByParentRef: studentsByParentRef
     });
   } catch (error) {
     console.error('❌ Debug error:', error);

@@ -6,7 +6,7 @@ import {
   Toolbar,
   Typography,
   List,
-  ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   IconButton,
@@ -136,8 +136,7 @@ const StudentLayout = ({ children }) => {
       <Divider />
       <List>
         {menuItems.map((item) => (
-          <ListItem
-            button
+          <ListItemButton
             key={item.text}
             onClick={() => handleNavigation(item.path)}
             selected={location.pathname === item.path}
@@ -152,23 +151,23 @@ const StudentLayout = ({ children }) => {
           >
             <ListItemIcon>{item.icon}</ListItemIcon>
             <ListItemText primary={item.text} />
-          </ListItem>
+          </ListItemButton>
         ))}
       </List>
       <Divider />
       <List>
-        <ListItem button onClick={() => handleNavigation('/student/notifications')}>
+        <ListItemButton onClick={() => handleNavigation('/student/notifications')}>
           <ListItemIcon>
             <Notifications />
           </ListItemIcon>
           <ListItemText primary="Notifications" />
-        </ListItem>
-        <ListItem button onClick={() => navigate('/logout')}>
+        </ListItemButton>
+        <ListItemButton onClick={() => navigate('/logout')}>
           <ListItemIcon>
             <Logout />
           </ListItemIcon>
           <ListItemText primary="Logout" />
-        </ListItem>
+        </ListItemButton>
       </List>
     </Box>
   );

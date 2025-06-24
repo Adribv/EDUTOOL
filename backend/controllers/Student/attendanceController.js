@@ -3,7 +3,7 @@ const Attendance = require('../../models/Staff/Teacher/attendance.model');
 const LeaveRequest = require('../../models/Student/leaveRequestModel');
 
 // Get attendance records
-exports.getAttendanceRecords = async (req, res) => {
+exports.getAttendance = async (req, res) => {
   try {
     const { month, year } = req.query;
     const student = await Student.findById(req.user.id);
@@ -46,7 +46,7 @@ exports.getAttendanceRecords = async (req, res) => {
 };
 
 // Submit leave request
-exports.submitLeaveRequest = async (req, res) => {
+exports.requestLeave = async (req, res) => {
   try {
     const { startDate, endDate, reason, type } = req.body;
     
@@ -55,6 +55,15 @@ exports.submitLeaveRequest = async (req, res) => {
       return res.status(404).json({ message: 'Student not found' });
     }
     
+    // Map UI types to enum values
+    const typeMap = {
+      sick: 'Medical',
+      personal: 'Personal',
+      emergency: 'Family Emergency',
+      other: 'Other',
+    };
+    const mappedType = typeMap[type] || type;
+    
     const leaveRequest = new LeaveRequest({
       studentId: student._id,
       class: student.class,
@@ -62,7 +71,7 @@ exports.submitLeaveRequest = async (req, res) => {
       startDate,
       endDate,
       reason,
-      type,
+      type: mappedType,
       status: 'Pending'
     });
     

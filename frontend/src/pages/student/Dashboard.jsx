@@ -61,7 +61,6 @@ import {
   CheckCircle,
 } from '@mui/icons-material';
 import studentService from '../../services/studentService';
-import { placeholderData, getPlaceholderData, createMockResponse, simulateApiDelay } from '../../services/placeholderData';
 import { toast } from 'react-toastify';
 
 const Dashboard = () => {
@@ -76,12 +75,14 @@ const Dashboard = () => {
   const [upcomingExams, setUpcomingExams] = useState([]);
   const [messages, setMessages] = useState([]);
   const [homework, setHomework] = useState([]);
+  // eslint-disable-next-line no-unused-vars
   const [feeStatus, setFeeStatus] = useState(null);
   const [learningResources, setLearningResources] = useState([]);
   const [leaveRequests, setLeaveRequests] = useState([]);
   
   // New state variables for enhanced features
   const [ongoingLessons, setOngoingLessons] = useState([]);
+  // eslint-disable-next-line no-unused-vars
   const [notifications, setNotifications] = useState([]);
   const [activeStep, setActiveStep] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -113,37 +114,37 @@ const Dashboard = () => {
         lessonsRes,
         notificationsRes,
       ] = await Promise.allSettled([
-        studentService.getProfile().catch(() => createMockResponse(placeholderData.studentProfile)),
-        studentService.getSubjectsAndTeachers().catch(() => createMockResponse({ subjects: placeholderData.subjects })),
-        studentService.getAssignments().catch(() => createMockResponse(placeholderData.assignments)),
-        studentService.getAnnouncements().catch(() => createMockResponse(placeholderData.announcements)),
-        studentService.getPerformanceAnalytics().catch(() => createMockResponse(placeholderData.performance)),
-        studentService.getAttendanceRecords().catch(() => createMockResponse(placeholderData.attendance)),
-        studentService.getUpcomingExams().catch(() => createMockResponse(placeholderData.upcomingExams)),
-        studentService.getMessages().catch(() => createMockResponse(placeholderData.messages)),
-        studentService.getHomework().catch(() => createMockResponse(placeholderData.homework)),
-        studentService.getPaymentStatus().catch(() => createMockResponse(placeholderData.feeStatus)),
-        studentService.getLearningResources().catch(() => createMockResponse(placeholderData.learningResources)),
-        studentService.getLeaveRequests().catch(() => createMockResponse(placeholderData.leaveRequests)),
-        studentService.getOngoingLessons ? studentService.getOngoingLessons().catch(() => createMockResponse(placeholderData.ongoingLessons)) : Promise.resolve(createMockResponse(placeholderData.ongoingLessons)),
-        studentService.getNotifications ? studentService.getNotifications().catch(() => createMockResponse(placeholderData.notifications)) : Promise.resolve(createMockResponse(placeholderData.notifications)),
+        studentService.getProfile(),
+        studentService.getSubjectsAndTeachers(),
+        studentService.getAssignments(),
+        studentService.getAnnouncements(),
+        studentService.getPerformanceAnalytics(),
+        studentService.getAttendanceRecords(),
+        studentService.getUpcomingExams(),
+        studentService.getMessages(),
+        studentService.getHomework(),
+        studentService.getPaymentStatus(),
+        studentService.getLearningResources(),
+        studentService.getLeaveRequests(),
+        studentService.getOngoingLessons ? studentService.getOngoingLessons() : Promise.resolve({ data: [] }),
+        studentService.getNotifications ? studentService.getNotifications() : Promise.resolve({ data: [] }),
       ]);
 
       // Extract data from resolved promises, using placeholder data if rejected
-      const profile = profileRes.status === 'fulfilled' ? profileRes.value.data : placeholderData.studentProfile;
-      const subjects = subjectsRes.status === 'fulfilled' ? (subjectsRes.value.data?.subjects || []) : placeholderData.subjects;
-      const assignments = assignmentsRes.status === 'fulfilled' ? (assignmentsRes.value.data || []) : placeholderData.assignments;
-      const announcements = announcementsRes.status === 'fulfilled' ? (announcementsRes.value.data || []) : placeholderData.announcements;
-      const performance = performanceRes.status === 'fulfilled' ? performanceRes.value.data : placeholderData.performance;
-      const attendance = attendanceRes.status === 'fulfilled' ? (attendanceRes.value.data || []) : placeholderData.attendance;
-      const upcomingExams = examsRes.status === 'fulfilled' ? (examsRes.value.data || []) : placeholderData.upcomingExams;
-      const messages = messagesRes.status === 'fulfilled' ? (messagesRes.value.data || []) : placeholderData.messages;
-      const homework = homeworkRes.status === 'fulfilled' ? (homeworkRes.value.data || []) : placeholderData.homework;
-      const feeStatus = feeRes.status === 'fulfilled' ? feeRes.value.data : placeholderData.feeStatus;
-      const learningResources = resourcesRes.status === 'fulfilled' ? (resourcesRes.value.data || []) : placeholderData.learningResources;
-      const leaveRequests = leaveRes.status === 'fulfilled' ? (leaveRes.value.data || []) : placeholderData.leaveRequests;
-      const ongoingLessons = lessonsRes.status === 'fulfilled' ? (lessonsRes.value.data || []) : placeholderData.ongoingLessons;
-      const notifications = notificationsRes.status === 'fulfilled' ? (notificationsRes.value.data || []) : placeholderData.notifications;
+      const profile = profileRes.status === 'fulfilled' ? profileRes.value.data : null;
+      const subjects = subjectsRes.status === 'fulfilled' ? (subjectsRes.value.data?.subjects || []) : [];
+      const assignments = assignmentsRes.status === 'fulfilled' ? (assignmentsRes.value.data || []) : [];
+      const announcements = announcementsRes.status === 'fulfilled' ? (announcementsRes.value.data || []) : [];
+      const performance = performanceRes.status === 'fulfilled' ? performanceRes.value.data : null;
+      const attendance = attendanceRes.status === 'fulfilled' ? (attendanceRes.value.data || []) : [];
+      const upcomingExams = examsRes.status === 'fulfilled' ? (examsRes.value.data || []) : [];
+      const messages = messagesRes.status === 'fulfilled' ? (messagesRes.value.data || []) : [];
+      const homework = homeworkRes.status === 'fulfilled' ? (homeworkRes.value.data || []) : [];
+      const _feeStatus = feeRes.status === 'fulfilled' ? feeRes.value.data : null;
+      const learningResources = resourcesRes.status === 'fulfilled' ? (resourcesRes.value.data || []) : [];
+      const leaveRequests = leaveRes.status === 'fulfilled' ? (leaveRes.value.data || []) : [];
+      const ongoingLessons = lessonsRes.status === 'fulfilled' ? (lessonsRes.value.data || []) : [];
+      const _notifications = notificationsRes.status === 'fulfilled' ? (notificationsRes.value.data || []) : [];
 
       setProfile(profile);
       setSubjects(subjects);
@@ -154,11 +155,11 @@ const Dashboard = () => {
       setUpcomingExams(upcomingExams);
       setMessages(messages);
       setHomework(homework);
-      setFeeStatus(feeStatus);
+      setFeeStatus(_feeStatus);
       setLearningResources(learningResources);
       setLeaveRequests(leaveRequests);
       setOngoingLessons(ongoingLessons);
-      setNotifications(notifications);
+      setNotifications(_notifications);
 
       // Generate task notifications from assignments and homework
       const allTasks = [
@@ -203,37 +204,25 @@ const Dashboard = () => {
       console.error('Error fetching dashboard data:', error);
       setError('Failed to load dashboard data. Using demo data instead.');
       
-      // Set all placeholder data as fallback
-      setProfile(placeholderData.studentProfile);
-      setSubjects(placeholderData.subjects);
-      setAssignments(placeholderData.assignments);
-      setAnnouncements(placeholderData.announcements);
-      setPerformance(placeholderData.performance);
-      setAttendance(placeholderData.attendance);
-      setUpcomingExams(placeholderData.upcomingExams);
-      setMessages(placeholderData.messages);
-      setHomework(placeholderData.homework);
-      setFeeStatus(placeholderData.feeStatus);
-      setLearningResources(placeholderData.learningResources);
-      setLeaveRequests(placeholderData.leaveRequests);
-      setOngoingLessons(placeholderData.ongoingLessons);
-      setNotifications(placeholderData.notifications);
+      // Set empty defaults when data cannot be fetched
+      setProfile(null);
+      setSubjects([]);
+      setAssignments([]);
+      setAnnouncements([]);
+      setPerformance(null);
+      setAttendance([]);
+      setUpcomingExams([]);
+      setMessages([]);
+      setHomework([]);
+      setFeeStatus(null);
+      setLearningResources([]);
+      setLeaveRequests([]);
+      setOngoingLessons([]);
+      setNotifications([]);
       
-      const allTasks = [
-        ...placeholderData.assignments.filter(a => a.status === 'pending'),
-        ...placeholderData.homework.filter(h => h.status === 'pending'),
-      ];
+      const allTasks = [];
       
-      const taskNotifs = allTasks.map(task => ({
-        id: task.id,
-        type: task.type || 'assignment',
-        title: task.title || task.name,
-        dueDate: task.dueDate || task.deadline,
-        priority: task.priority || 'medium',
-        message: `New ${task.type || 'assignment'} assigned: ${task.title || task.name}`,
-      }));
-      
-      setTaskNotifications(taskNotifs);
+      setTaskNotifications(allTasks);
       
       toast.info('Using demo data - some features may be limited');
     } finally {
@@ -776,7 +765,7 @@ const Dashboard = () => {
                   <Grid container spacing={2} sx={{ mb: 2 }}>
                     <Grid item xs={6}>
                       <Box display="flex" alignItems="center">
-                        <Teacher sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
+                        <PersonOutline sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
                         <Typography variant="body2">
                           {lesson.teacher}
                         </Typography>

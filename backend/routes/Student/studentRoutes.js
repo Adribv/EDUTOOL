@@ -12,6 +12,7 @@ const learningResourcesController = require('../../controllers/Student/learningR
 const profileController = require('../../controllers/Student/profileController');
 const { verifyToken } = require('../../middlewares/authMiddleware');
 const studentAuthController = require('../../controllers/Student/studentAuth');
+const documentController = require('../../controllers/Student/documentController');
 
 // Public routes (no authentication required)
 router.post('/login', studentAuthController.login);
@@ -34,70 +35,42 @@ router.post('/assignments/:assignmentId/submit', academicDashboardController.sub
 router.get('/submissions/:submissionId', academicDashboardController.getSubmissionFeedback);
 
 // Attendance routes
-if (attendanceController.getAttendance) {
-  router.get('/attendance', attendanceController.getAttendance);
-}
-if (attendanceController.getAttendanceDetails) {
-  router.get('/attendance/:month/:year', attendanceController.getAttendanceDetails);
-}
-if (attendanceController.requestLeave) {
-  router.post('/leave-request', attendanceController.requestLeave);
-}
-if (attendanceController.getLeaveRequests) {
-  router.get('/leave-requests', attendanceController.getLeaveRequests);
-}
+router.get('/attendance', attendanceController.getAttendance);
+router.post('/leave-requests', attendanceController.requestLeave);
+router.get('/leave-requests', attendanceController.getLeaveRequests);
 
 // Communication routes
 router.get('/announcements', communicationController.getAnnouncements);
 router.get('/messages', communicationController.getMessages);
 router.get('/messages/:messageId', communicationController.getMessageDetails);
 router.post('/messages/:messageId/reply', communicationController.sendMessageReply);
-router.get('/discussions', communicationController.getClassDiscussions);
-if (communicationController.getDiscussionDetails) {
-  router.get('/discussions/:discussionId', communicationController.getDiscussionDetails);
-}
+router.get('/class-discussions', communicationController.getClassDiscussions);
+router.get('/class-discussions/:discussionId', communicationController.getDiscussionDetails);
+router.post('/class-discussions/:discussionId/comments', communicationController.postDiscussionComment);
 
 // Examination routes
-if (examinationController.getExams) {
-  router.get('/exams', examinationController.getExams);
-}
-if (examinationController.getExamDetails) {
-  router.get('/exams/:examId', examinationController.getExamDetails);
-}
-if (examinationController.getResults) {
-  router.get('/results', examinationController.getResults);
-}
-if (examinationController.getResultDetails) {
-  router.get('/results/:resultId', examinationController.getResultDetails);
-}
+router.get('/exams/upcoming', examinationController.getUpcomingExams);
+router.get('/exams/:examId/admit-card', examinationController.getAdmitCard);
+router.get('/exam-results', examinationController.getExamResults);
+router.get('/report-cards', examinationController.getReportCards);
+router.get('/performance-analytics', examinationController.getPerformanceAnalytics);
 
 // Fee routes
-if (feeController.getFeeDetails) {
-  router.get('/fees', feeController.getFeeDetails);
-}
-if (feeController.getPaymentHistory) {
-  router.get('/fees/history', feeController.getPaymentHistory);
-}
-if (feeController.getPaymentReceipt) {
-  router.get('/fees/receipt/:paymentId', feeController.getPaymentReceipt);
-}
+router.get('/fee-structure', feeController.getFeeStructure);
+router.get('/payment-status', feeController.getPaymentStatus);
+router.get('/payment-receipts/:paymentId', feeController.getPaymentReceipt);
 
 // Homework routes
-if (homeworkController.getHomework) {
-  router.get('/homework', homeworkController.getHomework);
-}
-if (homeworkController.getHomeworkDetails) {
-  router.get('/homework/:homeworkId', homeworkController.getHomeworkDetails);
-}
-if (homeworkController.submitHomework) {
-  router.post('/homework/:homeworkId/submit', homeworkController.submitHomework);
-}
-if (homeworkController.getHomeworkSubmissions) {
-  router.get('/homework-submissions', homeworkController.getHomeworkSubmissions);
-}
+router.get('/homework', homeworkController.getHomework);
+router.get('/homework/:homeworkId', homeworkController.getHomeworkDetails);
+router.post('/homework/:homeworkId/submit', homeworkController.submitHomework);
+router.get('/homework-submissions', homeworkController.getHomeworkSubmissions);
 
 // Learning Resources routes
-router.get('/resources', learningResourcesController.getLearningResources);
-router.get('/resources/:resourceId', learningResourcesController.getResourceDetails);
+router.get('/learning-resources', learningResourcesController.getLearningResources);
+router.get('/learning-resources/:resourceId', learningResourcesController.getResourceDetails);
+
+// Documents routes
+router.get('/documents', documentController.getDocuments);
 
 module.exports = router;
