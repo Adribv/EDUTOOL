@@ -31,157 +31,117 @@ import {
   School as SchoolIcon,
   AdminPanelSettings as AdminIcon,
 } from '@mui/icons-material';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { parentAPI } from '../../services/api';
 
 const Messages = () => {
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [newMessage, setNewMessage] = useState('');
   const [openNewMessage, setOpenNewMessage] = useState(false);
   const [messageForm, setMessageForm] = useState({
-    recipient: '',
+    recipientId: '',
+    recipientModel: '',
     subject: '',
     message: '',
   });
 
-  const [conversations, setConversations] = useState([
-    {
-      id: 1,
-      recipient: {
-        name: 'Dr. John Smith',
-        role: 'Teacher',
-        avatar: null,
-      },
-      lastMessage: 'Please review the homework assignment',
-      timestamp: '2024-03-20 14:30',
-      unread: true,
-      messages: [
-        {
-          id: 1,
-          sender: 'Dr. John Smith',
-          message: 'Please review the homework assignment',
-          timestamp: '2024-03-20 14:30',
-        },
-        {
-          id: 2,
-          sender: 'You',
-          message: 'I will review it tonight',
-          timestamp: '2024-03-20 15:00',
-        },
-      ],
-    },
-    {
-      id: 2,
-      recipient: {
-        name: 'Sarah Johnson',
-        role: 'Counselor',
-        avatar: null,
-      },
-      lastMessage: 'Regarding the upcoming parent-teacher meeting',
-      timestamp: '2024-03-19 10:15',
-      unread: false,
-      messages: [
-        {
-          id: 1,
-          sender: 'Sarah Johnson',
-          message: 'Regarding the upcoming parent-teacher meeting',
-          timestamp: '2024-03-19 10:15',
-        },
-        {
-          id: 2,
-          sender: 'You',
-          message: 'I can attend on Thursday',
-          timestamp: '2024-03-19 11:00',
-        },
-      ],
-    },
-  ]);
+  const queryClient = useQueryClient();
 
-  const recipients = [
-    { id: 1, name: 'Dr. John Smith', role: 'Teacher' },
-    { id: 2, name: 'Sarah Johnson', role: 'Counselor' },
-    { id: 3, name: 'Principal Office', role: 'Administration' },
-  ];
+  const { data: receivedData } = useQuery({
+    queryKey: ['parent_messages_received'],
+    queryFn: parentAPI.getMessages,
+  });
+
+  const { data: sentData } = useQuery({
+    queryKey: ['parent_messages_sent'],
+    queryFn: parentAPI.getSentMessages,
+  });
+
+  const buildConversations = () => {
+    const convMap = new Map();
+
+    const processMsg = (msg, isSent) => {
+      const counterpartId = isSent ? msg.recipientId : msg.senderId;
+      const counterpartRole = isSent ? msg.recipientModel : msg.senderModel;
+      const key = `${counterpartRole}-${counterpartId}`;
+
+      if (!convMap.has(key)) {
+        convMap.set(key, {
+          id: key,
+          counterpartId,
+          counterpartRole,
+          name: msg.senderName || msg.recipientName || 'User',
+          avatar: null,
+          unread: !isSent && !msg.read,
+          messages: [],
+        });
+      }
+
+      const conv = convMap.get(key);
+      conv.messages.push({
+        id: msg._id,
+        sender: isSent ? 'You' : msg.senderName || 'User',
+        message: msg.content || msg.message,
+        timestamp: new Date(msg.createdAt).toLocaleString(),
+      });
+      conv.lastMessage = msg.content || msg.message;
+      conv.timestamp = new Date(msg.createdAt).toLocaleString();
+    };
+
+    (Array.isArray(receivedData) ? receivedData : []).forEach((m) => processMsg(m, false));
+    (Array.isArray(sentData) ? sentData : []).forEach((m) => processMsg(m, true));
+
+    return Array.from(convMap.values()).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  };
+
+  const conversations = buildConversations();
+
+  const sendMutation = useMutation({
+    mutationFn: parentAPI.sendMessage,
+    onSuccess: () => {
+      queryClient.invalidateQueries(['parent_messages_sent']);
+      handleCloseNewMessage();
+    },
+  });
 
   const handleSelectConversation = (conversation) => {
     setSelectedConversation(conversation);
-    // Mark as read when selected
-    setConversations((prev) =>
-      prev.map((conv) =>
-        conv.id === conversation.id ? { ...conv, unread: false } : conv
-      )
-    );
   };
 
   const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !selectedConversation) return;
 
-    const newMsg = {
-      id: Date.now(),
-      sender: 'You',
-      message: newMessage,
-      timestamp: new Date().toLocaleString(),
+    const payload = {
+      recipientId: selectedConversation.counterpartId,
+      recipientModel: selectedConversation.counterpartRole,
+      subject: 'RE',
+      content: newMessage,
     };
 
-    setConversations((prev) =>
-      prev.map((conv) =>
-        conv.id === selectedConversation.id
-          ? {
-              ...conv,
-              messages: [...conv.messages, newMsg],
-              lastMessage: newMessage,
-              timestamp: new Date().toLocaleString(),
-            }
-          : conv
-      )
-    );
-
+    sendMutation.mutate(payload);
     setNewMessage('');
   };
 
-  const handleNewMessage = () => {
-    setOpenNewMessage(true);
-  };
+  const handleNewMessage = () => setOpenNewMessage(true);
 
   const handleCloseNewMessage = () => {
     setOpenNewMessage(false);
-    setMessageForm({
-      recipient: '',
-      subject: '',
-      message: '',
-    });
+    setMessageForm({ recipientId: '', recipientModel: '', subject: '', message: '' });
   };
 
   const handleMessageFormChange = (e) => {
     const { name, value } = e.target;
-    setMessageForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setMessageForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmitNewMessage = () => {
-    const recipient = recipients.find((r) => r.id === messageForm.recipient);
-    const newConversation = {
-      id: Date.now(),
-      recipient: {
-        name: recipient.name,
-        role: recipient.role,
-        avatar: null,
-      },
-      lastMessage: messageForm.message,
-      timestamp: new Date().toLocaleString(),
-      unread: false,
-      messages: [
-        {
-          id: 1,
-          sender: 'You',
-          message: messageForm.message,
-          timestamp: new Date().toLocaleString(),
-        },
-      ],
-    };
-
-    setConversations((prev) => [newConversation, ...prev]);
-    handleCloseNewMessage();
+    if (!messageForm.recipientId || !messageForm.message) return;
+    sendMutation.mutate({
+      recipientId: messageForm.recipientId,
+      recipientModel: messageForm.recipientModel || 'Staff',
+      subject: messageForm.subject || 'Message',
+      content: messageForm.message,
+    });
   };
 
   const getAvatarIcon = (role) => {
@@ -229,11 +189,11 @@ const Messages = () => {
                       variant="dot"
                       invisible={!conversation.unread}
                     >
-                      <Avatar>{getAvatarIcon(conversation.recipient.role)}</Avatar>
+                      <Avatar>{getAvatarIcon(conversation.counterpartRole)}</Avatar>
                     </Badge>
                   </ListItemAvatar>
                   <ListItemText
-                    primary={conversation.recipient.name}
+                    primary={conversation.name}
                     secondary={
                       <>
                         <Typography
@@ -259,10 +219,10 @@ const Messages = () => {
             <Paper sx={{ height: 'calc(100vh - 200px)', display: 'flex', flexDirection: 'column' }}>
               <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
                 <Typography variant="h6">
-                  {selectedConversation.recipient.name}
+                  {selectedConversation.name}
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
-                  {selectedConversation.recipient.role}
+                  {selectedConversation.counterpartRole}
                 </Typography>
               </Box>
 
@@ -346,16 +306,12 @@ const Messages = () => {
                 <FormControl fullWidth>
                   <InputLabel>Recipient</InputLabel>
                   <Select
-                    name="recipient"
-                    value={messageForm.recipient}
+                    name="recipientId"
+                    value={messageForm.recipientId}
                     onChange={handleMessageFormChange}
                     label="Recipient"
                   >
-                    {recipients.map((recipient) => (
-                      <MenuItem key={recipient.id} value={recipient.id}>
-                        {recipient.name} ({recipient.role})
-                      </MenuItem>
-                    ))}
+                    {/* Placeholder for recipient selection */}
                   </Select>
                 </FormControl>
               </Grid>

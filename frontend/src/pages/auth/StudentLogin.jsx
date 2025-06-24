@@ -60,7 +60,9 @@ function StudentLogin() {
       return response.data;
     },
     onSuccess: (data) => {
+      localStorage.setItem('token', data.token);
       localStorage.setItem('studentToken', data.token);
+      localStorage.setItem('userRole', 'Student');
       toast.success('Login successful!');
       navigate('/student');
     },

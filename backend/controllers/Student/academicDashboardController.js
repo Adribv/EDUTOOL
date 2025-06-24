@@ -17,7 +17,7 @@ exports.getTimetable = async (req, res) => {
     });
     
     if (!timetable) {
-      return res.status(404).json({ message: 'Timetable not found for your class' });
+      return res.json([]);
     }
     
     res.json(timetable);

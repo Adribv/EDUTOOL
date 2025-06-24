@@ -16,7 +16,12 @@ exports.getFeeStructure = async (req, res) => {
     });
     
     if (!feeStructure) {
-      return res.status(404).json({ message: 'Fee structure not found' });
+      return res.json({
+        class: student.class,
+        academicYear: req.query.academicYear || new Date().getFullYear().toString(),
+        components: [],
+        totalAmount: 0
+      });
     }
     
     res.json(feeStructure);
@@ -43,7 +48,13 @@ exports.getPaymentStatus = async (req, res) => {
     });
     
     if (!feeStructure) {
-      return res.status(404).json({ message: 'Fee structure not found' });
+      return res.json({
+        academicYear,
+        totalFees: 0,
+        totalPaid: 0,
+        pendingAmount: 0,
+        paymentHistory: []
+      });
     }
     
     // Get payments made by student

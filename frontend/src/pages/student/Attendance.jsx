@@ -41,7 +41,34 @@ const Attendance = () => {
     try {
       setLoading(true);
       const response = await studentAPI.getAttendance();
-      setAttendanceData(response.data);
+      const records = Array.isArray(response.data) ? response.data : [];
+
+      // calculate overall percentage
+      const total = records.length;
+      const attended = records.filter(r=>r.status==='Present').length;
+      const overall = total? Math.round((attended/total)*100):0;
+
+      // build subject wise summary
+      const subjectMap = {};
+      records.forEach(r=>{
+        const subj = r.subject || 'General';
+        if(!subjectMap[subj]) subjectMap[subj]={name:subj, attended:0,total:0};
+        subjectMap[subj].total++;
+        if(r.status==='Present') subjectMap[subj].attended++;
+      });
+      const subjectWise = Object.values(subjectMap).map(s=>({
+        ...s,
+        percentage: s.total? Math.round((s.attended/s.total)*100):0,
+        id: s.name
+      }));
+
+      const recentRecords = records.slice(-10).reverse();
+
+      setAttendanceData({
+        overallAttendance: overall,
+        subjectWiseAttendance: subjectWise,
+        recentRecords
+      });
     } catch (error) {
       console.error('Error fetching attendance data:', error);
       setError('Failed to load attendance data');

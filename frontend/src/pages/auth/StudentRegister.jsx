@@ -70,9 +70,11 @@ function StudentRegister() {
       return response.data;
     },
     onSuccess: (data) => {
+      localStorage.setItem('token', data.token);
       localStorage.setItem('studentToken', data.token);
+      localStorage.setItem('userRole', 'Student');
       toast.success('Registration successful!');
-      navigate('/Student');
+      navigate('/student');
     },
     onError: (error) => {
       console.error('Registration failed:', error);

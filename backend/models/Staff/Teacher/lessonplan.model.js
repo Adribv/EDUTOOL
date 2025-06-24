@@ -7,6 +7,14 @@ const lessonPlanSchema = new mongoose.Schema({
   class: String,
   section: String,
   subject: String,
+  isPublished: {
+    type: Boolean,
+    default: false
+  },
+  viewCount: {
+    type: Number,
+    default: 0
+  },
   submittedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Staff' },
   status: { type: String, enum: ['Pending', 'Approved', 'Rejected'], default: 'Pending' },
   approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Staff' }

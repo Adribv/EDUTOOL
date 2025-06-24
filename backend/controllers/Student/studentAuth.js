@@ -8,7 +8,7 @@ exports.login = async (req, res) => {
   if (!student || !(await bcrypt.compare(password, student.password)))
     return res.status(401).json({ message: 'Invalid credentials' });
 
-  const token = jwt.sign({ id: student._id, role: 'Student' }, process.env.JWT_SECRET);
+  const token = jwt.sign({ id: student._id, role: 'Student' }, process.env.JWT_SECRET || 'default_secret');
   res.json({ token, role: 'Student' });
 };
 
@@ -17,13 +17,12 @@ exports.register = async (req, res) => {
   const { name, rollNumber, password, class: cls, section } = req.body;
   console.log('Destructured values:', { name, rollNumber, class: cls, section });
   
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const student = await Student.create({ 
-    name, 
-    rollNumber, 
-    password: hashedPassword, 
-    class: cls, 
-    section 
+  const student = await Student.create({
+    name,
+    rollNumber,
+    password,
+    class: cls,
+    section,
   });
   res.status(201).json(student);
 };

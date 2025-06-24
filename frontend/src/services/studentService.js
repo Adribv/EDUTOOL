@@ -51,6 +51,56 @@ const studentService = {
   getHomeworkDetails: studentAPI.getHomeworkDetails,
   submitHomework: studentAPI.submitHomework,
   getHomeworkSubmissions: studentAPI.getHomeworkSubmissions,
+  
+  // Documents
+  getDocuments: studentAPI.getDocuments,
 };
+
+// ----- Additional helper methods to prevent runtime errors on student pages -----
+// These alias existing endpoints or return minimal placeholder data so that
+// pages that reference them (e.g. Transport, Calendar) don't break if the
+// backend feature isn't implemented yet.
+
+// Generic empty success response helper
+const emptySuccess = (data = {}) => Promise.resolve({ data });
+
+// Attendance alias (some pages call getAttendance instead of getAttendanceRecords)
+studentService.getAttendance = studentAPI.getAttendance;
+
+// Grades alias (maps to exam results)
+studentService.getGrades = studentAPI.getExamResults;
+
+// Dashboard stats alias (maps to performance analytics)
+studentService.getDashboardStats = studentAPI.getPerformanceAnalytics;
+
+// Classes alias (maps to timetable)
+studentService.getClasses = studentAPI.getTimetable;
+
+// Transport related helpers (placeholder until backend routes are ready)
+studentService.getTransportDetails = () =>
+  emptySuccess({
+    busNumber: 'N/A',
+    pickupPoint: 'N/A',
+    pickupTime: 'N/A',
+    driverName: 'N/A',
+    driverContact: 'N/A',
+    emergencyContact: 'N/A',
+  });
+studentService.getRouteDetails = () => emptySuccess({ stops: [] });
+studentService.updateTransportDetails = () => emptySuccess();
+
+// Learning modules / progress placeholders
+studentService.getLearningModules = studentAPI.getResources;
+studentService.getLearningProgress = studentAPI.getPerformanceAnalytics;
+
+// Forum posts alias (class discussions)
+studentService.getForumPosts = studentAPI.getClassDiscussions;
+
+// Notifications & Ongoing lessons helpers
+studentService.getNotifications = studentAPI.getAnnouncements;
+studentService.getOngoingLessons = studentAPI.getTimetable;
+
+// Calendar events placeholder (could map to timetable or academic calendar if available)
+studentService.getCalendarEvents = () => emptySuccess([]);
 
 export default studentService; 
