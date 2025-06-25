@@ -16,6 +16,7 @@ exports.createDepartment = async (req, res) => {
       name,
       description,
       subjects: subjects || [],
+      email: null, // Explicitly set to null to avoid unique constraint issues
       headOfDepartment: req.user.id
     });
     

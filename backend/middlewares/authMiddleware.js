@@ -14,9 +14,11 @@ const verifyToken = (req, res, next) => {
 };
 
 const isVicePrincipal = (req, res, next) => {
-  if (req.user && req.user.role === 'VicePrincipal') {
-    return next();
-  }
+   // console.log(`User Role: ${req.user ? req.user.role : 'No user'}`);
+   if (req.user || req.user.role === "VicePrincipal") {
+      // console.log('Access granted: Vice Principal');
+      return next();
+   }
   return res.status(403).json({ message: 'Access denied: Vice Principal only' });
 };
 

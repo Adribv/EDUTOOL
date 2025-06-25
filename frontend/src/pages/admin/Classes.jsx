@@ -55,6 +55,7 @@ const Classes = () => {
     description: '',
     status: 'active',
   });
+  const [sheetLinks, setSheetLinks] = useState({});
 
   useEffect(() => {
     fetchClasses();
@@ -145,12 +146,23 @@ const Classes = () => {
 
   const handleSubmit = async () => {
     try {
+      let createdClass;
       if (selectedClass) {
         await adminAPI.updateClass(selectedClass.id, formData);
         toast.success('Class updated successfully');
       } else {
-        await adminAPI.createClass(formData);
+        createdClass = await adminAPI.createClass(formData);
         toast.success('Class added successfully');
+        // Auto-generate Google Sheet after class creation
+        if (createdClass?.data?.id || createdClass?.data?._id) {
+          const classId = createdClass.data.id || createdClass.data._id;
+          try {
+            const response = await adminAPI.generateClassSheet(classId);
+            setSheetLinks((prev) => ({ ...prev, [classId]: response.data.sheetUrl }));
+          } catch (err) {
+            toast.error('Failed to auto-generate sheet');
+          }
+        }
       }
       handleCloseDialog();
       fetchClasses();
@@ -176,6 +188,17 @@ const Classes = () => {
   const getTeacherName = (teacherId) => {
     const teacher = teachers.find((t) => t.id === teacherId);
     return teacher ? `${teacher.firstName} ${teacher.lastName}` : 'N/A';
+  };
+
+  const generateSheet = async (classId) => {
+    try {
+      const response = await adminAPI.generateClassSheet(classId);
+      setSheetLinks((prev) => ({ ...prev, [classId]: response.data.sheetUrl }));
+      toast.success('Google Sheet generated!');
+      fetchClasses();
+    } catch (err) {
+      toast.error('Failed to generate sheet');
+    }
   };
 
   return (
@@ -214,6 +237,7 @@ const Classes = () => {
               <TableCell>Capacity</TableCell>
               <TableCell>Academic Year</TableCell>
               <TableCell>Status</TableCell>
+              <TableCell>Sheet Link</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -249,6 +273,13 @@ const Classes = () => {
                       color={classItem.status === 'active' ? 'success' : 'error'}
                       size="small"
                     />
+                  </TableCell>
+                  <TableCell>
+                    {sheetLinks[classItem.id] ? (
+                      <Button href={sheetLinks[classItem.id]} target="_blank" size="small">View Sheet</Button>
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">Generating...</Typography>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Tooltip title="View Details">

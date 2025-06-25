@@ -19,7 +19,7 @@ const examSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['Unit Test', 'Mid Term', 'Final', 'Other'],
+    enum: ['UnitTest', 'MidTerm', 'Final', 'Other'],
     default: 'Other'
   },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Staff' }

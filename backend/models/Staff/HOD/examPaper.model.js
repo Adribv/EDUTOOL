@@ -17,7 +17,7 @@ const examPaperSchema = new mongoose.Schema({
   section: String,
   examType: { 
     type: String, 
-    enum: ['Unit Test', 'Mid-Term', 'Final', 'Quiz', 'Practice', 'Other'], 
+    enum: ['UnitTest', 'MidTerm', 'Final', 'Quiz', 'Practice', 'Other'], 
     required: true 
   },
   examDate: Date,

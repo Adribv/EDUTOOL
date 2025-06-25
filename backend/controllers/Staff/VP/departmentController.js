@@ -1,6 +1,35 @@
 const Department = require('../../../models/Staff/HOD/department.model');
 const Staff = require('../../../models/Staff/staffModel');
 
+// Helper function to ensure Vice Principal has a department
+const ensureVicePrincipalDepartment = async (vicePrincipalId) => {
+  // First, try to find an existing department for this Vice Principal
+  let department = await Department.findOne({ vicePrincipal: vicePrincipalId });
+  
+  if (!department) {
+    // If no department exists, try to find an unassigned department
+    department = await Department.findOne({ vicePrincipal: { $exists: false } });
+    
+    if (department) {
+      // Assign the unassigned department to this Vice Principal
+      department.vicePrincipal = vicePrincipalId;
+      await department.save();
+    } else {
+      // Create a default department for this Vice Principal
+      department = new Department({
+        name: 'General Department',
+        description: 'Default department for Vice Principal',
+        subjects: ['General'],
+        email: null,
+        vicePrincipal: vicePrincipalId
+      });
+      await department.save();
+    }
+  }
+  
+  return department;
+};
+
 // Create a new department
 exports.createDepartment = async (req, res) => {
   try {
@@ -14,6 +43,8 @@ exports.createDepartment = async (req, res) => {
       name,
       description,
       subjects: subjects || [],
+      email: `${name}@gmail.com`, // Explicitly set to null to avoid unique constraint issues
+      vicePrincipal: req.user.id // Set the vice principal
     });
     await department.save();
     res.status(201).json({ message: 'Department created successfully', department });
@@ -23,100 +54,133 @@ exports.createDepartment = async (req, res) => {
   }
 };
 
-// Get department details
+// Get department details - now returns all departments
 exports.getDepartmentDetails = async (req, res) => {
   try {
-    const department = await Department.findOne({ vicePrincipal: req.user.id })
+    const departments = await Department.find()
       .populate('vicePrincipal', 'name email')
-      .populate('teachers', 'name email');
-    if (!department) {
-      return res.status(404).json({ message: 'Department not found' });
-    }
-    res.json(department);
+      .populate('headOfDepartment', 'name email')
+      .populate('teachers', 'name email')
+      .sort({ name: 1 });
+    
+    res.json(departments);
   } catch (error) {
     console.error('Error fetching department details:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-// Update department details
+// Update department details - now can update any department
 exports.updateDepartment = async (req, res) => {
   try {
+    const { id } = req.params;
     const { name, description, subjects } = req.body;
-    const department = await Department.findOne({ vicePrincipal: req.user.id });
+    
+    const department = await Department.findById(id);
     if (!department) {
       return res.status(404).json({ message: 'Department not found' });
     }
+    
     if (name) department.name = name;
     if (description) department.description = description;
     if (subjects) department.subjects = subjects;
     department.updatedAt = Date.now();
+    
     await department.save();
-    res.json({ message: 'Department updated successfully', department });
+    
+    const updatedDepartment = await Department.findById(department._id)
+      .populate('vicePrincipal', 'name email')
+      .populate('headOfDepartment', 'name email')
+      .populate('teachers', 'name email');
+    
+    res.json({ message: 'Department updated successfully', department: updatedDepartment });
   } catch (error) {
     console.error('Error updating department:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-// Add teacher to department
+// Add teacher to department - now can add to any department
 exports.addTeacherToDepartment = async (req, res) => {
   try {
-    const { teacherId } = req.body;
+    const { departmentId, teacherId } = req.body;
+    
     // Verify teacher exists and is a teacher
     const teacher = await Staff.findById(teacherId);
     if (!teacher || teacher.role !== 'Teacher') {
       return res.status(404).json({ message: 'Teacher not found' });
     }
-    const department = await Department.findOne({ vicePrincipal: req.user.id });
+    
+    const department = await Department.findById(departmentId);
     if (!department) {
       return res.status(404).json({ message: 'Department not found' });
     }
+    
     // Check if teacher is already in department
     if (department.teachers.includes(teacherId)) {
       return res.status(400).json({ message: 'Teacher already in department' });
     }
+    
     department.teachers.push(teacherId);
     await department.save();
-    res.json({ message: 'Teacher added to department successfully', department });
+    
+    const updatedDepartment = await Department.findById(department._id)
+      .populate('vicePrincipal', 'name email')
+      .populate('headOfDepartment', 'name email')
+      .populate('teachers', 'name email');
+    
+    res.json({ message: 'Teacher added to department successfully', department: updatedDepartment });
   } catch (error) {
     console.error('Error adding teacher to department:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-// Remove teacher from department
+// Remove teacher from department - now can remove from any department
 exports.removeTeacherFromDepartment = async (req, res) => {
   try {
-    const { teacherId } = req.params;
-    const department = await Department.findOne({ vicePrincipal: req.user.id });
+    const { departmentId, teacherId } = req.params;
+    
+    const department = await Department.findById(departmentId);
     if (!department) {
       return res.status(404).json({ message: 'Department not found' });
     }
+    
     // Check if teacher is in department
     if (!department.teachers.includes(teacherId)) {
       return res.status(400).json({ message: 'Teacher not in department' });
     }
+    
     department.teachers = department.teachers.filter(id => id.toString() !== teacherId);
     await department.save();
-    res.json({ message: 'Teacher removed from department successfully', department });
+    
+    const updatedDepartment = await Department.findById(department._id)
+      .populate('vicePrincipal', 'name email')
+      .populate('headOfDepartment', 'name email')
+      .populate('teachers', 'name email');
+    
+    res.json({ message: 'Teacher removed from department successfully', department: updatedDepartment });
   } catch (error) {
     console.error('Error removing teacher from department:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-// Get all teachers in department
+// Get all teachers in department - now can get from any department
 exports.getDepartmentTeachers = async (req, res) => {
   try {
-    const department = await Department.findOne({ vicePrincipal: req.user.id });
+    const { departmentId } = req.params;
+    
+    const department = await Department.findById(departmentId);
     if (!department) {
       return res.status(404).json({ message: 'Department not found' });
     }
+    
     const teachers = await Staff.find({ 
       _id: { $in: department.teachers },
       role: 'Teacher'
     }, 'name email phone joiningDate');
+    
     res.json(teachers);
   } catch (error) {
     console.error('Error fetching department teachers:', error);
@@ -181,5 +245,79 @@ exports.getDepartmentStatistics = async (req, res) => {
       message: 'Failed to fetch department statistics',
       error: error.message
     });
+  }
+};
+
+// Get all departments
+exports.getAllDepartments = async (req, res) => {
+  try {
+    const departments = await Department.find()
+      .populate('vicePrincipal', 'name email')
+      .populate('headOfDepartment', 'name email')
+      .populate('teachers', 'name email');
+    
+    res.json(departments);
+  } catch (error) {
+    console.error('Error fetching all departments:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Assign HOD to department
+exports.assignHODToDepartment = async (req, res) => {
+  try {
+    const { departmentId, hodId } = req.body;
+    
+    // Verify the department exists
+    const department = await Department.findById(departmentId);
+    if (!department) {
+      return res.status(404).json({ message: 'Department not found' });
+    }
+    
+    // Verify the HOD exists and is actually an HOD
+    const hod = await Staff.findById(hodId);
+    if (!hod || hod.role !== 'HOD') {
+      return res.status(404).json({ message: 'HOD not found' });
+    }
+    
+    // Update department with HOD
+    department.headOfDepartment = hodId;
+    await department.save();
+    
+    const updatedDepartment = await Department.findById(department._id)
+      .populate('vicePrincipal', 'name email')
+      .populate('headOfDepartment', 'name email')
+      .populate('teachers', 'name email');
+    
+    res.json({ message: 'HOD assigned successfully', department: updatedDepartment });
+  } catch (error) {
+    console.error('Error assigning HOD:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Get all HODs
+exports.getAllHODs = async (req, res) => {
+  try {
+    const hods = await Staff.find({ role: 'HOD' })
+      .select('name email contactNumber joiningDate');
+    
+    // For each HOD, find the department they are assigned to
+    const hodsWithDepartments = await Promise.all(
+      hods.map(async (hod) => {
+        const department = await Department.findOne({ headOfDepartment: hod._id })
+          .select('name description');
+        
+        return {
+          ...hod.toObject(),
+          department: department || null
+        };
+      })
+    );
+    
+    res.json(hodsWithDepartments);
+  } catch (error) {
+    console.error('Error fetching HODs:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 }; 

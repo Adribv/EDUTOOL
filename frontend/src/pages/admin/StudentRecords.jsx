@@ -38,6 +38,7 @@ import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Papa from 'papaparse';
 
 const grades = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
 const sections = ['A', 'B', 'C', 'D', 'E'];
@@ -65,6 +66,10 @@ function StudentRecords() {
     section: '',
     gender: '',
   });
+  const [importDialog, setImportDialog] = useState(false);
+  const [sheetUrl, setSheetUrl] = useState('');
+  const [sheetData, setSheetData] = useState([]);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const handleFilterChange = (event) => {
     const { name, value } = event.target;
@@ -177,6 +182,39 @@ function StudentRecords() {
     // }
   };
 
+  const handleImportSheet = async () => {
+    try {
+      // Convert Google Sheet link to CSV export link
+      const match = sheetUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+      if (!match) {
+        toast.error('Invalid Google Sheet link');
+        return;
+      }
+      const sheetId = match[1];
+      const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
+      const response = await fetch(csvUrl);
+      const csv = await response.text();
+      const parsed = Papa.parse(csv, { header: true });
+      setSheetData(parsed.data);
+      setPreviewOpen(true);
+    } catch (err) {
+      toast.error('Failed to fetch or parse sheet');
+    }
+  };
+
+  const bulkImportMutation = useMutation({
+    mutationFn: async (students) => {
+      await axios.post('http://localhost:5000/api/admin-staff/students/bulk', { students });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['students']);
+      setPreviewOpen(false);
+      setImportDialog(false);
+      toast.success('Students imported successfully');
+    },
+    onError: () => toast.error('Bulk import failed'),
+  });
+
   const columns = [
     { field: 'name', headerName: 'Name', flex: 1 },
     { field: 'email', headerName: 'Email', flex: 1 },
@@ -238,8 +276,15 @@ function StudentRecords() {
                 variant="contained"
                 startIcon={<AddIcon />}
                 onClick={handleClickOpen}
+                sx={{ mr: 2 }}
               >
                 Add Record
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => setImportDialog(true)}
+              >
+                Import from Google Sheet
               </Button>
             </Box>
           </Box>
@@ -498,6 +543,33 @@ function StudentRecords() {
             </Button>
           </DialogActions>
         </form>
+      </Dialog>
+
+      <Dialog open={importDialog} onClose={() => setImportDialog(false)}>
+        <DialogTitle>Import Students from Google Sheet</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="Google Sheet Link"
+            fullWidth
+            margin="normal"
+            value={sheetUrl}
+            onChange={e => setSheetUrl(e.target.value)}
+          />
+          <Button variant="contained" onClick={handleImportSheet} sx={{ mt: 2 }}>Fetch & Preview</Button>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Preview Imported Students</DialogTitle>
+        <DialogContent>
+          <Box sx={{ maxHeight: 400, overflow: 'auto' }}>
+            <pre>{JSON.stringify(sheetData, null, 2)}</pre>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPreviewOpen(false)}>Cancel</Button>
+          <Button variant="contained" onClick={() => bulkImportMutation.mutate(sheetData)}>Import All</Button>
+        </DialogActions>
       </Dialog>
     </Container>
   );

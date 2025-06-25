@@ -78,7 +78,7 @@ export const AuthProvider = ({ children }) => {
       }
       
       const { token, user: userData, role } = response.data;
-      
+      console.log(response.data);
       localStorage.setItem('token', token);
       
       // For staff login, the backend only returns token and role

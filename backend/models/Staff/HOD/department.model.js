@@ -5,6 +5,16 @@ const departmentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  description: {
+    type: String
+  },
+  subjects: [{
+    type: String
+  }],
+  email: {
+    type: String, // Email is optional
+    sparse: true // This allows multiple null values
+  },
   role: {
     type: String,
     enum: ['Teacher', 'HOD', 'Admin'],
@@ -34,6 +44,11 @@ const departmentSchema = new mongoose.Schema({
   },
   // Add for Vice Principal
   vicePrincipal: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Staff'
+  },
+  // Add HOD reference
+  headOfDepartment: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Staff'
   },
