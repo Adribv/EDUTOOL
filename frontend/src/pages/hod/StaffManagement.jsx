@@ -31,6 +31,7 @@ import {
 } from '@mui/icons-material';
 import { toast } from 'react-toastify';
 import { hodAPI } from '../../services/api';
+import { useQuery } from '@tanstack/react-query';
 
 const StaffManagement = () => {
   const [loading, setLoading] = useState(true);
@@ -48,6 +49,13 @@ const StaffManagement = () => {
     qualification: '',
     experience: '',
     status: 'active',
+  });
+
+  // Query for departments
+  const { data: departments, isLoading: departmentsLoading } = useQuery({
+    queryKey: ['departments'],
+    queryFn: hodAPI.getDepartments,
+    staleTime: 5 * 60 * 1000,
   });
 
   useEffect(() => {
@@ -84,7 +92,7 @@ const StaffManagement = () => {
         lastName: staff.lastName,
         email: staff.email,
         phone: staff.phone,
-        department: staff.department,
+        department: staff.department?._id || staff.department || '',
         designation: staff.designation,
         qualification: staff.qualification,
         experience: staff.experience,
@@ -229,7 +237,7 @@ const StaffManagement = () => {
                       {member.firstName} {member.lastName}
                     </TableCell>
                     <TableCell>{member.email}</TableCell>
-                    <TableCell>{member.department}</TableCell>
+                    <TableCell>{member.department?.name || 'No Department'}</TableCell>
                     <TableCell>{member.designation}</TableCell>
                     <TableCell>
                       <Chip
@@ -318,12 +326,23 @@ const StaffManagement = () => {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
+                  select
                   label="Department"
                   name="department"
                   value={formData.department}
                   onChange={handleInputChange}
                   required
-                />
+                  disabled={departmentsLoading}
+                >
+                  <MenuItem value="">
+                    {departmentsLoading ? 'Loading departments...' : 'Select Department'}
+                  </MenuItem>
+                  {departments?.map((d) => (
+                    <MenuItem key={d._id || d.id} value={d._id || d.id}>
+                      {d.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField

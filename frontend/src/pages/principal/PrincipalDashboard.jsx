@@ -16,6 +16,7 @@ import CrisisAlertIcon from '@mui/icons-material/CrisisAlert';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { principalAPI } from '../../services/api';
 import { toast } from 'react-toastify';
+import { useAuth } from '../../context/AuthContext';
 
 export default function PrincipalDashboard() {
   const [tab, setTab] = useState(0);
@@ -29,10 +30,11 @@ export default function PrincipalDashboard() {
   const [appraisalDialog, setAppraisalDialog] = useState(false);
   const [appraisalForm, setAppraisalForm] = useState({ staffId: '', performance: '', notes: '' });
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   // School Info
   const { data: schoolInfo, isLoading: schoolLoading } = useQuery({
-    queryKey: ['principalSchoolInfo'],
+    queryKey: ['schoolInfo'],
     queryFn: principalAPI.getSchoolInfo,
     staleTime: 5 * 60 * 1000,
     onSuccess: (data) => setSchoolForm(data),
@@ -40,7 +42,7 @@ export default function PrincipalDashboard() {
   const updateSchoolMutation = useMutation({
     mutationFn: principalAPI.updateSchoolInfo,
     onSuccess: () => {
-      queryClient.invalidateQueries(['principalSchoolInfo']);
+      queryClient.invalidateQueries(['schoolInfo']);
       setEditSchoolDialog(false);
       toast.success('School info updated');
     },
@@ -49,15 +51,14 @@ export default function PrincipalDashboard() {
 
   // Policies/Announcements (including Crisis/PR)
   const { data: policies, isLoading: policiesLoading } = useQuery({
-    queryKey: ['principalPolicies'],
-    queryFn: principalAPI.getAnnouncements ? principalAPI.getAnnouncements : () => Promise.resolve([]),
+    queryKey: ['policies'],
+    queryFn: () => principalAPI.getPolicies?.() || Promise.resolve([]),
     staleTime: 5 * 60 * 1000,
-    enabled: !!principalAPI.getAnnouncements,
   });
   const createPolicyMutation = useMutation({
     mutationFn: principalAPI.createAnnouncement ? principalAPI.createAnnouncement : () => Promise.resolve(),
     onSuccess: () => {
-      queryClient.invalidateQueries(['principalPolicies']);
+      queryClient.invalidateQueries(['policies']);
       setPolicyDialog(false);
       setPolicyForm({ title: '', content: '', type: 'General' });
       toast.success('Policy/Announcement added');
@@ -67,14 +68,14 @@ export default function PrincipalDashboard() {
 
   // Staff
   const { data: staff, isLoading: staffLoading } = useQuery({
-    queryKey: ['principalStaff'],
+    queryKey: ['staff'],
     queryFn: principalAPI.getStaff,
     staleTime: 5 * 60 * 1000,
   });
   const createStaffMutation = useMutation({
     mutationFn: principalAPI.createStaff,
     onSuccess: () => {
-      queryClient.invalidateQueries(['principalStaff']);
+      queryClient.invalidateQueries(['staff']);
       setEditStaffDialog(false);
       setStaffForm({});
       toast.success('Staff added');
@@ -84,7 +85,7 @@ export default function PrincipalDashboard() {
   const updateStaffMutation = useMutation({
     mutationFn: ({ id, ...data }) => principalAPI.updateStaff(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['principalStaff']);
+      queryClient.invalidateQueries(['staff']);
       setEditStaffDialog(false);
       setStaffForm({});
       setSelectedStaff(null);
@@ -95,7 +96,7 @@ export default function PrincipalDashboard() {
   const deleteStaffMutation = useMutation({
     mutationFn: principalAPI.deleteStaff,
     onSuccess: () => {
-      queryClient.invalidateQueries(['principalStaff']);
+      queryClient.invalidateQueries(['staff']);
       toast.success('Staff deleted');
     },
     onError: () => toast.error('Failed to delete staff'),
@@ -103,10 +104,16 @@ export default function PrincipalDashboard() {
 
   // Reports
   const { data: schoolReport, isLoading: reportLoading } = useQuery({
-    queryKey: ['principalSchoolReport'],
-    queryFn: () => principalAPI.generateSchoolReport ? principalAPI.generateSchoolReport() : Promise.resolve({}),
-    enabled: !!principalAPI.generateSchoolReport,
-    staleTime: 10 * 60 * 1000,
+    queryKey: ['schoolReport'],
+    queryFn: () => principalAPI.generateSchoolReport?.() || Promise.resolve({}),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Departments
+  const { data: departments, isLoading: departmentsLoading } = useQuery({
+    queryKey: ['departments'],
+    queryFn: principalAPI.getDepartments,
+    staleTime: 5 * 60 * 1000,
   });
 
   // Handlers
@@ -265,9 +272,9 @@ export default function PrincipalDashboard() {
                       <TableCell>{s.name}</TableCell>
                       <TableCell>{s.email}</TableCell>
                       <TableCell>{s.role}</TableCell>
-                      <TableCell>{s.department}</TableCell>
+                      <TableCell>{s.department?.name || 'No Department'}</TableCell>
                       <TableCell>
-                        <Tooltip title="Edit"><IconButton onClick={() => { setEditStaffDialog(true); setSelectedStaff(s); setStaffForm(s); }}><EditIcon /></IconButton></Tooltip>
+                        <Tooltip title="Edit"><IconButton onClick={() => { setEditStaffDialog(true); setSelectedStaff(s); setStaffForm({...s, department: s.department?._id || s.department || ''}); }}><EditIcon /></IconButton></Tooltip>
                         <Tooltip title="Delete"><IconButton color="error" onClick={() => deleteStaffMutation.mutate(s._id || s.id)}><DeleteIcon /></IconButton></Tooltip>
                       </TableCell>
                     </TableRow>
@@ -339,7 +346,24 @@ export default function PrincipalDashboard() {
           <TextField fullWidth label="Name" name="name" value={staffForm.name || ''} onChange={handleStaffFormChange} sx={{ mb: 2 }} />
           <TextField fullWidth label="Email" name="email" value={staffForm.email || ''} onChange={handleStaffFormChange} sx={{ mb: 2 }} />
           <TextField fullWidth label="Role" name="role" value={staffForm.role || ''} onChange={handleStaffFormChange} sx={{ mb: 2 }} />
-          <TextField fullWidth label="Department" name="department" value={staffForm.department || ''} onChange={handleStaffFormChange} sx={{ mb: 2 }} />
+          <TextField
+            fullWidth
+            select
+            label="Department"
+            name="department"
+            value={staffForm.department || ''}
+            onChange={handleStaffFormChange}
+            SelectProps={{ native: true }}
+            sx={{ mb: 2 }}
+            disabled={departmentsLoading}
+          >
+            <option value="">
+              {departmentsLoading ? 'Loading departments...' : 'Select Department'}
+            </option>
+            {departments?.map((d) => (
+              <option key={d._id || d.id} value={d._id || d.id}>{d.name}</option>
+            ))}
+          </TextField>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEditStaffDialog(false)}>Cancel</Button>

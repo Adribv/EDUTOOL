@@ -8,6 +8,7 @@ const Visitor = require('../../../models/Admin/visitorModel');
 const Event = require('../../../models/Admin/eventModel');
 const Communication = require('../../../models/Communication/communicationModel');
 const Calendar = require('../../../models/Academic/calendarModel');
+const Department = require('../../../models/Staff/HOD/department.model');
 const path = require('path');
 const fs = require('fs');
 const PDFDocument = require('pdfkit');
@@ -182,7 +183,9 @@ exports.processTransfer = async (req, res) => {
 exports.getAllStaff = async (req, res) => {
   console.log('getAllStaff called with params:', req.query);
   try {
-    const staff = await Staff.find().select('-password');
+    const staff = await Staff.find()
+      .select('-password')
+      .populate('department', '_id name description');
     console.log('Found staff:', staff);
     res.json(staff);
   } catch (error) {
@@ -193,7 +196,9 @@ exports.getAllStaff = async (req, res) => {
 
 exports.getStaffById = async (req, res) => {
   try {
-    const staff = await Staff.findById(req.params.id).select('-password');
+    const staff = await Staff.findById(req.params.id)
+      .select('-password')
+      .populate('department', '_id name description');
     if (!staff) {
       return res.status(404).json({ message: 'Staff not found' });
     }
@@ -227,12 +232,22 @@ exports.registerStaff = async (req, res) => {
       return res.status(400).json({ message: 'Staff with this employee ID already exists' });
     }
 
+    // Validate department if provided
+    let departmentId = null;
+    if (department) {
+      const departmentDoc = await Department.findById(department);
+      if (!departmentDoc) {
+        return res.status(400).json({ message: 'Invalid department ID' });
+      }
+      departmentId = department;
+    }
+
     const newStaff = new Staff({
       name,
       email,
       password,
       role,
-      department,
+      department: departmentId, // Store the department object ID
       employeeId,
       joiningDate,
       qualification,
@@ -243,6 +258,15 @@ exports.registerStaff = async (req, res) => {
     });
 
     await newStaff.save();
+
+    // If department was specified, add staff to department's staff list
+    if (departmentId) {
+      await Department.findByIdAndUpdate(
+        departmentId,
+        { $addToSet: { staff: newStaff._id } }
+      );
+    }
+
     res.status(201).json({ message: 'Staff registered successfully', staff: newStaff });
   } catch (error) {
     console.error('Error registering staff:', error);
@@ -258,6 +282,42 @@ exports.updateStaff = async (req, res) => {
     // Remove password from update data if it exists
     if (updateData.password) {
       delete updateData.password;
+    }
+
+    // Handle department update
+    if (updateData.department !== undefined) {
+      // Get current staff to check if department is being changed
+      const currentStaff = await Staff.findById(staffId);
+      if (!currentStaff) {
+        return res.status(404).json({ message: 'Staff not found' });
+      }
+
+      const oldDepartmentId = currentStaff.department;
+      const newDepartmentId = updateData.department;
+
+      // Validate new department if provided
+      if (newDepartmentId) {
+        const departmentDoc = await Department.findById(newDepartmentId);
+        if (!departmentDoc) {
+          return res.status(400).json({ message: 'Invalid department ID' });
+        }
+      }
+
+      // Remove staff from old department
+      if (oldDepartmentId) {
+        await Department.findByIdAndUpdate(
+          oldDepartmentId,
+          { $pull: { staff: staffId } }
+        );
+      }
+
+      // Add staff to new department
+      if (newDepartmentId) {
+        await Department.findByIdAndUpdate(
+          newDepartmentId,
+          { $addToSet: { staff: staffId } }
+        );
+      }
     }
 
     const updatedStaff = await Staff.findByIdAndUpdate(
@@ -281,12 +341,22 @@ exports.deleteStaff = async (req, res) => {
   try {
     const staffId = req.params.id;
     
-    const deletedStaff = await Staff.findByIdAndDelete(staffId);
-    
-    if (!deletedStaff) {
+    // Get staff details before deletion to remove from department
+    const staffToDelete = await Staff.findById(staffId);
+    if (!staffToDelete) {
       return res.status(404).json({ message: 'Staff not found' });
     }
 
+    // Remove staff from their department
+    if (staffToDelete.department) {
+      await Department.findByIdAndUpdate(
+        staffToDelete.department,
+        { $pull: { staff: staffId } }
+      );
+    }
+    
+    const deletedStaff = await Staff.findByIdAndDelete(staffId);
+    
     res.json({ message: 'Staff deleted successfully' });
   } catch (error) {
     console.error('Error deleting staff:', error);
@@ -354,6 +424,17 @@ exports.trackStaffAttendance = async (req, res) => {
     res.json({ message: 'Staff attendance recorded successfully', staff });
   } catch (error) {
     console.error('Error recording staff attendance:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Department Management
+exports.getAllDepartments = async (req, res) => {
+  try {
+    const departments = await Department.find().select('_id name description hod email');
+    res.json(departments);
+  } catch (error) {
+    console.error('Error fetching departments:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

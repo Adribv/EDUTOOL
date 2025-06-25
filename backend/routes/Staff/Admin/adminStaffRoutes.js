@@ -85,6 +85,9 @@ router.delete('/staff/:id', adminStaffController.deleteStaff);
 router.get('/staff/:id/id-card', adminStaffController.generateStaffID);
 router.post('/staff/attendance', adminStaffController.trackStaffAttendance);
 
+// Department Management
+router.get('/departments', adminStaffController.getAllDepartments);
+
 // Fee Management System
 router.post('/fee-structure', adminStaffController.configureFeeStructure);
 router.post('/fee-invoice', adminStaffController.generateFeeInvoice);

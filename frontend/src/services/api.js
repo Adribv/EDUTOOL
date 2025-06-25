@@ -206,6 +206,7 @@ export const adminAPI = {
   deleteStaff: (staffId) => api.delete(`/api/admin-staff/staff/${staffId}`),
   getStaffAttendance: () => api.get('/api/admin-staff/staff/attendance'),
   generateStaffReport: (params) => api.get('/api/admin-staff/reports/staff', { params }),
+  getDepartments: () => api.get('/api/admin-staff/departments').then(res => res.data),
 
   // Student Management
   getAllStudents: (params) => api.get('/api/admin-staff/students', { params }).then(res => res.data),
@@ -797,6 +798,7 @@ export const hodAPI = {
   getDepartmentInfo: () => api.get('/hod/department'),
   updateDepartmentInfo: (data) => api.put('/hod/department', data),
   getDepartmentStats: () => api.get('/hod/department/stats'),
+  getDepartments: () => api.get('/hod/departments'),
   
   // Reports
   generateCourseReport: (courseId, params) => 

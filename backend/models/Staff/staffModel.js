@@ -5,6 +5,7 @@ const staffSchema = new mongoose.Schema({
   name: String,
   email: { type: String, unique: true },
   password: String,
+  phone: String,
   role: {
     type: String,
     enum: [
@@ -13,7 +14,8 @@ const staffSchema = new mongoose.Schema({
     ]
   },
   department: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Department',
     required: function() {
       return ['Teacher', 'HOD'].includes(this.role);
     }
@@ -35,7 +37,48 @@ const staffSchema = new mongoose.Schema({
       section: String,
       subject: String
     }
-  ]
+  ],
+  assignedClasses: [
+    {
+      class: String,
+      section: String
+    }
+  ],
+  attendance: [
+    {
+      date: {
+        type: Date,
+        required: true
+      },
+      status: {
+        type: String,
+        enum: ['present', 'absent', 'late', 'half-day'],
+        required: true
+      },
+      timeIn: String,
+      timeOut: String,
+      remarks: String,
+      markedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Staff'
+      },
+      markedAt: {
+        type: Date,
+        default: Date.now
+      },
+      updatedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Staff'
+      },
+      updatedAt: Date
+    }
+  ],
+  status: {
+    type: String,
+    enum: ['active', 'inactive'],
+    default: 'active'
+  },
+  subjects: [String]
 });
 
 // Hash password before saving

@@ -45,10 +45,18 @@ router.get('/department/statistics', (req, res) => {
 // Teacher Management routes - these are already implemented in teacherManagement.controller.js
 router.get('/teacher-management/teachers', teacherManagementController.getAllTeachers);
 router.get('/teacher-management/teachers/:teacherId', teacherManagementController.getTeacherDetails);
+router.post('/teacher-management/teachers', teacherManagementController.addTeacher);
+router.put('/teacher-management/teachers/:teacherId', teacherManagementController.updateTeacher);
+router.delete('/teacher-management/teachers/:teacherId', teacherManagementController.deleteTeacher);
 router.post('/teacher-management/teachers/:teacherId/subjects', teacherManagementController.assignSubject);
 router.delete('/teacher-management/teachers/:teacherId/subjects/:subjectId', teacherManagementController.removeSubject);
 router.post('/teacher-management/teachers/:teacherId/classes', teacherManagementController.assignClass);
 router.delete('/teacher-management/teachers/:teacherId/classes/:classValue', teacherManagementController.removeClass);
+
+// Teacher Attendance routes
+router.get('/teacher-attendance', teacherManagementController.getTeacherAttendance);
+router.post('/teacher-attendance', teacherManagementController.markAttendance);
+router.put('/teacher-attendance/:attendanceId', teacherManagementController.updateAttendance);
 
 // Add a default route for testing
 router.get('/test', (req, res) => {
@@ -106,5 +114,9 @@ router.get('/reports/learning-trends', reportsAnalyticsController.analyzeLearnin
 router.get('/reports/performance-metrics', reportsAnalyticsController.comparePerformanceMetrics);
 router.post('/reports/improvement-plans', reportsAnalyticsController.createImprovementPlan);
 router.get('/reports/improvement-plans', reportsAnalyticsController.getImprovementPlans);
+
+// Class Allocation routes
+router.get('/class-allocation/recommendations', teacherManagementController.getClassAllocationRecommendations);
+router.post('/class-allocation', teacherManagementController.allocateClass);
 
 module.exports = router;

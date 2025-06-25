@@ -95,18 +95,34 @@ const hodAPI = {
   getDepartmentStaff: () => fetch('/api/hod/department/staff').then(res => res.json()),
   getDepartmentStatistics: () => fetch('/api/hod/department/statistics').then(res => res.json()),
   
-  // Teacher Management
-  getAllTeachers: () => fetch('/api/hod/teacher-management/teachers').then(res => res.json()),
-  getTeacherDetails: (teacherId) => fetch(`/api/hod/teacher-management/teachers/${teacherId}`).then(res => res.json()),
-  assignSubject: (teacherId, subjectData) => fetch(`/api/hod/teacher-management/teachers/${teacherId}/subjects`, {
+  // Staff Management (all staff in department)
+  getAllStaff: () => fetch('/api/hod/teacher-management/teachers').then(res => res.json()),
+  getStaffDetails: (staffId) => fetch(`/api/hod/teacher-management/teachers/${staffId}`).then(res => res.json()),
+  addStaff: (staffData) => fetch('/api/hod/teacher-management/teachers', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(subjectData)
+    body: JSON.stringify(staffData)
   }).then(res => res.json()),
-  assignClass: (teacherId, classData) => fetch(`/api/hod/teacher-management/teachers/${teacherId}/classes`, {
+  updateStaff: (staffId, staffData) => fetch(`/api/hod/teacher-management/teachers/${staffId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(staffData)
+  }).then(res => res.json()),
+  deleteStaff: (staffId) => fetch(`/api/hod/teacher-management/teachers/${staffId}`, {
+    method: 'DELETE'
+  }).then(res => res.json()),
+  
+  // Teacher Attendance
+  getTeacherAttendance: () => fetch('/api/hod/teacher-attendance').then(res => res.json()),
+  markAttendance: (attendanceData) => fetch('/api/hod/teacher-attendance', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(classData)
+    body: JSON.stringify(attendanceData)
+  }).then(res => res.json()),
+  updateAttendance: (attendanceId, attendanceData) => fetch(`/api/hod/teacher-attendance/${attendanceId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(attendanceData)
   }).then(res => res.json()),
   
   // Teacher Evaluation
@@ -116,58 +132,25 @@ const hodAPI = {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(evaluationData)
   }).then(res => res.json()),
-  
-  // Teacher Supervision
-  getTeacherProfiles: () => fetch('/api/hod/teacher-supervision/profiles').then(res => res.json()),
-  getLeaveRequests: () => fetch('/api/hod/teacher-supervision/leave-requests').then(res => res.json()),
-  updateLeaveRequest: (requestId, status) => fetch(`/api/hod/teacher-supervision/leave-requests/${requestId}`, {
+  updateEvaluation: (evaluationId, evaluationData) => fetch(`/api/hod/teacher-evaluations/${evaluationId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status })
+    body: JSON.stringify(evaluationData)
+  }).then(res => res.json()),
+  deleteEvaluation: (evaluationId) => fetch(`/api/hod/teacher-evaluations/${evaluationId}`, {
+    method: 'DELETE'
   }).then(res => res.json()),
   
-  // Academic Planning
-  getLessonPlans: () => fetch('/api/hod/academic-planning/lesson-plans').then(res => res.json()),
-  reviewLessonPlan: (planId, reviewData) => fetch(`/api/hod/academic-planning/lesson-plans/${planId}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(reviewData)
-  }).then(res => res.json()),
-  getSyllabusProgress: () => fetch('/api/hod/academic-planning/syllabus-progress').then(res => res.json()),
-  
-  // Content Quality
-  getResourcesForReview: () => fetch('/api/hod/content-quality/resources').then(res => res.json()),
-  reviewResource: (resourceId, reviewData) => fetch(`/api/hod/content-quality/resources/${resourceId}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(reviewData)
-  }).then(res => res.json()),
-  
-  // Subject Allocation
-  getSubjectAllocations: () => fetch('/api/hod/subject-allocation').then(res => res.json()),
-  allocateSubject: (allocationData) => fetch('/api/hod/subject-allocation', {
+  // Class Allocation
+  getClassAllocationRecommendations: () => fetch('/api/hod/class-allocation/recommendations').then(res => res.json()),
+  allocateClass: (allocationData) => fetch('/api/hod/class-allocation', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(allocationData)
   }).then(res => res.json()),
   
-  // Department Metrics
-  getMetrics: () => fetch('/api/hod/metrics').then(res => res.json()),
-  getDepartmentPerformance: () => fetch('/api/hod/metrics/performance').then(res => res.json()),
-  getDepartmentAttendance: () => fetch('/api/hod/metrics/attendance').then(res => res.json()),
-  
-  // Approval Workflow
-  getPendingRequests: () => fetch('/api/hod/approval-workflow/pending').then(res => res.json()),
-  approveRequest: (requestId) => fetch(`/api/hod/approval-workflow/approve/${requestId}`, {
-    method: 'PUT'
-  }).then(res => res.json()),
-  rejectRequest: (requestId) => fetch(`/api/hod/approval-workflow/reject/${requestId}`, {
-    method: 'PUT'
-  }).then(res => res.json()),
-  
-  // Reports and Analytics
+  // Department Reports
   generateDepartmentReport: () => fetch('/api/hod/reports/department').then(res => res.json()),
-  analyzeLearningTrends: () => fetch('/api/hod/reports/learning-trends').then(res => res.json()),
   getPerformanceMetrics: () => fetch('/api/hod/reports/performance-metrics').then(res => res.json()),
 };
 
@@ -198,8 +181,44 @@ const Dashboard = () => {
   const [evaluationDialog, setEvaluationDialog] = useState(false);
   const [allocationDialog, setAllocationDialog] = useState(false);
   const [reviewDialog, setReviewDialog] = useState(false);
-  const [newEvaluation, setNewEvaluation] = useState({});
-  const [newAllocation, setNewAllocation] = useState({});
+  
+  // Teacher Management States
+  const [teacherDialog, setTeacherDialog] = useState(false);
+  const [teacherForm, setTeacherForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    qualification: '',
+    experience: '',
+    subjects: [],
+    status: 'active'
+  });
+  
+  // Teacher Attendance States
+  const [attendanceDialog, setAttendanceDialog] = useState(false);
+  const [attendanceForm, setAttendanceForm] = useState({
+    teacherId: '',
+    date: new Date().toISOString().split('T')[0],
+    status: 'present',
+    timeIn: '',
+    timeOut: '',
+    remarks: ''
+  });
+  
+  // Teacher Evaluation States
+  const [evaluationForm, setEvaluationForm] = useState({
+    teacherId: '',
+    rating: 0,
+    comments: '',
+    evaluationDate: new Date().toISOString().split('T')[0],
+    criteria: {
+      teachingQuality: 0,
+      studentEngagement: 0,
+      lessonPreparation: 0,
+      classroomManagement: 0,
+      professionalDevelopment: 0
+    }
+  });
 
   // Get user's role and department
   const userRole = user?.role || user?.designation || 'HOD';
@@ -208,132 +227,174 @@ const Dashboard = () => {
   // Queries
   const { data: departmentStats, isLoading: statsLoading } = useQuery({
     queryKey: ['hodDepartmentStats'],
-    queryFn: hodAPI.getDepartmentStatistics,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    queryFn: async () => {
+      const response = await hodAPI.getDepartmentStatistics();
+      return response.data || response;
+    },
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: teachers, isLoading: teachersLoading } = useQuery({
     queryKey: ['hodTeachers'],
-    queryFn: hodAPI.getAllTeachers,
+    queryFn: async () => {
+      const response = await hodAPI.getAllStaff();
+      return response.data || response;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: teacherAttendance, isLoading: attendanceLoading } = useQuery({
+    queryKey: ['hodTeacherAttendance'],
+    queryFn: async () => {
+      const response = await hodAPI.getTeacherAttendance();
+      return response.data || response;
+    },
     staleTime: 5 * 60 * 1000,
   });
 
   const { data: evaluations, isLoading: evaluationsLoading } = useQuery({
     queryKey: ['hodEvaluations'],
-    queryFn: hodAPI.getAllEvaluations,
+    queryFn: async () => {
+      const response = await hodAPI.getAllEvaluations();
+      return response.data || response;
+    },
     staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: leaveRequests, isLoading: leaveLoading } = useQuery({
-    queryKey: ['hodLeaveRequests'],
-    queryFn: hodAPI.getLeaveRequests,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-  });
-
-  const { data: lessonPlans, isLoading: plansLoading } = useQuery({
-    queryKey: ['hodLessonPlans'],
-    queryFn: hodAPI.getLessonPlans,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: pendingRequests, isLoading: requestsLoading } = useQuery({
-    queryKey: ['hodPendingRequests'],
-    queryFn: hodAPI.getPendingRequests,
-    staleTime: 1 * 60 * 1000, // 1 minute
   });
 
   const { data: subjectAllocations, isLoading: allocationsLoading } = useQuery({
     queryKey: ['hodSubjectAllocations'],
-    queryFn: hodAPI.getSubjectAllocations,
+    queryFn: async () => {
+      const response = await hodAPI.getClassAllocationRecommendations();
+      return response.data || response;
+    },
     staleTime: 5 * 60 * 1000,
   });
 
   const { data: performanceMetrics, isLoading: metricsLoading } = useQuery({
     queryKey: ['hodPerformanceMetrics'],
-    queryFn: hodAPI.getDepartmentPerformance,
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    queryFn: async () => {
+      const response = await hodAPI.getPerformanceMetrics();
+      return response.data || response;
+    },
+    staleTime: 5 * 60 * 1000,
   });
+
+  // Helper function to flatten attendance data
+  const getFlattenedAttendance = () => {
+    if (!teacherAttendance) return [];
+    const flattened = [];
+    teacherAttendance.forEach(teacherData => {
+      if (teacherData.attendance) {
+        teacherData.attendance.forEach((attendance, index) => {
+          flattened.push({
+            ...attendance,
+            teacherName: teacherData.teacherName,
+            teacherId: teacherData.id,
+            key: `${teacherData.id}-${index}`
+          });
+        });
+      }
+    });
+    return flattened;
+  };
 
   // Mutations
-  const approveRequestMutation = useMutation({
-    mutationFn: hodAPI.approveRequest,
-    onSuccess: () => {
-      queryClient.invalidateQueries(['hodPendingRequests']);
-      toast.success('Request approved successfully');
-    },
-    onError: () => toast.error('Failed to approve request'),
-  });
-
-  const rejectRequestMutation = useMutation({
-    mutationFn: hodAPI.rejectRequest,
-    onSuccess: () => {
-      queryClient.invalidateQueries(['hodPendingRequests']);
-      toast.success('Request rejected');
-    },
-    onError: () => toast.error('Failed to reject request'),
-  });
-
   const createEvaluationMutation = useMutation({
     mutationFn: hodAPI.createEvaluation,
     onSuccess: () => {
       queryClient.invalidateQueries(['hodEvaluations']);
       setEvaluationDialog(false);
-      setNewEvaluation({});
+      setEvaluationForm({
+        teacherId: '',
+        rating: 0,
+        comments: '',
+        evaluationDate: new Date().toISOString().split('T')[0],
+        criteria: {
+          teachingQuality: 0,
+          studentEngagement: 0,
+          lessonPreparation: 0,
+          classroomManagement: 0,
+          professionalDevelopment: 0
+        }
+      });
       toast.success('Evaluation created successfully');
     },
     onError: () => toast.error('Failed to create evaluation'),
   });
 
   const allocateSubjectMutation = useMutation({
-    mutationFn: hodAPI.allocateSubject,
+    mutationFn: hodAPI.allocateClass,
     onSuccess: () => {
       queryClient.invalidateQueries(['hodSubjectAllocations']);
       setAllocationDialog(false);
-      setNewAllocation({});
       toast.success('Subject allocated successfully');
     },
     onError: () => toast.error('Failed to allocate subject'),
+  });
+
+  const addTeacherMutation = useMutation({
+    mutationFn: hodAPI.addStaff,
+    onSuccess: () => {
+      queryClient.invalidateQueries(['hodTeachers']);
+      setTeacherDialog(false);
+      setTeacherForm({
+        name: '',
+        email: '',
+        phone: '',
+        qualification: '',
+        experience: '',
+        subjects: [],
+        status: 'active'
+      });
+      toast.success('Teacher added successfully');
+    },
+    onError: () => toast.error('Failed to add teacher'),
+  });
+
+  const markAttendanceMutation = useMutation({
+    mutationFn: hodAPI.markAttendance,
+    onSuccess: () => {
+      queryClient.invalidateQueries(['hodTeacherAttendance']);
+      setAttendanceDialog(false);
+      setAttendanceForm({
+        teacherId: '',
+        date: new Date().toISOString().split('T')[0],
+        status: 'present',
+        timeIn: '',
+        timeOut: '',
+        remarks: ''
+      });
+      toast.success('Attendance marked successfully');
+    },
+    onError: () => toast.error('Failed to mark attendance'),
   });
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
 
-  const handleApproveRequest = (requestId) => {
-    approveRequestMutation.mutate(requestId);
-  };
-
-  const handleRejectRequest = (requestId) => {
-    rejectRequestMutation.mutate(requestId);
-  };
-
   const handleCreateEvaluation = () => {
-    createEvaluationMutation.mutate(newEvaluation);
+    createEvaluationMutation.mutate(evaluationForm);
   };
 
   const handleAllocateSubject = () => {
-    allocateSubjectMutation.mutate(newAllocation);
+    allocateSubjectMutation.mutate({
+      teacherId: teacherForm.teacherId,
+      grade: teacherForm.grade,
+      section: teacherForm.section,
+      academicYear: teacherForm.academicYear
+    });
   };
 
-  const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'approved': return 'success';
-      case 'pending': return 'warning';
-      case 'rejected': return 'error';
-      default: return 'default';
-    }
+  const handleAddTeacher = () => {
+    addTeacherMutation.mutate(teacherForm);
   };
 
-  const getPriorityColor = (priority) => {
-    switch (priority?.toLowerCase()) {
-      case 'high': return 'error';
-      case 'medium': return 'warning';
-      case 'low': return 'success';
-      default: return 'default';
-    }
+  const handleMarkAttendance = () => {
+    markAttendanceMutation.mutate(attendanceForm);
   };
 
-  if (statsLoading || teachersLoading) {
+  if (statsLoading || teachersLoading || attendanceLoading || evaluationsLoading || allocationsLoading || metricsLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
         <CircularProgress />
@@ -390,10 +451,10 @@ const Dashboard = () => {
             <CardContent sx={{ textAlign: 'center' }}>
               <People color="primary" sx={{ fontSize: 40, mb: 1 }} />
               <Typography variant="h4" color="primary">
-                {departmentStats?.totalTeachers || 0}
+                {teachers?.length || 0}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Total Teachers
+                Total Staff
               </Typography>
             </CardContent>
           </Card>
@@ -403,10 +464,10 @@ const Dashboard = () => {
             <CardContent sx={{ textAlign: 'center' }}>
               <School color="secondary" sx={{ fontSize: 40, mb: 1 }} />
               <Typography variant="h4" color="secondary">
-                {departmentStats?.totalStudents || 0}
+                {teachers?.filter(staff => staff.role === 'Teacher').length || 0}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Total Students
+                Teachers
               </Typography>
             </CardContent>
           </Card>
@@ -429,10 +490,10 @@ const Dashboard = () => {
             <CardContent sx={{ textAlign: 'center' }}>
               <Assessment color="warning" sx={{ fontSize: 40, mb: 1 }} />
               <Typography variant="h4" color="warning.main">
-                {pendingRequests?.length || 0}
+                {evaluations?.length || 0}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Pending Approvals
+                Total Evaluations
               </Typography>
             </CardContent>
           </Card>
@@ -449,12 +510,11 @@ const Dashboard = () => {
           sx={{ borderBottom: 1, borderColor: 'divider' }}
         >
           <Tab label="Overview" icon={<DashboardIcon />} />
-          <Tab label="Teachers" icon={<People />} />
-          <Tab label="Evaluations" icon={<Assessment />} />
-          <Tab label="Approvals" icon={<Approval />} />
-          <Tab label="Lesson Plans" icon={<Book />} />
-          <Tab label="Subject Allocation" icon={<Subject />} />
-          <Tab label="Reports" icon={<Analytics />} />
+          <Tab label="Staff Management" icon={<People />} />
+          <Tab label="Teacher Attendance" icon={<Schedule />} />
+          <Tab label="Teacher Evaluation" icon={<Assessment />} />
+          <Tab label="Class Allocation" icon={<Class />} />
+          <Tab label="Department Reports" icon={<Analytics />} />
         </Tabs>
 
         {/* Overview Tab */}
@@ -502,15 +562,19 @@ const Dashboard = () => {
                     Recent Activities
                   </Typography>
                   <List dense>
-                    {leaveRequests?.slice(0, 3).map((request, index) => (
+                    {getFlattenedAttendance().slice(0, 3).map((attendance, index) => (
                       <ListItem key={index}>
                         <ListItemText
-                          primary={`Leave request from ${request.teacherName}`}
-                          secondary={request.reason}
+                          primary={`${attendance.teacherName} - ${attendance.status}`}
+                          secondary={new Date(attendance.date).toLocaleDateString()}
                         />
                         <Chip 
-                          label={request.status} 
-                          color={getStatusColor(request.status)} 
+                          label={attendance.status} 
+                          color={
+                            attendance.status === 'present' ? 'success' : 
+                            attendance.status === 'absent' ? 'error' : 
+                            attendance.status === 'late' ? 'warning' : 'default'
+                          } 
                           size="small"
                         />
                       </ListItem>
@@ -522,16 +586,97 @@ const Dashboard = () => {
           </Grid>
         </TabPanel>
 
-        {/* Teachers Tab */}
+        {/* Staff Management Tab */}
         <TabPanel value={tabValue} index={1}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-            <Typography variant="h6">Teacher Management</Typography>
+            <Typography variant="h6">Staff Management</Typography>
             <Button
               variant="contained"
               startIcon={<Add />}
-              onClick={() => setAllocationDialog(true)}
+              onClick={() => setTeacherDialog(true)}
             >
-              Allocate Subject
+              Add Staff
+            </Button>
+          </Box>
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Staff Member</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Phone</TableCell>
+                  <TableCell>Role</TableCell>
+                  <TableCell>Qualification</TableCell>
+                  <TableCell>Experience</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {teachers?.map((staff) => (
+                  <TableRow key={staff._id || staff.id}>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Avatar sx={{ width: 32, height: 32 }}>
+                          {staff.name?.charAt(0) || 'S'}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="body2" fontWeight="bold">
+                            {staff.name || 'Unknown Staff'}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </TableCell>
+                    <TableCell>{staff.email || 'N/A'}</TableCell>
+                    <TableCell>{staff.phone || 'N/A'}</TableCell>
+                    <TableCell>
+                      <Chip 
+                        label={staff.role || 'Unknown'} 
+                        color={
+                          staff.role === 'Teacher' ? 'primary' : 
+                          staff.role === 'HOD' ? 'secondary' : 
+                          staff.role === 'Admin' ? 'error' : 'default'
+                        } 
+                        size="small" 
+                      />
+                    </TableCell>
+                    <TableCell>{staff.qualification || 'N/A'}</TableCell>
+                    <TableCell>{staff.experience || '0'} years</TableCell>
+                    <TableCell>
+                      <Chip 
+                        label={staff.status || 'active'} 
+                        color={(staff.status || 'active') === 'active' ? 'success' : 'error'} 
+                        size="small" 
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <IconButton size="small" onClick={() => setSelectedTeacher(staff)}>
+                        <Visibility />
+                      </IconButton>
+                      <IconButton size="small">
+                        <Edit />
+                      </IconButton>
+                      <IconButton size="small" color="error">
+                        <Delete />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </TabPanel>
+
+        {/* Teacher Attendance Tab */}
+        <TabPanel value={tabValue} index={2}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+            <Typography variant="h6">Teacher Attendance</Typography>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => setAttendanceDialog(true)}
+            >
+              Mark Attendance
             </Button>
           </Box>
           <TableContainer component={Paper}>
@@ -539,47 +684,34 @@ const Dashboard = () => {
               <TableHead>
                 <TableRow>
                   <TableCell>Teacher</TableCell>
-                  <TableCell>Subjects</TableCell>
-                  <TableCell>Classes</TableCell>
-                  <TableCell>Performance</TableCell>
+                  <TableCell>Date</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Time In</TableCell>
+                  <TableCell>Time Out</TableCell>
+                  <TableCell>Remarks</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {teachers?.map((teacher) => (
-                  <TableRow key={teacher.id}>
+                {getFlattenedAttendance().map((attendance) => (
+                  <TableRow key={attendance.key}>
+                    <TableCell>{attendance.teacherName}</TableCell>
+                    <TableCell>{new Date(attendance.date).toLocaleDateString()}</TableCell>
                     <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Avatar sx={{ width: 32, height: 32 }}>
-                          {teacher.name?.charAt(0)}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="body2" fontWeight="bold">
-                            {teacher.name}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {teacher.email}
-                          </Typography>
-                        </Box>
-                      </Box>
+                      <Chip 
+                        label={attendance.status} 
+                        color={
+                          attendance.status === 'present' ? 'success' : 
+                          attendance.status === 'absent' ? 'error' : 
+                          attendance.status === 'late' ? 'warning' : 'default'
+                        } 
+                        size="small" 
+                      />
                     </TableCell>
+                    <TableCell>{attendance.timeIn}</TableCell>
+                    <TableCell>{attendance.timeOut}</TableCell>
+                    <TableCell>{attendance.remarks}</TableCell>
                     <TableCell>
-                      {teacher.subjects?.map((subject, index) => (
-                        <Chip key={index} label={subject} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
-                      ))}
-                    </TableCell>
-                    <TableCell>
-                      {teacher.classes?.map((cls, index) => (
-                        <Chip key={index} label={cls} size="small" variant="outlined" sx={{ mr: 0.5, mb: 0.5 }} />
-                      ))}
-                    </TableCell>
-                    <TableCell>
-                      <Rating value={teacher.rating || 0} readOnly size="small" />
-                    </TableCell>
-                    <TableCell>
-                      <IconButton size="small" onClick={() => setSelectedTeacher(teacher)}>
-                        <Visibility />
-                      </IconButton>
                       <IconButton size="small">
                         <Edit />
                       </IconButton>
@@ -592,7 +724,7 @@ const Dashboard = () => {
         </TabPanel>
 
         {/* Evaluations Tab */}
-        <TabPanel value={tabValue} index={2}>
+        <TabPanel value={tabValue} index={3}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
             <Typography variant="h6">Teacher Evaluations</Typography>
             <Button
@@ -630,129 +762,117 @@ const Dashboard = () => {
           </Grid>
         </TabPanel>
 
-        {/* Approvals Tab */}
-        <TabPanel value={tabValue} index={3}>
-          <Typography variant="h6" gutterBottom>
-            Pending Approvals
-          </Typography>
-          <Grid container spacing={2}>
-            {pendingRequests?.map((request) => (
-              <Grid item xs={12} md={6} key={request.id}>
-                <Card>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                      <Typography variant="h6">{request.type}</Typography>
-                      <Chip 
-                        label={request.priority} 
-                        color={getPriorityColor(request.priority)} 
-                        size="small"
-                      />
-                    </Box>
-                    <Typography variant="body2" sx={{ mb: 2 }}>
-                      {request.description}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Requested by: {request.requestedBy} on {request.requestDate}
-                    </Typography>
-                  </CardContent>
-                  <CardActions>
-                    <Button 
-                      size="small" 
-                      startIcon={<CheckCircle />} 
-                      color="success"
-                      onClick={() => handleApproveRequest(request.id)}
-                      disabled={approveRequestMutation.isLoading}
-                    >
-                      Approve
-                    </Button>
-                    <Button 
-                      size="small" 
-                      startIcon={<Cancel />} 
-                      color="error"
-                      onClick={() => handleRejectRequest(request.id)}
-                      disabled={rejectRequestMutation.isLoading}
-                    >
-                      Reject
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        </TabPanel>
-
-        {/* Lesson Plans Tab */}
+        {/* Class Allocation Tab */}
         <TabPanel value={tabValue} index={4}>
-          <Typography variant="h6" gutterBottom>
-            Lesson Plans for Review
-          </Typography>
-          <Grid container spacing={2}>
-            {lessonPlans?.map((plan) => (
-              <Grid item xs={12} md={6} key={plan.id}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      {plan.title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      {plan.description}
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-                      <Chip label={plan.subject} size="small" />
-                      <Chip label={plan.grade} size="small" variant="outlined" />
-                      <Chip label={plan.duration} size="small" variant="outlined" />
-                    </Box>
-                    <Typography variant="caption" color="text.secondary">
-                      Submitted by: {plan.submittedBy} on {plan.submittedDate}
-                    </Typography>
-                  </CardContent>
-                  <CardActions>
-                    <Button size="small" startIcon={<Visibility />}>Review</Button>
-                    <Button size="small" startIcon={<CheckCircle />} color="success">Approve</Button>
-                    <Button size="small" startIcon={<Cancel />} color="error">Reject</Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        </TabPanel>
-
-        {/* Subject Allocation Tab */}
-        <TabPanel value={tabValue} index={5}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-            <Typography variant="h6">Subject Allocations</Typography>
+            <Typography variant="h6">Class Allocation</Typography>
             <Button
               variant="contained"
               startIcon={<Add />}
               onClick={() => setAllocationDialog(true)}
             >
-              New Allocation
+              Allocate Class
             </Button>
           </Box>
+          
+          {/* Class Allocation Recommendations */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              Class Allocation Recommendations (Based on Experience)
+            </Typography>
+            <Grid container spacing={2}>
+              {subjectAllocations?.gradeLevels?.map((grade) => (
+                <Grid item xs={12} sm={6} md={3} key={grade.grade}>
+                  <Card>
+                    <CardContent>
+                      <Typography variant="h6" color="primary">
+                        {grade.grade}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Experience: {grade.minExperience}-{grade.maxExperience} years
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Priority: {grade.priority}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
+
+          {/* Teacher Allocations Table */}
           <TableContainer component={Paper}>
             <Table>
               <TableHead>
                 <TableRow>
                   <TableCell>Teacher</TableCell>
-                  <TableCell>Subject</TableCell>
-                  <TableCell>Class</TableCell>
-                  <TableCell>Academic Year</TableCell>
+                  <TableCell>Experience</TableCell>
+                  <TableCell>Current Grade</TableCell>
+                  <TableCell>Recommended Grade</TableCell>
+                  <TableCell>Suitability Score</TableCell>
+                  <TableCell>Qualification</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {subjectAllocations?.map((allocation) => (
-                  <TableRow key={allocation.id}>
-                    <TableCell>{allocation.teacherName}</TableCell>
-                    <TableCell>{allocation.subject}</TableCell>
-                    <TableCell>{allocation.class}</TableCell>
-                    <TableCell>{allocation.academicYear}</TableCell>
+                {subjectAllocations?.allocations?.map((allocation) => (
+                  <TableRow key={allocation.teacherId}>
                     <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Avatar sx={{ width: 32, height: 32 }}>
+                          {allocation.teacherName?.charAt(0) || 'T'}
+                        </Avatar>
+                        <Typography variant="body2" fontWeight="bold">
+                          {allocation.teacherName}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>{allocation.experience} years</TableCell>
+                    <TableCell>
+                      <Chip 
+                        label={allocation.currentGrade} 
+                        color={allocation.currentGrade === 'Not Assigned' ? 'default' : 'primary'} 
+                        size="small" 
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Chip 
+                        label={allocation.recommendedGrade} 
+                        color="success" 
+                        size="small" 
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <LinearProgress 
+                          variant="determinate" 
+                          value={allocation.suitabilityScore} 
+                          sx={{ width: 60, height: 8, borderRadius: 4 }}
+                        />
+                        <Typography variant="body2">
+                          {allocation.suitabilityScore}%
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>{allocation.qualification || 'N/A'}</TableCell>
+                    <TableCell>
+                      <IconButton 
+                        size="small" 
+                        color="primary"
+                        onClick={() => {
+                          setTeacherForm({
+                            ...teacherForm,
+                            teacherId: allocation.teacherId,
+                            grade: allocation.recommendedGrade
+                          });
+                          setAllocationDialog(true);
+                        }}
+                      >
+                        <Add />
+                      </IconButton>
                       <IconButton size="small">
                         <Edit />
-                      </IconButton>
-                      <IconButton size="small" color="error">
-                        <Delete />
                       </IconButton>
                     </TableCell>
                   </TableRow>
@@ -762,24 +882,44 @@ const Dashboard = () => {
           </TableContainer>
         </TabPanel>
 
-        {/* Reports Tab */}
-        <TabPanel value={tabValue} index={6}>
+        {/* Department Reports Tab */}
+        <TabPanel value={tabValue} index={5}>
           <Typography variant="h6" gutterBottom>
-            Reports & Analytics
+            Department Reports & Analytics
           </Typography>
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
-                    Department Report
+                    Teacher Performance Overview
                   </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    Generate comprehensive department performance report
-                  </Typography>
-                  <Button variant="outlined" startIcon={<Download />}>
-                    Download Report
-                  </Button>
+                  {performanceMetrics ? (
+                    <Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                        <Typography variant="body2">Average Teaching Rating</Typography>
+                        <Typography variant="body2">{performanceMetrics.avgTeachingRating || 4.2}/5</Typography>
+                      </Box>
+                      <LinearProgress 
+                        variant="determinate" 
+                        value={(performanceMetrics.avgTeachingRating || 4.2) * 20} 
+                        sx={{ mb: 2 }}
+                      />
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                        <Typography variant="body2">Attendance Rate</Typography>
+                        <Typography variant="body2">{performanceMetrics.attendanceRate || 95}%</Typography>
+                      </Box>
+                      <LinearProgress 
+                        variant="determinate" 
+                        value={performanceMetrics.attendanceRate || 95} 
+                        sx={{ mb: 2 }}
+                      />
+                    </Box>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">
+                      No performance data available
+                    </Typography>
+                  )}
                 </CardContent>
               </Card>
             </Grid>
@@ -787,14 +927,22 @@ const Dashboard = () => {
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
-                    Learning Trends
+                    Department Statistics
                   </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    Analyze learning patterns and trends
-                  </Typography>
-                  <Button variant="outlined" startIcon={<Analytics />}>
-                    View Analysis
-                  </Button>
+                  <Box>
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      Total Teachers: {departmentStats?.totalTeachers || 0}
+                    </Typography>
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      Active Teachers: {departmentStats?.activeTeachers || 0}
+                    </Typography>
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      Total Students: {departmentStats?.totalStudents || 0}
+                    </Typography>
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      Active Courses: {departmentStats?.activeCourses || 0}
+                    </Typography>
+                  </Box>
                 </CardContent>
               </Card>
             </Grid>
@@ -813,28 +961,21 @@ const Dashboard = () => {
             label="Teacher"
             select
             margin="normal"
-            value={newEvaluation.teacherId || ''}
-            onChange={(e) => setNewEvaluation({...newEvaluation, teacherId: e.target.value})}
+            value={evaluationForm.teacherId || ''}
+            onChange={(e) => setEvaluationForm({...evaluationForm, teacherId: e.target.value})}
           >
             {teachers?.map((teacher) => (
-              <MenuItem key={teacher.id} value={teacher.id}>{teacher.name}</MenuItem>
+              <MenuItem key={teacher._id || teacher.id} value={teacher._id || teacher.id}>{teacher.name}</MenuItem>
             ))}
           </TextField>
-          <TextField
-            fullWidth
-            label="Subject"
-            margin="normal"
-            value={newEvaluation.subject || ''}
-            onChange={(e) => setNewEvaluation({...newEvaluation, subject: e.target.value})}
-          />
           <TextField
             fullWidth
             label="Rating"
             type="number"
             margin="normal"
             inputProps={{ min: 1, max: 5 }}
-            value={newEvaluation.rating || ''}
-            onChange={(e) => setNewEvaluation({...newEvaluation, rating: parseInt(e.target.value)})}
+            value={evaluationForm.rating || ''}
+            onChange={(e) => setEvaluationForm({...evaluationForm, rating: parseInt(e.target.value)})}
           />
           <TextField
             fullWidth
@@ -842,8 +983,8 @@ const Dashboard = () => {
             multiline
             rows={4}
             margin="normal"
-            value={newEvaluation.comments || ''}
-            onChange={(e) => setNewEvaluation({...newEvaluation, comments: e.target.value})}
+            value={evaluationForm.comments || ''}
+            onChange={(e) => setEvaluationForm({...evaluationForm, comments: e.target.value})}
           />
         </DialogContent>
         <DialogActions>
@@ -856,46 +997,196 @@ const Dashboard = () => {
 
       {/* Allocation Dialog */}
       <Dialog open={allocationDialog} onClose={() => setAllocationDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Allocate Subject</DialogTitle>
+        <DialogTitle>Allocate Class</DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
             label="Teacher"
             select
             margin="normal"
-            value={newAllocation.teacherId || ''}
-            onChange={(e) => setNewAllocation({...newAllocation, teacherId: e.target.value})}
+            value={teacherForm.teacherId || ''}
+            onChange={(e) => setTeacherForm({...teacherForm, teacherId: e.target.value})}
           >
-            {teachers?.map((teacher) => (
-              <MenuItem key={teacher.id} value={teacher.id}>{teacher.name}</MenuItem>
+            {teachers?.filter(staff => staff.role === 'Teacher').map((teacher) => (
+              <MenuItem key={teacher._id || teacher.id} value={teacher._id || teacher.id}>
+                {teacher.name} ({teacher.experience || 0} years exp.)
+              </MenuItem>
             ))}
           </TextField>
           <TextField
             fullWidth
-            label="Subject"
+            label="Grade"
+            select
             margin="normal"
-            value={newAllocation.subject || ''}
-            onChange={(e) => setNewAllocation({...newAllocation, subject: e.target.value})}
-          />
+            value={teacherForm.grade || ''}
+            onChange={(e) => setTeacherForm({...teacherForm, grade: e.target.value})}
+          >
+            <MenuItem value="Grade 1-3">Grade 1-3 (0-3 years exp.)</MenuItem>
+            <MenuItem value="Grade 4-6">Grade 4-6 (2-5 years exp.)</MenuItem>
+            <MenuItem value="Grade 7-9">Grade 7-9 (4-8 years exp.)</MenuItem>
+            <MenuItem value="Grade 10-12">Grade 10-12 (6+ years exp.)</MenuItem>
+          </TextField>
           <TextField
             fullWidth
-            label="Class"
+            label="Section"
             margin="normal"
-            value={newAllocation.class || ''}
-            onChange={(e) => setNewAllocation({...newAllocation, class: e.target.value})}
+            value={teacherForm.section || ''}
+            onChange={(e) => setTeacherForm({...teacherForm, section: e.target.value})}
+            placeholder="e.g., A, B, C"
           />
           <TextField
             fullWidth
             label="Academic Year"
             margin="normal"
-            value={newAllocation.academicYear || ''}
-            onChange={(e) => setNewAllocation({...newAllocation, academicYear: e.target.value})}
+            value={teacherForm.academicYear || ''}
+            onChange={(e) => setTeacherForm({...teacherForm, academicYear: e.target.value})}
+            placeholder="e.g., 2024-2025"
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setAllocationDialog(false)}>Cancel</Button>
           <Button onClick={handleAllocateSubject} variant="contained">
-            Allocate Subject
+            Allocate Class
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Teacher Dialog */}
+      <Dialog open={teacherDialog} onClose={() => setTeacherDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Add Teacher</DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth
+            label="Name"
+            margin="normal"
+            value={teacherForm.name || ''}
+            onChange={(e) => setTeacherForm({...teacherForm, name: e.target.value})}
+          />
+          <TextField
+            fullWidth
+            label="Email"
+            margin="normal"
+            value={teacherForm.email || ''}
+            onChange={(e) => setTeacherForm({...teacherForm, email: e.target.value})}
+          />
+          <TextField
+            fullWidth
+            label="Phone"
+            margin="normal"
+            value={teacherForm.phone || ''}
+            onChange={(e) => setTeacherForm({...teacherForm, phone: e.target.value})}
+          />
+          <TextField
+            fullWidth
+            label="Qualification"
+            margin="normal"
+            value={teacherForm.qualification || ''}
+            onChange={(e) => setTeacherForm({...teacherForm, qualification: e.target.value})}
+          />
+          <TextField
+            fullWidth
+            label="Experience"
+            margin="normal"
+            value={teacherForm.experience || ''}
+            onChange={(e) => setTeacherForm({...teacherForm, experience: e.target.value})}
+          />
+          <TextField
+            fullWidth
+            label="Subjects"
+            margin="normal"
+            value={teacherForm.subjects?.join(', ') || ''}
+            onChange={(e) => setTeacherForm({...teacherForm, subjects: e.target.value.split(',').map(s => s.trim())})}
+          />
+          <TextField
+            fullWidth
+            label="Status"
+            margin="normal"
+            select
+            value={teacherForm.status || 'active'}
+            onChange={(e) => setTeacherForm({...teacherForm, status: e.target.value})}
+          >
+            <MenuItem value="active">Active</MenuItem>
+            <MenuItem value="inactive">Inactive</MenuItem>
+          </TextField>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setTeacherDialog(false)}>Cancel</Button>
+          <Button onClick={handleAddTeacher} variant="contained">
+            Add Teacher
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Attendance Dialog */}
+      <Dialog open={attendanceDialog} onClose={() => setAttendanceDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Mark Teacher Attendance</DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth
+            select
+            label="Teacher"
+            margin="normal"
+            value={attendanceForm.teacherId || ''}
+            onChange={(e) => setAttendanceForm({...attendanceForm, teacherId: e.target.value})}
+          >
+            {teachers?.map((teacher) => (
+              <MenuItem key={teacher._id || teacher.id} value={teacher._id || teacher.id}>{teacher.name}</MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            fullWidth
+            label="Date"
+            type="date"
+            margin="normal"
+            value={attendanceForm.date || ''}
+            onChange={(e) => setAttendanceForm({...attendanceForm, date: e.target.value})}
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            fullWidth
+            select
+            label="Status"
+            margin="normal"
+            value={attendanceForm.status || 'present'}
+            onChange={(e) => setAttendanceForm({...attendanceForm, status: e.target.value})}
+          >
+            <MenuItem value="present">Present</MenuItem>
+            <MenuItem value="absent">Absent</MenuItem>
+            <MenuItem value="late">Late</MenuItem>
+            <MenuItem value="half-day">Half Day</MenuItem>
+          </TextField>
+          <TextField
+            fullWidth
+            label="Time In"
+            type="time"
+            margin="normal"
+            value={attendanceForm.timeIn || ''}
+            onChange={(e) => setAttendanceForm({...attendanceForm, timeIn: e.target.value})}
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            fullWidth
+            label="Time Out"
+            type="time"
+            margin="normal"
+            value={attendanceForm.timeOut || ''}
+            onChange={(e) => setAttendanceForm({...attendanceForm, timeOut: e.target.value})}
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            fullWidth
+            label="Remarks"
+            margin="normal"
+            multiline
+            rows={3}
+            value={attendanceForm.remarks || ''}
+            onChange={(e) => setAttendanceForm({...attendanceForm, remarks: e.target.value})}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAttendanceDialog(false)}>Cancel</Button>
+          <Button onClick={handleMarkAttendance} variant="contained">
+            Mark Attendance
           </Button>
         </DialogActions>
       </Dialog>
@@ -908,8 +1199,10 @@ const Dashboard = () => {
           sx={{ position: 'fixed', bottom: 16, right: 16 }}
           onClick={() => {
             switch(tabValue) {
-              case 1: setAllocationDialog(true); break;
-              case 2: setEvaluationDialog(true); break;
+              case 1: setTeacherDialog(true); break;
+              case 2: setAttendanceDialog(true); break;
+              case 3: setEvaluationDialog(true); break;
+              case 4: setAllocationDialog(true); break;
               default: break;
             }
           }}

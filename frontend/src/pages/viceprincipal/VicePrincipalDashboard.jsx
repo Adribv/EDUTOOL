@@ -31,9 +31,6 @@ const vpAPI = {
   getStatistics: () => api.get('/api/vp/department/statistics').then(res => res.data),
   getDepartment: () => api.get('/api/vp/department').then(res => res.data),
   updateDepartment: (data) => api.put(`/api/vp/department/${data.id}`, data).then(res => res.data),
-  getTeachers: (departmentId) => api.get(`/api/vp/department/${departmentId}/teachers`).then(res => res.data),
-  addTeacher: (data) => api.post('/api/vp/department/teacher', data).then(res => res.data),
-  removeTeacher: (departmentId, teacherId) => api.delete(`/api/vp/department/${departmentId}/teacher/${teacherId}`).then(res => res.data),
   createDepartment: (data) => api.post('/api/vp/department', data).then(res => res.data),
   
   // HOD Management
@@ -76,8 +73,6 @@ export default function VicePrincipalDashboard() {
   const [tab, setTab] = useState(0);
   const [editDialog, setEditDialog] = useState(false);
   const [editDept, setEditDept] = useState({});
-  const [addTeacherDialog, setAddTeacherDialog] = useState(false);
-  const [newTeacherId, setNewTeacherId] = useState('');
   const [addDeptDialog, setAddDeptDialog] = useState(false);
   const [newDept, setNewDept] = useState({ name: '', description: '', subjects: '' });
   
@@ -151,11 +146,6 @@ export default function VicePrincipalDashboard() {
   const { data: staff, isLoading: loadingStaff } = useQuery({ queryKey: ['vpStaff'], queryFn: vpAPI.getStaff });
   const { data: statistics, isLoading: loadingStats } = useQuery({ queryKey: ['vpStats'], queryFn: vpAPI.getStatistics });
   const { data: departments, isLoading: loadingDept } = useQuery({ queryKey: ['vpDepartment'], queryFn: vpAPI.getDepartment });
-  const { data: teachers, isLoading: loadingTeachers } = useQuery({ 
-    queryKey: ['vpTeachers', selectedDepartment?._id], 
-    queryFn: () => selectedDepartment ? vpAPI.getTeachers(selectedDepartment._id) : Promise.resolve([]),
-    enabled: !!selectedDepartment
-  });
   
   // New queries for expanded features
   const { data: allDepartments, isLoading: loadingAllDepts } = useQuery({ queryKey: ['vpAllDepartments'], queryFn: vpAPI.getAllDepartments });
@@ -174,26 +164,6 @@ export default function VicePrincipalDashboard() {
       toast.success('Department updated');
     },
     onError: () => toast.error('Failed to update department'),
-  });
-
-  const addTeacherMutation = useMutation({
-    mutationFn: vpAPI.addTeacher,
-    onSuccess: () => {
-      queryClient.invalidateQueries(['vpTeachers', selectedDepartment?._id]);
-      setAddTeacherDialog(false);
-      setNewTeacherId('');
-      toast.success('Teacher added');
-    },
-    onError: () => toast.error('Failed to add teacher'),
-  });
-
-  const removeTeacherMutation = useMutation({
-    mutationFn: ({ departmentId, teacherId }) => vpAPI.removeTeacher(departmentId, teacherId),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['vpTeachers', selectedDepartment?._id]);
-      toast.success('Teacher removed');
-    },
-    onError: () => toast.error('Failed to remove teacher'),
   });
 
   const createDepartmentMutation = useMutation({
@@ -355,7 +325,7 @@ export default function VicePrincipalDashboard() {
     return <Box p={3}><Typography color="error">Access denied: Vice Principal only</Typography></Box>;
   }
 
-  if (loadingOverview || loadingStaff || loadingStats || loadingDept || loadingTeachers || loadingAllDepts || loadingHODs || loadingExams || loadingTimetables || loadingCurriculum || loadingHODSubmissions) {
+  if (loadingOverview || loadingStaff || loadingStats || loadingDept || loadingAllDepts || loadingHODs || loadingExams || loadingTimetables || loadingCurriculum || loadingHODSubmissions) {
     return <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh"><CircularProgress /></Box>;
   }
 
@@ -567,60 +537,28 @@ export default function VicePrincipalDashboard() {
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
-                    {selectedDepartment ? `${selectedDepartment.name} Teachers` : 'Select a Department'}
+                    {selectedDepartment ? `${selectedDepartment.name} Details` : 'Select a Department'}
                   </Typography>
                   {selectedDepartment ? (
                     <>
                       <Typography variant="body2" color="textSecondary" gutterBottom>
                         {selectedDepartment.description}
                       </Typography>
-                      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                      <Box mb={2}>
                         <Typography variant="body2">
-                          HOD: {selectedDepartment.headOfDepartment?.name || 'Not Assigned'}
+                          <strong>HOD:</strong> {selectedDepartment.headOfDepartment?.name || 'Not Assigned'}
                         </Typography>
-                        <Button 
-                          size="small" 
-                          variant="outlined"
-                          onClick={() => setAddTeacherDialog(true)}
-                        >
-                          Add Teacher
-                        </Button>
+                        <Typography variant="body2">
+                          <strong>Teachers:</strong> {selectedDepartment.teachers?.length || 0}
+                        </Typography>
+                        <Typography variant="body2">
+                          <strong>Subjects:</strong> {selectedDepartment.subjects?.join(', ') || 'Not specified'}
+                        </Typography>
                       </Box>
-                      <TableContainer>
-                        <Table size="small">
-                          <TableHead>
-                            <TableRow>
-                              <TableCell>Name</TableCell>
-                              <TableCell>Email</TableCell>
-                              <TableCell>Actions</TableCell>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {teachers?.map((teacher) => (
-                              <TableRow key={teacher._id}>
-                                <TableCell>{teacher.name}</TableCell>
-                                <TableCell>{teacher.email}</TableCell>
-                                <TableCell>
-                                  <IconButton 
-                                    size="small" 
-                                    color="error"
-                                    onClick={() => removeTeacherMutation.mutate({ 
-                                      departmentId: selectedDepartment._id, 
-                                      teacherId: teacher._id 
-                                    })}
-                                  >
-                                    <DeleteIcon />
-                                  </IconButton>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
                     </>
                   ) : (
                     <Typography variant="body2" color="textSecondary">
-                      Click on a department to view its teachers
+                      Click on a department to view its details
                     </Typography>
                   )}
                 </CardContent>
@@ -1401,36 +1339,6 @@ export default function VicePrincipalDashboard() {
         </DialogActions>
       </Dialog>
 
-      {/* Add Teacher Dialog */}
-      <Dialog open={addTeacherDialog} onClose={() => setAddTeacherDialog(false)}>
-        <DialogTitle>Add Teacher to Department</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" gutterBottom>
-            Department: {selectedDepartment?.name}
-          </Typography>
-          <TextField 
-            label="Teacher ID" 
-            fullWidth 
-            margin="normal" 
-            value={newTeacherId} 
-            onChange={e => setNewTeacherId(e.target.value)} 
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setAddTeacherDialog(false)}>Cancel</Button>
-          <Button 
-            variant="contained" 
-            onClick={() => addTeacherMutation.mutate({ 
-              departmentId: selectedDepartment?._id, 
-              teacherId: newTeacherId 
-            })}
-            disabled={!selectedDepartment || !newTeacherId}
-          >
-            Add
-          </Button>
-        </DialogActions>
-      </Dialog>
-
       {/* Edit Exam Dialog */}
       <Dialog open={editExamDialog} onClose={() => setEditExamDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Edit Exam</DialogTitle>
@@ -1828,7 +1736,7 @@ export default function VicePrincipalDashboard() {
             variant="contained" 
             onClick={() => {
               localStorage.removeItem('token');
-              navigate('/login');
+              navigate('/management-login');
             }}
           >
             Logout

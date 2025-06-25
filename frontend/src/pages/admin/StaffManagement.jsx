@@ -44,18 +44,6 @@ const roles = [
   'Counsellor',
 ];
 
-const departments = [
-  'Mathematics',
-  'Science',
-  'English',
-  'History',
-  'Geography',
-  'Computer Science',
-  'Physical Education',
-  'Arts',
-  'Music',
-];
-
 function StaffManagement() {
   const [open, setOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
@@ -82,6 +70,12 @@ function StaffManagement() {
       const response = await adminAPI.getAllStaff();
       return response.data;
     },
+  });
+
+  const { data: departments, isLoading: departmentsLoading } = useQuery({
+    queryKey: ['departments'],
+    queryFn: adminAPI.getDepartments,
+    staleTime: 5 * 60 * 1000,
   });
 
   const createMutation = useMutation({
@@ -126,7 +120,7 @@ function StaffManagement() {
         name: staff.name,
         email: staff.email,
         role: staff.role,
-        department: staff.department,
+        department: staff.department?._id || staff.department || '',
         contactNumber: staff.phone,
         address: staff.address,
         employeeId: staff.employeeId,
@@ -292,11 +286,19 @@ ${Object.entries(reportData.filters)
     }
   };
 
-  const filteredStaff = staff?.filter((member) =>
-    Object.values(member).some((value) =>
-      value.toString().toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
+  const filteredStaff = staff?.filter((member) => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      member.name?.toLowerCase().includes(searchLower) ||
+      member.email?.toLowerCase().includes(searchLower) ||
+      member.role?.toLowerCase().includes(searchLower) ||
+      member.department?.name?.toLowerCase().includes(searchLower) ||
+      member.phone?.toLowerCase().includes(searchLower) ||
+      member.employeeId?.toLowerCase().includes(searchLower) ||
+      member.qualification?.toLowerCase().includes(searchLower) ||
+      member.experience?.toString().includes(searchLower)
+    );
+  });
 
   if (isLoading) {
     return (
@@ -381,7 +383,7 @@ ${Object.entries(reportData.filters)
                     size="small"
                   />
                 </TableCell>
-                <TableCell>{member.department}</TableCell>
+                <TableCell>{member.department?.name || 'No Department'}</TableCell>
                 <TableCell>{member.phone}</TableCell>
                 <TableCell>
                   <Tooltip title="Edit">
@@ -468,10 +470,14 @@ ${Object.entries(reportData.filters)
               value={formData.department}
               onChange={handleInputChange}
               sx={{ mb: 2 }}
+              disabled={departmentsLoading}
             >
-              {departments.map((dept) => (
-                <MenuItem key={dept} value={dept}>
-                  {dept}
+              <MenuItem value="">
+                {departmentsLoading ? 'Loading departments...' : 'Select Department'}
+              </MenuItem>
+              {departments?.map((dept) => (
+                <MenuItem key={dept._id || dept.id} value={dept._id || dept.id}>
+                  {dept.name}
                 </MenuItem>
               ))}
             </TextField>
