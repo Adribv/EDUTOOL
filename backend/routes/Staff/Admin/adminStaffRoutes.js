@@ -51,7 +51,9 @@ router.post('/login', async (req, res) => {
 // Public routes (no auth required)
 router.get('/classes/public', adminStaffController.getClasses);
 router.get('/students/public', adminStaffController.getAllStudents);
+router.get('/students/export', adminStaffController.exportStudents);
 router.post('/students/public', adminStaffController.registerStudent);
+router.post('/students/bulk', adminStaffController.bulkImportStudents);
 router.put('/students/public/:id', adminStaffController.updateStudent);
 router.delete('/students/public/:id', adminStaffController.deleteStudent);
 router.get('/fee-structure/public', adminStaffController.getFeeStructures);

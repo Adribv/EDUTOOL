@@ -98,6 +98,192 @@ exports.registerStudent = async (req, res) => {
   }
 };
 
+exports.bulkImportStudents = async (req, res) => {
+  try {
+    const { students } = req.body;
+    
+    if (!Array.isArray(students) || students.length === 0) {
+      return res.status(400).json({ message: 'Students array is required and cannot be empty' });
+    }
+
+    const results = {
+      successful: [],
+      failed: [],
+      total: students.length
+    };
+
+    for (const studentData of students) {
+      try {
+        const {
+          name,
+          email,
+          class: studentClass,
+          section,
+          rollNumber,
+          dateOfBirth,
+          gender,
+          parentName,
+          parentPhone,
+          address
+        } = studentData;
+
+        // Validate required fields
+        if (!name || !rollNumber) {
+          results.failed.push({
+            ...studentData,
+            error: 'Name and roll number are required'
+          });
+          continue;
+        }
+
+        // Check if student already exists
+        const existingStudent = await Student.findOne({ rollNumber });
+        if (existingStudent) {
+          results.failed.push({
+            ...studentData,
+            error: 'Student with this roll number already exists'
+          });
+          continue;
+        }
+
+        // Generate password
+        const password = rollNumber ? `${rollNumber}@123` : Math.random().toString(36).slice(-8);
+        
+        // Normalize gender
+        let finalGender = gender;
+        if (gender) {
+          const cap = gender.charAt(0).toUpperCase() + gender.slice(1).toLowerCase();
+          finalGender = cap;
+        }
+
+        // Create parent info if provided
+        const parentInfo = parentName || parentPhone ? {
+          name: parentName || '',
+          contactNumber: parentPhone || '',
+          relationship: 'Parent'
+        } : null;
+
+        const newStudent = new Student({
+          name,
+          rollNumber,
+          password,
+          class: studentClass,
+          section,
+          dateOfBirth,
+          gender: finalGender,
+          address,
+          contactNumber: parentPhone,
+          email,
+          parentInfo,
+          status: 'Active'
+        });
+
+        await newStudent.save();
+        results.successful.push({
+          ...studentData,
+          password, // Include generated password
+          _id: newStudent._id
+        });
+
+      } catch (error) {
+        console.error('Error importing student:', studentData, error);
+        results.failed.push({
+          ...studentData,
+          error: error.message || 'Unknown error'
+        });
+      }
+    }
+
+    res.status(200).json({
+      message: `Bulk import completed. ${results.successful.length} successful, ${results.failed.length} failed`,
+      results
+    });
+
+  } catch (error) {
+    console.error('Error in bulk import:', error);
+    res.status(500).json({ message: 'Server error during bulk import' });
+  }
+};
+
+exports.exportStudents = async (req, res) => {
+  try {
+    const { format = 'csv', class: studentClass, section, gender } = req.query;
+    
+    // Build filter query
+    const filterQuery = {};
+    if (studentClass) filterQuery.class = studentClass;
+    if (section) filterQuery.section = section;
+    if (gender) filterQuery.gender = gender;
+    
+    // Get students with filters (no populate needed for parentInfo)
+    const students = await Student.find(filterQuery).select('-password');
+
+    if (format === 'csv') {
+      // Convert to CSV format
+      const csvData = students.map(student => {
+        // Format address
+        const address = student.address ? 
+          `${student.address.street || ''} ${student.address.city || ''} ${student.address.state || ''} ${student.address.postalCode || ''} ${student.address.country || ''}`.trim() : '';
+        
+        return {
+          'Student ID': student._id,
+          'Name': student.name || '',
+          'Roll Number': student.rollNumber || '',
+          'Email': student.email || '',
+          'Class': student.class || '',
+          'Section': student.section || '',
+          'Date of Birth': student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString() : '',
+          'Gender': student.gender || '',
+          'Contact Number': student.contactNumber || '',
+          'Address': address,
+          'Status': student.status || '',
+          'Emergency Contact Name': student.emergencyContact?.name || '',
+          'Emergency Contact Phone': student.emergencyContact?.contactNumber || '',
+          'Emergency Contact Relationship': student.emergencyContact?.relationship || '',
+          'Blood Group': student.bloodGroup || '',
+          'Admission Date': student.admissionDate ? new Date(student.admissionDate).toLocaleDateString() : '',
+          'Created At': student.createdAt ? new Date(student.createdAt).toLocaleDateString() : '',
+          'Updated At': student.updatedAt ? new Date(student.updatedAt).toLocaleDateString() : '',
+          'Login Password': student.rollNumber ? `${student.rollNumber}@123` : 'Auto-generated'
+        };
+      });
+
+      // Convert to CSV string
+      const headers = Object.keys(csvData[0] || {});
+      const csvString = [
+        headers.join(','),
+        ...csvData.map(row => 
+          headers.map(header => {
+            const value = row[header] || '';
+            // Escape commas and quotes in CSV
+            if (typeof value === 'string' && (value.includes(',') || value.includes('"') || value.includes('\n'))) {
+              return `"${value.replace(/"/g, '""')}"`;
+            }
+            return value;
+          }).join(',')
+        )
+      ].join('\n');
+
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="students_export_${new Date().toISOString().split('T')[0]}.csv"`);
+      res.send(csvString);
+
+    } else {
+      // Return JSON format
+      res.json({
+        message: 'Students exported successfully',
+        count: students.length,
+        filters: { class: studentClass, section, gender },
+        students: students
+      });
+    }
+
+  } catch (error) {
+    console.error('Error exporting students:', error);
+    res.status(500).json({ message: 'Server error during export' });
+  }
+};
+
 exports.updateStudent = async (req, res) => {
   try {
     const studentId = req.params.id;
