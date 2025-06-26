@@ -55,7 +55,8 @@ router.post('/students/public', adminStaffController.registerStudent);
 router.put('/students/public/:id', adminStaffController.updateStudent);
 router.delete('/students/public/:id', adminStaffController.deleteStudent);
 router.get('/fee-structure/public', adminStaffController.getFeeStructures);
-router.post('/fee-structure/public', adminStaffController.configureFeeStructure);
+router.post('/fee-structure/public', adminStaffController.createSimpleFeeStructure);
+router.put('/fee-structure/public/:id', adminStaffController.updateSimpleFeeStructure);
 router.delete('/fee-structure/public/:id', adminStaffController.deleteFeeStructure);
 
 // Apply authentication middleware to all routes below this line

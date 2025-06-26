@@ -2099,3 +2099,92 @@ exports.deleteParent = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+// Simple method for public endpoint
+exports.createSimpleFeeStructure = async (req, res) => {
+  try {
+    const { grade, feeType, amount, dueDate, description, academicYear } = req.body;
+
+    // Validate required fields
+    if (!grade || !feeType || !amount || !dueDate) {
+      return res.status(400).json({ message: 'Grade, fee type, amount, and due date are required', body: req.body });
+    }
+
+    // Create fee components array
+    const feeComponents = [{ name: feeType, amount: parseFloat(amount), description: description || '' }];
+
+    // Set default academic year if not provided
+    const finalAcademicYear = academicYear || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`;
+
+    // Check if fee structure already exists for this grade and academic year
+    const existingFeeStructure = await FeeStructure.findOne({
+      academicYear: finalAcademicYear,
+      class: grade,
+      term: 'Annual'
+    });
+
+    if (existingFeeStructure) {
+      // Update existing fee structure
+      existingFeeStructure.components = feeComponents;
+      existingFeeStructure.feeComponents = feeComponents;
+      existingFeeStructure.totalAmount = parseFloat(amount);
+      existingFeeStructure.dueDate = new Date(dueDate);
+      await existingFeeStructure.save();
+      return res.json({ message: 'Fee structure updated successfully', feeStructure: existingFeeStructure });
+    }
+
+    // Create new fee structure
+    const newFeeStructure = new FeeStructure({
+      academicYear: finalAcademicYear,
+      class: grade,
+      term: 'Annual',
+      components: feeComponents,
+      feeComponents: feeComponents,
+      totalAmount: parseFloat(amount),
+      dueDate: new Date(dueDate),
+      isActive: true
+    });
+
+    await newFeeStructure.save();
+    res.status(201).json({ message: 'Fee structure created successfully', feeStructure: newFeeStructure });
+  } catch (error) {
+    console.error('Error creating fee structure:', error, req.body);
+    res.status(500).json({ message: 'Server error', error: error.message, body: req.body });
+  }
+};
+
+// Simple update method for public endpoint
+exports.updateSimpleFeeStructure = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { grade, feeType, amount, dueDate, description, academicYear } = req.body;
+
+    // Validate required fields
+    if (!grade || !feeType || !amount || !dueDate) {
+      return res.status(400).json({ message: 'Grade, fee type, amount, and due date are required' });
+    }
+
+    // Find the fee structure
+    const feeStructure = await FeeStructure.findById(id);
+    if (!feeStructure) {
+      return res.status(404).json({ message: 'Fee structure not found' });
+    }
+
+    // Create fee components array
+    const feeComponents = [{ name: feeType, amount: parseFloat(amount), description: description || '' }];
+
+    // Update the fee structure
+    feeStructure.class = grade;
+    feeStructure.components = feeComponents;
+    feeStructure.feeComponents = feeComponents;
+    feeStructure.totalAmount = parseFloat(amount);
+    feeStructure.dueDate = new Date(dueDate);
+    if (academicYear) feeStructure.academicYear = academicYear;
+
+    await feeStructure.save();
+    res.json({ message: 'Fee structure updated successfully', feeStructure });
+  } catch (error) {
+    console.error('Error updating fee structure:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};

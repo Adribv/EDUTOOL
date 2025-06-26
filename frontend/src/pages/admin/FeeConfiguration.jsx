@@ -46,8 +46,8 @@ import { adminAPI } from '../../services/api';
 import { toast } from 'react-toastify';
 import * as XLSX from 'xlsx';
 import { motion } from 'framer-motion';
+import axios from 'axios';
 
-const grades = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
 const feeTypes = ['Tuition', 'Transportation', 'Library', 'Laboratory', 'Sports', 'Other'];
 const paymentStatus = ['Paid', 'Pending', 'Overdue'];
 const initialFormData = { grade: '', feeType: '', amount: '', dueDate: '', description: '' };
@@ -71,10 +71,34 @@ function FeeConfiguration() {
 
   const queryClient = useQueryClient();
 
+  // Fetch classes to get available grades
+  const { data: classes = [], isLoading: classesLoading } = useQuery({
+    queryKey: ['classes'],
+    queryFn: async () => {
+      const response = await axios.get('http://localhost:5000/api/admin-staff/classes/public');
+      return response.data;
+    },
+    onError: (error) => {
+      console.error('Error fetching classes:', error);
+      toast.error('Failed to load classes');
+    }
+  });
+
+  // Get unique grades from classes
+  const grades = classes && Array.isArray(classes) ? 
+    [...new Set(classes.map(cls => cls.grade))].sort() : [];
+
   // Fetch fee structures
   const { data: feeStructures, isLoading: isLoadingStructures } = useQuery({
     queryKey: ['feeStructures'],
-    queryFn: () => adminAPI.getFeeStructures(),
+    queryFn: async () => {
+      const response = await axios.get('http://localhost:5000/api/admin-staff/fee-structure/public');
+      return response.data;
+    },
+    onError: (error) => {
+      console.error('Error fetching fee structures:', error);
+      toast.error('Failed to load fee structures');
+    }
   });
 
   // Fetch student fee records
@@ -91,10 +115,11 @@ function FeeConfiguration() {
 
   const mutation = useMutation({
     mutationFn: async (values) => {
-      const apiCall = selectedFee
-        ? adminAPI.updateFeeStructure(selectedFee._id, values)
-        : adminAPI.createFeeStructure(values);
-      return apiCall;
+      if (selectedFee) {
+        return axios.put(`http://localhost:5000/api/admin-staff/fee-structure/public/${selectedFee._id}`, values);
+      } else {
+        return axios.post('http://localhost:5000/api/admin-staff/fee-structure/public', values);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['feeStructures']);
@@ -102,17 +127,19 @@ function FeeConfiguration() {
       toast.success(`Fee structure ${selectedFee ? 'updated' : 'added'} successfully`);
     },
     onError: (error) => {
+      console.error('Error saving fee structure:', error);
       toast.error(error.response?.data?.message || 'An error occurred');
     }
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => adminAPI.deleteFeeStructure(id),
+    mutationFn: (id) => axios.delete(`http://localhost:5000/api/admin-staff/fee-structure/public/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries(['feeStructures']);
       toast.success('Fee structure deleted successfully');
     },
     onError: (error) => {
+      console.error('Error deleting fee structure:', error);
       toast.error(error.response?.data?.message || 'An error occurred');
     }
   });
@@ -184,7 +211,7 @@ function FeeConfiguration() {
     }
   };
 
-  if (isLoadingStructures || isLoadingStudentFees || isLoadingStaffSalaries) {
+  if (isLoadingStructures || isLoadingStudentFees || isLoadingStaffSalaries || classesLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
         <CircularProgress />
@@ -282,12 +309,17 @@ function FeeConfiguration() {
                       value={formData.grade}
                       onChange={handleInputChange}
                       required
+                      disabled={classesLoading}
                     >
-                      {grades.map((grade) => (
-                        <MenuItem key={grade} value={grade}>
-                          {grade}
-                        </MenuItem>
-                      ))}
+                      {classesLoading ? (
+                        <MenuItem disabled>Loading grades...</MenuItem>
+                      ) : (
+                        grades.map((grade) => (
+                          <MenuItem key={grade} value={grade}>
+                            Grade {grade}
+                          </MenuItem>
+                        ))
+                      )}
                     </TextField>
                   </Grid>
                   <Grid item xs={12} sm={6}>

@@ -75,6 +75,7 @@ const A_Fees = () => {
   const fetchClasses = async () => {
     try {
       const response = await axios.get('http://localhost:5000/api/admin-staff/classes/public');
+      console.log('Classes data received:', response.data);
       setClasses(response.data);
     } catch (error) {
       console.error('Error fetching classes:', error);
@@ -121,7 +122,7 @@ const A_Fees = () => {
   const handleSubmit = async () => {
     try {
       if (editingFee) {
-        await axios.put(`http://localhost:5000/api/admin-staff/fee-structure/public/${editingFee.id}`, formData);
+        await axios.put(`http://localhost:5000/api/admin-staff/fee-structure/public/${editingFee._id || editingFee.id}`, formData);
         toast.success('Fee updated successfully');
       } else {
         await axios.post('http://localhost:5000/api/admin-staff/fee-structure/public', formData);
@@ -276,13 +277,18 @@ const A_Fees = () => {
                   disabled={classesLoading}
                 >
                   {classesLoading ? (
-                    <MenuItem disabled>Loading classes...</MenuItem>
+                    <MenuItem disabled>Loading grades...</MenuItem>
                   ) : (
-                    classes && Array.isArray(classes) && classes.map((cls) => (
-                      <MenuItem key={cls._id || cls.id} value={cls.grade}>
-                        Grade {cls.grade} - {cls.name}
-                      </MenuItem>
-                    ))
+                    (() => {
+                      const uniqueGrades = classes && Array.isArray(classes) ? 
+                        [...new Set(classes.map(cls => cls.grade))].sort() : [];
+                      console.log('Available grades:', uniqueGrades);
+                      return uniqueGrades.map((grade) => (
+                        <MenuItem key={grade} value={grade}>
+                          Grade {grade}
+                        </MenuItem>
+                      ));
+                    })()
                   )}
                 </Select>
               </FormControl>
