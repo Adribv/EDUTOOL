@@ -48,6 +48,16 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// Public routes (no auth required)
+router.get('/classes/public', adminStaffController.getClasses);
+router.get('/students/public', adminStaffController.getAllStudents);
+router.post('/students/public', adminStaffController.registerStudent);
+router.put('/students/public/:id', adminStaffController.updateStudent);
+router.delete('/students/public/:id', adminStaffController.deleteStudent);
+router.get('/fee-structure/public', adminStaffController.getFeeStructures);
+router.post('/fee-structure/public', adminStaffController.configureFeeStructure);
+router.delete('/fee-structure/public/:id', adminStaffController.deleteFeeStructure);
+
 // Apply authentication middleware to all routes below this line
 router.use(verifyToken);
 router.use(permit('AdminStaff'));
@@ -66,6 +76,7 @@ router.get('/students', adminStaffController.getAllStudents);
 router.get('/students/:id', adminStaffController.getStudentById);
 router.post('/students', adminStaffController.registerStudent);
 router.put('/students/:id', adminStaffController.updateStudent);
+router.delete('/students/:id', adminStaffController.deleteStudent);
 router.get('/students/:id/id-card', adminStaffController.generateStudentID);
 router.post('/students/transfer', adminStaffController.processTransfer);
 

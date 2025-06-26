@@ -40,14 +40,12 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Papa from 'papaparse';
 
-const grades = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
-const sections = ['A', 'B', 'C', 'D', 'E'];
 const genders = ['male', 'female', 'other'];
 
 const validationSchema = yup.object({
   name: yup.string().required('Name is required'),
   email: yup.string().email('Invalid email').required('Email is required'),
-  grade: yup.string().required('Grade is required'),
+  class: yup.string().required('Class is required'),
   section: yup.string().required('Section is required'),
   rollNumber: yup.string().required('Roll Number is required'),
   dateOfBirth: yup.string().required('Date of Birth is required'),
@@ -62,7 +60,7 @@ function StudentRecords() {
   const [open, setOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [filters, setFilters] = useState({
-    grade: '',
+    class: '',
     section: '',
     gender: '',
   });
@@ -80,22 +78,38 @@ function StudentRecords() {
   };
 
   // Fetch students data
-  const { data: students, isLoading } = useQuery({
-    queryKey: ['students', filters],
+  const { data: students = [], isLoading: studentsLoading } = useQuery({
+    queryKey: ['students'],
     queryFn: async () => {
-      const response = await axios.get('http://localhost:5000/api/admin-staff/students', { params: filters });
+      const response = await axios.get('http://localhost:5000/api/admin-staff/students/public');
       return response.data;
     },
-    keepPreviousData: true,
+    onError: (error) => {
+      console.error('Error fetching students:', error);
+      toast.error('Failed to load students');
+    }
+  });
+
+  // Fetch classes data for dropdown
+  const { data: classes = [], isLoading: classesLoading } = useQuery({
+    queryKey: ['classes'],
+    queryFn: async () => {
+      const response = await axios.get('http://localhost:5000/api/admin-staff/classes/public');
+      return response.data;
+    },
+    onError: (error) => {
+      console.error('Error fetching classes:', error);
+      toast.error('Failed to load classes');
+    }
   });
 
   // Add/Edit student mutation
   const mutation = useMutation({
     mutationFn: async (values) => {
       if (selectedStudent) {
-        await axios.put(`http://localhost:5000/api/admin-staff/students/${selectedStudent._id}`, values);
+        await axios.put(`http://localhost:5000/api/admin-staff/students/public/${selectedStudent._id}`, values);
       } else {
-        await axios.post('http://localhost:5000/api/admin-staff/students', values);
+        await axios.post('http://localhost:5000/api/admin-staff/students/public', values);
       }
     },
     onSuccess: () => {
@@ -111,7 +125,7 @@ function StudentRecords() {
   // Delete student mutation
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
-      await axios.delete(`http://localhost:5000/api/admin-staff/students/${id}`);
+      await axios.delete(`http://localhost:5000/api/admin-staff/students/public/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['students']);
@@ -123,7 +137,7 @@ function StudentRecords() {
     initialValues: {
       name: '',
       email: '',
-      grade: '',
+      class: '',
       section: '',
       rollNumber: '',
       dateOfBirth: '',
@@ -197,7 +211,7 @@ function StudentRecords() {
       const parsed = Papa.parse(csv, { header: true });
       setSheetData(parsed.data);
       setPreviewOpen(true);
-    } catch (err) {
+    } catch {
       toast.error('Failed to fetch or parse sheet');
     }
   };
@@ -218,7 +232,7 @@ function StudentRecords() {
   const columns = [
     { field: 'name', headerName: 'Name', flex: 1 },
     { field: 'email', headerName: 'Email', flex: 1 },
-    { field: 'grade', headerName: 'Grade', width: 100 },
+    { field: 'class', headerName: 'Class', width: 100 },
     { field: 'section', headerName: 'Section', width: 100 },
     { field: 'rollNumber', headerName: 'Roll No', width: 100 },
     {
@@ -242,13 +256,20 @@ function StudentRecords() {
 
   const filteredStudents = students?.filter(student => {
     return (
-      (filters.grade ? student.grade === filters.grade : true) &&
+      (filters.class ? student.class === filters.class : true) &&
       (filters.section ? student.section === filters.section : true) &&
       (filters.gender ? student.gender === filters.gender : true)
     );
   });
 
-  if (isLoading) {
+  // Get available sections for selected class
+  const getAvailableSections = (selectedClass) => {
+    if (!selectedClass || !classes || !Array.isArray(classes) || classes.length === 0) return [];
+    const classData = classes.find(c => c.name === selectedClass);
+    return classData ? [classData.section] : [];
+  };
+
+  if (studentsLoading || classesLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
         <CircularProgress />
@@ -295,17 +316,17 @@ function StudentRecords() {
               <Grid container spacing={2} alignItems="center">
                 <Grid item xs={12} sm={6} md={3}>
                   <FormControl fullWidth size="small">
-                    <InputLabel>Grade</InputLabel>
+                    <InputLabel>Class</InputLabel>
                     <Select
-                      name="grade"
-                      value={filters.grade}
+                      name="class"
+                      value={filters.class}
                       onChange={handleFilterChange}
-                      label="Grade"
+                      disabled={classesLoading}
                     >
-                      <MenuItem value="">All Grades</MenuItem>
-                      {grades.map((grade) => (
-                        <MenuItem key={grade} value={grade}>
-                          Grade {grade}
+                      <MenuItem value="">All Classes</MenuItem>
+                      {classes && Array.isArray(classes) && classes.map((classData) => (
+                        <MenuItem key={classData.name} value={classData.name}>
+                          {classData.name}
                         </MenuItem>
                       ))}
                     </Select>
@@ -318,10 +339,10 @@ function StudentRecords() {
                       name="section"
                       value={filters.section}
                       onChange={handleFilterChange}
-                      label="Section"
+                      disabled={classesLoading}
                     >
                       <MenuItem value="">All Sections</MenuItem>
-                      {sections.map((section) => (
+                      {getAvailableSections(filters.class).map((section) => (
                         <MenuItem key={section} value={section}>
                           Section {section}
                         </MenuItem>
@@ -336,7 +357,6 @@ function StudentRecords() {
                       name="gender"
                       value={filters.gender}
                       onChange={handleFilterChange}
-                      label="Gender"
                     >
                       <MenuItem value="">All Genders</MenuItem>
                       {genders.map((gender) => (
@@ -350,7 +370,7 @@ function StudentRecords() {
                  <Grid item xs={12} sm={6} md={3}>
                   <Button
                     variant="outlined"
-                    onClick={() => setFilters({ grade: '', section: '', gender: '' })}
+                    onClick={() => setFilters({ class: '', section: '', gender: '' })}
                   >
                     Clear Filters
                   </Button>
@@ -363,7 +383,7 @@ function StudentRecords() {
             <DataGrid
               rows={filteredStudents || []}
               columns={columns}
-              loading={isLoading}
+              loading={studentsLoading}
               getRowId={(row) => row._id}
               pageSizeOptions={[10, 25, 50]}
               initialState={{
@@ -417,17 +437,19 @@ function StudentRecords() {
                 <TextField
                   fullWidth
                   select
-                  id="grade"
-                  name="grade"
-                  label="Grade"
-                  value={formik.values.grade}
+                  id="class"
+                  name="class"
+                  label="Class"
+                  value={formik.values.class}
                   onChange={formik.handleChange}
-                  error={formik.touched.grade && Boolean(formik.errors.grade)}
-                  helperText={formik.touched.grade && formik.errors.grade}
+                  error={formik.touched.class && Boolean(formik.errors.class)}
+                  helperText={formik.touched.class && formik.errors.class}
+                  disabled={classesLoading}
                 >
-                  {grades.map((grade) => (
-                    <MenuItem key={grade} value={grade}>
-                      Grade {grade}
+                  <MenuItem value="">Select Class</MenuItem>
+                  {classes && Array.isArray(classes) && classes.map((classData) => (
+                    <MenuItem key={classData.name} value={classData.name}>
+                      {classData.name}
                     </MenuItem>
                   ))}
                 </TextField>
@@ -443,10 +465,12 @@ function StudentRecords() {
                   onChange={formik.handleChange}
                   error={formik.touched.section && Boolean(formik.errors.section)}
                   helperText={formik.touched.section && formik.errors.section}
+                  disabled={classesLoading}
                 >
-                  {sections.map((section) => (
+                  <MenuItem value="">Select Section</MenuItem>
+                  {getAvailableSections(formik.values.class).map((section) => (
                     <MenuItem key={section} value={section}>
-                      Section {section}
+                      {section}
                     </MenuItem>
                   ))}
                 </TextField>

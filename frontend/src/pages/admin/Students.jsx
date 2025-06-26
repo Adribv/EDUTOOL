@@ -16,6 +16,11 @@ import {
   InputAdornment,
   Chip,
   useTheme,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Grid,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -29,7 +34,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
-import { motion } from 'framer-motion';
 
 const validationSchema = yup.object({
   name: yup.string().required('Name is required'),
@@ -49,10 +53,19 @@ function Students() {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   // Fetch students data
-  const { data: students, isLoading } = useQuery({
+  const { data: students, isLoading: studentsLoading } = useQuery({
     queryKey: ['students'],
     queryFn: async () => {
-      const response = await axios.get('http://localhost:5000/api/admin/students');
+      const response = await axios.get('http://localhost:5000/api/admin-staff/students');
+      return response.data;
+    }
+  });
+
+  // Fetch classes data for dropdown
+  const { data: classes, isLoading: classesLoading } = useQuery({
+    queryKey: ['classes'],
+    queryFn: async () => {
+      const response = await axios.get('http://localhost:5000/api/admin-staff/classes');
       return response.data;
     }
   });
@@ -61,9 +74,9 @@ function Students() {
   const mutation = useMutation({
     mutationFn: async (values) => {
       if (selectedStudent) {
-        await axios.put(`http://localhost:5000/api/admin/students/${selectedStudent.id}`, values);
+        await axios.put(`http://localhost:5000/api/admin-staff/students/${selectedStudent.id}`, values);
       } else {
-        await axios.post('http://localhost:5000/api/admin/students', values);
+        await axios.post('http://localhost:5000/api/admin-staff/students', values);
       }
     },
     onSuccess: () => {
@@ -87,7 +100,7 @@ function Students() {
   // Delete student mutation
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
-      await axios.delete(`http://localhost:5000/api/admin/students/${id}`);
+      await axios.delete(`http://localhost:5000/api/admin-staff/students/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['students']);
@@ -138,6 +151,13 @@ function Students() {
     }
   };
 
+  // Get available sections for selected class
+  const getAvailableSections = (selectedClass) => {
+    if (!selectedClass || !classes) return [];
+    const classData = classes.find(c => c.name === selectedClass);
+    return classData ? [classData.section] : [];
+  };
+
   const columns = [
     { field: 'rollNumber', headerName: 'Roll Number', width: 130 },
     { field: 'name', headerName: 'Name', width: 200 },
@@ -184,7 +204,7 @@ function Students() {
     },
   ];
 
-  if (isLoading) {
+  if (studentsLoading || classesLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
         <CircularProgress />
@@ -194,11 +214,7 @@ function Students() {
 
   return (
     <Container maxWidth="xl">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
+      <div>
         <Box sx={{ py: 4 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
             <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
@@ -248,77 +264,102 @@ function Students() {
         </Box>
 
         {/* Add/Edit Student Dialog */}
-        <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+        <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
           <DialogTitle>{selectedStudent ? 'Edit Student' : 'Add New Student'}</DialogTitle>
           <form onSubmit={formik.handleSubmit}>
             <DialogContent>
-              <Box sx={{ display: 'grid', gap: 2 }}>
-                <TextField
-                  fullWidth
-                  name="name"
-                  label="Full Name"
-                  value={formik.values.name}
-                  onChange={formik.handleChange}
-                  error={formik.touched.name && Boolean(formik.errors.name)}
-                  helperText={formik.touched.name && formik.errors.name}
-                />
-                <TextField
-                  fullWidth
-                  name="rollNumber"
-                  label="Roll Number"
-                  value={formik.values.rollNumber}
-                  onChange={formik.handleChange}
-                  error={formik.touched.rollNumber && Boolean(formik.errors.rollNumber)}
-                  helperText={formik.touched.rollNumber && formik.errors.rollNumber}
-                />
-                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    name="class"
-                    label="Class"
-                    value={formik.values.class}
+                    name="name"
+                    label="Full Name"
+                    value={formik.values.name}
                     onChange={formik.handleChange}
-                    error={formik.touched.class && Boolean(formik.errors.class)}
-                    helperText={formik.touched.class && formik.errors.class}
+                    error={formik.touched.name && Boolean(formik.errors.name)}
+                    helperText={formik.touched.name && formik.errors.name}
                   />
+                </Grid>
+                <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    name="section"
-                    label="Section"
-                    value={formik.values.section}
+                    name="rollNumber"
+                    label="Roll Number"
+                    value={formik.values.rollNumber}
                     onChange={formik.handleChange}
-                    error={formik.touched.section && Boolean(formik.errors.section)}
-                    helperText={formik.touched.section && formik.errors.section}
+                    error={formik.touched.rollNumber && Boolean(formik.errors.rollNumber)}
+                    helperText={formik.touched.rollNumber && formik.errors.rollNumber}
                   />
-                </Box>
-                <TextField
-                  fullWidth
-                  name="parentName"
-                  label="Parent Name"
-                  value={formik.values.parentName}
-                  onChange={formik.handleChange}
-                  error={formik.touched.parentName && Boolean(formik.errors.parentName)}
-                  helperText={formik.touched.parentName && formik.errors.parentName}
-                />
-                <TextField
-                  fullWidth
-                  name="contactNumber"
-                  label="Contact Number"
-                  value={formik.values.contactNumber}
-                  onChange={formik.handleChange}
-                  error={formik.touched.contactNumber && Boolean(formik.errors.contactNumber)}
-                  helperText={formik.touched.contactNumber && formik.errors.contactNumber}
-                />
-                <TextField
-                  fullWidth
-                  name="email"
-                  label="Email"
-                  value={formik.values.email}
-                  onChange={formik.handleChange}
-                  error={formik.touched.email && Boolean(formik.errors.email)}
-                  helperText={formik.touched.email && formik.errors.email}
-                />
-              </Box>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Class</InputLabel>
+                    <Select
+                      name="class"
+                      value={formik.values.class}
+                      onChange={formik.handleChange}
+                      error={formik.touched.class && Boolean(formik.errors.class)}
+                    >
+                      {classes?.map((cls) => (
+                        <MenuItem key={cls._id} value={cls.name}>
+                          {cls.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Section</InputLabel>
+                    <Select
+                      name="section"
+                      value={formik.values.section}
+                      onChange={formik.handleChange}
+                      error={formik.touched.section && Boolean(formik.errors.section)}
+                    >
+                      {getAvailableSections(formik.values.class).map((section) => (
+                        <MenuItem key={section} value={section}>
+                          {section}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    name="parentName"
+                    label="Parent Name"
+                    value={formik.values.parentName}
+                    onChange={formik.handleChange}
+                    error={formik.touched.parentName && Boolean(formik.errors.parentName)}
+                    helperText={formik.touched.parentName && formik.errors.parentName}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    name="contactNumber"
+                    label="Contact Number"
+                    value={formik.values.contactNumber}
+                    onChange={formik.handleChange}
+                    error={formik.touched.contactNumber && Boolean(formik.errors.contactNumber)}
+                    helperText={formik.touched.contactNumber && formik.errors.contactNumber}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    name="email"
+                    label="Email"
+                    type="email"
+                    value={formik.values.email}
+                    onChange={formik.handleChange}
+                    error={formik.touched.email && Boolean(formik.errors.email)}
+                    helperText={formik.touched.email && formik.errors.email}
+                  />
+                </Grid>
+              </Grid>
             </DialogContent>
             <DialogActions>
               <Button onClick={handleClose}>Cancel</Button>
@@ -347,7 +388,7 @@ function Students() {
             {snackbar.message}
           </Alert>
         </Snackbar>
-      </motion.div>
+      </div>
     </Container>
   );
 }

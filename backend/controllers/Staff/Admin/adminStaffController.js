@@ -125,6 +125,22 @@ exports.updateStudent = async (req, res) => {
   }
 };
 
+exports.deleteStudent = async (req, res) => {
+  try {
+    const studentId = req.params.id;
+    const deletedStudent = await Student.findByIdAndDelete(studentId);
+    
+    if (!deletedStudent) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    res.json({ message: 'Student deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting student:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 exports.generateStudentID = async (req, res) => {
   try {
     const student = await Student.findById(req.params.id).select('-password');

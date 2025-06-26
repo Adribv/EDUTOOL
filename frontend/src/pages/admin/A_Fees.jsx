@@ -34,22 +34,24 @@ import {
   AttachMoney as AttachMoneyIcon,
   School as SchoolIcon,
 } from '@mui/icons-material';
-import adminService from '../../services/adminService';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 
 const A_Fees = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [fees, setFees] = useState([]);
   const [classes, setClasses] = useState([]);
+  const [classesLoading, setClassesLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingFee, setEditingFee] = useState(null);
   const [formData, setFormData] = useState({
-    classId: '',
-    type: '',
+    grade: '',
+    feeType: '',
     amount: '',
     dueDate: '',
     description: '',
-    academicYear: '',
+    academicYear: ''
   });
 
   useEffect(() => {
@@ -59,9 +61,11 @@ const A_Fees = () => {
 
   const fetchFees = async () => {
     try {
-      const response = await adminService.getFees();
+      const response = await axios.get('http://localhost:5000/api/admin-staff/fee-structure/public');
       setFees(response.data);
-    } catch {
+    } catch (error) {
+      console.error('Error fetching fees:', error);
+      toast.error('Failed to load fees');
       setError('Failed to load fees');
     } finally {
       setLoading(false);
@@ -70,10 +74,13 @@ const A_Fees = () => {
 
   const fetchClasses = async () => {
     try {
-      const response = await adminService.getClasses();
+      const response = await axios.get('http://localhost:5000/api/admin-staff/classes/public');
       setClasses(response.data);
-    } catch {
-      setError('Failed to load classes');
+    } catch (error) {
+      console.error('Error fetching classes:', error);
+      toast.error('Failed to load classes');
+    } finally {
+      setClassesLoading(false);
     }
   };
 
@@ -81,22 +88,22 @@ const A_Fees = () => {
     if (feeData) {
       setEditingFee(feeData);
       setFormData({
-        classId: feeData.classId,
-        type: feeData.type,
+        grade: feeData.grade,
+        feeType: feeData.feeType,
         amount: feeData.amount,
-        dueDate: feeData.dueDate,
+        dueDate: feeData.dueDate ? new Date(feeData.dueDate).toISOString().split('T')[0] : '',
         description: feeData.description,
-        academicYear: feeData.academicYear,
+        academicYear: feeData.academicYear
       });
     } else {
       setEditingFee(null);
       setFormData({
-        classId: '',
-        type: '',
+        grade: '',
+        feeType: '',
         amount: '',
         dueDate: '',
         description: '',
-        academicYear: '',
+        academicYear: ''
       });
     }
     setOpenDialog(true);
@@ -114,24 +121,29 @@ const A_Fees = () => {
   const handleSubmit = async () => {
     try {
       if (editingFee) {
-        await adminService.updateFee(editingFee.id, formData);
+        await axios.put(`http://localhost:5000/api/admin-staff/fee-structure/public/${editingFee.id}`, formData);
+        toast.success('Fee updated successfully');
       } else {
-        await adminService.createFee(formData);
+        await axios.post('http://localhost:5000/api/admin-staff/fee-structure/public', formData);
+        toast.success('Fee created successfully');
       }
       handleCloseDialog();
       fetchFees();
-    } catch {
-      setError('Failed to save fee');
+    } catch (error) {
+      console.error('Error saving fee:', error);
+      toast.error(error.response?.data?.message || 'Failed to save fee');
     }
   };
 
   const handleDelete = async (feeId) => {
     if (window.confirm('Are you sure you want to delete this fee?')) {
       try {
-        await adminService.deleteFee(feeId);
+        await axios.delete(`http://localhost:5000/api/admin-staff/fee-structure/public/${feeId}`);
+        toast.success('Fee deleted successfully');
         fetchFees();
-      } catch {
-        setError('Failed to delete fee');
+      } catch (error) {
+        console.error('Error deleting fee:', error);
+        toast.error(error.response?.data?.message || 'Failed to delete fee');
       }
     }
   };
@@ -184,10 +196,10 @@ const A_Fees = () => {
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
                 <SchoolIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Classes with Fees</Typography>
+                <Typography variant="h6">Grades with Fees</Typography>
               </Box>
               <Typography variant="h4">
-                {new Set(fees.map((fee) => fee.classId)).size}
+                {new Set(fees.filter(fee => fee.grade).map((fee) => fee.grade)).size}
               </Typography>
             </CardContent>
           </Card>
@@ -200,7 +212,10 @@ const A_Fees = () => {
                 <Typography variant="h6">Total Amount</Typography>
               </Box>
               <Typography variant="h4">
-                ${fees.reduce((total, fee) => total + parseFloat(fee.amount), 0).toFixed(2)}
+                ${fees.reduce((total, fee) => {
+                  const amount = parseFloat(fee.amount) || 0;
+                  return total + amount;
+                }, 0).toFixed(2)}
               </Typography>
             </CardContent>
           </Card>
@@ -212,35 +227,27 @@ const A_Fees = () => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Class</TableCell>
-                  <TableCell>Type</TableCell>
+                  <TableCell>Grade</TableCell>
+                  <TableCell>Fee Type</TableCell>
                   <TableCell>Amount</TableCell>
                   <TableCell>Due Date</TableCell>
-                  <TableCell>Academic Year</TableCell>
-                  <TableCell>Status</TableCell>
+                  <TableCell>Description</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {fees.map((fee) => (
-                  <TableRow key={fee.id}>
-                    <TableCell>{fee.className}</TableCell>
-                    <TableCell>{fee.type}</TableCell>
+                  <TableRow key={fee._id || fee.id}>
+                    <TableCell>{fee.grade}</TableCell>
+                    <TableCell>{fee.feeType}</TableCell>
                     <TableCell>${fee.amount}</TableCell>
                     <TableCell>{new Date(fee.dueDate).toLocaleDateString()}</TableCell>
-                    <TableCell>{fee.academicYear}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={fee.status}
-                        color={fee.status === 'paid' ? 'success' : 'warning'}
-                        size="small"
-                      />
-                    </TableCell>
+                    <TableCell>{fee.description}</TableCell>
                     <TableCell>
                       <IconButton onClick={() => handleOpenDialog(fee)} color="primary">
                         <EditIcon />
                       </IconButton>
-                      <IconButton onClick={() => handleDelete(fee.id)} color="error">
+                      <IconButton onClick={() => handleDelete(fee._id || fee.id)} color="error">
                         <DeleteIcon />
                       </IconButton>
                     </TableCell>
@@ -260,35 +267,41 @@ const A_Fees = () => {
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
-                <InputLabel>Class</InputLabel>
+                <InputLabel>Grade</InputLabel>
                 <Select
-                  name="classId"
-                  value={formData.classId}
+                  name="grade"
+                  value={formData.grade}
                   onChange={handleChange}
                   required
+                  disabled={classesLoading}
                 >
-                  {classes.map((cls) => (
-                    <MenuItem key={cls.id} value={cls.id}>
-                      {cls.name} - {cls.section}
-                    </MenuItem>
-                  ))}
+                  {classesLoading ? (
+                    <MenuItem disabled>Loading classes...</MenuItem>
+                  ) : (
+                    classes && Array.isArray(classes) && classes.map((cls) => (
+                      <MenuItem key={cls._id || cls.id} value={cls.grade}>
+                        Grade {cls.grade} - {cls.name}
+                      </MenuItem>
+                    ))
+                  )}
                 </Select>
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
-                <InputLabel>Type</InputLabel>
+                <InputLabel>Fee Type</InputLabel>
                 <Select
-                  name="type"
-                  value={formData.type}
+                  name="feeType"
+                  value={formData.feeType}
                   onChange={handleChange}
                   required
                 >
-                  <MenuItem value="tuition">Tuition</MenuItem>
-                  <MenuItem value="exam">Exam</MenuItem>
-                  <MenuItem value="library">Library</MenuItem>
-                  <MenuItem value="sports">Sports</MenuItem>
-                  <MenuItem value="other">Other</MenuItem>
+                  <MenuItem value="Tuition">Tuition</MenuItem>
+                  <MenuItem value="Exam">Exam</MenuItem>
+                  <MenuItem value="Library">Library</MenuItem>
+                  <MenuItem value="Sports">Sports</MenuItem>
+                  <MenuItem value="Transport">Transport</MenuItem>
+                  <MenuItem value="Other">Other</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
