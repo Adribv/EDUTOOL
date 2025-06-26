@@ -1,100 +1,390 @@
 import { teacherAPI } from './api';
+import { teacherSampleData, getTeacherData, simulateApiDelay, createMockResponse } from './teacherSampleData';
 
 const teacherService = {
   // Dashboard
-  getDashboard: () => teacherAPI.getDashboard(),
-  getDashboardStats: () => teacherAPI.getDashboard(), // Alias for compatibility
+  getDashboard: async () => {
+    await simulateApiDelay();
+    return createMockResponse(getTeacherData('dashboard'));
+  },
+  getDashboardStats: async () => {
+    await simulateApiDelay();
+    return createMockResponse(getTeacherData('dashboard'));
+  },
   
   // Class Management
-  getClasses: () => teacherAPI.getClasses(),
-  createClass: (data) => teacherAPI.createClass(data),
-  updateClass: (classId, data) => teacherAPI.updateClass(classId, data),
-  deleteClass: (classId) => teacherAPI.deleteClass(classId),
-  getClassStudents: (classId) => teacherAPI.getClassStudents(classId),
-  getClassAttendance: (classId) => teacherAPI.getClassAttendance(classId),
-  markAttendance: (classId, data) => teacherAPI.markAttendance(classId, data),
+  getClasses: async () => {
+    await simulateApiDelay();
+    return createMockResponse(getTeacherData('classes'));
+  },
+  createClass: async (data) => {
+    await simulateApiDelay();
+    const newClass = {
+      id: Date.now(),
+      ...data,
+      totalStudents: 0,
+      averageGrade: 0,
+      attendanceRate: 0
+    };
+    return createMockResponse(newClass);
+  },
+  updateClass: async (classId, data) => {
+    await simulateApiDelay();
+    return createMockResponse({ id: classId, ...data });
+  },
+  deleteClass: async (classId) => {
+    await simulateApiDelay();
+    return createMockResponse({ message: 'Class deleted successfully' });
+  },
+  getClassStudents: async (classId) => {
+    await simulateApiDelay();
+    const students = getTeacherData('students').filter(student => 
+      student.class.includes(classId.toString())
+    );
+    return createMockResponse(students);
+  },
+  getClassAttendance: async (classId) => {
+    await simulateApiDelay();
+    const attendance = getTeacherData('attendance').filter(att => 
+      att.classId === parseInt(classId)
+    );
+    return createMockResponse(attendance);
+  },
+  markAttendance: async (classId, data) => {
+    await simulateApiDelay();
+    return createMockResponse({ message: 'Attendance marked successfully' });
+  },
   
   // Assignment Management
-  getAssignments: () => teacherAPI.getAssignments(),
-  createAssignment: (data) => teacherAPI.createAssignment(data),
-  updateAssignment: (assignmentId, data) => teacherAPI.updateAssignment(assignmentId, data),
-  deleteAssignment: (assignmentId) => teacherAPI.deleteAssignment(assignmentId),
-  getAssignmentSubmissions: (assignmentId) => teacherAPI.getAssignmentSubmissions(assignmentId),
-  gradeAssignment: (assignmentId, submissionId, data) => 
-    teacherAPI.gradeAssignment(assignmentId, submissionId, data),
+  getAssignments: async () => {
+    await simulateApiDelay();
+    return createMockResponse(getTeacherData('assignments'));
+  },
+  createAssignment: async (data) => {
+    await simulateApiDelay();
+    const newAssignment = {
+      id: Date.now(),
+      ...data,
+      totalStudents: 30,
+      submittedCount: 0,
+      gradedCount: 0,
+      averageGrade: 0,
+      status: "active"
+    };
+    return createMockResponse(newAssignment);
+  },
+  updateAssignment: async (assignmentId, data) => {
+    await simulateApiDelay();
+    return createMockResponse({ id: assignmentId, ...data });
+  },
+  deleteAssignment: async (assignmentId) => {
+    await simulateApiDelay();
+    return createMockResponse({ message: 'Assignment deleted successfully' });
+  },
+  getAssignmentSubmissions: async (assignmentId) => {
+    await simulateApiDelay();
+    const submissions = getTeacherData('assignmentSubmissions').filter(sub => 
+      sub.assignmentId === parseInt(assignmentId)
+    );
+    return createMockResponse(submissions);
+  },
+  gradeAssignment: async (assignmentId, submissionId, data) => {
+    await simulateApiDelay();
+    return createMockResponse({ message: 'Assignment graded successfully' });
+  },
   
   // Exam Management
-  getExams: () => teacherAPI.getExams(),
-  createExam: (data) => teacherAPI.createExam(data),
-  updateExam: (examId, data) => teacherAPI.updateExam(examId, data),
-  deleteExam: (examId) => teacherAPI.deleteExam(examId),
-  getExamResults: (examId) => teacherAPI.getExamResults(examId),
-  gradeExam: (examId, studentId, data) => 
-    teacherAPI.gradeExam(examId, studentId, data),
+  getExams: async () => {
+    await simulateApiDelay();
+    return createMockResponse(getTeacherData('exams'));
+  },
+  createExam: async (data) => {
+    await simulateApiDelay();
+    const newExam = {
+      id: Date.now(),
+      ...data,
+      totalStudents: 30,
+      averageScore: null,
+      highestScore: null,
+      lowestScore: null,
+      status: "scheduled"
+    };
+    return createMockResponse(newExam);
+  },
+  updateExam: async (examId, data) => {
+    await simulateApiDelay();
+    return createMockResponse({ id: examId, ...data });
+  },
+  deleteExam: async (examId) => {
+    await simulateApiDelay();
+    return createMockResponse({ message: 'Exam deleted successfully' });
+  },
+  getExamResults: async (examId) => {
+    await simulateApiDelay();
+    const results = getTeacherData('examResults').filter(result => 
+      result.examId === parseInt(examId)
+    );
+    return createMockResponse(results);
+  },
+  gradeExam: async (examId, studentId, data) => {
+    await simulateApiDelay();
+    return createMockResponse({ message: 'Exam graded successfully' });
+  },
   
   // Student Management
-  getStudents: () => teacherAPI.getStudents(),
-  getStudentDetails: (studentId) => teacherAPI.getStudentDetails(studentId),
-  getStudentGrades: (studentId) => teacherAPI.getStudentGrades(studentId),
-  getStudentAttendance: (studentId) => teacherAPI.getStudentAttendance(studentId),
-  getStudentAssignments: (studentId) => teacherAPI.getStudentAssignments(studentId),
+  getStudents: async () => {
+    await simulateApiDelay();
+    return createMockResponse(getTeacherData('students'));
+  },
+  getStudentDetails: async (studentId) => {
+    await simulateApiDelay();
+    const student = getTeacherData('students').find(s => s.id === parseInt(studentId));
+    return createMockResponse(student);
+  },
+  getStudentGrades: async (studentId) => {
+    await simulateApiDelay();
+    const grades = getTeacherData('grades').filter(grade => 
+      grade.studentId === parseInt(studentId)
+    );
+    return createMockResponse(grades);
+  },
+  getStudentAttendance: async (studentId) => {
+    await simulateApiDelay();
+    const attendance = getTeacherData('studentAttendance').filter(att => 
+      att.studentId === parseInt(studentId)
+    );
+    return createMockResponse(attendance);
+  },
+  getStudentAssignments: async (studentId) => {
+    await simulateApiDelay();
+    const submissions = getTeacherData('assignmentSubmissions').filter(sub => 
+      sub.studentId === parseInt(studentId)
+    );
+    return createMockResponse(submissions);
+  },
   
-  // Grade Management (specific methods needed by T_Grades.jsx)
-  getGrades: () => teacherAPI.getGrades ? teacherAPI.getGrades() : 
-    teacherAPI.getStudentGrades ? teacherAPI.getStudentGrades() : 
-    Promise.resolve({ data: [] }), // Fallback if not implemented
-  createGrade: (data) => teacherAPI.createGrade ? teacherAPI.createGrade(data) :
-    teacherAPI.gradeAssignment ? teacherAPI.gradeAssignment(data.assignmentId, data.studentId, data) :
-    Promise.reject(new Error('Grade creation not implemented')),
-  updateGrade: (gradeId, data) => teacherAPI.updateGrade ? teacherAPI.updateGrade(gradeId, data) :
-    teacherAPI.gradeAssignment ? teacherAPI.gradeAssignment(data.assignmentId, data.studentId, data) :
-    Promise.reject(new Error('Grade update not implemented')),
-  deleteGrade: (gradeId) => teacherAPI.deleteGrade ? teacherAPI.deleteGrade(gradeId) :
-    Promise.reject(new Error('Grade deletion not implemented')),
+  // Grade Management
+  getGrades: async () => {
+    await simulateApiDelay();
+    return createMockResponse(getTeacherData('grades'));
+  },
+  createGrade: async (data) => {
+    await simulateApiDelay();
+    const newGrade = {
+      id: Date.now(),
+      ...data,
+      date: new Date().toISOString().split('T')[0]
+    };
+    return createMockResponse(newGrade);
+  },
+  updateGrade: async (gradeId, data) => {
+    await simulateApiDelay();
+    return createMockResponse({ id: gradeId, ...data });
+  },
+  deleteGrade: async (gradeId) => {
+    await simulateApiDelay();
+    return createMockResponse({ message: 'Grade deleted successfully' });
+  },
   
-  // Attendance Management (specific methods needed by T_Attendance.jsx)
-  getAttendance: () => teacherAPI.getAttendance ? teacherAPI.getAttendance() :
-    teacherAPI.getClassAttendance ? teacherAPI.getClassAttendance() :
-    Promise.resolve({ data: [] }), // Fallback if not implemented
-  createAttendance: (data) => teacherAPI.createAttendance ? teacherAPI.createAttendance(data) :
-    teacherAPI.markAttendance ? teacherAPI.markAttendance(data.classId, data) :
-    Promise.reject(new Error('Attendance creation not implemented')),
-  updateAttendance: (attendanceId, data) => teacherAPI.updateAttendance ? teacherAPI.updateAttendance(attendanceId, data) :
-    teacherAPI.markAttendance ? teacherAPI.markAttendance(data.classId, data) :
-    Promise.reject(new Error('Attendance update not implemented')),
-  deleteAttendance: (attendanceId) => teacherAPI.deleteAttendance ? teacherAPI.deleteAttendance(attendanceId) :
-    Promise.reject(new Error('Attendance deletion not implemented')),
+  // Attendance Management
+  getAttendance: async () => {
+    await simulateApiDelay();
+    return createMockResponse(getTeacherData('attendance'));
+  },
+  createAttendance: async (data) => {
+    await simulateApiDelay();
+    const newAttendance = {
+      id: Date.now(),
+      ...data,
+      attendanceRate: ((data.presentCount / data.totalStudents) * 100).toFixed(1)
+    };
+    return createMockResponse(newAttendance);
+  },
+  updateAttendance: async (attendanceId, data) => {
+    await simulateApiDelay();
+    return createMockResponse({ id: attendanceId, ...data });
+  },
+  deleteAttendance: async (attendanceId) => {
+    await simulateApiDelay();
+    return createMockResponse({ message: 'Attendance record deleted successfully' });
+  },
   
-  // Communication Management (specific methods needed by T_Communication.jsx)
-  getAnnouncements: () => teacherAPI.getAnnouncements ? teacherAPI.getAnnouncements() :
-    Promise.resolve({ data: [] }), // Fallback if not implemented
-  getMessages: () => teacherAPI.getMessages(),
-  createAnnouncement: (data) => teacherAPI.createAnnouncement ? teacherAPI.createAnnouncement(data) :
-    Promise.reject(new Error('Announcement creation not implemented')),
-  updateAnnouncement: (announcementId, data) => teacherAPI.updateAnnouncement ? teacherAPI.updateAnnouncement(announcementId, data) :
-    Promise.reject(new Error('Announcement update not implemented')),
-  deleteAnnouncement: (announcementId) => teacherAPI.deleteAnnouncement ? teacherAPI.deleteAnnouncement(announcementId) :
-    Promise.reject(new Error('Announcement deletion not implemented')),
-  createMessage: (data) => teacherAPI.sendMessage(data),
-  updateMessage: (messageId, data) => teacherAPI.updateMessage ? teacherAPI.updateMessage(messageId, data) :
-    Promise.reject(new Error('Message update not implemented')),
-  deleteMessage: (messageId) => teacherAPI.deleteMessage ? teacherAPI.deleteMessage(messageId) :
-    Promise.reject(new Error('Message deletion not implemented')),
+  // Communication Management
+  getAnnouncements: async () => {
+    await simulateApiDelay();
+    return createMockResponse(getTeacherData('announcements'));
+  },
+  getMessages: async () => {
+    await simulateApiDelay();
+    return createMockResponse(getTeacherData('messages'));
+  },
+  createAnnouncement: async (data) => {
+    await simulateApiDelay();
+    const newAnnouncement = {
+      id: Date.now(),
+      ...data,
+      date: new Date().toISOString().split('T')[0]
+    };
+    return createMockResponse(newAnnouncement);
+  },
+  updateAnnouncement: async (announcementId, data) => {
+    await simulateApiDelay();
+    return createMockResponse({ id: announcementId, ...data });
+  },
+  deleteAnnouncement: async (announcementId) => {
+    await simulateApiDelay();
+    return createMockResponse({ message: 'Announcement deleted successfully' });
+  },
+  createMessage: async (data) => {
+    await simulateApiDelay();
+    const newMessage = {
+      id: Date.now(),
+      ...data,
+      date: new Date().toISOString().split('T')[0],
+      status: 'sent'
+    };
+    return createMockResponse(newMessage);
+  },
+  updateMessage: async (messageId, data) => {
+    await simulateApiDelay();
+    return createMockResponse({ id: messageId, ...data });
+  },
+  deleteMessage: async (messageId) => {
+    await simulateApiDelay();
+    return createMockResponse({ message: 'Message deleted successfully' });
+  },
   
   // Profile Management
-  getProfile: () => teacherAPI.getProfile(),
-  updateProfile: (data) => teacherAPI.updateProfile(data),
-  updatePassword: (data) => teacherAPI.updatePassword(data),
-  uploadProfileImage: (formData) => teacherAPI.uploadProfileImage(formData),
+  getProfile: async () => {
+    await simulateApiDelay();
+    return createMockResponse(getTeacherData('profile'));
+  },
+  updateProfile: async (data) => {
+    await simulateApiDelay();
+    return createMockResponse({ ...getTeacherData('profile'), ...data });
+  },
+  updatePassword: async (data) => {
+    await simulateApiDelay();
+    return createMockResponse({ message: 'Password updated successfully' });
+  },
+  uploadProfileImage: async (formData) => {
+    await simulateApiDelay();
+    return createMockResponse({ message: 'Profile image uploaded successfully' });
+  },
+  
+  // Timetable
+  getTimetable: async () => {
+    await simulateApiDelay();
+    return createMockResponse(getTeacherData('timetable'));
+  },
+  
+  // Learning Resources
+  getResources: async () => {
+    await simulateApiDelay();
+    return createMockResponse(getTeacherData('resources'));
+  },
+  uploadResource: async (data) => {
+    await simulateApiDelay();
+    const newResource = {
+      id: Date.now(),
+      ...data,
+      uploadDate: new Date().toISOString().split('T')[0],
+      downloads: 0
+    };
+    return createMockResponse(newResource);
+  },
+  
+  // Lesson Plans
+  getLessonPlans: async () => {
+    await simulateApiDelay();
+    return createMockResponse(getTeacherData('lessonPlans'));
+  },
+  submitLessonPlan: async (data) => {
+    await simulateApiDelay();
+    const newLessonPlan = {
+      id: Date.now(),
+      ...data,
+      date: new Date().toISOString().split('T')[0],
+      status: 'pending'
+    };
+    return createMockResponse(newLessonPlan);
+  },
+  
+  // Projects
+  getProjects: async () => {
+    await simulateApiDelay();
+    return createMockResponse(getTeacherData('projects'));
+  },
+  createProject: async (data) => {
+    await simulateApiDelay();
+    const newProject = {
+      id: Date.now(),
+      ...data,
+      totalStudents: 30,
+      completedCount: 0
+    };
+    return createMockResponse(newProject);
+  },
+  
+  // Parent Communications
+  getParentCommunications: async () => {
+    await simulateApiDelay();
+    return createMockResponse(getTeacherData('parentCommunications'));
+  },
+  recordCommunication: async (data) => {
+    await simulateApiDelay();
+    const newCommunication = {
+      id: Date.now(),
+      ...data,
+      date: new Date().toISOString().split('T')[0],
+      status: 'completed'
+    };
+    return createMockResponse(newCommunication);
+  },
+  
+  // Feedback
+  getFeedback: async () => {
+    await simulateApiDelay();
+    return createMockResponse(getTeacherData('feedback'));
+  },
+  submitFeedback: async (data) => {
+    await simulateApiDelay();
+    const newFeedback = {
+      id: Date.now(),
+      ...data,
+      date: new Date().toISOString().split('T')[0],
+      status: 'submitted'
+    };
+    return createMockResponse(newFeedback);
+  },
   
   // Notifications
-  getNotifications: () => teacherAPI.getNotifications(),
+  getNotifications: async () => {
+    await simulateApiDelay();
+    return createMockResponse(getTeacherData('notifications'));
+  },
   
   // Reports
-  generateClassReport: (classId, params) => teacherAPI.generateClassReport(classId, params),
-  generateStudentReport: (studentId, params) => teacherAPI.generateStudentReport(studentId, params),
-  generateAttendanceReport: (params) => teacherAPI.generateAttendanceReport(params),
-  generateGradeReport: (params) => teacherAPI.generateGradeReport(params),
+  generateClassReport: async (classId, params) => {
+    await simulateApiDelay();
+    const classData = getTeacherData('classes').find(c => c.id === parseInt(classId));
+    const students = getTeacherData('students').filter(s => s.class.includes(classId.toString()));
+    return createMockResponse({ class: classData, students, report: 'Class report generated' });
+  },
+  generateStudentReport: async (studentId, params) => {
+    await simulateApiDelay();
+    const student = getTeacherData('students').find(s => s.id === parseInt(studentId));
+    const grades = getTeacherData('grades').filter(g => g.studentId === parseInt(studentId));
+    return createMockResponse({ student, grades, report: 'Student report generated' });
+  },
+  generateAttendanceReport: async (params) => {
+    await simulateApiDelay();
+    return createMockResponse({ attendance: getTeacherData('attendance'), report: 'Attendance report generated' });
+  },
+  generateGradeReport: async (params) => {
+    await simulateApiDelay();
+    return createMockResponse({ grades: getTeacherData('grades'), report: 'Grade report generated' });
+  },
 };
 
 export default teacherService; 

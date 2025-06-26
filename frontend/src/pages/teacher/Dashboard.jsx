@@ -7,21 +7,31 @@ import {
   TextField, Table, TableHead, TableRow, TableCell, TableBody, CircularProgress, IconButton, Accordion, 
   AccordionSummary, AccordionDetails, List, ListItem, ListItemText, ListItemIcon, Tooltip, Chip, Avatar,
   FormControl, InputLabel, Select, MenuItem, Switch, FormControlLabel, Alert, Divider, Paper, Badge,
-  Stepper, Step, StepLabel, LinearProgress, Rating, Fab, Drawer, AppBar, Toolbar, Menu, MenuItem as MenuItemMUI
+  Stepper, Step, StepLabel, LinearProgress, Rating, Fab, Drawer, AppBar, Toolbar, Menu, MenuItem as MenuItemMUI,
+  CardHeader, CardActions, ListItemAvatar, CardMedia, Chip as MuiChip, AlertTitle, Skeleton, 
+  TableContainer, TablePagination, Autocomplete, InputAdornment, Slider, ToggleButton, ToggleButtonGroup
 } from '@mui/material';
 import {
   ExpandMore, Add, Edit, Delete, Assignment, School, Event, Book, Group, Feedback, Message, 
   Assessment, Schedule, Person, Upload, Download, Visibility, CheckCircle, Warning, Error,
   Notifications, AccountCircle, Logout, Settings, Dashboard, Class, Grade, Timeline, 
   FileUpload, FileDownload, Send, Reply, Star, StarBorder, CalendarToday, AccessTime,
-  LocationOn, Phone, Email, Work, Psychology, TrendingUp, TrendingDown, Equalizer
+  LocationOn, Phone, Email, Work, Psychology, TrendingUp, TrendingDown, Equalizer,
+  BarChart, PieChart, MoreVert, FilterList, Search, Refresh, Print, Share,
+  Favorite, FavoriteBorder, ThumbUp, ThumbDown, VisibilityOff, Archive, Unarchive,
+  Block, Report, Flag, Bookmark, BookmarkBorder, PlayArrow, Pause, Stop, SkipNext,
+  VolumeUp, VolumeOff, Fullscreen, FullscreenExit, ZoomIn, ZoomOut, RotateLeft, RotateRight
 } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { teacherAPI } from '../../services/api';
+import teacherService from '../../services/teacherService';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import Timetable from './Timetable';
+import Assignments from './Assignments';
+import Students from './Students';
 
+// Feature tabs configuration
 const featureTabs = [
   { label: 'Dashboard', icon: <Dashboard />, key: 'dashboard' },
   { label: 'Profile', icon: <Person />, key: 'profile' },
@@ -30,435 +40,313 @@ const featureTabs = [
   { label: 'Attendance', icon: <CheckCircle />, key: 'attendance' },
   { label: 'Assignments', icon: <Assignment />, key: 'assignments' },
   { label: 'Exams', icon: <Assessment />, key: 'exams' },
-  { label: 'Materials', icon: <Book />, key: 'materials' },
+  { label: 'Grades', icon: <Grade />, key: 'grades' },
+  { label: 'Students', icon: <Group />, key: 'students' },
+  { label: 'Resources', icon: <Book />, key: 'resources' },
+  { label: 'Lesson Plans', icon: <Work />, key: 'lessonPlans' },
   { label: 'Communication', icon: <Message />, key: 'communication' },
-  { label: 'Performance', icon: <TrendingUp />, key: 'performance' },
-  { label: 'Projects', icon: <Work />, key: 'projects' },
-  { label: 'Parent Interaction', icon: <Group />, key: 'parent-interaction' },
+  { label: 'Projects', icon: <Psychology />, key: 'projects' },
+  { label: 'Parent Interaction', icon: <Group />, key: 'parentInteraction' },
   { label: 'Feedback', icon: <Feedback />, key: 'feedback' },
+  { label: 'Notifications', icon: <Notifications />, key: 'notifications' },
 ];
 
-function AssignmentDialog({ open, onClose, assignment, onAssignmentChange, onSubmit, classes, loading }) {
-  return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Create Assignment</DialogTitle>
-      <DialogContent>
-        <TextField
-          label="Title"
-          fullWidth
-          margin="normal"
-          value={assignment.title}
-          onChange={e => onAssignmentChange({ ...assignment, title: e.target.value })}
-        />
-        <TextField
-          label="Description"
-          fullWidth
-          margin="normal"
-          value={assignment.description}
-          onChange={e => onAssignmentChange({ ...assignment, description: e.target.value })}
-        />
-        {/* Add more fields as needed */}
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={onSubmit} disabled={loading}>
-          {loading ? "Saving..." : "Create"}
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-}
-
-function ResourceDialog({ open, onClose, resource, onResourceChange, onSubmit, loading }) {
-  return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Upload Resource</DialogTitle>
-      <DialogContent>
-        <TextField
-          label="Title"
-          fullWidth
-          margin="normal"
-          value={resource.title}
-          onChange={e => onResourceChange({ ...resource, title: e.target.value })}
-        />
-        <TextField
-          label="Description"
-          fullWidth
-          margin="normal"
-          value={resource.description}
-          onChange={e => onResourceChange({ ...resource, description: e.target.value })}
-        />
-        <TextField
-          label="Type"
-          fullWidth
-          margin="normal"
-          value={resource.type}
-          onChange={e => onResourceChange({ ...resource, type: e.target.value })}
-        />
-        <Button
-          variant="outlined"
-          component="label"
-          sx={{ mt: 2 }}
-        >
-          Upload File
-          <input
-            type="file"
-            hidden
-            onChange={e => onResourceChange({ ...resource, file: e.target.files[0] })}
-          />
-        </Button>
-        {resource.file && (
-          <Typography variant="body2" sx={{ mt: 1 }}>
-            Selected: {resource.file.name}
-          </Typography>
-        )}
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={onSubmit} disabled={loading}>
-          {loading ? "Uploading..." : "Upload"}
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-}
-
-function LessonPlanDialog({ open, onClose, lessonPlan, onLessonPlanChange, onSubmit, classes, loading }) {
-  return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Submit Lesson Plan</DialogTitle>
-      <DialogContent>
-        <TextField
-          label="Title"
-          fullWidth
-          margin="normal"
-          value={lessonPlan.title}
-          onChange={e => onLessonPlanChange({ ...lessonPlan, title: e.target.value })}
-        />
-        <TextField
-          label="Subject"
-          fullWidth
-          margin="normal"
-          value={lessonPlan.subject}
-          onChange={e => onLessonPlanChange({ ...lessonPlan, subject: e.target.value })}
-        />
-        <TextField
-          label="Class"
-          fullWidth
-          margin="normal"
-          value={lessonPlan.class}
-          onChange={e => onLessonPlanChange({ ...lessonPlan, class: e.target.value })}
-        />
-        <TextField
-          label="Objectives"
-          fullWidth
-          margin="normal"
-          value={lessonPlan.objectives}
-          onChange={e => onLessonPlanChange({ ...lessonPlan, objectives: e.target.value })}
-        />
-        <TextField
-          label="Activities"
-          fullWidth
-          margin="normal"
-          value={lessonPlan.activities}
-          onChange={e => onLessonPlanChange({ ...lessonPlan, activities: e.target.value })}
-        />
-        <Button
-          variant="outlined"
-          component="label"
-          sx={{ mt: 2 }}
-        >
-          Upload File
-          <input
-            type="file"
-            hidden
-            onChange={e => onLessonPlanChange({ ...lessonPlan, file: e.target.files[0] })}
-          />
-        </Button>
-        {lessonPlan.file && (
-          <Typography variant="body2" sx={{ mt: 1 }}>
-            Selected: {lessonPlan.file.name}
-          </Typography>
-        )}
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={onSubmit} disabled={loading}>
-          {loading ? "Submitting..." : "Submit"}
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-}
-
-function ExamDialog({ open, onClose, exam, onExamChange, onSubmit, classes, loading }) {
-  return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Create Exam</DialogTitle>
-      <DialogContent>
-        <TextField
-          label="Title"
-          fullWidth
-          margin="normal"
-          value={exam.title}
-          onChange={e => onExamChange({ ...exam, title: e.target.value })}
-        />
-        <TextField
-          label="Subject"
-          fullWidth
-          margin="normal"
-          value={exam.subject}
-          onChange={e => onExamChange({ ...exam, subject: e.target.value })}
-        />
-        <TextField
-          label="Class"
-          fullWidth
-          margin="normal"
-          value={exam.class}
-          onChange={e => onExamChange({ ...exam, class: e.target.value })}
-        />
-        <TextField
-          label="Date"
-          type="date"
-          fullWidth
-          margin="normal"
-          InputLabelProps={{ shrink: true }}
-          value={exam.date}
-          onChange={e => onExamChange({ ...exam, date: e.target.value })}
-        />
-        <TextField
-          label="Duration (minutes)"
-          type="number"
-          fullWidth
-          margin="normal"
-          value={exam.duration}
-          onChange={e => onExamChange({ ...exam, duration: e.target.value })}
-        />
-        <Button
-          variant="outlined"
-          component="label"
-          sx={{ mt: 2 }}
-        >
-          Upload Question Paper
-          <input
-            type="file"
-            hidden
-            onChange={e => onExamChange({ ...exam, questionPaper: e.target.files[0] })}
-          />
-        </Button>
-        {exam.questionPaper && (
-          <Typography variant="body2" sx={{ mt: 1 }}>
-            Selected: {exam.questionPaper.name}
-          </Typography>
-        )}
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={onSubmit} disabled={loading}>
-          {loading ? "Creating..." : "Create"}
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-}
-
-function MessageDialog({ open, onClose, message, onMessageChange, onSubmit, loading }) {
-  return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Send Message</DialogTitle>
-      <DialogContent>
-        <TextField
-          label="Recipient"
-          fullWidth
-          margin="normal"
-          value={message.recipient}
-          onChange={e => onMessageChange({ ...message, recipient: e.target.value })}
-        />
-        <TextField
-          label="Subject"
-          fullWidth
-          margin="normal"
-          value={message.subject}
-          onChange={e => onMessageChange({ ...message, subject: e.target.value })}
-        />
-        <TextField
-          label="Content"
-          fullWidth
-          margin="normal"
-          multiline
-          rows={4}
-          value={message.content}
-          onChange={e => onMessageChange({ ...message, content: e.target.value })}
-        />
-        <Button
-          variant="outlined"
-          component="label"
-          sx={{ mt: 2 }}
-        >
-          Attach Files
-          <input
-            type="file"
-            hidden
-            multiple
-            onChange={e => onMessageChange({ ...message, attachments: Array.from(e.target.files) })}
-          />
-        </Button>
-        {message.attachments && message.attachments.length > 0 && (
-          <Typography variant="body2" sx={{ mt: 1 }}>
-            {message.attachments.length} file(s) selected
-          </Typography>
-        )}
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={onSubmit} disabled={loading}>
-          {loading ? "Sending..." : "Send"}
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-}
-
-function ProjectDialog({ open, onClose, project, onProjectChange, onSubmit, loading }) {
-  return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Create Project</DialogTitle>
-      <DialogContent>
-        <TextField
-          label="Title"
-          fullWidth
-          margin="normal"
-          value={project.title}
-          onChange={e => onProjectChange({ ...project, title: e.target.value })}
-        />
-        <TextField
-          label="Description"
-          fullWidth
-          margin="normal"
-          value={project.description}
-          onChange={e => onProjectChange({ ...project, description: e.target.value })}
-        />
-        <TextField
-          label="Objectives"
-          fullWidth
-          margin="normal"
-          value={project.objectives}
-          onChange={e => onProjectChange({ ...project, objectives: e.target.value })}
-        />
-        <Button
-          variant="outlined"
-          component="label"
-          sx={{ mt: 2 }}
-        >
-          Attach File
-          <input
-            type="file"
-            hidden
-            onChange={e => onProjectChange({ ...project, attachment: e.target.files[0] })}
-          />
-        </Button>
-        {project.attachment && (
-          <Typography variant="body2" sx={{ mt: 1 }}>
-            Selected: {project.attachment.name}
-          </Typography>
-        )}
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={onSubmit} disabled={loading}>
-          {loading ? "Creating..." : "Create"}
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-}
-
-function FeedbackDialog({ open, onClose, feedback, onFeedbackChange, onSubmit, loading }) {
-  return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Submit Feedback</DialogTitle>
-      <DialogContent>
-        <TextField
-          label="Type"
-          fullWidth
-          margin="normal"
-          value={feedback.type}
-          onChange={e => onFeedbackChange({ ...feedback, type: e.target.value })}
-        />
-        <TextField
-          label="Title"
-          fullWidth
-          margin="normal"
-          value={feedback.title}
-          onChange={e => onFeedbackChange({ ...feedback, title: e.target.value })}
-        />
-        <TextField
-          label="Content"
-          fullWidth
-          margin="normal"
-          multiline
-          rows={4}
-          value={feedback.content}
-          onChange={e => onFeedbackChange({ ...feedback, content: e.target.value })}
-        />
-        <FormControl fullWidth margin="normal">
-          <InputLabel>Priority</InputLabel>
-          <Select
-            value={feedback.priority}
-            label="Priority"
-            onChange={e => onFeedbackChange({ ...feedback, priority: e.target.value })}
-          >
-            <MenuItem value="low">Low</MenuItem>
-            <MenuItem value="medium">Medium</MenuItem>
-            <MenuItem value="high">High</MenuItem>
-          </Select>
-        </FormControl>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={onSubmit} disabled={loading}>
-          {loading ? "Submitting..." : "Submit"}
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-}
-
 // Dashboard Overview Component
-function DashboardOverview({ profile, classes, assignments, exams, announcements }) {
+function DashboardOverview() {
+  const { data: dashboardData, isLoading, error } = useQuery({
+    queryKey: ['dashboard'],
+    queryFn: () => teacherService.getDashboardStats()
+  });
+
+  if (isLoading) {
+    return (
+      <Grid container spacing={3}>
+        {[1, 2, 3, 4].map((item) => (
+          <Grid item xs={12} sm={6} md={3} key={item}>
+            <Card>
+              <CardContent>
+                <Skeleton variant="rectangular" height={60} />
+                <Skeleton variant="text" sx={{ mt: 1 }} />
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+    );
+  }
+
+  if (error) {
+    return <Alert severity="error">Failed to load dashboard data</Alert>;
+  }
+
+  const stats = dashboardData?.data || {};
+
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>Welcome, {profile?.name || 'Teacher'}!</Typography>
+      {/* Welcome Section */}
+      <Card sx={{ mb: 3, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
+        <CardContent>
+          <Typography variant="h4" gutterBottom>
+            Welcome back, Dr. Sarah Wilson! 👋
+          </Typography>
+          <Typography variant="body1">
+            Here's what's happening in your classes today
+          </Typography>
+        </CardContent>
+      </Card>
+
+      {/* Statistics Cards */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ 
+            background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            color: 'white',
+            '&:hover': { transform: 'translateY(-4px)', transition: 'transform 0.3s ease' }
+          }}>
+            <CardContent>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Box>
+                  <Typography variant="h4" fontWeight="bold">
+                    {stats.totalClasses || 0}
+                  </Typography>
+                  <Typography variant="body2">Total Classes</Typography>
+                </Box>
+                <School sx={{ fontSize: 40, opacity: 0.8 }} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ 
+            background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+            color: 'white',
+            '&:hover': { transform: 'translateY(-4px)', transition: 'transform 0.3s ease' }
+          }}>
+            <CardContent>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Box>
+                  <Typography variant="h4" fontWeight="bold">
+                    {stats.totalStudents || 0}
+                  </Typography>
+                  <Typography variant="body2">Total Students</Typography>
+                </Box>
+                <Group sx={{ fontSize: 40, opacity: 0.8 }} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ 
+            background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+            color: 'white',
+            '&:hover': { transform: 'translateY(-4px)', transition: 'transform 0.3s ease' }
+          }}>
+            <CardContent>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Box>
+                  <Typography variant="h4" fontWeight="bold">
+                    {stats.upcomingClasses || 0}
+                  </Typography>
+                  <Typography variant="body2">Upcoming Classes</Typography>
+                </Box>
+                <Event sx={{ fontSize: 40, opacity: 0.8 }} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ 
+            background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+            color: 'white',
+            '&:hover': { transform: 'translateY(-4px)', transition: 'transform 0.3s ease' }
+          }}>
+            <CardContent>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Box>
+                  <Typography variant="h4" fontWeight="bold">
+                    {stats.pendingAssignments || 0}
+                  </Typography>
+                  <Typography variant="body2">Pending Assignments</Typography>
+                </Box>
+                <Assignment sx={{ fontSize: 40, opacity: 0.8 }} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Performance Metrics */}
+      {stats.performanceMetrics && (
+        <Card sx={{ mb: 3 }}>
+          <CardHeader 
+            title="Performance Metrics" 
+            action={
+              <IconButton>
+                <TrendingUp />
+              </IconButton>
+            }
+          />
+          <CardContent>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6} md={3}>
+                <Box textAlign="center">
+                  <Typography variant="h6" color="primary">
+                    {stats.performanceMetrics.averageAttendance}%
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    Average Attendance
+                  </Typography>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={stats.performanceMetrics.averageAttendance} 
+                    sx={{ mt: 1 }}
+                  />
+                </Box>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Box textAlign="center">
+                  <Typography variant="h6" color="primary">
+                    {stats.performanceMetrics.averageGrade}%
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    Average Grade
+                  </Typography>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={stats.performanceMetrics.averageGrade} 
+                    sx={{ mt: 1 }}
+                  />
+                </Box>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Box textAlign="center">
+                  <Typography variant="h6" color="primary">
+                    {stats.performanceMetrics.assignmentsCompleted}%
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    Assignments Completed
+                  </Typography>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={stats.performanceMetrics.assignmentsCompleted} 
+                    sx={{ mt: 1 }}
+                  />
+                </Box>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Box textAlign="center">
+                  <Rating 
+                    value={stats.performanceMetrics.studentSatisfaction} 
+                    readOnly 
+                    precision={0.1}
+                  />
+                  <Typography variant="body2" color="textSecondary">
+                    Student Satisfaction
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Recent Activity */}
       <Grid container spacing={3}>
-        <Grid item xs={12} md={3}>
+        <Grid item xs={12} md={6}>
           <Card>
+            <CardHeader 
+              title="Recent Announcements" 
+              action={
+                <IconButton>
+                  <MoreVert />
+                </IconButton>
+              }
+            />
             <CardContent>
-              <Typography variant="h6">Classes</Typography>
-              <Typography variant="h4" color="primary">{classes?.length || 0}</Typography>
+              <List>
+                {stats.recentAnnouncements?.map((announcement, index) => (
+                  <Box key={announcement.id}>
+                    <ListItem alignItems="flex-start">
+                      <ListItemAvatar>
+                        <Avatar sx={{ bgcolor: announcement.priority === 'high' ? 'error.main' : 'primary.main' }}>
+                          <Notifications />
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={
+                          <Box display="flex" alignItems="center" gap={1}>
+                            {announcement.title}
+                            <Chip 
+                              label={announcement.priority} 
+                              size="small" 
+                              color={announcement.priority === 'high' ? 'error' : 'default'}
+                            />
+                          </Box>
+                        }
+                        secondary={
+                          <>
+                            <Typography component="span" variant="body2" color="text.primary">
+                              {announcement.content}
+                            </Typography>
+                            <Typography variant="caption" display="block" color="text.secondary">
+                              {announcement.date}
+                            </Typography>
+                          </>
+                        }
+                      />
+                    </ListItem>
+                    {index < stats.recentAnnouncements.length - 1 && <Divider variant="inset" component="li" />}
+                  </Box>
+                ))}
+              </List>
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={3}>
+
+        <Grid item xs={12} md={6}>
           <Card>
+            <CardHeader 
+              title="Upcoming Events" 
+              action={
+                <IconButton>
+                  <MoreVert />
+                </IconButton>
+              }
+            />
             <CardContent>
-              <Typography variant="h6">Assignments</Typography>
-              <Typography variant="h4" color="secondary">{assignments?.length || 0}</Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={3}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6">Exams</Typography>
-              <Typography variant="h4" color="success.main">{exams?.length || 0}</Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={3}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6">Announcements</Typography>
-              <Typography variant="h4" color="warning.main">{announcements?.length || 0}</Typography>
+              <List>
+                {stats.upcomingEvents?.map((event, index) => (
+                  <Box key={event.id}>
+                    <ListItem alignItems="flex-start">
+                      <ListItemAvatar>
+                        <Avatar sx={{ bgcolor: 'success.main' }}>
+                          <Event />
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={event.title}
+                        secondary={
+                          <>
+                            <Typography component="span" variant="body2" color="text.primary">
+                              {event.date} at {event.time}
+                            </Typography>
+                            <Typography variant="caption" display="block" color="text.secondary">
+                              {event.location}
+                            </Typography>
+                          </>
+                        }
+                      />
+                      <IconButton size="small">
+                        <AccessTime />
+                      </IconButton>
+                    </ListItem>
+                    {index < stats.upcomingEvents.length - 1 && <Divider variant="inset" component="li" />}
+                  </Box>
+                ))}
+              </List>
             </CardContent>
           </Card>
         </Grid>
@@ -468,871 +356,448 @@ function DashboardOverview({ profile, classes, assignments, exams, announcements
 }
 
 // Profile Management Component
-function ProfileManagement({ profile, onUpdateProfile }) {
-  return (
-    <Card>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>Profile Management</Typography>
-        <Grid container spacing={2}>
-          <Grid item xs={12} md={6}>
-            <TextField
-              label="Name"
-              fullWidth
-              margin="normal"
-              value={profile?.name || ''}
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <TextField
-              label="Email"
-              fullWidth
-              margin="normal"
-              value={profile?.email || ''}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <Button variant="contained" onClick={() => onUpdateProfile({})}>
-              Update Profile
-            </Button>
-          </Grid>
-        </Grid>
-      </CardContent>
-    </Card>
-  );
-}
+function ProfileManagement() {
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ['profile'],
+    queryFn: () => teacherService.getProfile()
+  });
 
-// Class Management Component
-function ClassManagement({ classes, selectedClass, onSelectClass }) {
-  return (
-    <Card>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>Class Management</Typography>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Class</TableCell>
-              <TableCell>Section</TableCell>
-              <TableCell>Subject</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {classes?.map((cls, index) => (
-              <TableRow key={index}>
-                <TableCell>{cls.class}</TableCell>
-                <TableCell>{cls.section}</TableCell>
-                <TableCell>{cls.subject}</TableCell>
-                <TableCell>
-                  <Button size="small" onClick={() => onSelectClass(cls)}>
-                    View Details
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
-  );
-}
+  const [editMode, setEditMode] = useState(false);
+  const [editedProfile, setEditedProfile] = useState({});
 
-// Timetable Management Component
-function TimetableManagement({ timetable }) {
-  return (
-    <Card>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>Timetable</Typography>
-        <List>
-          {timetable?.map((item, index) => (
-            <ListItem key={index}>
-              <ListItemText 
-                primary={item.subject} 
-                secondary={`${item.day} ${item.time}`} 
-              />
-            </ListItem>
-          ))}
-        </List>
-      </CardContent>
-    </Card>
-  );
-}
+  useEffect(() => {
+    if (profile?.data) {
+      setEditedProfile(profile.data);
+    }
+  }, [profile]);
 
-// Attendance Management Component
-function AttendanceManagement({ classes, selectedClass, selectedDate, onSelectClass, onSelectDate, onMarkAttendance }) {
-  return (
-    <Card>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>Attendance Management</Typography>
-        <Grid container spacing={2}>
-          <Grid item xs={12} md={4}>
-            <FormControl fullWidth>
-              <InputLabel>Select Class</InputLabel>
-              <Select
-                value={selectedClass?.class || ''}
-                onChange={(e) => {
-                  const cls = classes?.find(c => c.class === e.target.value);
-                  onSelectClass(cls);
-                }}
-              >
-                {classes?.map((cls, index) => (
-                  <MenuItem key={index} value={cls.class}>
-                    {cls.class} - {cls.section}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <TextField
-              label="Date"
-              type="date"
-              fullWidth
-              value={selectedDate}
-              onChange={(e) => onSelectDate(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <Button variant="contained" onClick={() => onMarkAttendance({})}>
-              Mark Attendance
-            </Button>
-          </Grid>
-        </Grid>
-      </CardContent>
-    </Card>
-  );
-}
+  const handleSave = async () => {
+    try {
+      await teacherService.updateProfile(editedProfile);
+      toast.success('Profile updated successfully');
+      setEditMode(false);
+    } catch (error) {
+      toast.error('Failed to update profile');
+    }
+  };
 
-// Assignment Management Component
-function AssignmentManagement({ assignments, classes, onCreateAssignment, onGradeSubmission }) {
-  return (
-    <Card>
-      <CardContent>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h6">Assignment Management</Typography>
-          <Button variant="contained" onClick={onCreateAssignment}>
-            Create Assignment
-          </Button>
-        </Box>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Title</TableCell>
-              <TableCell>Class</TableCell>
-              <TableCell>Subject</TableCell>
-              <TableCell>Due Date</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {assignments?.map((assignment, index) => (
-              <TableRow key={index}>
-                <TableCell>{assignment.title}</TableCell>
-                <TableCell>{assignment.class}</TableCell>
-                <TableCell>{assignment.subject}</TableCell>
-                <TableCell>{assignment.dueDate}</TableCell>
-                <TableCell>
-                  <Button size="small" onClick={() => onGradeSubmission(assignment._id, {})}>
-                    Grade
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
-  );
-}
+  if (isLoading) {
+    return <CircularProgress />;
+  }
 
-// Exam Management Component
-function ExamManagement({ exams, onCreateExam }) {
-  return (
-    <Card>
-      <CardContent>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h6">Exam Management</Typography>
-          <Button variant="contained" onClick={onCreateExam}>
-            Create Exam
-          </Button>
-        </Box>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Title</TableCell>
-              <TableCell>Subject</TableCell>
-              <TableCell>Class</TableCell>
-              <TableCell>Date</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {exams?.map((exam, index) => (
-              <TableRow key={index}>
-                <TableCell>{exam.title}</TableCell>
-                <TableCell>{exam.subject}</TableCell>
-                <TableCell>{exam.class}</TableCell>
-                <TableCell>{exam.date}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
-  );
-}
+  const profileData = profile?.data || {};
 
-// Materials Management Component
-function MaterialsManagement({ resources, lessonPlans, onUploadResource, onSubmitLessonPlan }) {
   return (
     <Box>
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h6">Learning Resources</Typography>
-                <Button variant="contained" onClick={onUploadResource}>
-                  Upload Resource
-                </Button>
+      <Card sx={{ mb: 3 }}>
+        <CardHeader 
+          title="Profile Information" 
+          action={
+            <Button 
+              variant={editMode ? "contained" : "outlined"}
+              onClick={() => setEditMode(!editMode)}
+              startIcon={editMode ? <CheckCircle /> : <Edit />}
+            >
+              {editMode ? 'Save' : 'Edit'}
+            </Button>
+          }
+        />
+        <CardContent>
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={4}>
+              <Box textAlign="center">
+                <Avatar 
+                  sx={{ 
+                    width: 120, 
+                    height: 120, 
+                    mx: 'auto', 
+                    mb: 2,
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                  }}
+                >
+                  <Person sx={{ fontSize: 60 }} />
+                </Avatar>
+                <Typography variant="h6">{profileData.name}</Typography>
+                <Typography variant="body2" color="textSecondary">{profileData.designation}</Typography>
+                <Chip label={profileData.department} color="primary" sx={{ mt: 1 }} />
               </Box>
-              <List>
-                {resources?.map((resource, index) => (
-                  <ListItem key={index}>
-                    <ListItemText 
-                      primary={resource.title} 
-                      secondary={resource.type} 
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h6">Lesson Plans</Typography>
-                <Button variant="contained" onClick={onSubmitLessonPlan}>
-                  Submit Lesson Plan
-                </Button>
-              </Box>
-              <List>
-                {lessonPlans?.map((plan, index) => (
-                  <ListItem key={index}>
-                    <ListItemText 
-                      primary={plan.title} 
-                      secondary={plan.subject} 
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+            </Grid>
+            <Grid item xs={12} md={8}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Name"
+                    value={editMode ? editedProfile.name : profileData.name}
+                    onChange={(e) => setEditedProfile({...editedProfile, name: e.target.value})}
+                    disabled={!editMode}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Email"
+                    value={editMode ? editedProfile.email : profileData.email}
+                    onChange={(e) => setEditedProfile({...editedProfile, email: e.target.value})}
+                    disabled={!editMode}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Phone"
+                    value={editMode ? editedProfile.phone : profileData.phone}
+                    onChange={(e) => setEditedProfile({...editedProfile, phone: e.target.value})}
+                    disabled={!editMode}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Qualification"
+                    value={editMode ? editedProfile.qualification : profileData.qualification}
+                    onChange={(e) => setEditedProfile({...editedProfile, qualification: e.target.value})}
+                    disabled={!editMode}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={3}
+                    label="Bio"
+                    value={editMode ? editedProfile.bio : profileData.bio}
+                    onChange={(e) => setEditedProfile({...editedProfile, bio: e.target.value})}
+                    disabled={!editMode}
+                  />
+                </Grid>
+              </Grid>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
+
+      {/* Professional Development */}
+      <Card>
+        <CardHeader title="Professional Development" />
+        <CardContent>
+          <List>
+            {profileData.professionalDevelopment?.map((dev, index) => (
+              <ListItem key={dev.id}>
+                <ListItemAvatar>
+                  <Avatar sx={{ bgcolor: 'success.main' }}>
+                    <School />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={dev.title}
+                  secondary={
+                    <>
+                      <Typography component="span" variant="body2" color="text.primary">
+                        {dev.institution}
+                      </Typography>
+                      <Typography variant="caption" display="block" color="text.secondary">
+                        {dev.date} • {dev.duration}
+                      </Typography>
+                    </>
+                  }
+                />
+                <IconButton>
+                  <Download />
+                </IconButton>
+              </ListItem>
+            ))}
+          </List>
+        </CardContent>
+      </Card>
     </Box>
   );
 }
 
-// Communication Management Component
-function CommunicationManagement({ announcements, onSendMessage }) {
-  return (
-    <Card>
-      <CardContent>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h6">Communication</Typography>
-          <Button variant="contained" onClick={onSendMessage}>
-            Send Message
-          </Button>
-        </Box>
-        <Typography variant="h6" gutterBottom>Announcements</Typography>
-        <List>
-          {announcements?.map((announcement, index) => (
-            <ListItem key={index}>
-              <ListItemText 
-                primary={announcement.title} 
-                secondary={announcement.content} 
-              />
-            </ListItem>
-          ))}
-        </List>
-      </CardContent>
-    </Card>
-  );
-}
+// Classes Management Component
+function ClassesManagement() {
+  const { data: classes, isLoading } = useQuery({
+    queryKey: ['classes'],
+    queryFn: () => teacherService.getClasses()
+  });
 
-// Performance Management Component
-function PerformanceManagement({ classes, onRecordPerformance }) {
-  return (
-    <Card>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>Student Performance</Typography>
-        <Grid container spacing={2}>
-          <Grid item xs={12} md={4}>
-            <FormControl fullWidth>
-              <InputLabel>Select Class</InputLabel>
-              <Select>
-                {classes?.map((cls, index) => (
-                  <MenuItem key={index} value={cls.class}>
-                    {cls.class} - {cls.section}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={8}>
-            <Button variant="contained" onClick={() => onRecordPerformance({})}>
-              Record Performance
-            </Button>
-          </Grid>
-        </Grid>
-      </CardContent>
-    </Card>
-  );
-}
-
-// Project Management Component
-function ProjectManagement({ projects, onCreateProject }) {
-  return (
-    <Card>
-      <CardContent>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h6">Projects & Activities</Typography>
-          <Button variant="contained" onClick={onCreateProject}>
-            Create Project
-          </Button>
-        </Box>
-        <List>
-          {projects?.map((project, index) => (
-            <ListItem key={index}>
-              <ListItemText 
-                primary={project.title} 
-                secondary={project.description} 
-              />
-            </ListItem>
-          ))}
-        </List>
-      </CardContent>
-    </Card>
-  );
-}
-
-// Parent Interaction Management Component
-function ParentInteractionManagement() {
-  return (
-    <Card>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>Parent Interaction</Typography>
-        <Typography variant="body2" color="textSecondary">
-          Parent meeting schedules and communication history will be displayed here.
-        </Typography>
-      </CardContent>
-    </Card>
-  );
-}
-
-// Feedback Management Component
-function FeedbackManagement({ feedback, onSubmitFeedback }) {
-  return (
-    <Card>
-      <CardContent>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h6">Feedback & Suggestions</Typography>
-          <Button variant="contained" onClick={onSubmitFeedback}>
-            Submit Feedback
-          </Button>
-        </Box>
-        <List>
-          {feedback?.map((item, index) => (
-            <ListItem key={index}>
-              <ListItemText 
-                primary={item.title} 
-                secondary={item.content} 
-              />
-            </ListItem>
-          ))}
-        </List>
-      </CardContent>
-    </Card>
-  );
-}
-
-export default function TeacherDashboard() {
-  const [tab, setTab] = useState(0);
   const [selectedClass, setSelectedClass] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [profileMenuAnchor, setProfileMenuAnchor] = useState(null);
-  const [logoutDialog, setLogoutDialog] = useState(false);
-  
-  // Dialog states
-  const [assignmentDialog, setAssignmentDialog] = useState(false);
-  const [attendanceDialog, setAttendanceDialog] = useState(false);
-  const [resourceDialog, setResourceDialog] = useState(false);
-  const [lessonPlanDialog, setLessonPlanDialog] = useState(false);
-  const [examDialog, setExamDialog] = useState(false);
-  const [messageDialog, setMessageDialog] = useState(false);
-  const [performanceDialog, setPerformanceDialog] = useState(false);
-  const [projectDialog, setProjectDialog] = useState(false);
-  const [feedbackDialog, setFeedbackDialog] = useState(false);
-  
-  // Form states
-  const [newAssignment, setNewAssignment] = useState({ title: '', description: '', class: '', section: '', subject: '', dueDate: '' });
-  const [newResource, setNewResource] = useState({ title: '', description: '', type: '', file: null });
-  const [newLessonPlan, setNewLessonPlan] = useState({ title: '', subject: '', class: '', objectives: '', activities: '', file: null });
-  const [newExam, setNewExam] = useState({ title: '', subject: '', class: '', date: '', duration: '', questionPaper: null });
-  const [newMessage, setNewMessage] = useState({ recipient: '', subject: '', content: '', attachments: [] });
-  const [newPerformance, setNewPerformance] = useState({ studentId: '', subject: '', grade: '', comments: '' });
-  const [newProject, setNewProject] = useState({ title: '', description: '', objectives: '', attachment: null });
-  const [newFeedback, setNewFeedback] = useState({ type: '', title: '', content: '', priority: 'medium' });
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
-  const queryClient = useQueryClient();
-  const { user, logout } = useAuth();
+  if (isLoading) {
+    return <CircularProgress />;
+  }
+
+  const classesData = classes?.data || [];
+
+  return (
+    <Box>
+      <Card>
+        <CardHeader 
+          title="Class Management" 
+          action={
+            <Button variant="contained" startIcon={<Add />}>
+              Add New Class
+            </Button>
+          }
+        />
+        <CardContent>
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Class Name</TableCell>
+                  <TableCell>Subject</TableCell>
+                  <TableCell>Room</TableCell>
+                  <TableCell>Schedule</TableCell>
+                  <TableCell>Students</TableCell>
+                  <TableCell>Avg Grade</TableCell>
+                  <TableCell>Attendance</TableCell>
+                  <TableCell>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {classesData
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((cls) => (
+                  <TableRow key={cls.id} hover>
+                    <TableCell>
+                      <Box>
+                        <Typography variant="subtitle2">{cls.name}</Typography>
+                        <Typography variant="caption" color="textSecondary">
+                          Grade {cls.grade} - Section {cls.section}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Chip label={cls.subject} size="small" color="primary" />
+                    </TableCell>
+                    <TableCell>{cls.room}</TableCell>
+                    <TableCell>
+                      <Typography variant="body2">{cls.schedule}</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Box textAlign="center">
+                        <Typography variant="h6">{cls.totalStudents}</Typography>
+                        <Typography variant="caption">students</Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Box textAlign="center">
+                        <Typography variant="h6" color="primary">
+                          {cls.averageGrade}%
+                        </Typography>
+                        <LinearProgress 
+                          variant="determinate" 
+                          value={cls.averageGrade} 
+                          sx={{ mt: 0.5 }}
+                        />
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Box textAlign="center">
+                        <Typography variant="h6" color="success.main">
+                          {cls.attendanceRate}%
+                        </Typography>
+                        <LinearProgress 
+                          variant="determinate" 
+                          value={cls.attendanceRate} 
+                          sx={{ mt: 0.5 }}
+                        />
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Box display="flex" gap={1}>
+                        <IconButton size="small" color="primary">
+                          <Visibility />
+                        </IconButton>
+                        <IconButton size="small" color="secondary">
+                          <Edit />
+                        </IconButton>
+                        <IconButton size="small" color="error">
+                          <Delete />
+                        </IconButton>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={classesData.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(event, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(event) => {
+              setRowsPerPage(parseInt(event.target.value, 10));
+              setPage(0);
+            }}
+          />
+        </CardContent>
+      </Card>
+    </Box>
+  );
+}
+
+// Main Dashboard Component
+export default function TeacherDashboard() {
+  const [activeTab, setActiveTab] = useState(0);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const { logout } = useAuth();
   const navigate = useNavigate();
 
-  // Queries
-  const { data: profile, isLoading: profileLoading } = useQuery({
-    queryKey: ['teacherProfile'],
-    queryFn: teacherAPI.getProfile,
-    staleTime: 5 * 60 * 1000,
-  });
+  // Fetch notifications
+  useEffect(() => {
+    teacherService.getNotifications().then(res => {
+      setNotifications(res.data);
+    });
+  }, []);
 
-  const { data: classes, isLoading: classesLoading } = useQuery({
-    queryKey: ['teacherClasses'],
-    queryFn: teacherAPI.getClasses,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: timetable, isLoading: timetableLoading } = useQuery({
-    queryKey: ['teacherTimetable'],
-    queryFn: teacherAPI.getTimetable,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: assignments, isLoading: assignmentsLoading } = useQuery({
-    queryKey: ['teacherAssignments'],
-    queryFn: teacherAPI.getAssignments,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: exams, isLoading: examsLoading } = useQuery({
-    queryKey: ['teacherExams'],
-    queryFn: teacherAPI.getExams,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: resources, isLoading: resourcesLoading } = useQuery({
-    queryKey: ['teacherResources'],
-    queryFn: teacherAPI.getResources,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: lessonPlans, isLoading: lessonPlansLoading } = useQuery({
-    queryKey: ['teacherLessonPlans'],
-    queryFn: teacherAPI.getLessonPlans,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: announcements, isLoading: announcementsLoading } = useQuery({
-    queryKey: ['teacherAnnouncements'],
-    queryFn: teacherAPI.getAnnouncements,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: projects, isLoading: projectsLoading } = useQuery({
-    queryKey: ['teacherProjects'],
-    queryFn: teacherAPI.getProjects,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: feedback, isLoading: feedbackLoading } = useQuery({
-    queryKey: ['teacherFeedback'],
-    queryFn: teacherAPI.getCurriculumFeedback,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  // Mutations
-  const createAssignmentMutation = useMutation({
-    mutationFn: teacherAPI.createAssignment,
-    onSuccess: () => {
-      queryClient.invalidateQueries(['teacherAssignments']);
-      setAssignmentDialog(false);
-      setNewAssignment({ title: '', description: '', class: '', section: '', subject: '', dueDate: '' });
-      toast.success('Assignment created successfully');
-    },
-    onError: () => toast.error('Failed to create assignment'),
-  });
-
-  const createResourceMutation = useMutation({
-    mutationFn: teacherAPI.uploadResource,
-    onSuccess: () => {
-      queryClient.invalidateQueries(['teacherResources']);
-      setResourceDialog(false);
-      setNewResource({ title: '', description: '', type: '', file: null });
-      toast.success('Resource uploaded successfully');
-    },
-    onError: () => toast.error('Failed to upload resource'),
-  });
-
-  const createLessonPlanMutation = useMutation({
-    mutationFn: teacherAPI.submitLessonPlan,
-    onSuccess: () => {
-      queryClient.invalidateQueries(['teacherLessonPlans']);
-      setLessonPlanDialog(false);
-      setNewLessonPlan({ title: '', subject: '', class: '', objectives: '', activities: '', file: null });
-      toast.success('Lesson plan submitted successfully');
-    },
-    onError: () => toast.error('Failed to submit lesson plan'),
-  });
-
-  const createExamMutation = useMutation({
-    mutationFn: teacherAPI.createExam,
-    onSuccess: () => {
-      queryClient.invalidateQueries(['teacherExams']);
-      setExamDialog(false);
-      setNewExam({ title: '', subject: '', class: '', date: '', duration: '', questionPaper: null });
-      toast.success('Exam created successfully');
-    },
-    onError: () => toast.error('Failed to create exam'),
-  });
-
-  const sendMessageMutation = useMutation({
-    mutationFn: teacherAPI.sendMessage,
-    onSuccess: () => {
-      queryClient.invalidateQueries(['teacherAnnouncements']);
-      setMessageDialog(false);
-      setNewMessage({ recipient: '', subject: '', content: '', attachments: [] });
-      toast.success('Message sent successfully');
-    },
-    onError: () => toast.error('Failed to send message'),
-  });
-
-  const createProjectMutation = useMutation({
-    mutationFn: teacherAPI.createProject,
-    onSuccess: () => {
-      queryClient.invalidateQueries(['teacherProjects']);
-      setProjectDialog(false);
-      setNewProject({ title: '', description: '', objectives: '', attachment: null });
-      toast.success('Project created successfully');
-    },
-    onError: () => toast.error('Failed to create project'),
-  });
-
-  const submitFeedbackMutation = useMutation({
-    mutationFn: teacherAPI.provideCurriculumFeedback,
-    onSuccess: () => {
-      queryClient.invalidateQueries(['teacherFeedback']);
-      setFeedbackDialog(false);
-      setNewFeedback({ type: '', title: '', content: '', priority: 'medium' });
-      toast.success('Feedback submitted successfully');
-    },
-    onError: () => toast.error('Failed to submit feedback'),
-  });
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+  };
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
-  if (user?.role !== 'Teacher') {
-    return <Box p={3}><Typography color="error">Access denied: Teacher only</Typography></Box>;
-  }
+  const unreadNotifications = notifications.filter(n => !n.read).length;
 
-  const isLoading = profileLoading || classesLoading || timetableLoading || assignmentsLoading || 
-                   examsLoading || resourcesLoading || lessonPlansLoading || announcementsLoading || 
-                   projectsLoading || feedbackLoading;
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 0:
+        return <DashboardOverview />;
+      case 1:
+        return <ProfileManagement />;
+      case 2:
+        return <ClassesManagement />;
+      case 3:
+        return <Timetable />;
+      case 4:
+        return <div>Attendance Component</div>;
+      case 5:
+        return <Assignments />;
+      case 6:
+        return <div>Exams Component</div>;
+      case 7:
+        return <div>Grades Component</div>;
+      case 8:
+        return <Students />;
+      default:
+        return <DashboardOverview />;
+    }
+  };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: 'grey.50' }}>
-      {/* Header */}
-      <AppBar position="static" elevation={0} sx={{ bgcolor: 'primary.main' }}>
+    <Box sx={{ flexGrow: 1 }}>
+      {/* App Bar */}
+      <AppBar position="static" sx={{ mb: 3 }}>
         <Toolbar>
-          <School sx={{ mr: 2 }} />
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             Teacher Dashboard
           </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Badge badgeContent={3} color="error">
-              <IconButton color="inherit">
+          
+          <Box display="flex" alignItems="center" gap={2}>
+            <IconButton color="inherit" onClick={() => setNotificationsOpen(true)}>
+              <Badge badgeContent={unreadNotifications} color="error">
                 <Notifications />
-              </IconButton>
-            </Badge>
-            <IconButton
-              onClick={(e) => setProfileMenuAnchor(e.currentTarget)}
-              color="inherit"
-            >
-              <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.main' }}>
-                {user?.name?.charAt(0)?.toUpperCase() || 'T'}
-              </Avatar>
+              </Badge>
             </IconButton>
-            <Menu
-              anchorEl={profileMenuAnchor}
-              open={Boolean(profileMenuAnchor)}
-              onClose={() => setProfileMenuAnchor(null)}
-            >
-              <MenuItemMUI onClick={() => {
-                setProfileMenuAnchor(null);
-                setTab(1); // Profile tab
-              }}>
-                <AccountCircle sx={{ mr: 1 }} />
-                Profile
-              </MenuItemMUI>
-              <MenuItemMUI onClick={() => {
-                setProfileMenuAnchor(null);
-                setLogoutDialog(true);
-              }}>
-                <Logout sx={{ mr: 1 }} />
-                Logout
-              </MenuItemMUI>
-            </Menu>
+            
+            <IconButton color="inherit">
+              <AccountCircle />
+            </IconButton>
+            
+            <IconButton color="inherit" onClick={handleLogout}>
+              <Logout />
+            </IconButton>
           </Box>
         </Toolbar>
       </AppBar>
 
       {/* Main Content */}
-      <Box sx={{ display: 'flex', flex: 1 }}>
-        {/* Sidebar */}
-        <Paper sx={{ width: 280, minHeight: 'calc(100vh - 64px)', borderRadius: 0 }}>
-          <Tabs
-            orientation="vertical"
-            value={tab}
-            onChange={(_, v) => setTab(v)}
-            sx={{ borderRight: 1, borderColor: 'divider', pt: 2 }}
+      <Box sx={{ p: 3 }}>
+        {/* Tabs */}
+        <Card sx={{ mb: 3 }}>
+          <Tabs 
+            value={activeTab} 
+            onChange={handleTabChange}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{ borderBottom: 1, borderColor: 'divider' }}
           >
-            {featureTabs.map((feature, index) => (
-              <Tab
-                key={feature.key}
-                label={feature.label}
-                icon={feature.icon}
+            {featureTabs.map((tab, index) => (
+              <Tab 
+                key={tab.key}
+                label={tab.label}
+                icon={tab.icon}
                 iconPosition="start"
-                sx={{
-                  textAlign: 'left',
-                  justifyContent: 'flex-start',
-                  minHeight: 56,
-                  '&.Mui-selected': {
-                    bgcolor: 'primary.light',
-                    color: 'primary.contrastText',
-                  }
-                }}
+                sx={{ minHeight: 64 }}
               />
             ))}
           </Tabs>
-        </Paper>
+        </Card>
 
-        {/* Content Area */}
-        <Box sx={{ flex: 1, p: 3, overflow: 'auto' }}>
-          {isLoading ? (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-              <CircularProgress />
-            </Box>
-          ) : (
-            <Box>
-              {/* Dashboard Overview */}
-              {tab === 0 && (
-                <DashboardOverview 
-                  profile={profile}
-                  classes={classes}
-                  assignments={assignments}
-                  exams={exams}
-                  announcements={announcements}
-                />
-              )}
-
-              {/* Profile Management */}
-              {tab === 1 && (
-                <ProfileManagement 
-                  profile={profile}
-                  onUpdateProfile={(data) => {
-                    // Handle profile update
-                    toast.success('Profile updated successfully');
-                  }}
-                />
-              )}
-
-              {/* Class Management */}
-              {tab === 2 && (
-                <ClassManagement 
-                  classes={classes}
-                  selectedClass={selectedClass}
-                  onSelectClass={setSelectedClass}
-                />
-              )}
-
-              {/* Timetable */}
-              {tab === 3 && (
-                <TimetableManagement 
-                  timetable={timetable}
-                />
-              )}
-
-              {/* Attendance Management */}
-              {tab === 4 && (
-                <AttendanceManagement 
-                  classes={classes}
-                  selectedClass={selectedClass}
-                  selectedDate={selectedDate}
-                  onSelectClass={setSelectedClass}
-                  onSelectDate={setSelectedDate}
-                  onMarkAttendance={(data) => {
-                    // Handle attendance marking
-                    toast.success('Attendance marked successfully');
-                  }}
-                />
-              )}
-
-              {/* Assignment Management */}
-              {tab === 5 && (
-                <AssignmentManagement 
-                  assignments={assignments}
-                  classes={classes}
-                  onCreateAssignment={() => setAssignmentDialog(true)}
-                  onGradeSubmission={(submissionId, data) => {
-                    // Handle grading
-                    toast.success('Submission graded successfully');
-                  }}
-                />
-              )}
-
-              {/* Exam Management */}
-              {tab === 6 && (
-                <ExamManagement 
-                  exams={exams}
-                  onCreateExam={() => setExamDialog(true)}
-                />
-              )}
-
-              {/* Learning Materials */}
-              {tab === 7 && (
-                <MaterialsManagement 
-                  resources={resources}
-                  lessonPlans={lessonPlans}
-                  onUploadResource={() => setResourceDialog(true)}
-                  onSubmitLessonPlan={() => setLessonPlanDialog(true)}
-                />
-              )}
-
-              {/* Communication */}
-              {tab === 8 && (
-                <CommunicationManagement 
-                  announcements={announcements}
-                  onSendMessage={() => setMessageDialog(true)}
-                />
-              )}
-
-              {/* Student Performance */}
-              {tab === 9 && (
-                <PerformanceManagement 
-                  classes={classes}
-                  onRecordPerformance={(data) => {
-                    // Handle performance recording
-                    toast.success('Performance recorded successfully');
-                  }}
-                />
-              )}
-
-              {/* Projects and Activities */}
-              {tab === 10 && (
-                <ProjectManagement 
-                  projects={projects}
-                  onCreateProject={() => setProjectDialog(true)}
-                />
-              )}
-
-              {/* Parent Interaction */}
-              {tab === 11 && (
-                <ParentInteractionManagement />
-              )}
-
-              {/* Feedback System */}
-              {tab === 12 && (
-                <FeedbackManagement 
-                  feedback={feedback}
-                  onSubmitFeedback={() => setFeedbackDialog(true)}
-                />
-              )}
-            </Box>
-          )}
+        {/* Tab Content */}
+        <Box sx={{ mt: 3 }}>
+          {renderTabContent()}
         </Box>
       </Box>
 
-      {/* Dialogs */}
-      <AssignmentDialog 
-        open={assignmentDialog}
-        onClose={() => setAssignmentDialog(false)}
-        assignment={newAssignment}
-        onAssignmentChange={setNewAssignment}
-        onSubmit={() => createAssignmentMutation.mutate(newAssignment)}
-        classes={classes}
-        loading={createAssignmentMutation.isPending}
-      />
+      {/* Notifications Drawer */}
+      <Drawer
+        anchor="right"
+        open={notificationsOpen}
+        onClose={() => setNotificationsOpen(false)}
+      >
+        <Box sx={{ width: 350, p: 2 }}>
+          <Typography variant="h6" gutterBottom>
+            Notifications
+          </Typography>
+          <List>
+            {notifications.map((notification) => (
+              <ListItem key={notification.id}>
+                <ListItemAvatar>
+                  <Avatar sx={{ 
+                    bgcolor: notification.read ? 'grey.300' : 'primary.main',
+                    color: notification.read ? 'grey.600' : 'white'
+                  }}>
+                    <Notifications />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={notification.title}
+                  secondary={
+                    <>
+                      <Typography component="span" variant="body2" color="text.primary">
+                        {notification.content}
+                      </Typography>
+                      <Typography variant="caption" display="block" color="text.secondary">
+                        {new Date(notification.date).toLocaleString()}
+                      </Typography>
+                    </>
+                  }
+                />
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+      </Drawer>
 
-      <ResourceDialog 
-        open={resourceDialog}
-        onClose={() => setResourceDialog(false)}
-        resource={newResource}
-        onResourceChange={setNewResource}
-        onSubmit={() => createResourceMutation.mutate(newResource)}
-        loading={createResourceMutation.isPending}
-      />
-
-      <LessonPlanDialog 
-        open={lessonPlanDialog}
-        onClose={() => setLessonPlanDialog(false)}
-        lessonPlan={newLessonPlan}
-        onLessonPlanChange={setNewLessonPlan}
-        onSubmit={() => createLessonPlanMutation.mutate(newLessonPlan)}
-        classes={classes}
-        loading={createLessonPlanMutation.isPending}
-      />
-
-      <ExamDialog 
-        open={examDialog}
-        onClose={() => setExamDialog(false)}
-        exam={newExam}
-        onExamChange={setNewExam}
-        onSubmit={() => createExamMutation.mutate(newExam)}
-        classes={classes}
-        loading={createExamMutation.isPending}
-      />
-
-      <MessageDialog 
-        open={messageDialog}
-        onClose={() => setMessageDialog(false)}
-        message={newMessage}
-        onMessageChange={setNewMessage}
-        onSubmit={() => sendMessageMutation.mutate(newMessage)}
-        loading={sendMessageMutation.isPending}
-      />
-
-      <ProjectDialog 
-        open={projectDialog}
-        onClose={() => setProjectDialog(false)}
-        project={newProject}
-        onProjectChange={setNewProject}
-        onSubmit={() => createProjectMutation.mutate(newProject)}
-        loading={createProjectMutation.isPending}
-      />
-
-      <FeedbackDialog 
-        open={feedbackDialog}
-        onClose={() => setFeedbackDialog(false)}
-        feedback={newFeedback}
-        onFeedbackChange={setNewFeedback}
-        onSubmit={() => submitFeedbackMutation.mutate(newFeedback)}
-        loading={submitFeedbackMutation.isPending}
-      />
-
-      {/* Logout Confirmation */}
-      <Dialog open={logoutDialog} onClose={() => setLogoutDialog(false)}>
-        <DialogTitle>Confirm Logout</DialogTitle>
-        <DialogContent>
-          <Typography>Are you sure you want to logout?</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setLogoutDialog(false)}>Cancel</Button>
-          <Button onClick={handleLogout} color="primary">Logout</Button>
-        </DialogActions>
-      </Dialog>
+      {/* Floating Action Button */}
+      <Fab 
+        color="primary" 
+        aria-label="add"
+        sx={{ position: 'fixed', bottom: 16, right: 16 }}
+      >
+        <Add />
+      </Fab>
     </Box>
   );
 }
