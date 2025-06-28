@@ -21,6 +21,13 @@ import {
   FormControl,
   InputLabel,
   Select,
+  TableContainer,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  Paper,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -112,10 +119,19 @@ function StudentRecords() {
         await axios.post('http://localhost:5000/api/admin-staff/students/public', values);
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries(['students']);
       handleClose();
-      toast.success(`Student ${selectedStudent ? 'updated' : 'added'} successfully`);
+      
+      // Show password info if student was created
+      if (!selectedStudent && data?.student?.password) {
+        toast.success(`Student added successfully! Password: ${data.student.password}`, {
+          autoClose: 10000, // Show for 10 seconds
+          position: "top-center"
+        });
+      } else {
+        toast.success(`Student ${selectedStudent ? 'updated' : 'added'} successfully`);
+      }
     },
     onError: (error) => {
       toast.error(error.response?.data?.message || 'An error occurred');
@@ -140,6 +156,7 @@ function StudentRecords() {
       class: '',
       section: '',
       rollNumber: '',
+      password: '',
       dateOfBirth: '',
       gender: '',
       parentName: '',
@@ -179,21 +196,44 @@ function StudentRecords() {
   };
 
   const handleDownloadReport = async () => {
-    toast.info('Exporting records...');
-    // Mock functionality, replace with actual API call
-    // try {
-    //   const response = await adminAPI.generateStudentReport();
-    //   const url = window.URL.createObjectURL(new Blob([response.data]));
-    //   const link = document.createElement('a');
-    //   link.href = url;
-    //   link.setAttribute('download', 'student-report.pdf');
-    //   document.body.appendChild(link);
-    //   link.click();
-    //   link.remove();
-    //   toast.success('Report downloaded successfully');
-    // } catch {
-    //   toast.error('Failed to download report');
-    // }
+    try {
+      toast.info('Exporting records...');
+      
+      // Build query parameters for filters
+      const params = new URLSearchParams();
+      if (filters.class) params.append('class', filters.class);
+      if (filters.section) params.append('section', filters.section);
+      if (filters.gender) params.append('gender', filters.gender);
+      params.append('format', 'csv');
+      
+      const response = await axios.get(`http://localhost:5000/api/admin-staff/students/export?${params.toString()}`, {
+        responseType: 'blob'
+      });
+      
+      // Create blob and download
+      const blob = new Blob([response.data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Create filename with filters
+      let filename = `students_export_${new Date().toISOString().split('T')[0]}`;
+      if (filters.class) filename += `_${filters.class}`;
+      if (filters.section) filename += `_${filters.section}`;
+      if (filters.gender) filename += `_${filters.gender}`;
+      filename += '.csv';
+      
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Export completed successfully');
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export records');
+    }
   };
 
   const handleImportSheet = async () => {
@@ -218,15 +258,38 @@ function StudentRecords() {
 
   const bulkImportMutation = useMutation({
     mutationFn: async (students) => {
-      await axios.post('http://localhost:5000/api/admin-staff/students/bulk', { students });
+      const response = await axios.post('http://localhost:5000/api/admin-staff/students/bulk', { students });
+      return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries(['students']);
       setPreviewOpen(false);
       setImportDialog(false);
-      toast.success('Students imported successfully');
+      
+      // Show detailed results
+      if (data.results) {
+        const { successful, failed } = data.results;
+        toast.success(`Import completed! ${successful.length} successful, ${failed.length} failed`);
+        
+        // Show passwords for successful imports
+        if (successful.length > 0) {
+          const passwordInfo = successful.map(s => `${s.name}: ${s.password}`).join('\n');
+          alert(`Generated passwords:\n${passwordInfo}`);
+        }
+        
+        // Show errors for failed imports
+        if (failed.length > 0) {
+          const errorInfo = failed.map(f => `${f.name}: ${f.error}`).join('\n');
+          alert(`Failed imports:\n${errorInfo}`);
+        }
+      } else {
+        toast.success('Students imported successfully');
+      }
     },
-    onError: () => toast.error('Bulk import failed'),
+    onError: (error) => {
+      console.error('Bulk import error:', error);
+      toast.error(error.response?.data?.message || 'Bulk import failed');
+    }
   });
 
   const columns = [
@@ -490,6 +553,19 @@ function StudentRecords() {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
+                  id="password"
+                  name="password"
+                  label="Password (optional - auto-generated if empty)"
+                  type="password"
+                  value={formik.values.password}
+                  onChange={formik.handleChange}
+                  error={formik.touched.password && Boolean(formik.errors.password)}
+                  helperText={formik.touched.password && formik.errors.password || "Leave empty for auto-generated password"}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
                   id="dateOfBirth"
                   name="dateOfBirth"
                   label="Date of Birth"
@@ -584,15 +660,55 @@ function StudentRecords() {
       </Dialog>
 
       <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Preview Imported Students</DialogTitle>
+        <DialogTitle>Preview Imported Students ({sheetData?.length || 0} students)</DialogTitle>
         <DialogContent>
           <Box sx={{ maxHeight: 400, overflow: 'auto' }}>
-            <pre>{JSON.stringify(sheetData, null, 2)}</pre>
+            {sheetData && sheetData.length > 0 ? (
+              <TableContainer component={Paper}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Name</TableCell>
+                      <TableCell>Email</TableCell>
+                      <TableCell>Class</TableCell>
+                      <TableCell>Section</TableCell>
+                      <TableCell>Roll Number</TableCell>
+                      <TableCell>Gender</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {sheetData.slice(0, 10).map((student, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{student.name || 'N/A'}</TableCell>
+                        <TableCell>{student.email || 'N/A'}</TableCell>
+                        <TableCell>{student.class || 'N/A'}</TableCell>
+                        <TableCell>{student.section || 'N/A'}</TableCell>
+                        <TableCell>{student.rollNumber || 'N/A'}</TableCell>
+                        <TableCell>{student.gender || 'N/A'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <Typography color="error">No data to preview</Typography>
+            )}
+            {sheetData && sheetData.length > 10 && (
+              <Typography variant="body2" sx={{ mt: 2, color: 'text.secondary' }}>
+                Showing first 10 of {sheetData.length} students
+              </Typography>
+            )}
           </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setPreviewOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={() => bulkImportMutation.mutate(sheetData)}>Import All</Button>
+          <Button 
+            variant="contained" 
+            onClick={() => bulkImportMutation.mutate(sheetData)}
+            disabled={bulkImportMutation.isLoading}
+          >
+            {bulkImportMutation.isLoading ? <CircularProgress size={24} /> : `Import All (${sheetData?.length || 0})`}
+          </Button>
         </DialogActions>
       </Dialog>
     </Container>

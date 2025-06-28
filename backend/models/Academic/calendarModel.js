@@ -8,7 +8,7 @@ const calendarSchema = new mongoose.Schema({
   description: String,
   eventType: {
     type: String,
-    enum: ['Academic', 'Exam', 'Holiday', 'Event', 'Meeting', 'Other'],
+    enum: ['Academic', 'Exam', 'Holiday', 'Event', 'Meeting', 'Sports', 'Cultural', 'Other'],
     required: true
   },
   startDate: {

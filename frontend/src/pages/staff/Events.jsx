@@ -79,10 +79,10 @@ const Events = () => {
   const filterEvents = () => {
     const filtered = events.filter(
       (event) =>
-        event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.organizer.toLowerCase().includes(searchTerm.toLowerCase())
+        (event.title?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (event.type?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (event.location?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (event.organizer?.toLowerCase() || '').includes(searchTerm.toLowerCase())
     );
     setFilteredEvents(filtered);
   };

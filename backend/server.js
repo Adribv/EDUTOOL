@@ -1,5 +1,5 @@
 const express = require('express');
-const connectDB = require('./config/db');
+const connectDB = require('./config/dbRetry');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const authModule = require('./modules/auth.modules');
@@ -12,7 +12,7 @@ const app = express();
 
 // Enable CORS for all routes
 app.use(cors({
-  origin: 'http://localhost:3000', // Your frontend URL
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3000', // Your frontend URL
   credentials: true
 }));
 
@@ -37,7 +37,8 @@ uploadDirs.forEach(dir => {
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-connectDB();
+// Initialize database connection
+connectDB.connect();
 
 app.use('/api', authModule);
 

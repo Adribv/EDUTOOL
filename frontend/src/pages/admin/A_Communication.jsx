@@ -28,6 +28,7 @@ import {
   CardContent,
   Tabs,
   Tab,
+  Snackbar,
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -35,6 +36,9 @@ import {
   Add as AddIcon,
   Announcement as AnnouncementIcon,
   Message as MessageIcon,
+  Pending as PendingIcon,
+  CheckCircle as ApprovedIcon,
+  Cancel as RejectedIcon,
 } from '@mui/icons-material';
 import { adminAPI } from '../../services/api';
 
@@ -46,6 +50,7 @@ const A_Communication = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -62,11 +67,41 @@ const A_Communication = () => {
 
   const fetchData = async () => {
     try {
-      const list = await adminAPI.getCommunications();
+      const [list, approvalsData] = await Promise.all([
+        adminAPI.getCommunications(),
+        adminAPI.getApprovalRequests({ requestType: 'Communication' })
+      ]);
+      
       const activeItems = list.filter((c)=>c.status !== 'Deleted');
-      setAnnouncements(activeItems.filter((c)=>c.type==='Announcement'));
-      setMessages(activeItems.filter((c)=>c.type==='Message'));
-    } catch {
+      
+      // Add approval status to existing communications
+      const communicationsWithStatus = activeItems.map(item => ({
+        ...item,
+        status: 'Approved' // Communications in the communications collection are already approved
+      }));
+      
+      // Add pending/rejected communications from approval requests
+      const pendingCommunications = approvalsData
+        .filter(approval => approval.status !== 'Approved')
+        .map(approval => ({
+          _id: approval._id,
+          title: approval.title,
+          content: approval.description,
+          type: approval.requestData?.communicationType || 'Announcement',
+          priority: approval.requestData?.priority || 'Normal',
+          targetAudience: approval.requestData?.recipients?.[0] || 'All',
+          startDate: approval.requestData?.scheduledDate || '',
+          endDate: approval.requestData?.endDate || '',
+          status: approval.status,
+          approvalId: approval._id
+        }));
+      
+      const allCommunications = [...communicationsWithStatus, ...pendingCommunications];
+      
+      setAnnouncements(allCommunications.filter((c)=>c.type==='Announcement'));
+      setMessages(allCommunications.filter((c)=>c.type==='Message'));
+    } catch (error) {
+      console.error('Error fetching communication data:', error);
       setError('Failed to load communication data');
     } finally {
       setLoading(false);
@@ -113,13 +148,29 @@ const A_Communication = () => {
     try {
       if (editingItem) {
         await adminAPI.updateCommunication(editingItem._id, formData);
+        setSnackbar({ open: true, message: 'Communication updated successfully', severity: 'success' });
       } else {
-        await adminAPI.createCommunication({ ...formData, type: activeTab === 0 ? 'Announcement' : 'Message' });
+        // Create approval request instead of directly creating communication
+        const communicationData = { 
+          ...formData, 
+          type: activeTab === 0 ? 'Announcement' : 'Message' 
+        };
+        await adminAPI.createCommunicationApproval(communicationData);
+        setSnackbar({ 
+          open: true, 
+          message: 'Communication approval request submitted successfully. Waiting for principal approval.', 
+          severity: 'info' 
+        });
       }
       handleCloseDialog();
       fetchData();
-    } catch {
-      setError('Failed to save communication item');
+    } catch (error) {
+      console.error('Error saving communication:', error);
+      setSnackbar({ 
+        open: true, 
+        message: error.response?.data?.message || 'Failed to save communication item', 
+        severity: 'error' 
+      });
     }
   };
 
@@ -127,10 +178,50 @@ const A_Communication = () => {
     if (window.confirm('Are you sure you want to delete this item?')) {
       try {
         await adminAPI.updateCommunicationStatus(id, { status: 'Deleted' });
+        setSnackbar({ open: true, message: 'Item deleted successfully', severity: 'success' });
         fetchData();
       } catch {
-        setError('Failed to delete item');
+        setSnackbar({ open: true, message: 'Failed to delete item', severity: 'error' });
       }
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Approved':
+        return 'success';
+      case 'Pending':
+        return 'warning';
+      case 'Rejected':
+        return 'error';
+      default:
+        return 'default';
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'Approved':
+        return <ApprovedIcon />;
+      case 'Pending':
+        return <PendingIcon />;
+      case 'Rejected':
+        return <RejectedIcon />;
+      default:
+        return null;
+    }
+  };
+
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case 'High':
+        return 'error';
+      case 'Medium':
+        return 'warning';
+      case 'Low':
+        return 'success';
+      default:
+        return 'default';
     }
   };
 
@@ -149,6 +240,8 @@ const A_Communication = () => {
       </Box>
     );
   }
+
+  const currentItems = activeTab === 0 ? announcements : messages;
 
   return (
     <Box>
@@ -175,7 +268,7 @@ const A_Communication = () => {
 
       <Grid container spacing={3}>
         {/* Statistics */}
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={3}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
@@ -184,46 +277,45 @@ const A_Communication = () => {
                   Total {activeTab === 0 ? 'Announcements' : 'Messages'}
                 </Typography>
               </Box>
+              <Typography variant="h4">{currentItems.length}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <Card>
+            <CardContent>
+              <Box display="flex" alignItems="center" mb={2}>
+                <ApprovedIcon color="success" sx={{ mr: 1 }} />
+                <Typography variant="h6">Approved</Typography>
+              </Box>
               <Typography variant="h4">
-                {activeTab === 0 ? announcements.length : messages.length}
+                {currentItems.filter((item) => item.status === 'Approved').length}
               </Typography>
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={3}>
+          <Card>
+            <CardContent>
+              <Box display="flex" alignItems="center" mb={2}>
+                <PendingIcon color="warning" sx={{ mr: 1 }} />
+                <Typography variant="h6">Pending Approval</Typography>
+              </Box>
+              <Typography variant="h4">
+                {currentItems.filter((item) => item.status === 'Pending').length}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={3}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
                 <MessageIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Active Items</Typography>
-              </Box>
-              <Typography variant="h4">
-                {activeTab === 0
-                  ? announcements.filter(
-                      (a) =>
-                        new Date(a.startDate) <= new Date() &&
-                        new Date(a.endDate) >= new Date()
-                    ).length
-                  : messages.filter(
-                      (m) =>
-                        new Date(m.startDate) <= new Date() &&
-                        new Date(m.endDate) >= new Date()
-                    ).length}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center" mb={2}>
-                <AnnouncementIcon color="primary" sx={{ mr: 1 }} />
                 <Typography variant="h6">High Priority</Typography>
               </Box>
               <Typography variant="h4">
-                {activeTab === 0
-                  ? announcements.filter((a) => a.priority === 'high').length
-                  : messages.filter((m) => m.priority === 'high').length}
+                {currentItems.filter((item) => item.priority === 'High').length}
               </Typography>
             </CardContent>
           </Card>
@@ -239,60 +331,82 @@ const A_Communication = () => {
                   <TableCell>Type</TableCell>
                   <TableCell>Priority</TableCell>
                   <TableCell>Target Audience</TableCell>
-                  <TableCell>Start Date</TableCell>
-                  <TableCell>End Date</TableCell>
                   <TableCell>Status</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {(activeTab === 0 ? announcements : messages).map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>{item.title}</TableCell>
-                    <TableCell>{item.type}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={item.priority}
-                        color={
-                          item.priority === 'high'
-                            ? 'error'
-                            : item.priority === 'medium'
-                            ? 'warning'
-                            : 'success'
-                        }
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>{item.targetAudience}</TableCell>
-                    <TableCell>{new Date(item.startDate).toLocaleDateString()}</TableCell>
-                    <TableCell>{new Date(item.endDate).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={
-                          new Date(item.startDate) <= new Date() &&
-                          new Date(item.endDate) >= new Date()
-                            ? 'Active'
-                            : 'Inactive'
-                        }
-                        color={
-                          new Date(item.startDate) <= new Date() &&
-                          new Date(item.endDate) >= new Date()
-                            ? 'success'
-                            : 'default'
-                        }
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <IconButton onClick={() => handleOpenDialog(item)} color="primary">
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton onClick={() => handleDelete(item.id)} color="error">
-                        <DeleteIcon />
-                      </IconButton>
+                {currentItems.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center">
+                      <Typography variant="body2" color="text.secondary">
+                        No {activeTab === 0 ? 'announcements' : 'messages'} found
+                      </Typography>
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  currentItems.map((item) => (
+                    <TableRow key={item._id} hover>
+                      <TableCell>
+                        <Typography variant="body2" fontWeight="medium">
+                          {item.title}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {item.content?.substring(0, 50)}...
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Chip 
+                          label={item.type} 
+                          size="small" 
+                          variant="outlined"
+                          color={item.type === 'Announcement' ? 'primary' : 'secondary'}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={item.priority || 'Normal'}
+                          color={getPriorityColor(item.priority)}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Chip 
+                          label={item.targetAudience || 'All'} 
+                          size="small" 
+                          variant="outlined" 
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          icon={getStatusIcon(item.status)}
+                          label={item.status || 'Pending'}
+                          color={getStatusColor(item.status)}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => handleOpenDialog(item)}
+                            disabled={item.status === 'Rejected'}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => handleDelete(item._id)}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </TableContainer>
@@ -301,49 +415,33 @@ const A_Communication = () => {
 
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
         <DialogTitle>
-          {editingItem
-            ? `Edit ${activeTab === 0 ? 'Announcement' : 'Message'}`
-            : `Add New ${activeTab === 0 ? 'Announcement' : 'Message'}`}
+          {editingItem ? 'Edit Communication' : `Add New ${activeTab === 0 ? 'Announcement' : 'Message'}`}
         </DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12}>
               <TextField
-                name="title"
+                fullWidth
                 label="Title"
+                name="title"
                 value={formData.title}
                 onChange={handleChange}
-                fullWidth
+                variant="outlined"
                 required
               />
             </Grid>
             <Grid item xs={12}>
               <TextField
-                name="content"
+                fullWidth
                 label="Content"
+                name="content"
                 value={formData.content}
                 onChange={handleChange}
-                fullWidth
+                variant="outlined"
                 multiline
                 rows={4}
                 required
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Type</InputLabel>
-                <Select
-                  name="type"
-                  value={formData.type}
-                  onChange={handleChange}
-                  required
-                >
-                  <MenuItem value="general">General</MenuItem>
-                  <MenuItem value="academic">Academic</MenuItem>
-                  <MenuItem value="event">Event</MenuItem>
-                  <MenuItem value="emergency">Emergency</MenuItem>
-                </Select>
-              </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
@@ -352,11 +450,11 @@ const A_Communication = () => {
                   name="priority"
                   value={formData.priority}
                   onChange={handleChange}
-                  required
+                  label="Priority"
                 >
-                  <MenuItem value="high">High</MenuItem>
-                  <MenuItem value="medium">Medium</MenuItem>
-                  <MenuItem value="low">Low</MenuItem>
+                  <MenuItem value="Low">Low</MenuItem>
+                  <MenuItem value="Medium">Medium</MenuItem>
+                  <MenuItem value="High">High</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -367,36 +465,38 @@ const A_Communication = () => {
                   name="targetAudience"
                   value={formData.targetAudience}
                   onChange={handleChange}
-                  required
+                  label="Target Audience"
                 >
-                  <MenuItem value="all">All</MenuItem>
-                  <MenuItem value="students">Students</MenuItem>
-                  <MenuItem value="staff">Staff</MenuItem>
-                  <MenuItem value="parents">Parents</MenuItem>
+                  <MenuItem value="All">All</MenuItem>
+                  <MenuItem value="Students">Students</MenuItem>
+                  <MenuItem value="Parents">Parents</MenuItem>
+                  <MenuItem value="Teachers">Teachers</MenuItem>
+                  <MenuItem value="Staff">Staff</MenuItem>
+                  <MenuItem value="Admin">Admin</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
-                name="startDate"
+                fullWidth
                 label="Start Date"
+                name="startDate"
                 type="date"
                 value={formData.startDate}
                 onChange={handleChange}
-                fullWidth
-                required
+                variant="outlined"
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
-                name="endDate"
+                fullWidth
                 label="End Date"
+                name="endDate"
                 type="date"
                 value={formData.endDate}
                 onChange={handleChange}
-                fullWidth
-                required
+                variant="outlined"
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
@@ -404,11 +504,24 @@ const A_Communication = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained" color="primary">
-            {editingItem ? 'Update' : 'Create'}
+          <Button variant="contained" color="primary" onClick={handleSubmit}>
+            {editingItem ? 'Update' : 'Submit for Approval'}
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      >
+        <Alert 
+          onClose={() => setSnackbar({ ...snackbar, open: false })} 
+          severity={snackbar.severity}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

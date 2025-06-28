@@ -6,6 +6,7 @@ import SchoolManagement from '../pages/principal/SchoolManagement';
 import StaffManagement from '../pages/principal/StaffManagement';
 import AcademicManagement from '../pages/principal/AcademicManagement';
 import Reports from '../pages/principal/Reports';
+import Approvals from '../pages/principal/Approvals';
 
 const PrincipalRoutes = () => {
   return (
@@ -18,6 +19,7 @@ const PrincipalRoutes = () => {
         <Route path="staff" element={<StaffManagement />} />
         <Route path="academic" element={<AcademicManagement />} />
         <Route path="reports" element={<Reports />} />
+        <Route path="approvals" element={<Approvals />} />
       </Route>
     </Routes>
   );

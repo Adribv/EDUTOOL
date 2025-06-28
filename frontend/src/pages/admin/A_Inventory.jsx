@@ -33,8 +33,13 @@ import {
   Add as AddIcon,
   Inventory as InventoryIcon,
   School as SchoolIcon,
+  Download as DownloadIcon,
+  Upload as UploadIcon,
 } from '@mui/icons-material';
 import { adminAPI } from '../../services/api';
+import axios from 'axios';
+import { toast } from 'react-toastify';
+import Papa from 'papaparse';
 
 const A_Inventory = () => {
   const [loading, setLoading] = useState(true);
@@ -42,6 +47,10 @@ const A_Inventory = () => {
   const [inventory, setInventory] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [importDialog, setImportDialog] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [sheetUrl, setSheetUrl] = useState('');
+  const [sheetData, setSheetData] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
     category: '',
@@ -134,6 +143,90 @@ const A_Inventory = () => {
     }
   };
 
+  const handleExport = async () => {
+    try {
+      toast.info('Exporting inventory...');
+      
+      const response = await axios.get('http://localhost:5000/api/admin-staff/inventory/export?format=csv', {
+        responseType: 'blob'
+      });
+      
+      // Create blob and download
+      const blob = new Blob([response.data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `inventory_export_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Export completed successfully');
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export inventory');
+    }
+  };
+
+  const handleImportSheet = async () => {
+    try {
+      // Convert Google Sheet link to CSV export link
+      const match = sheetUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+      if (!match) {
+        toast.error('Invalid Google Sheet link');
+        return;
+      }
+      const sheetId = match[1];
+      const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
+      const response = await fetch(csvUrl);
+      const csv = await response.text();
+      const parsed = Papa.parse(csv, { header: true });
+      setSheetData(parsed.data);
+      setPreviewOpen(true);
+    } catch {
+      toast.error('Failed to fetch or parse sheet');
+    }
+  };
+
+  const bulkImportMutation = {
+    mutate: async (items) => {
+      try {
+        const response = await axios.post('http://localhost:5000/api/admin-staff/inventory/bulk', { items });
+        return response.data;
+      } catch (error) {
+        throw error;
+      }
+    },
+    isLoading: false
+  };
+
+  const handleBulkImport = async () => {
+    try {
+      const response = await bulkImportMutation.mutate(sheetData);
+      setPreviewOpen(false);
+      setImportDialog(false);
+      fetchInventory();
+      
+      // Show detailed results
+      if (response.results) {
+        const { successful, failed } = response.results;
+        toast.success(`Import completed! ${successful.length} successful, ${failed.length} failed`);
+        
+        // Show errors for failed imports
+        if (failed.length > 0) {
+          const errorInfo = failed.map(f => `${f.name}: ${f.error}`).join('\n');
+          alert(`Failed imports:\n${errorInfo}`);
+        }
+      } else {
+        toast.success('Inventory imported successfully');
+      }
+    } catch (error) {
+      console.error('Bulk import error:', error);
+      toast.error(error.response?.data?.message || 'Bulk import failed');
+    }
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
@@ -154,14 +247,34 @@ const A_Inventory = () => {
     <Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h4">Inventory Management</Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
-          onClick={() => handleOpenDialog()}
-        >
-          Add New Item
-        </Button>
+        <Box>
+          <Button
+            variant="outlined"
+            color="primary"
+            startIcon={<DownloadIcon />}
+            onClick={handleExport}
+            sx={{ mr: 2 }}
+          >
+            Export Records
+          </Button>
+          <Button
+            variant="outlined"
+            color="secondary"
+            startIcon={<UploadIcon />}
+            onClick={() => setImportDialog(true)}
+            sx={{ mr: 2 }}
+          >
+            Import from Google Sheet
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={() => handleOpenDialog()}
+          >
+            Add New Item
+          </Button>
+        </Box>
       </Box>
 
       <Grid container spacing={3}>
@@ -369,6 +482,78 @@ const A_Inventory = () => {
           <Button onClick={handleCloseDialog}>Cancel</Button>
           <Button onClick={handleSubmit} variant="contained" color="primary">
             {editingItem ? 'Update' : 'Create'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Import Dialog */}
+      <Dialog open={importDialog} onClose={() => setImportDialog(false)}>
+        <DialogTitle>Import Inventory from Google Sheet</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="Google Sheet Link"
+            fullWidth
+            margin="normal"
+            value={sheetUrl}
+            onChange={e => setSheetUrl(e.target.value)}
+            placeholder="https://docs.google.com/spreadsheets/d/..."
+          />
+          <Button variant="contained" onClick={handleImportSheet} sx={{ mt: 2 }}>
+            Fetch & Preview
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Preview Dialog */}
+      <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Preview Imported Inventory ({sheetData?.length || 0} items)</DialogTitle>
+        <DialogContent>
+          <Box sx={{ maxHeight: 400, overflow: 'auto' }}>
+            {sheetData && sheetData.length > 0 ? (
+              <TableContainer component={Paper}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Name</TableCell>
+                      <TableCell>Category</TableCell>
+                      <TableCell>Quantity</TableCell>
+                      <TableCell>Unit</TableCell>
+                      <TableCell>Location</TableCell>
+                      <TableCell>Unit Price</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {sheetData.slice(0, 10).map((item, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{item.name || 'N/A'}</TableCell>
+                        <TableCell>{item.category || 'N/A'}</TableCell>
+                        <TableCell>{item.quantity || 'N/A'}</TableCell>
+                        <TableCell>{item.unit || 'N/A'}</TableCell>
+                        <TableCell>{item.location || 'N/A'}</TableCell>
+                        <TableCell>{item.unitPrice || 'N/A'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <Typography color="error">No data to preview</Typography>
+            )}
+            {sheetData && sheetData.length > 10 && (
+              <Typography variant="body2" sx={{ mt: 2, color: 'text.secondary' }}>
+                Showing first 10 of {sheetData.length} items
+              </Typography>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPreviewOpen(false)}>Cancel</Button>
+          <Button 
+            variant="contained" 
+            onClick={handleBulkImport}
+            disabled={bulkImportMutation.isLoading}
+          >
+            {bulkImportMutation.isLoading ? <CircularProgress size={24} /> : `Import All (${sheetData?.length || 0})`}
           </Button>
         </DialogActions>
       </Dialog>

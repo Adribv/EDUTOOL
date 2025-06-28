@@ -1020,7 +1020,8 @@ exports.getSchoolCalendar = async (req, res) => {
   try {
     const { month, year } = req.query;
     
-    let query = {
+    // Query for Calendar events
+    let calendarQuery = {
       $or: [
         { targetAudience: 'Parents' },
         { targetAudience: 'All' }
@@ -1028,18 +1029,74 @@ exports.getSchoolCalendar = async (req, res) => {
       status: 'Active'
     };
     
+    // Query for Event events
+    let eventQuery = {
+      $or: [
+        { audience: 'Parents' },
+        { audience: 'All' }
+      ],
+      status: { $ne: 'Cancelled' }
+    };
+    
     // Filter by month and year if provided
     if (month && year) {
       const startDate = new Date(year, month - 1, 1);
       const endDate = new Date(year, month, 0);
       
-      query.startDate = { $lte: endDate };
-      query.endDate = { $gte: startDate };
+      calendarQuery.startDate = { $lte: endDate };
+      calendarQuery.endDate = { $gte: startDate };
+      
+      eventQuery.startDate = { $lte: endDate };
+      eventQuery.endDate = { $gte: startDate };
     }
     
-    const calendarEvents = await Calendar.find(query).sort({ startDate: 1 });
+    // Fetch from both models
+    const [calendarEvents, eventEvents] = await Promise.all([
+      Calendar.find(calendarQuery).sort({ startDate: 1 }),
+      Event.find(eventQuery).sort({ startDate: 1 })
+    ]);
     
-    res.json(calendarEvents);
+    // Format calendar events to match frontend expectations
+    const formattedCalendarEvents = calendarEvents.map(event => ({
+      _id: event._id,
+      title: event.title,
+      description: event.description,
+      startDate: event.startDate,
+      endDate: event.endDate,
+      venue: event.location || 'School Campus',
+      organizer: event.organizer || 'School Administration',
+      eventType: event.eventType,
+      audience: event.targetAudience,
+      status: event.status,
+      isHoliday: event.isHoliday,
+      source: 'calendar'
+    }));
+    
+    // Format event events to match frontend expectations
+    const formattedEventEvents = eventEvents.map(event => ({
+      _id: event._id,
+      title: event.title,
+      description: event.description,
+      startDate: event.startDate,
+      endDate: event.endDate,
+      venue: event.venue,
+      organizer: event.organizer,
+      eventType: 'Event', // Default type for events
+      audience: event.audience,
+      status: event.status,
+      isHoliday: false,
+      source: 'event'
+    }));
+    
+    // Combine and sort all events
+    const allEvents = [...formattedCalendarEvents, ...formattedEventEvents]
+      .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+    
+    console.log('📅 Calendar events found:', calendarEvents.length);
+    console.log('🎉 Event events found:', eventEvents.length);
+    console.log('📊 Total events returned:', allEvents.length);
+    
+    res.json(allEvents);
   } catch (error) {
     console.error('Error fetching school calendar:', error);
     res.status(500).json({ message: 'Server error' });
