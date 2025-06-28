@@ -567,28 +567,26 @@ export const adminAPI = {
 
 // Teacher API functions
 export const teacherAPI = {
-  // Profile Management
-  getProfile: () => api.get('/api/teacher/profile').then(res => res.data),
-  updateProfile: (data) => api.put('/api/teacher/profile', data).then(res => res.data),
-  addProfessionalDevelopment: (data) => {
-    const formData = new FormData();
-    Object.keys(data).forEach(key => {
-      if (key === 'document' && data[key] instanceof File) {
-        formData.append(key, data[key]);
-      } else {
-        formData.append(key, data[key]);
-      }
-    });
-    return api.post('/api/teacher/profile/professional-development', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    }).then(res => res.data);
-  },
+  // Profile Management - Updated to use staff endpoints
+  getProfile: () => api.get('/api/staff/profile').then(res => res.data),
+  updateProfile: (data) => api.put('/api/staff/profile', data).then(res => res.data),
+  changePassword: (data) => api.put('/api/staff/change-password', data).then(res => res.data),
+  uploadProfileImage: (formData) => api.put('/api/staff/profile-image', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }).then(res => res.data),
+  
+  // Professional Development Management
+  addProfessionalDevelopment: (data) => api.post('/api/staff/professional-development', data).then(res => res.data),
+  updateProfessionalDevelopment: (index, data) => api.put(`/api/staff/professional-development/${index}`, data).then(res => res.data),
+  deleteProfessionalDevelopment: (index) => api.delete(`/api/staff/professional-development/${index}`).then(res => res.data),
+  
+  // Get public profile of another staff member
+  getPublicProfile: (staffId) => api.get(`/api/staff/profile/${staffId}`).then(res => res.data),
 
   // Class and Subject Management
-  getClasses: () => api.get('/api/teacher/classes').then(res => res.data),
-  getStudentRoster: (classId, section) => api.get(`/api/teacher/classes/${classId}/${section}/students`).then(res => res.data),
-  createChapterPlan: (data) => api.post('/api/teacher/chapter-plans', data).then(res => res.data),
-  getChapterPlans: (classId, section, subject) => api.get(`/api/teacher/chapter-plans/${classId}/${section}/${subject}`).then(res => res.data),
+  getClasses: () => api.get('/api/staff/class-data').then(res => res.data),
+  getStudents: () => api.get('/api/staff/students').then(res => res.data),
+  getAssignedStudents: () => api.get('/api/staff/students').then(res => res.data),
 
   // Timetable
   getTimetable: () => api.get('/api/teacher/timetable').then(res => res.data),
@@ -597,13 +595,13 @@ export const teacherAPI = {
   getAcademicCalendar: () => api.get('/api/teacher/academic-calendar').then(res => res.data),
 
   // Attendance Management
-  markAttendance: (data) => api.post('/api/teacher/attendance', data).then(res => res.data),
-  getAttendance: (classId, section, date) => api.get(`/api/teacher/attendance/${classId}/${section}/${date}`).then(res => res.data),
-  generateAttendanceReport: (classId, section, startDate, endDate) => api.get(`/api/teacher/attendance-report/${classId}/${section}/${startDate}/${endDate}`).then(res => res.data),
+  markAttendance: (data) => api.post('/api/staff/attendance', data).then(res => res.data),
+  getAttendance: () => api.get('/api/staff/attendance').then(res => res.data),
+  getMarkedAttendance: () => api.get('/api/staff/attendance').then(res => res.data),
 
   // Assignment Management
-  createAssignment: (data) => api.post('/api/teacher/assignments', data).then(res => res.data),
-  getAssignments: () => api.get('/api/teacher/assignments').then(res => res.data),
+  createAssignment: (data) => api.post('/api/staff/assignments', data).then(res => res.data),
+  getAssignments: () => api.get('/api/staff/assignments').then(res => res.data),
   getSubmissions: (assignmentId) => api.get(`/api/teacher/assignments/${assignmentId}/submissions`).then(res => res.data),
   gradeSubmission: (submissionId, data) => api.put(`/api/teacher/submissions/${submissionId}/grade`, data).then(res => res.data),
 
@@ -626,34 +624,10 @@ export const teacherAPI = {
   generatePerformanceReport: (examId) => api.get(`/api/teacher/exams/${examId}/performance-report`).then(res => res.data),
 
   // Learning Materials
-  submitLessonPlan: (data) => {
-    const formData = new FormData();
-    Object.keys(data).forEach(key => {
-      if (key === 'file' && data[key] instanceof File) {
-        formData.append(key, data[key]);
-      } else {
-        formData.append(key, data[key]);
-      }
-    });
-    return api.post('/api/teacher/lesson-plans', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    }).then(res => res.data);
-  },
-  getLessonPlans: () => api.get('/api/teacher/lesson-plans').then(res => res.data),
-  uploadResource: (data) => {
-    const formData = new FormData();
-    Object.keys(data).forEach(key => {
-      if (key === 'file' && data[key] instanceof File) {
-        formData.append(key, data[key]);
-      } else {
-        formData.append(key, data[key]);
-      }
-    });
-    return api.post('/api/teacher/resources', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    }).then(res => res.data);
-  },
-  getResources: () => api.get('/api/teacher/resources').then(res => res.data),
+  submitLessonPlan: (data) => api.post('/api/staff/lessonplans', data).then(res => res.data),
+  getLessonPlans: () => api.get('/api/staff/lessonplans').then(res => res.data),
+  uploadResource: (data) => api.post('/api/staff/resources', data).then(res => res.data),
+  getResources: () => api.get('/api/staff/resources').then(res => res.data),
   getDepartmentalResources: () => api.get('/api/teacher/departmental-resources').then(res => res.data),
 
   // Communication

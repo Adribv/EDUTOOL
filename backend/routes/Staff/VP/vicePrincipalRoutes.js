@@ -46,6 +46,7 @@ router.get('/timetables/date-range', timetableController.getTimetablesByDateRang
 
 // Curriculum Management
 router.get('/curriculum', curriculumController.getAllCurriculumPlans);
+router.get('/curriculum/approved', curriculumController.getApprovedCurriculumPlans);
 router.post('/curriculum', curriculumController.createCurriculumPlan);
 router.put('/curriculum/:id', curriculumController.updateCurriculumPlan);
 router.delete('/curriculum/:id', curriculumController.deleteCurriculumPlan);

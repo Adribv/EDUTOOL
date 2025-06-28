@@ -53,6 +53,7 @@ const vpAPI = {
   
   // Curriculum Management
   getCurriculumPlans: () => api.get('/api/vp/curriculum').then(res => res.data),
+  getApprovedCurriculumPlans: () => api.get('/api/vp/curriculum/approved').then(res => res.data),
   createCurriculum: (data) => api.post('/api/vp/curriculum', data).then(res => res.data),
   updateCurriculum: (data) => api.put(`/api/vp/curriculum/${data.id}`, data).then(res => res.data),
   deleteCurriculum: (planId) => api.delete(`/api/vp/curriculum/${planId}`).then(res => res.data),
@@ -125,6 +126,20 @@ export default function VicePrincipalDashboard() {
     confirmPassword: ''
   });
 
+  // New state for curriculum management
+  const [selectedGrade, setSelectedGrade] = useState(1);
+  const [curriculumViewMode, setCurriculumViewMode] = useState('grade'); // 'grade' or 'department'
+  const [availableSubjects] = useState([
+    'Mathematics', 'English', 'Science', 'Social Studies', 'History', 'Geography',
+    'Physics', 'Chemistry', 'Biology', 'Computer Science', 'Art', 'Music',
+    'Physical Education', 'Economics', 'Business Studies', 'Literature',
+    'Environmental Science', 'Psychology', 'Sociology', 'Political Science'
+  ]);
+
+  // Curriculum details dialog state
+  const [curriculumDetailsDialog, setCurriculumDetailsDialog] = useState(false);
+  const [selectedCurriculum, setSelectedCurriculum] = useState(null);
+
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -153,6 +168,7 @@ export default function VicePrincipalDashboard() {
   const { data: exams, isLoading: loadingExams } = useQuery({ queryKey: ['vpExams'], queryFn: vpAPI.getExams });
   const { data: timetables, isLoading: loadingTimetables } = useQuery({ queryKey: ['vpTimetables'], queryFn: vpAPI.getTimetables });
   const { data: curriculumPlans, isLoading: loadingCurriculum } = useQuery({ queryKey: ['vpCurriculum'], queryFn: vpAPI.getCurriculumPlans });
+  const { data: approvedCurriculumPlans, isLoading: loadingApprovedCurriculum } = useQuery({ queryKey: ['vpApprovedCurriculum'], queryFn: vpAPI.getApprovedCurriculumPlans });
   const { data: hodSubmissions, isLoading: loadingHODSubmissions } = useQuery({ queryKey: ['vpHODSubmissions'], queryFn: vpAPI.getHODSubmissions });
 
   // Mutations
@@ -325,7 +341,7 @@ export default function VicePrincipalDashboard() {
     return <Box p={3}><Typography color="error">Access denied: Vice Principal only</Typography></Box>;
   }
 
-  if (loadingOverview || loadingStaff || loadingStats || loadingDept || loadingAllDepts || loadingHODs || loadingExams || loadingTimetables || loadingCurriculum || loadingHODSubmissions) {
+  if (loadingOverview || loadingStaff || loadingStats || loadingDept || loadingAllDepts || loadingHODs || loadingExams || loadingTimetables || loadingCurriculum || loadingApprovedCurriculum || loadingHODSubmissions) {
     return <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh"><CircularProgress /></Box>;
   }
 
@@ -392,6 +408,7 @@ export default function VicePrincipalDashboard() {
         <Tab label="Timetables" icon={<ScheduleIcon />} />
         <Tab label="Curriculum" icon={<BookIcon />} />
         <Tab label="HOD Approvals" icon={<ApprovalIcon />} />
+        <Tab label="Approved Curriculum" icon={<CheckCircleIcon />} />
       </Tabs>
 
       {/* Overview Tab */}
@@ -420,6 +437,34 @@ export default function VicePrincipalDashboard() {
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
                   Total Heads of Departments
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Curriculum Status</Typography>
+                <Typography variant="h4" color="success" gutterBottom>
+                  {curriculumPlans?.filter(plan => plan.status === 'Approved')?.length || 0} Approved
+                </Typography>
+                <Typography variant="body2" color="textSecondary">
+                  {curriculumPlans?.filter(plan => plan.status === 'Draft')?.length || 0} Pending Approval
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Exam Management</Typography>
+                <Typography variant="h4" color="info" gutterBottom>
+                  {exams?.length || 0} Exams
+                </Typography>
+                <Typography variant="body2" color="textSecondary">
+                  {timetables?.length || 0} Scheduled
                 </Typography>
               </CardContent>
             </Card>
@@ -456,6 +501,58 @@ export default function VicePrincipalDashboard() {
                     Showing first 5 departments. View all in Departments tab.
                   </Typography>
                 )}
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Curriculum by Grade</Typography>
+                <Grid container spacing={2}>
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((grade) => {
+                    const gradeCurriculum = curriculumPlans?.filter(plan => plan.grade === grade) || [];
+                    const approvedCount = gradeCurriculum.filter(plan => plan.status === 'Approved').length;
+                    const totalCount = gradeCurriculum.length;
+                    const completionPercentage = totalCount > 0 ? Math.round((approvedCount / totalCount) * 100) : 0;
+                    
+                    return (
+                      <Grid item xs={6} sm={4} md={2} key={grade}>
+                        <Box 
+                          sx={{ 
+                            p: 2, 
+                            border: '1px solid', 
+                            borderColor: 'divider', 
+                            borderRadius: 1,
+                            textAlign: 'center',
+                            cursor: 'pointer',
+                            '&:hover': { bgcolor: 'action.hover' }
+                          }}
+                          onClick={() => {
+                            setTab(5); // Switch to Curriculum tab
+                            setCurriculumViewMode('grade');
+                            setSelectedGrade(grade);
+                          }}
+                        >
+                          <Typography variant="h6" color="primary">
+                            Grade {grade}
+                          </Typography>
+                          <Typography variant="body2" color="textSecondary">
+                            {approvedCount}/{totalCount} Approved
+                          </Typography>
+                          <Box sx={{ mt: 1 }}>
+                            <Typography 
+                              variant="caption" 
+                              color={completionPercentage >= 80 ? 'success.main' : completionPercentage >= 50 ? 'warning.main' : 'error.main'}
+                            >
+                              {completionPercentage}% Complete
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Grid>
+                    );
+                  })}
+                </Grid>
               </CardContent>
             </Card>
           </Grid>
@@ -798,85 +895,446 @@ export default function VicePrincipalDashboard() {
         <Box>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
             <Typography variant="h6">Curriculum Management</Typography>
-            <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCurriculumDialog(true)}>
-              Add Curriculum Plan
-            </Button>
+            <Box display="flex" gap={1}>
+              <Button 
+                variant={curriculumViewMode === 'grade' ? 'contained' : 'outlined'}
+                onClick={() => setCurriculumViewMode('grade')}
+              >
+                Grade View
+              </Button>
+              <Button 
+                variant={curriculumViewMode === 'department' ? 'contained' : 'outlined'}
+                onClick={() => setCurriculumViewMode('department')}
+              >
+                Department View
+              </Button>
+              <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCurriculumDialog(true)}>
+                Add Curriculum
+              </Button>
+            </Box>
           </Box>
-          
-          <Grid container spacing={2}>
-            {curriculumPlans?.map((plan) => (
-              <Grid item xs={12} md={6} key={plan._id}>
-                <Card>
-                  <CardContent>
-                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                      <Typography variant="h6">{plan.subject} - Grade {plan.grade}</Typography>
-                      <Box>
-                        <IconButton 
-                          size="small" 
-                          color="primary"
-                          onClick={() => {
-                            setEditingCurriculum({
-                              id: plan._id,
-                              departmentId: plan.departmentId?._id,
-                              subject: plan.subject,
-                              grade: plan.grade,
-                              description: plan.description,
-                              objectives: plan.objectives
-                            });
-                            setEditCurriculumDialog(true);
-                          }}
-                        >
-                          <EditIcon />
-                        </IconButton>
-                        <IconButton 
-                          size="small" 
-                          color="error"
-                          onClick={() => {
-                            if (window.confirm('Are you sure you want to delete this curriculum plan?')) {
-                              deleteCurriculumMutation.mutate(plan._id);
-                            }
-                          }}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
+
+          {curriculumViewMode === 'grade' ? (
+            // Grade-wise Curriculum View
+            <Box>
+              <Box display="flex" gap={1} mb={3} sx={{ overflowX: 'auto', pb: 1 }}>
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((grade) => (
+                  <Button
+                    key={grade}
+                    variant={selectedGrade === grade ? 'contained' : 'outlined'}
+                    onClick={() => setSelectedGrade(grade)}
+                    sx={{ minWidth: 80 }}
+                  >
+                    Grade {grade}
+                  </Button>
+                ))}
+              </Box>
+
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={8}>
+                  <Card>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>
+                        Grade {selectedGrade} Curriculum
+                      </Typography>
+                      <TableContainer>
+                        <Table>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>Subject</TableCell>
+                              <TableCell>Department</TableCell>
+                              <TableCell>Description</TableCell>
+                              <TableCell>Status</TableCell>
+                              <TableCell>Actions</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {curriculumPlans?.filter(plan => plan.grade === selectedGrade)?.map((plan) => (
+                              <TableRow key={plan._id}>
+                                <TableCell>
+                                  <Typography variant="body2" fontWeight="medium">
+                                    {plan.subject}
+                                  </Typography>
+                                </TableCell>
+                                <TableCell>{plan.departmentId?.name}</TableCell>
+                                <TableCell>
+                                  <Typography variant="body2" noWrap sx={{ maxWidth: 200 }}>
+                                    {plan.description}
+                                  </Typography>
+                                </TableCell>
+                                <TableCell>
+                                  <Chip 
+                                    label={plan.status || 'Draft'} 
+                                    color={plan.status === 'Approved' ? 'success' : plan.status === 'Rejected' ? 'error' : 'warning'} 
+                                    size="small" 
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <IconButton 
+                                    size="small" 
+                                    color="primary"
+                                    onClick={() => {
+                                      setEditingCurriculum({
+                                        id: plan._id,
+                                        departmentId: plan.departmentId?._id,
+                                        subject: plan.subject,
+                                        grade: plan.grade,
+                                        description: plan.description,
+                                        objectives: plan.objectives
+                                      });
+                                      setEditCurriculumDialog(true);
+                                    }}
+                                  >
+                                    <EditIcon />
+                                  </IconButton>
+                                  <IconButton 
+                                    size="small" 
+                                    color="error"
+                                    onClick={() => {
+                                      if (window.confirm('Are you sure you want to delete this curriculum plan?')) {
+                                        deleteCurriculumMutation.mutate(plan._id);
+                                      }
+                                    }}
+                                  >
+                                    <DeleteIcon />
+                                  </IconButton>
+                                  {plan.status === 'Draft' && (
+                                    <IconButton 
+                                      size="small" 
+                                      color="success"
+                                      onClick={() => approveCurriculumMutation.mutate(plan._id)}
+                                    >
+                                      <CheckCircleIcon />
+                                    </IconButton>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                            {curriculumPlans?.filter(plan => plan.grade === selectedGrade)?.length === 0 && (
+                              <TableRow>
+                                <TableCell colSpan={5} align="center">
+                                  <Typography variant="body2" color="textSecondary">
+                                    No curriculum plans found for Grade {selectedGrade}
+                                  </Typography>
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                <Grid item xs={12} md={4}>
+                  <Card>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>
+                        Grade {selectedGrade} Summary
+                      </Typography>
+                      <Box mb={2}>
+                        <Typography variant="body2" color="textSecondary">
+                          Total Subjects: {curriculumPlans?.filter(plan => plan.grade === selectedGrade)?.length || 0}
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          Approved: {curriculumPlans?.filter(plan => plan.grade === selectedGrade && plan.status === 'Approved')?.length || 0}
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          Pending: {curriculumPlans?.filter(plan => plan.grade === selectedGrade && plan.status === 'Draft')?.length || 0}
+                        </Typography>
                       </Box>
-                    </Box>
-                    <Typography variant="body2" color="textSecondary" gutterBottom>
-                      Department: {plan.departmentId?.name}
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary" gutterBottom>
-                      {plan.description}
-                    </Typography>
-                    <Typography variant="body2">
-                      <strong>Objectives:</strong> {plan.objectives}
-                    </Typography>
-                    <Box mt={2} display="flex" justifyContent="space-between" alignItems="center">
-                      <Chip 
-                        label={plan.status || 'Draft'} 
-                        color={plan.status === 'Approved' ? 'success' : plan.status === 'Rejected' ? 'error' : 'warning'} 
-                        size="small" 
-                      />
-                      {plan.status === 'Draft' && (
-                        <Button 
-                          size="small" 
-                          variant="outlined" 
-                          color="success"
-                          onClick={() => approveCurriculumMutation.mutate(plan._id)}
-                        >
-                          Approve
-                        </Button>
-                      )}
-                    </Box>
-                  </CardContent>
-                </Card>
+                      
+                      <Divider sx={{ my: 2 }} />
+                      
+                      <Typography variant="subtitle2" gutterBottom>
+                        Available Subjects for Grade {selectedGrade}
+                      </Typography>
+                      <Box display="flex" flexWrap="wrap" gap={1}>
+                        {availableSubjects.slice(0, 8).map((subject) => (
+                          <Chip 
+                            key={subject}
+                            label={subject}
+                            size="small"
+                            variant="outlined"
+                            onClick={() => {
+                              setNewCurriculum({
+                                departmentId: '',
+                                subject: subject,
+                                grade: selectedGrade,
+                                description: '',
+                                objectives: ''
+                              });
+                              setCurriculumDialog(true);
+                            }}
+                            sx={{ cursor: 'pointer' }}
+                          />
+                        ))}
+                        {availableSubjects.length > 8 && (
+                          <Chip 
+                            label={`+${availableSubjects.length - 8} more`}
+                            size="small"
+                            variant="outlined"
+                            onClick={() => {
+                              setNewCurriculum({
+                                departmentId: '',
+                                subject: '',
+                                grade: selectedGrade,
+                                description: '',
+                                objectives: ''
+                              });
+                              setCurriculumDialog(true);
+                            }}
+                            sx={{ cursor: 'pointer' }}
+                          />
+                        )}
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
               </Grid>
-            ))}
+            </Box>
+          ) : (
+            // Department-wise Curriculum View (Original)
+            <Grid container spacing={2}>
+              {curriculumPlans?.map((plan) => (
+                <Grid item xs={12} md={6} key={plan._id}>
+                  <Card>
+                    <CardContent>
+                      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                        <Typography variant="h6">{plan.subject} - Grade {plan.grade}</Typography>
+                        <Box>
+                          <IconButton 
+                            size="small" 
+                            color="primary"
+                            onClick={() => {
+                              setEditingCurriculum({
+                                id: plan._id,
+                                departmentId: plan.departmentId?._id,
+                                subject: plan.subject,
+                                grade: plan.grade,
+                                description: plan.description,
+                                objectives: plan.objectives
+                              });
+                              setEditCurriculumDialog(true);
+                            }}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                          <IconButton 
+                            size="small" 
+                            color="error"
+                            onClick={() => {
+                              if (window.confirm('Are you sure you want to delete this curriculum plan?')) {
+                                deleteCurriculumMutation.mutate(plan._id);
+                              }
+                            }}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Box>
+                      </Box>
+                      <Typography variant="body2" color="textSecondary" gutterBottom>
+                        Department: {plan.departmentId?.name}
+                      </Typography>
+                      <Typography variant="body2" color="textSecondary" gutterBottom>
+                        {plan.description}
+                      </Typography>
+                      <Typography variant="body2">
+                        <strong>Objectives:</strong> {plan.objectives}
+                      </Typography>
+                      <Box mt={2} display="flex" justifyContent="space-between" alignItems="center">
+                        <Chip 
+                          label={plan.status || 'Draft'} 
+                          color={plan.status === 'Approved' ? 'success' : plan.status === 'Rejected' ? 'error' : 'warning'} 
+                          size="small" 
+                        />
+                        {plan.status === 'Draft' && (
+                          <Button 
+                            size="small" 
+                            variant="outlined" 
+                            color="success"
+                            onClick={() => approveCurriculumMutation.mutate(plan._id)}
+                          >
+                            Approve
+                          </Button>
+                        )}
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          )}
+        </Box>
+      )}
+
+      {/* Approved Curriculum Tab */}
+      {tab === 6 && (
+        <Box>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Typography variant="h6">Approved Curriculum Plans</Typography>
+            <Box display="flex" gap={1}>
+              <Button 
+                variant="outlined"
+                onClick={() => {
+                  setTab(5); // Switch to Curriculum tab
+                  setCurriculumViewMode('grade');
+                }}
+              >
+                Manage Curriculum
+              </Button>
+            </Box>
+          </Box>
+
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={8}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    All Approved Curriculum Plans ({approvedCurriculumPlans?.length || 0})
+                  </Typography>
+                  <TableContainer>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Subject</TableCell>
+                          <TableCell>Grade</TableCell>
+                          <TableCell>Department</TableCell>
+                          <TableCell>Created By</TableCell>
+                          <TableCell>Approved By</TableCell>
+                          <TableCell>Approved Date</TableCell>
+                          <TableCell>Actions</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {approvedCurriculumPlans?.map((plan) => (
+                          <TableRow key={plan._id}>
+                            <TableCell>
+                              <Typography variant="body2" fontWeight="medium">
+                                {plan.subject}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Chip label={`Grade ${plan.grade}`} size="small" color="primary" />
+                            </TableCell>
+                            <TableCell>{plan.departmentId?.name}</TableCell>
+                            <TableCell>{plan.createdBy?.name}</TableCell>
+                            <TableCell>{plan.approvedBy?.name}</TableCell>
+                            <TableCell>
+                              {plan.approvedAt ? new Date(plan.approvedAt).toLocaleDateString() : 'N/A'}
+                            </TableCell>
+                            <TableCell>
+                              <IconButton 
+                                size="small" 
+                                color="primary"
+                                onClick={() => {
+                                  setEditingCurriculum({
+                                    id: plan._id,
+                                    departmentId: plan.departmentId?._id,
+                                    subject: plan.subject,
+                                    grade: plan.grade,
+                                    description: plan.description,
+                                    objectives: plan.objectives
+                                  });
+                                  setEditCurriculumDialog(true);
+                                }}
+                              >
+                                <EditIcon />
+                              </IconButton>
+                              <IconButton 
+                                size="small" 
+                                color="info"
+                                onClick={() => {
+                                  setSelectedCurriculum(plan);
+                                  setCurriculumDetailsDialog(true);
+                                }}
+                              >
+                                <BookIcon />
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {approvedCurriculumPlans?.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={7} align="center">
+                              <Typography variant="body2" color="textSecondary">
+                                No approved curriculum plans found
+                              </Typography>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12} md={4}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Approved Curriculum Summary
+                  </Typography>
+                  
+                  <Box mb={3}>
+                    <Typography variant="body2" color="textSecondary" gutterBottom>
+                      Total Approved Plans: {approvedCurriculumPlans?.length || 0}
+                    </Typography>
+                    
+                    <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
+                      By Grade Level:
+                    </Typography>
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((grade) => {
+                      const gradeCount = approvedCurriculumPlans?.filter(plan => plan.grade === grade)?.length || 0;
+                      return gradeCount > 0 ? (
+                        <Box key={grade} display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                          <Typography variant="body2">Grade {grade}</Typography>
+                          <Chip label={gradeCount} size="small" color="success" />
+                        </Box>
+                      ) : null;
+                    })}
+                  </Box>
+
+                  <Divider sx={{ my: 2 }} />
+
+                  <Typography variant="subtitle2" gutterBottom>
+                    By Department:
+                  </Typography>
+                  {departments?.map((dept) => {
+                    const deptCount = approvedCurriculumPlans?.filter(plan => plan.departmentId?._id === dept._id)?.length || 0;
+                    return deptCount > 0 ? (
+                      <Box key={dept._id} display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                        <Typography variant="body2">{dept.name}</Typography>
+                        <Chip label={deptCount} size="small" color="primary" />
+                      </Box>
+                    ) : null;
+                  })}
+
+                  <Divider sx={{ my: 2 }} />
+
+                  <Typography variant="subtitle2" gutterBottom>
+                    Recent Approvals:
+                  </Typography>
+                  {approvedCurriculumPlans?.slice(0, 3).map((plan) => (
+                    <Box key={plan._id} sx={{ mb: 1, p: 1, bgcolor: 'background.paper', borderRadius: 1 }}>
+                      <Typography variant="body2" fontWeight="medium">
+                        {plan.subject} - Grade {plan.grade}
+                      </Typography>
+                      <Typography variant="caption" color="textSecondary">
+                        Approved: {plan.approvedAt ? new Date(plan.approvedAt).toLocaleDateString() : 'N/A'}
+                      </Typography>
+                    </Box>
+                  ))}
+                </CardContent>
+              </Card>
+            </Grid>
           </Grid>
         </Box>
       )}
 
       {/* HOD Approvals Tab */}
-      {tab === 6 && (
+      {tab === 7 && (
         <Card>
           <CardContent>
             <Typography variant="h6" gutterBottom>HOD Submissions Pending Approval</Typography>
@@ -1259,60 +1717,96 @@ export default function VicePrincipalDashboard() {
       </Dialog>
 
       {/* Add Curriculum Dialog */}
-      <Dialog open={curriculumDialog} onClose={() => setCurriculumDialog(false)} maxWidth="sm" fullWidth>
+      <Dialog open={curriculumDialog} onClose={() => setCurriculumDialog(false)} maxWidth="md" fullWidth>
         <DialogTitle>Add Curriculum Plan</DialogTitle>
         <DialogContent>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Department</InputLabel>
+                <Select
+                  value={newCurriculum.departmentId}
+                  onChange={(e) => setNewCurriculum({ ...newCurriculum, departmentId: e.target.value })}
+                  label="Department"
+                >
+                  {departments?.map((dept) => (
+                    <MenuItem key={dept._id} value={dept._id}>
+                      {dept.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Grade</InputLabel>
+                <Select
+                  value={newCurriculum.grade}
+                  onChange={(e) => setNewCurriculum({ ...newCurriculum, grade: e.target.value })}
+                  label="Grade"
+                >
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((grade) => (
+                    <MenuItem key={grade} value={grade}>Grade {grade}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+
           <FormControl fullWidth margin="normal">
-            <InputLabel>Department</InputLabel>
+            <InputLabel>Subject</InputLabel>
             <Select
-              value={newCurriculum.departmentId}
-              onChange={(e) => setNewCurriculum({ ...newCurriculum, departmentId: e.target.value })}
-              label="Department"
+              value={newCurriculum.subject}
+              onChange={(e) => setNewCurriculum({ ...newCurriculum, subject: e.target.value })}
+              label="Subject"
             >
-              {departments?.map((dept) => (
-                <MenuItem key={dept._id} value={dept._id}>
-                  {dept.name}
-                </MenuItem>
+              {availableSubjects.map((subject) => (
+                <MenuItem key={subject} value={subject}>{subject}</MenuItem>
               ))}
             </Select>
           </FormControl>
-          <TextField 
-            label="Subject" 
-            fullWidth 
-            margin="normal" 
-            value={newCurriculum.subject} 
-            onChange={e => setNewCurriculum({ ...newCurriculum, subject: e.target.value })} 
-          />
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Grade</InputLabel>
-            <Select
-              value={newCurriculum.grade}
-              onChange={(e) => setNewCurriculum({ ...newCurriculum, grade: e.target.value })}
-              label="Grade"
-            >
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((grade) => (
-                <MenuItem key={grade} value={grade}>Grade {grade}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+
           <TextField 
             label="Description" 
             fullWidth 
             margin="normal" 
             multiline 
             rows={3}
+            placeholder="Brief description of the curriculum plan..."
             value={newCurriculum.description} 
             onChange={e => setNewCurriculum({ ...newCurriculum, description: e.target.value })} 
           />
+          
           <TextField 
             label="Learning Objectives" 
             fullWidth 
             margin="normal" 
             multiline 
             rows={4}
+            placeholder="List the key learning objectives for this subject and grade..."
             value={newCurriculum.objectives} 
             onChange={e => setNewCurriculum({ ...newCurriculum, objectives: e.target.value })} 
           />
+
+          <Box mt={2}>
+            <Typography variant="subtitle2" gutterBottom>
+              Quick Subject Selection for Grade {newCurriculum.grade || 'All'}
+            </Typography>
+            <Box display="flex" flexWrap="wrap" gap={1}>
+              {availableSubjects.slice(0, 10).map((subject) => (
+                <Chip 
+                  key={subject}
+                  label={subject}
+                  size="small"
+                  variant={newCurriculum.subject === subject ? "filled" : "outlined"}
+                  color={newCurriculum.subject === subject ? "primary" : "default"}
+                  onClick={() => setNewCurriculum({ ...newCurriculum, subject: subject })}
+                  sx={{ cursor: 'pointer' }}
+                />
+              ))}
+            </Box>
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setCurriculumDialog(false)}>Cancel</Button>
@@ -1561,60 +2055,96 @@ export default function VicePrincipalDashboard() {
       </Dialog>
 
       {/* Edit Curriculum Dialog */}
-      <Dialog open={editCurriculumDialog} onClose={() => setEditCurriculumDialog(false)} maxWidth="sm" fullWidth>
+      <Dialog open={editCurriculumDialog} onClose={() => setEditCurriculumDialog(false)} maxWidth="md" fullWidth>
         <DialogTitle>Edit Curriculum Plan</DialogTitle>
         <DialogContent>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Department</InputLabel>
+                <Select
+                  value={editingCurriculum.departmentId || ''}
+                  onChange={(e) => setEditingCurriculum({ ...editingCurriculum, departmentId: e.target.value })}
+                  label="Department"
+                >
+                  {departments?.map((dept) => (
+                    <MenuItem key={dept._id} value={dept._id}>
+                      {dept.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Grade</InputLabel>
+                <Select
+                  value={editingCurriculum.grade || ''}
+                  onChange={(e) => setEditingCurriculum({ ...editingCurriculum, grade: e.target.value })}
+                  label="Grade"
+                >
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((grade) => (
+                    <MenuItem key={grade} value={grade}>Grade {grade}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+
           <FormControl fullWidth margin="normal">
-            <InputLabel>Department</InputLabel>
+            <InputLabel>Subject</InputLabel>
             <Select
-              value={editingCurriculum.departmentId || ''}
-              onChange={(e) => setEditingCurriculum({ ...editingCurriculum, departmentId: e.target.value })}
-              label="Department"
+              value={editingCurriculum.subject || ''}
+              onChange={(e) => setEditingCurriculum({ ...editingCurriculum, subject: e.target.value })}
+              label="Subject"
             >
-              {departments?.map((dept) => (
-                <MenuItem key={dept._id} value={dept._id}>
-                  {dept.name}
-                </MenuItem>
+              {availableSubjects.map((subject) => (
+                <MenuItem key={subject} value={subject}>{subject}</MenuItem>
               ))}
             </Select>
           </FormControl>
-          <TextField 
-            label="Subject" 
-            fullWidth 
-            margin="normal" 
-            value={editingCurriculum.subject || ''} 
-            onChange={e => setEditingCurriculum({ ...editingCurriculum, subject: e.target.value })} 
-          />
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Grade</InputLabel>
-            <Select
-              value={editingCurriculum.grade || ''}
-              onChange={(e) => setEditingCurriculum({ ...editingCurriculum, grade: e.target.value })}
-              label="Grade"
-            >
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((grade) => (
-                <MenuItem key={grade} value={grade}>Grade {grade}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+
           <TextField 
             label="Description" 
             fullWidth 
             margin="normal" 
             multiline 
             rows={3}
+            placeholder="Brief description of the curriculum plan..."
             value={editingCurriculum.description || ''} 
             onChange={e => setEditingCurriculum({ ...editingCurriculum, description: e.target.value })} 
           />
+          
           <TextField 
             label="Learning Objectives" 
             fullWidth 
             margin="normal" 
             multiline 
             rows={4}
+            placeholder="List the key learning objectives for this subject and grade..."
             value={editingCurriculum.objectives || ''} 
             onChange={e => setEditingCurriculum({ ...editingCurriculum, objectives: e.target.value })} 
           />
+
+          <Box mt={2}>
+            <Typography variant="subtitle2" gutterBottom>
+              Quick Subject Selection for Grade {editingCurriculum.grade || 'All'}
+            </Typography>
+            <Box display="flex" flexWrap="wrap" gap={1}>
+              {availableSubjects.slice(0, 10).map((subject) => (
+                <Chip 
+                  key={subject}
+                  label={subject}
+                  size="small"
+                  variant={editingCurriculum.subject === subject ? "filled" : "outlined"}
+                  color={editingCurriculum.subject === subject ? "primary" : "default"}
+                  onClick={() => setEditingCurriculum({ ...editingCurriculum, subject: subject })}
+                  sx={{ cursor: 'pointer' }}
+                />
+              ))}
+            </Box>
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEditCurriculumDialog(false)}>Cancel</Button>
@@ -1741,6 +2271,130 @@ export default function VicePrincipalDashboard() {
           >
             Logout
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Curriculum Details Dialog */}
+      <Dialog open={curriculumDetailsDialog} onClose={() => setCurriculumDetailsDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle>
+          <Box display="flex" alignItems="center" gap={1}>
+            <BookIcon color="primary" />
+            Curriculum Plan Details
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {selectedCurriculum && (
+            <Box>
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="h6" gutterBottom>
+                    {selectedCurriculum.subject} - Grade {selectedCurriculum.grade}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary" gutterBottom>
+                    Department: {selectedCurriculum.departmentId?.name}
+                  </Typography>
+                  <Chip 
+                    label="Approved" 
+                    color="success" 
+                    size="small" 
+                    sx={{ mb: 2 }}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Approval Information
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    Approved by: {selectedCurriculum.approvedBy?.name || 'N/A'}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    Approved on: {selectedCurriculum.approvedAt ? new Date(selectedCurriculum.approvedAt).toLocaleDateString() : 'N/A'}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    Created by: {selectedCurriculum.createdBy?.name || 'N/A'}
+                  </Typography>
+                </Grid>
+              </Grid>
+
+              <Divider sx={{ my: 3 }} />
+
+              <Typography variant="h6" gutterBottom>
+                Description
+              </Typography>
+              <Typography variant="body2" paragraph>
+                {selectedCurriculum.description || 'No description provided'}
+              </Typography>
+
+              <Typography variant="h6" gutterBottom>
+                Learning Objectives
+              </Typography>
+              <Typography variant="body2" paragraph>
+                {selectedCurriculum.objectives || 'No objectives provided'}
+              </Typography>
+
+              {selectedCurriculum.topics && selectedCurriculum.topics.length > 0 && (
+                <>
+                  <Typography variant="h6" gutterBottom>
+                    Topics Covered
+                  </Typography>
+                  <Box>
+                    {selectedCurriculum.topics.map((topic, index) => (
+                      <Box key={index} sx={{ mb: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
+                        <Typography variant="subtitle2" gutterBottom>
+                          {topic.title}
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary" gutterBottom>
+                          {topic.description}
+                        </Typography>
+                        <Typography variant="caption" color="textSecondary">
+                          Duration: {topic.duration}
+                        </Typography>
+                        {topic.learningOutcomes && topic.learningOutcomes.length > 0 && (
+                          <Box mt={1}>
+                            <Typography variant="caption" fontWeight="medium">
+                              Learning Outcomes:
+                            </Typography>
+                            <ul style={{ margin: '4px 0', paddingLeft: '20px' }}>
+                              {topic.learningOutcomes.map((outcome, idx) => (
+                                <li key={idx}>
+                                  <Typography variant="caption" color="textSecondary">
+                                    {outcome}
+                                  </Typography>
+                                </li>
+                              ))}
+                            </ul>
+                          </Box>
+                        )}
+                      </Box>
+                    ))}
+                  </Box>
+                </>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCurriculumDetailsDialog(false)}>Close</Button>
+          {selectedCurriculum && (
+            <Button 
+              variant="contained" 
+              onClick={() => {
+                setEditingCurriculum({
+                  id: selectedCurriculum._id,
+                  departmentId: selectedCurriculum.departmentId?._id,
+                  subject: selectedCurriculum.subject,
+                  grade: selectedCurriculum.grade,
+                  description: selectedCurriculum.description,
+                  objectives: selectedCurriculum.objectives
+                });
+                setCurriculumDetailsDialog(false);
+                setEditCurriculumDialog(true);
+              }}
+            >
+              Edit Plan
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
     </Box>

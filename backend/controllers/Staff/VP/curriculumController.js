@@ -66,6 +66,22 @@ exports.getAllCurriculumPlans = async (req, res) => {
   }
 };
 
+// Get approved curriculum plans
+exports.getApprovedCurriculumPlans = async (req, res) => {
+  try {
+    const approvedCurriculumPlans = await CurriculumPlan.find({ status: 'Approved' })
+      .populate('departmentId', 'name')
+      .populate('createdBy', 'name email')
+      .populate('approvedBy', 'name email')
+      .sort({ approvedAt: -1 });
+    
+    res.json(approvedCurriculumPlans);
+  } catch (error) {
+    console.error('Error fetching approved curriculum plans:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // Create a new curriculum plan
 exports.createCurriculumPlan = async (req, res) => {
   try {

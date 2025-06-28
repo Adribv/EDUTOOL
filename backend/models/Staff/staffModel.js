@@ -31,6 +31,45 @@ const staffSchema = new mongoose.Schema({
   joiningDate: Date,
   qualification: String,
   experience: String,
+  bio: {
+    type: String,
+    maxlength: 500
+  },
+  designation: String,
+  emergencyContact: {
+    name: String,
+    relationship: String,
+    phone: String,
+    email: String
+  },
+  professionalDevelopment: [
+    {
+      title: String,
+      institution: String,
+      date: Date,
+      duration: String,
+      certificate: String,
+      description: String
+    }
+  ],
+  skills: [String],
+  languages: [String],
+  socialMedia: {
+    linkedin: String,
+    twitter: String,
+    website: String
+  },
+  preferences: {
+    notifications: {
+      email: { type: Boolean, default: true },
+      sms: { type: Boolean, default: false },
+      push: { type: Boolean, default: true }
+    },
+    privacy: {
+      profileVisibility: { type: String, enum: ['public', 'private', 'staff-only'], default: 'staff-only' },
+      showContactInfo: { type: Boolean, default: false }
+    }
+  },
   assignedSubjects: [
     {
       class: String,
@@ -79,6 +118,8 @@ const staffSchema = new mongoose.Schema({
     default: 'active'
   },
   subjects: [String]
+}, {
+  timestamps: true
 });
 
 // Hash password before saving
