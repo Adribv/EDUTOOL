@@ -39,6 +39,7 @@ import {
 } from '@mui/icons-material';
 import { adminAPI } from '../../services/api';
 import { toast } from 'react-toastify';
+import axios from 'axios';
 
 const Fees = () => {
   const [loading, setLoading] = useState(true);
@@ -191,8 +192,8 @@ const Fees = () => {
         await adminAPI.updateFeeStructure(selectedItem.id, formData);
         toast.success('Fee structure updated successfully');
       } else {
-        await adminAPI.createFeeStructure(formData);
-        toast.success('Fee structure added successfully');
+        await axios.post('http://localhost:5000/api/admin-staff/fee-structure/approval', formData);
+        toast.success('Fee approval request submitted successfully. Waiting for principal approval.');
       }
       handleCloseDialog();
       fetchFeeStructures();

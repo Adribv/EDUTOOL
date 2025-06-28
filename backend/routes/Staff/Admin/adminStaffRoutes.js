@@ -60,6 +60,18 @@ router.get('/fee-structure/public', adminStaffController.getFeeStructures);
 router.post('/fee-structure/public', adminStaffController.createSimpleFeeStructure);
 router.put('/fee-structure/public/:id', adminStaffController.updateSimpleFeeStructure);
 router.delete('/fee-structure/public/:id', adminStaffController.deleteFeeStructure);
+router.get('/inventory/export', adminStaffController.exportInventory);
+router.post('/inventory/bulk', adminStaffController.bulkImportInventory);
+
+// Public fee approval endpoint (no auth required)
+router.post('/fee-structure/approval', adminStaffController.configureFeeStructure);
+
+// Approval routes (no auth required for creating approvals)
+router.post('/approvals', adminStaffController.createApprovalRequest);
+router.get('/approvals', adminStaffController.getApprovalRequests);
+router.get('/approvals/:id', adminStaffController.getApprovalRequestById);
+router.put('/approvals/:id', adminStaffController.updateApprovalRequest);
+router.delete('/approvals/:id', adminStaffController.deleteApprovalRequest);
 
 // Apply authentication middleware to all routes below this line
 router.use(verifyToken);

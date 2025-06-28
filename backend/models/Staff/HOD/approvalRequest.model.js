@@ -28,14 +28,17 @@ const approvalHistorySchema = new Schema({
 
 const approvalRequestSchema = new Schema({
   requesterId: {
-    type: Schema.Types.ObjectId,
-    ref: 'Staff',
-    required: true
+    type: Schema.Types.Mixed,
+    required: false
+  },
+  requesterName: {
+    type: String,
+    default: 'Admin'
   },
   requestType: {
     type: String,
     required: true,
-    enum: ['Leave', 'Resource', 'Event', 'Budget', 'Other']
+    enum: ['Leave', 'Resource', 'Event', 'Budget', 'Fee', 'Announcement', 'Communication', 'Other']
   },
   title: {
     type: String,
@@ -44,6 +47,10 @@ const approvalRequestSchema = new Schema({
   description: {
     type: String,
     required: true
+  },
+  requestData: {
+    type: Schema.Types.Mixed,
+    default: {}
   },
   status: {
     type: String,

@@ -118,13 +118,18 @@ function FeeConfiguration() {
       if (selectedFee) {
         return axios.put(`http://localhost:5000/api/admin-staff/fee-structure/public/${selectedFee._id}`, values);
       } else {
-        return axios.post('http://localhost:5000/api/admin-staff/fee-structure/public', values);
+        // Create approval request instead of directly creating fee
+        return axios.post('http://localhost:5000/api/admin-staff/fee-structure/approval', values);
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['feeStructures']);
       handleClose();
-      toast.success(`Fee structure ${selectedFee ? 'updated' : 'added'} successfully`);
+      if (selectedFee) {
+        toast.success('Fee structure updated successfully');
+      } else {
+        toast.success('Fee approval request submitted successfully. Waiting for principal approval.');
+      }
     },
     onError: (error) => {
       console.error('Error saving fee structure:', error);

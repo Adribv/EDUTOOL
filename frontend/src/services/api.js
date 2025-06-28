@@ -218,7 +218,7 @@ export const adminAPI = {
 
   // Fee Management
   getFeeStructures: () => api.get('/api/admin-staff/fee-structure').then(res => res.data),
-  configureFeeStructure: (data) => api.post('/api/admin-staff/fee-structure', data),
+  configureFeeStructure: (data) => api.post('/api/admin-staff/fee-structure/approval', data),
   updateFeeStructure: (id, data) => api.post('/api/admin-staff/fee-structure', { ...data, id }),
   deleteFeeStructure: (id) => api.delete(`/api/admin-staff/fee-structure/${id}`),
   generateFeeReport: (params = {}) => api.get('/api/admin-staff/reports/fee-collection', {
@@ -396,6 +396,53 @@ export const adminAPI = {
 
     return api.post('/api/admin-staff/calendar', payload);
   },
+  createEventApproval: (formData) => {
+    const {
+      date,
+      startTime,
+      endTime,
+      location,
+      type,
+      title,
+      description,
+      organizer,
+      participants
+    } = formData;
+
+    const buildDateTime = (d, t, fallbackTime) => {
+      if (!d) return undefined;
+      const timePart = t || fallbackTime;
+      return new Date(`${d}T${timePart}`).toISOString();
+    };
+
+    // Set default date to today if not provided
+    const eventDate = date || new Date().toISOString().split('T')[0];
+    const eventStartTime = startTime || '09:00';
+    const eventEndTime = endTime || '10:00';
+
+    const payload = {
+      title: title || 'New Event', // Ensure title is provided
+      description: description || 'Event description', // Ensure description is provided
+      requestType: 'Event',
+      currentApprover: 'Principal',
+      status: 'Pending',
+      requestData: {
+        title: title || 'New Event',
+        description: description || 'Event description',
+        eventType: type ? (type.charAt(0).toUpperCase() + type.slice(1)) : 'Event',
+        startDate: buildDateTime(eventDate, eventStartTime, '09:00'),
+        endDate: buildDateTime(eventDate, eventEndTime, '10:00'),
+        location: location || 'TBD',
+        organizer: organizer || 'School Administration',
+        participants: participants || [],
+        venue: location || 'TBD', // Map location to venue for Event model
+        audience: ['All'], // Default audience
+        // Don't include ...rest here to avoid double nesting
+      }
+    };
+
+    return api.post('/api/admin-staff/approvals', payload);
+  },
   updateEvent: (id, formData) => {
     const {
       date,
@@ -484,6 +531,60 @@ export const adminAPI = {
 
     return api.post('/api/admin-staff/communications', payload);
   },
+  createCommunicationApproval: (formData) => {
+    // UI uses `title`, `content`, `type`, `targetAudience` etc.
+    // Backend expects `subject`, `content`, `communicationType`, `recipients`.
+    const {
+      title,
+      content,
+      type,
+      targetAudience,
+      startDate,
+      endDate,
+      priority,
+      ...rest
+    } = formData;
+
+    const mapAudience = (aud) => {
+      if (!aud) return 'All Students';
+      const val = aud.toLowerCase();
+      switch (val) {
+        case 'all':
+        case 'students':
+          return 'All Students';
+        case 'staff':
+          return 'All Staff';
+        case 'parents':
+          return 'All Parents';
+        case 'class':
+          return 'Specific Class';
+        case 'department':
+          return 'Specific Department';
+        default:
+          return 'Custom';
+      }
+    };
+
+    const payload = {
+      title: title || 'New Communication', // Ensure title is provided
+      description: content || 'Communication content', // Ensure description is provided
+      requestType: 'Communication',
+      currentApprover: 'Principal',
+      status: 'Pending',
+      requestData: {
+        subject: title || 'New Communication',
+        content: content || 'Communication content',
+        communicationType: type || 'Announcement',
+        recipients: [mapAudience(targetAudience)],
+        scheduledDate: startDate || new Date(),
+        endDate,
+        priority,
+        ...rest,
+      }
+    };
+
+    return api.post('/api/admin-staff/approvals', payload);
+  },
   updateCommunication: (id, formData) => {
     const {
       title,
@@ -530,6 +631,12 @@ export const adminAPI = {
     return api.put(`/api/admin-staff/communications/${id}`, payload);
   },
   updateCommunicationStatus: (id,data) => api.put(`/api/admin-staff/communications/${id}/status`, data),
+
+  // Approval Management
+  getApprovalRequests: (params = {}) => api.get('/api/admin-staff/approvals', { params }).then(res => res.data),
+  createApprovalRequest: (data) => api.post('/api/admin-staff/approvals', data),
+  updateApprovalRequest: (id, data) => api.put(`/api/admin-staff/approvals/${id}`, data),
+  deleteApprovalRequest: (id) => api.delete(`/api/admin-staff/approvals/${id}`),
 
   // Class Management
   getClasses: () => api.get('/api/admin-staff/classes').then(res=>{
@@ -823,58 +930,77 @@ export const hodAPI = {
 // Principal endpoints
 export const principalAPI = {
   // Dashboard
-  getDashboard: () => api.get('/principal/dashboard'),
+  getDashboard: () => api.get('/api/principal/dashboard'),
   
-  // School Management
-  getSchoolInfo: () => api.get('/principal/school'),
-  updateSchoolInfo: (data) => api.put('/principal/school', data),
+  // Approval System
+  getPendingApprovals: () => api.get('/api/principal/approvals'),
+  getApprovalDetails: (approvalId) => api.get(`/api/principal/approvals/${approvalId}`),
+  approveRequest: (approvalId, data) => api.put(`/api/principal/approvals/${approvalId}/approve`, data),
+  rejectRequest: (approvalId, data) => api.put(`/api/principal/approvals/${approvalId}/reject`, data),
+  getApprovalHistory: (params) => api.get('/api/principal/approvals/history', { params }),
   
-  // Department Management
-  getDepartments: () => api.get('/principal/departments'),
-  createDepartment: (data) => api.post('/principal/departments', data),
-  updateDepartment: (departmentId, data) => 
-    api.put(`/principal/departments/${departmentId}`, data),
-  deleteDepartment: (departmentId) => 
-    api.delete(`/principal/departments/${departmentId}`),
-  getDepartmentDetails: (departmentId) => 
-    api.get(`/principal/departments/${departmentId}`),
+  // Student Management
+  getAllStudents: () => api.get('/api/principal/students'),
+  getStudentDetails: (studentId) => api.get(`/api/principal/students/${studentId}`),
+  getStudentAttendance: () => api.get('/api/principal/students/attendance'),
+  getStudentPerformance: () => api.get('/api/principal/students/performance'),
   
   // Staff Management
-  getStaff: () => api.get('/principal/staff'),
-  getStaffDetails: (staffId) => api.get(`/principal/staff/${staffId}`),
-  createStaff: (data) => api.post('/principal/staff', data),
-  updateStaff: (staffId, data) => api.put(`/principal/staff/${staffId}`, data),
-  deleteStaff: (staffId) => api.delete(`/principal/staff/${staffId}`),
+  getStaff: () => api.get('/api/principal/staff'),
+  getStaffDetails: (staffId) => api.get(`/api/principal/staff/${staffId}`),
+  getLeaveRequests: () => api.get('/api/principal/staff/leave-requests'),
+  getStaffPerformance: () => api.get('/api/principal/staff/performance'),
+  approveLeaveRequest: (leaveId, data) => api.put(`/api/principal/staff/leave-requests/${leaveId}/approve`, data),
+  rejectLeaveRequest: (leaveId, data) => api.put(`/api/principal/staff/leave-requests/${leaveId}/reject`, data),
+  
+  // Admissions
+  getAdmissions: () => api.get('/api/principal/admissions'),
+  approveAdmission: (admissionId, data) => api.put(`/api/principal/admissions/${admissionId}/approve`, data),
+  rejectAdmission: (admissionId, data) => api.put(`/api/principal/admissions/${admissionId}/reject`, data),
+  
+  // School Management
+  getSchoolInfo: () => api.get('/api/principal/school'),
+  updateSchoolInfo: (data) => api.put('/api/principal/school', data),
+  
+  // Department Management
+  getDepartments: () => api.get('/api/principal/departments'),
+  createDepartment: (data) => api.post('/api/principal/departments', data),
+  updateDepartment: (departmentId, data) => 
+    api.put(`/api/principal/departments/${departmentId}`, data),
+  deleteDepartment: (departmentId) => 
+    api.delete(`/api/principal/departments/${departmentId}`),
+  getDepartmentDetails: (departmentId) => 
+    api.get(`/api/principal/departments/${departmentId}`),
   
   // Academic Management
-  getAcademicYear: () => api.get('/principal/academic-year'),
-  updateAcademicYear: (data) => api.put('/principal/academic-year', data),
-  getHolidays: () => api.get('/principal/holidays'),
-  createHoliday: (data) => api.post('/principal/holidays', data),
+  getAcademicYear: () => api.get('/api/principal/academic-year'),
+  updateAcademicYear: (data) => api.put('/api/principal/academic-year', data),
+  getHolidays: () => api.get('/api/principal/holidays'),
+  createHoliday: (data) => api.post('/api/principal/holidays', data),
   updateHoliday: (holidayId, data) => 
-    api.put(`/principal/holidays/${holidayId}`, data),
+    api.put(`/api/principal/holidays/${holidayId}`, data),
   deleteHoliday: (holidayId) => 
-    api.delete(`/principal/holidays/${holidayId}`),
+    api.delete(`/api/principal/holidays/${holidayId}`),
   
   // Reports
   generateSchoolReport: (params) => 
-    api.get('/principal/reports/school', { params }),
+    api.get('/api/principal/reports/school', { params }),
   generateDepartmentReport: (params) => 
-    api.get('/principal/reports/departments', { params }),
+    api.get('/api/principal/reports/departments', { params }),
   generateStaffReport: (params) => 
-    api.get('/principal/reports/staff', { params }),
+    api.get('/api/principal/reports/staff', { params }),
   
   // Profile Management
-  getProfile: () => api.get('/principal/profile'),
-  updateProfile: (data) => api.put('/principal/profile', data),
-  updatePassword: (data) => api.put('/principal/profile/password', data),
+  getProfile: () => api.get('/api/principal/profile'),
+  updateProfile: (data) => api.put('/api/principal/profile', data),
+  updatePassword: (data) => api.put('/api/principal/profile/password', data),
   uploadProfileImage: (formData) => 
-    api.post('/principal/profile/image', formData),
+    api.post('/api/principal/profile/image', formData),
   
   // Notifications and Messages
-  getNotifications: () => api.get('/principal/notifications'),
-  getMessages: () => api.get('/principal/messages'),
-  sendMessage: (data) => api.post('/principal/messages', data),
+  getNotifications: () => api.get('/api/principal/notifications'),
+  getMessages: () => api.get('/api/principal/messages'),
+  sendMessage: (data) => api.post('/api/principal/messages', data),
 };
 
 export default api;
