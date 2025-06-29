@@ -67,7 +67,24 @@ export const studentAPI = {
   getTimetable: () => api.get('/api/students/timetable'),
   getSubjects: () => api.get('/api/students/subjects'),
   getAssignments: () => api.get('/api/students/assignments'),
-  submitAssignment: (assignmentId, data) => api.post(`/api/students/assignments/${assignmentId}/submit`, data),
+  getAssignmentDetails: (assignmentId) => api.get(`/api/students/assignments/${assignmentId}`),
+  submitAssignment: (assignmentId, data) => {
+    const formData = new FormData();
+    
+    // Add text content if provided
+    if (data.content) {
+      formData.append('content', data.content);
+    }
+    
+    // Add file if provided
+    if (data.file) {
+      formData.append('file', data.file);
+    }
+    
+    return api.post(`/api/students/assignments/${assignmentId}/submit`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
   getSubmissionFeedback: (submissionId) => api.get(`/api/students/submissions/${submissionId}`),
   
   // Attendance
@@ -115,7 +132,14 @@ export const studentAPI = {
 
 // Staff endpoints
 export const staffAPI = {
-  getDashboard: () => api.get('/api/admin-staff/dashboard'),
+  getDashboard: () => api.get('/api/staffs/dashboard'),
+  getCoordinatedStudents: () => api.get('/api/staffs/coordinated-students'),
+  getCoordinatedParents: () => api.get('/api/staffs/coordinated-parents'),
+  getCoordinatedClasses: () => api.get('/api/staffs/coordinated-classes'),
+  getProfile: () => api.get('/api/staffs/profile'),
+  updateProfile: (data) => api.put('/api/staffs/profile', data),
+  getLeaveRequests: () => api.get('/api/staffs/leave-requests'),
+  updateLeaveRequest: (id, data) => api.put(`/api/staffs/leave-requests/${id}`, data),
   getClasses: () => api.get('/api/admin-staff/classes').then(res=>{
     const mapClass = (c)=>({
       ...c,
@@ -133,8 +157,6 @@ export const staffAPI = {
     api.post(`/api/admin-staff/assignments/${assignmentId}/grade`, data),
   markAttendance: (classId, data) => 
     api.post(`/api/admin-staff/classes/${classId}/attendance`, data),
-  getProfile: () => api.get('/api/admin-staff/profile'),
-  updateProfile: (data) => api.put('/api/admin-staff/profile', data),
   uploadProfileImage: (formData) => api.post('/api/admin-staff/profile/image', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
@@ -643,13 +665,14 @@ export const adminAPI = {
     const mapClass = (c)=>({
       ...c,
       id: c._id || c.id,
-      teacherId: c.classTeacher || c.teacherId,
+      coordinator: c.coordinator || c.coordinatorId,
     });
     return Array.isArray(res.data) ? res.data.map(mapClass) : [];
   }),
   createClass: (data) => api.post('/api/admin-staff/classes', data),
   updateClass: (id,data) => api.put(`/api/admin-staff/classes/${id}`, data),
   deleteClass: (id) => api.delete(`/api/admin-staff/classes/${id}`),
+  getTeachers: () => api.get('/api/admin-staff/staff/teachers/public').then(res => res.data),
 
   // Subject Management
   getSubjects: () => api.get('/api/admin-staff/subjects').then(res=>{
@@ -674,43 +697,67 @@ export const adminAPI = {
 
 // Teacher API functions
 export const teacherAPI = {
-  // Profile Management - Updated to use staff endpoints
-  getProfile: () => api.get('/api/staff/profile').then(res => res.data),
-  updateProfile: (data) => api.put('/api/staff/profile', data).then(res => res.data),
-  changePassword: (data) => api.put('/api/staff/change-password', data).then(res => res.data),
-  uploadProfileImage: (formData) => api.put('/api/staff/profile-image', formData, {
+  // Profile Management - Updated to use staff endpoints with staffId
+  getProfile: (staffId) => api.get(`/api/staffs/${staffId}/profile`).then(res => res.data),
+  updateProfile: (staffId, data) => api.put(`/api/staffs/${staffId}/profile`, data).then(res => res.data),
+  changePassword: (data) => api.put('/api/staffs/change-password', data).then(res => res.data),
+  uploadProfileImage: (formData) => api.put('/api/staffs/profile-image', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }).then(res => res.data),
   
   // Professional Development Management
-  addProfessionalDevelopment: (data) => api.post('/api/staff/professional-development', data).then(res => res.data),
-  updateProfessionalDevelopment: (index, data) => api.put(`/api/staff/professional-development/${index}`, data).then(res => res.data),
-  deleteProfessionalDevelopment: (index) => api.delete(`/api/staff/professional-development/${index}`).then(res => res.data),
+  addProfessionalDevelopment: (data) => api.post('/api/staffs/professional-development', data).then(res => res.data),
+  updateProfessionalDevelopment: (index, data) => api.put(`/api/staffs/professional-development/${index}`, data).then(res => res.data),
+  deleteProfessionalDevelopment: (index) => api.delete(`/api/staffs/professional-development/${index}`).then(res => res.data),
   
   // Get public profile of another staff member
-  getPublicProfile: (staffId) => api.get(`/api/staff/profile/${staffId}`).then(res => res.data),
+  getPublicProfile: (staffId) => api.get(`/api/staffs/profile/${staffId}`).then(res => res.data),
 
-  // Class and Subject Management
-  getClasses: () => api.get('/api/staff/class-data').then(res => res.data),
-  getStudents: () => api.get('/api/staff/students').then(res => res.data),
-  getAssignedStudents: () => api.get('/api/staff/students').then(res => res.data),
+  // Class and Subject Management - Updated with staffId
+  getClasses: (staffId) => api.get(`/api/staffs/${staffId}/coordinated-classes`).then(res => res.data),
+  getStudents: (staffId) => api.get(`/api/staffs/${staffId}/coordinated-students`).then(res => res.data),
+  getAssignedStudents: (staffId) => api.get(`/api/staffs/${staffId}/coordinated-students`).then(res => res.data),
+  getCoordinatedStudents: (staffId) => api.get(`/api/staffs/${staffId}/coordinated-students`).then(res => res.data),
+  getCoordinatedParents: (staffId) => api.get(`/api/staffs/${staffId}/coordinated-parents`).then(res => res.data),
+  getClassDetails: (classId) => api.get(`/api/staffs/classes/${classId}`).then(res => res.data),
+  createClass: (data) => api.post('/api/staffs/classes', data).then(res => res.data),
+  updateClass: (classId, data) => api.put(`/api/staffs/classes/${classId}`, data).then(res => res.data),
+  deleteClass: (classId) => api.delete(`/api/staffs/classes/${classId}`).then(res => res.data),
+  saveAttendance: (classId, data) => api.post(`/api/staffs/classes/${classId}/attendance`, data).then(res => res.data),
 
   // Timetable
-  getTimetable: () => api.get('/api/teacher/timetable').then(res => res.data),
-  requestSubstitution: (data) => api.post('/api/teacher/substitution-requests', data).then(res => res.data),
-  getSubstitutionRequests: () => api.get('/api/teacher/substitution-requests').then(res => res.data),
-  getAcademicCalendar: () => api.get('/api/teacher/academic-calendar').then(res => res.data),
+  getTimetable: () => api.get('/api/teachers/timetable').then(res => res.data),
+  requestSubstitution: (data) => api.post('/api/teachers/substitution-requests', data).then(res => res.data),
+  getSubstitutionRequests: () => api.get('/api/teachers/substitution-requests').then(res => res.data),
+  getAcademicCalendar: () => api.get('/api/teachers/academic-calendar').then(res => res.data),
+  getCalendarEvents: () => api.get('/api/teachers/calendar-events').then(res => res.data),
+  createEvent: (data) => api.post('/api/teachers/events', data).then(res => res.data),
+  updateEvent: (eventId, data) => api.put(`/api/teachers/events/${eventId}`, data).then(res => res.data),
+  deleteEvent: (eventId) => api.delete(`/api/teachers/events/${eventId}`).then(res => res.data),
 
   // Attendance Management
-  markAttendance: (data) => api.post('/api/staff/attendance', data).then(res => res.data),
-  getAttendance: () => api.get('/api/staff/attendance').then(res => res.data),
-  getMarkedAttendance: () => api.get('/api/staff/attendance').then(res => res.data),
+  markAttendance: (data) => api.post('/api/teachers/attendance', data).then(res => res.data),
+  getAttendance: () => api.get('/api/teachers/attendance').then(res => res.data),
+  getMarkedAttendance: () => api.get('/api/teachers/attendance').then(res => res.data),
+  getClassAttendance: (classId) => api.get(`/api/teachers/attendance/${classId}`).then(res => res.data),
+  createAttendance: (data) => api.post('/api/teachers/attendance', data).then(res => res.data),
+  updateAttendance: (attendanceId, data) => api.put(`/api/teachers/attendance/${attendanceId}`, data).then(res => res.data),
+  
+  // Enhanced Attendance Management
+  markClassAttendance: (data) => api.post('/api/teachers/attendance', data).then(res => res.data),
+  getClassAttendanceByDate: (className, section, date) => api.get(`/api/teachers/attendance/${className}/${section}/${date}`).then(res => res.data),
+  generateAttendanceReport: (className, section, startDate, endDate) => api.get(`/api/teachers/attendance-report/${className}/${section}/${startDate}/${endDate}`).then(res => res.data),
+  getStudentsByClass: (className, section) => api.get(`/api/teachers/students/${className}/${section}`).then(res => res.data),
+  exportAttendanceCSV: (className, section, startDate, endDate) => api.get(`/api/teachers/attendance-report/${className}/${section}/${startDate}/${endDate}?format=csv`, { responseType: 'blob' }),
 
   // Assignment Management
-  createAssignment: (data) => api.post('/api/staff/assignments', data).then(res => res.data),
-  getAssignments: () => api.get('/api/staff/assignments').then(res => res.data),
-  getSubmissions: (assignmentId) => api.get(`/api/teacher/assignments/${assignmentId}/submissions`).then(res => res.data),
-  gradeSubmission: (submissionId, data) => api.put(`/api/teacher/submissions/${submissionId}/grade`, data).then(res => res.data),
+  createAssignment: (data) => api.post('/api/teachers/assignments', data).then(res => res.data),
+  getAssignments: () => api.get('/api/teachers/assignments').then(res => res.data),
+  getAssignmentDetails: (assignmentId) => api.get(`/api/teachers/assignments/${assignmentId}`).then(res => res.data),
+  updateAssignment: (assignmentId, data) => api.put(`/api/teachers/assignments/${assignmentId}`, data).then(res => res.data),
+  deleteAssignment: (assignmentId) => api.delete(`/api/teachers/assignments/${assignmentId}`).then(res => res.data),
+  getSubmissions: (assignmentId) => api.get(`/api/teachers/assignments/${assignmentId}/submissions`).then(res => res.data),
+  gradeSubmission: (submissionId, data) => api.put(`/api/teachers/submissions/${submissionId}/grade`, data).then(res => res.data),
 
   // Exam Management
   createExam: (data) => {
@@ -722,20 +769,28 @@ export const teacherAPI = {
         formData.append(key, data[key]);
       }
     });
-    return api.post('/api/teacher/exams', formData, {
+    return api.post('/api/teachers/exams', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     }).then(res => res.data);
   },
-  getExams: () => api.get('/api/teacher/exams').then(res => res.data),
-  enterExamResults: (examId, data) => api.post(`/api/teacher/exams/${examId}/results`, data).then(res => res.data),
-  generatePerformanceReport: (examId) => api.get(`/api/teacher/exams/${examId}/performance-report`).then(res => res.data),
+  getExams: () => api.get('/api/teachers/exams').then(res => res.data),
+  getExamResults: (examId) => api.get(`/api/teachers/exams/${examId}/results`).then(res => res.data),
+  enterExamResults: (examId, data) => api.post(`/api/teachers/exams/${examId}/results`, data).then(res => res.data),
+  generatePerformanceReport: (examId) => api.get(`/api/teachers/exams/${examId}/performance-report`).then(res => res.data),
+  updateExam: (examId, data) => api.put(`/api/teachers/exams/${examId}`, data).then(res => res.data),
+  deleteExam: (examId) => api.delete(`/api/teachers/exams/${examId}`).then(res => res.data),
+  gradeExam: (resultId, data) => api.put(`/api/teachers/exam-results/${resultId}`, data).then(res => res.data),
 
   // Learning Materials
-  submitLessonPlan: (data) => api.post('/api/staff/lessonplans', data).then(res => res.data),
-  getLessonPlans: () => api.get('/api/staff/lessonplans').then(res => res.data),
-  uploadResource: (data) => api.post('/api/staff/resources', data).then(res => res.data),
-  getResources: () => api.get('/api/staff/resources').then(res => res.data),
-  getDepartmentalResources: () => api.get('/api/teacher/departmental-resources').then(res => res.data),
+  submitLessonPlan: (data) => api.post('/api/teachers/lesson-plans', data).then(res => res.data),
+  getLessonPlans: () => api.get('/api/teachers/lesson-plans').then(res => res.data),
+  uploadResource: (data) => api.post('/api/teachers/resources', data).then(res => res.data),
+  getResources: () => api.get('/api/teachers/resources').then(res => res.data),
+  getDepartmentalResources: () => api.get('/api/teachers/departmental-resources').then(res => res.data),
+  getLearningResources: () => api.get('/api/teachers/resources').then(res => res.data),
+  createResource: (data) => api.post('/api/teachers/resources', data).then(res => res.data),
+  updateResource: (resourceId, data) => api.put(`/api/teachers/resources/${resourceId}`, data).then(res => res.data),
+  deleteResource: (resourceId) => api.delete(`/api/teachers/resources/${resourceId}`).then(res => res.data),
 
   // Communication
   sendMessage: (data) => {
@@ -747,12 +802,14 @@ export const teacherAPI = {
         formData.append(key, data[key]);
       }
     });
-    return api.post('/api/teacher/messages', formData, {
+    return api.post('/api/teachers/messages', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     }).then(res => res.data);
   },
-  getReceivedMessages: () => api.get('/api/teacher/messages/received').then(res => res.data),
-  getSentMessages: () => api.get('/api/teacher/messages/sent').then(res => res.data),
+  getReceivedMessages: () => api.get('/api/teachers/messages/received').then(res => res.data),
+  getSentMessages: () => api.get('/api/teachers/messages/sent').then(res => res.data),
+  getMessages: () => api.get('/api/teachers/messages').then(res => res.data),
+  replyToMessage: (messageId, data) => api.post(`/api/teachers/messages/${messageId}/reply`, data).then(res => res.data),
   postAnnouncement: (data) => {
     const formData = new FormData();
     Object.keys(data).forEach(key => {
@@ -762,24 +819,27 @@ export const teacherAPI = {
         formData.append(key, data[key]);
       }
     });
-    return api.post('/api/teacher/announcements', formData, {
+    return api.post('/api/teachers/announcements', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     }).then(res => res.data);
   },
-  getAnnouncements: () => api.get('/api/teacher/announcements').then(res => res.data),
-  scheduleMeeting: (data) => api.post('/api/teacher/meetings', data).then(res => res.data),
-  getMeetings: () => api.get('/api/teacher/meetings').then(res => res.data),
+  getAnnouncements: () => api.get('/api/teachers/announcements').then(res => res.data),
+  createAnnouncement: (data) => api.post('/api/teachers/announcements', data).then(res => res.data),
+  updateAnnouncement: (announcementId, data) => api.put(`/api/teachers/announcements/${announcementId}`, data).then(res => res.data),
+  deleteAnnouncement: (announcementId) => api.delete(`/api/teachers/announcements/${announcementId}`).then(res => res.data),
+  scheduleMeeting: (data) => api.post('/api/teachers/meetings', data).then(res => res.data),
+  getMeetings: () => api.get('/api/teachers/meetings').then(res => res.data),
 
   // Student Performance
-  recordPerformance: (data) => api.post('/api/teacher/student-performance', data).then(res => res.data),
+  recordPerformance: (data) => api.post('/api/teachers/student-performance', data).then(res => res.data),
   getStudentPerformance: (studentId, subject = null) => {
     const url = subject 
-      ? `/api/teacher/student-performance/${studentId}/subject/${subject}`
-      : `/api/teacher/student-performance/${studentId}`;
+      ? `/api/teachers/student-performance/${studentId}/subject/${subject}`
+      : `/api/teachers/student-performance/${studentId}`;
     return api.get(url).then(res => res.data);
   },
-  addBehavioralObservation: (studentId, data) => api.post(`/api/teacher/student-performance/${studentId}/observations`, data).then(res => res.data),
-  createInterventionPlan: (studentId, data) => api.post(`/api/teacher/student-performance/${studentId}/intervention-plan`, data).then(res => res.data),
+  addBehavioralObservation: (studentId, data) => api.post(`/api/teachers/student-performance/${studentId}/observations`, data).then(res => res.data),
+  createInterventionPlan: (studentId, data) => api.post(`/api/teachers/student-performance/${studentId}/intervention-plan`, data).then(res => res.data),
 
   // Projects and Activities
   createProject: (data) => {
@@ -791,12 +851,12 @@ export const teacherAPI = {
         formData.append(key, data[key]);
       }
     });
-    return api.post('/api/teacher/projects', formData, {
+    return api.post('/api/teachers/projects', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     }).then(res => res.data);
   },
-  getProjects: () => api.get('/api/teacher/projects').then(res => res.data),
-  getProjectDetails: (projectId) => api.get(`/api/teacher/projects/${projectId}`).then(res => res.data),
+  getProjects: () => api.get('/api/teachers/projects').then(res => res.data),
+  getProjectDetails: (projectId) => api.get(`/api/teachers/projects/${projectId}`).then(res => res.data),
   updateProject: (projectId, data) => {
     const formData = new FormData();
     Object.keys(data).forEach(key => {
@@ -806,12 +866,12 @@ export const teacherAPI = {
         formData.append(key, data[key]);
       }
     });
-    return api.put(`/api/teacher/projects/${projectId}`, formData, {
+    return api.put(`/api/teachers/projects/${projectId}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     }).then(res => res.data);
   },
-  recordStudentContribution: (projectId, data) => api.post(`/api/teacher/projects/${projectId}/student-contributions`, data).then(res => res.data),
-  getStudentContributions: (projectId) => api.get(`/api/teacher/projects/${projectId}/student-contributions`).then(res => res.data),
+  recordStudentContribution: (projectId, data) => api.post(`/api/teachers/projects/${projectId}/student-contributions`, data).then(res => res.data),
+  getStudentContributions: (projectId) => api.get(`/api/teachers/projects/${projectId}/student-contributions`).then(res => res.data),
   recordExtracurricularAchievement: (data) => {
     const formData = new FormData();
     Object.keys(data).forEach(key => {
@@ -821,17 +881,17 @@ export const teacherAPI = {
         formData.append(key, data[key]);
       }
     });
-    return api.post('/api/teacher/extracurricular-achievements', formData, {
+    return api.post('/api/teachers/extracurricular-achievements', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     }).then(res => res.data);
   },
 
   // Parent Interaction
-  getParentMeetings: () => api.get('/api/teacher/parent-meetings').then(res => res.data),
-  recordCommunication: (data) => api.post('/api/teacher/parent-communications', data).then(res => res.data),
-  getCommunicationHistory: (parentId) => api.get(`/api/teacher/parent-communications/${parentId}`).then(res => res.data),
-  documentConcern: (data) => api.post('/api/teacher/parent-concerns', data).then(res => res.data),
-  addFollowUp: (concernId, data) => api.put(`/api/teacher/parent-concerns/${concernId}/follow-up`, data).then(res => res.data),
+  getParentMeetings: () => api.get('/api/teachers/parent-meetings').then(res => res.data),
+  recordCommunication: (data) => api.post('/api/teachers/parent-communications', data).then(res => res.data),
+  getCommunicationHistory: (parentId) => api.get(`/api/teachers/parent-communications/${parentId}`).then(res => res.data),
+  documentConcern: (data) => api.post('/api/teachers/parent-concerns', data).then(res => res.data),
+  addFollowUp: (concernId, data) => api.put(`/api/teachers/parent-concerns/${concernId}/follow-up`, data).then(res => res.data),
   sendProgressUpdate: (data) => {
     const formData = new FormData();
     Object.keys(data).forEach(key => {
@@ -841,17 +901,35 @@ export const teacherAPI = {
         formData.append(key, data[key]);
       }
     });
-    return api.post('/api/teacher/progress-updates', formData, {
+    return api.post('/api/teachers/progress-updates', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     }).then(res => res.data);
   },
 
   // Feedback System
-  submitSuggestion: (data) => api.post('/api/teacher/academic-suggestions', data).then(res => res.data),
-  requestResource: (data) => api.post('/api/teacher/resource-requests', data).then(res => res.data),
-  getResourceRequests: () => api.get('/api/teacher/resource-requests').then(res => res.data),
-  provideCurriculumFeedback: (data) => api.post('/api/teacher/curriculum-feedback', data).then(res => res.data),
-  getCurriculumFeedback: () => api.get('/api/teacher/curriculum-feedback').then(res => res.data),
+  submitSuggestion: (data) => api.post('/api/teachers/academic-suggestions', data).then(res => res.data),
+  requestResource: (data) => api.post('/api/teachers/resource-requests', data).then(res => res.data),
+  getResourceRequests: () => api.get('/api/teachers/resource-requests').then(res => res.data),
+  provideCurriculumFeedback: (data) => api.post('/api/teachers/curriculum-feedback', data).then(res => res.data),
+  getCurriculumFeedback: () => api.get('/api/teachers/curriculum-feedback').then(res => res.data),
+
+  // Leave Request Management - Updated with staffId
+  getLeaveRequests: (staffId) => api.get(`/api/staffs/${staffId}/leave-requests`).then(res => res.data),
+  updateLeaveRequest: (staffId, leaveId, data) => api.put(`/api/staffs/${staffId}/leave-requests/${leaveId}`, data).then(res => res.data),
+  
+  // Student Attendance Management
+  getStudentAttendancePercentage: (staffId, studentId) => api.get(`/api/staffs/${staffId}/students/${studentId}/attendance`).then(res => res.data),
+  
+  // VP Exam Management - For viewing VP-scheduled exams
+  getVPExams: (staffId) => api.get(`/api/staffs/${staffId}/published-exams`).then(res => res.data),
+  getVPExamsByGrade: (staffId, grade) => api.get(`/api/staffs/${staffId}/published-exams?grade=${grade}`).then(res => res.data),
+  getVPExamsBySubject: (staffId, subject) => api.get(`/api/staffs/${staffId}/published-exams?subject=${subject}`).then(res => res.data),
+  getVPExamsFiltered: (staffId, filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.grade && filters.grade !== 'all') params.append('grade', filters.grade);
+    if (filters.subject && filters.subject !== 'all') params.append('subject', filters.subject);
+    return api.get(`/api/staffs/${staffId}/published-exams?${params.toString()}`).then(res => res.data);
+  },
 };
 
 // HOD endpoints

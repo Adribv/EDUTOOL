@@ -407,8 +407,8 @@ export default function VicePrincipalDashboard() {
         <Tab label="Exams" icon={<EventIcon />} />
         <Tab label="Timetables" icon={<ScheduleIcon />} />
         <Tab label="Curriculum" icon={<BookIcon />} />
-        <Tab label="HOD Approvals" icon={<ApprovalIcon />} />
         <Tab label="Approved Curriculum" icon={<CheckCircleIcon />} />
+        <Tab label="HOD Approvals" icon={<ApprovalIcon />} />
       </Tabs>
 
       {/* Overview Tab */}

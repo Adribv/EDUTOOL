@@ -17,7 +17,7 @@ import {
   Apps, List as ListIcon
 } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
-import teacherService from '../../services/teacherService';
+import { teacherAPI } from '../../services/api';
 
 export default function Students() {
   const [viewMode, setViewMode] = useState('grid');
@@ -28,12 +28,12 @@ export default function Students() {
 
   const { data: studentsData, isLoading, error } = useQuery({
     queryKey: ['students'],
-    queryFn: () => teacherService.getStudents()
+    queryFn: () => teacherAPI.getStudents()
   });
 
   const { data: gradesData } = useQuery({
     queryKey: ['grades'],
-    queryFn: () => teacherService.getGrades()
+    queryFn: () => teacherAPI.getGrades()
   });
 
   if (isLoading) {
@@ -58,7 +58,7 @@ export default function Students() {
   const students = studentsData?.data || [];
   const grades = gradesData?.data || [];
 
-  const filteredStudents = students.filter(student => {
+  const filteredStudents = (students || []).filter(student => {
     const matchesClass = filterClass === 'all' || student.class.includes(filterClass);
     const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          student.studentId.toLowerCase().includes(searchTerm.toLowerCase());
@@ -66,7 +66,7 @@ export default function Students() {
   });
 
   const getStudentGrades = (studentId) => {
-    return grades.filter(grade => grade.studentId === studentId);
+    return (grades || []).filter(grade => grade.studentId === studentId);
   };
 
   const getAverageGrade = (studentId) => {
@@ -309,7 +309,7 @@ export default function Students() {
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
                   <Typography variant="h4" fontWeight="bold">
-                    {students.filter(s => s.status === 'Active').length}
+                    {(students || []).filter(s => s.status === 'Active').length}
                   </Typography>
                   <Typography variant="body2">Active Students</Typography>
                 </Box>

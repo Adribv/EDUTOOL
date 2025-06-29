@@ -8,6 +8,11 @@ const classSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Staff',
   },
+  coordinator: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Staff',
+    required: true,
+  },
   capacity: { type: Number, default: 40 },
   description: String,
 }, { timestamps: true });

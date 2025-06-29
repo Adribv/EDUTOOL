@@ -397,6 +397,18 @@ exports.getAllStaff = async (req, res) => {
   }
 };
 
+exports.getAllTeachers = async (req, res) => {
+  try {
+    const teachers = await Staff.find({ role: 'Teacher' })
+      .select('-password')
+      .populate('department', '_id name description');
+    res.json(teachers);
+  } catch (error) {
+    console.error('Error fetching teachers:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 exports.getStaffById = async (req, res) => {
   try {
     const staff = await Staff.findById(req.params.id)
@@ -426,7 +438,8 @@ exports.registerStaff = async (req, res) => {
       experience,
       contactNumber,
       email,
-      address
+      address,
+      coordinator
     } = req.body;
 
     // Check if staff with employee ID already exists
@@ -445,6 +458,19 @@ exports.registerStaff = async (req, res) => {
       departmentId = department;
     }
 
+    // Validate coordinator classes if provided
+    let coordinatorClasses = [];
+    if (coordinator && Array.isArray(coordinator) && coordinator.length > 0) {
+      const Class = require('../../../models/Admin/classModel');
+      for (const classId of coordinator) {
+        const classDoc = await Class.findById(classId);
+        if (!classDoc) {
+          return res.status(400).json({ message: `Invalid class ID: ${classId}` });
+        }
+      }
+      coordinatorClasses = coordinator;
+    }
+
     const newStaff = new Staff({
       name,
       email,
@@ -457,6 +483,7 @@ exports.registerStaff = async (req, res) => {
       experience,
       contactNumber,
       address,
+      coordinator: coordinatorClasses,
       assignedSubjects: []
     });
 
@@ -467,6 +494,15 @@ exports.registerStaff = async (req, res) => {
       await Department.findByIdAndUpdate(
         departmentId,
         { $addToSet: { staff: newStaff._id } }
+      );
+    }
+
+    // Update classes to set this staff as coordinator
+    if (coordinatorClasses.length > 0) {
+      const Class = require('../../../models/Admin/classModel');
+      await Class.updateMany(
+        { _id: { $in: coordinatorClasses } },
+        { $set: { coordinator: newStaff._id } }
       );
     }
 
@@ -1945,7 +1981,9 @@ exports.deleteFeeStructure = async (req, res) => {
 // Class Management
 exports.getClasses = async (req,res)=>{
   try{
-    const classes = await ClassModel.find();
+    const classes = await ClassModel.find()
+      .populate('classTeacher', 'name email')
+      .populate('coordinator', 'name email');
     
     // Get student count for each class
     const classesWithStudentCount = await Promise.all(
@@ -1981,7 +2019,11 @@ exports.getClasses = async (req,res)=>{
 exports.createClass = async(req,res)=>{
   try{
     const newClass = await ClassModel.create(req.body);
-    res.status(201).json(newClass);
+    // Populate teacher and coordinator information
+    const populatedClass = await ClassModel.findById(newClass._id)
+      .populate('classTeacher', 'name email')
+      .populate('coordinator', 'name email');
+    res.status(201).json(populatedClass);
   }catch(err){
     console.error('Error creating class:',err);
     res.status(500).json({message:'Server error'});
@@ -1991,7 +2033,9 @@ exports.createClass = async(req,res)=>{
 exports.updateClass = async(req,res)=>{
   try{
     const {id}=req.params;
-    const updated=await ClassModel.findByIdAndUpdate(id,{$set:req.body},{new:true,runValidators:true});
+    const updated=await ClassModel.findByIdAndUpdate(id,{$set:req.body},{new:true,runValidators:true})
+      .populate('classTeacher', 'name email')
+      .populate('coordinator', 'name email');
     if(!updated) return res.status(404).json({message:'Class not found'});
     res.json(updated);
   }catch(err){

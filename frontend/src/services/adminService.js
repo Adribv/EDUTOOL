@@ -49,6 +49,7 @@ const adminService = {
   createClass: (data) => api.post('/api/admin-staff/classes', data),
   updateClass: (id, data) => api.put(`/api/admin-staff/classes/${id}`, data),
   deleteClass: (id) => api.delete(`/api/admin-staff/classes/${id}`),
+  getTeachers: () => api.get('/api/admin-staff/staff/teachers/public'),
   
   // Subject Management
   getSubjects: () => api.get('/api/admin-staff/subjects'),

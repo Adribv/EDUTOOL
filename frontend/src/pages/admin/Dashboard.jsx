@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import {
   Box,
   Grid,
@@ -8,6 +9,12 @@ import {
   Button,
   IconButton,
   Tooltip,
+  Alert,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon,
+  Divider,
 } from '@mui/material';
 import {
   People,
@@ -21,10 +28,12 @@ import {
   Inventory,
   Settings,
   Assessment,
+  Group as GroupIcon,
+  Notifications as NotificationsIcon,
+  TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { adminAPI } from '../../services/api';
-import { placeholderData, createMockResponse } from '../../services/placeholderData';
 import { toast } from 'react-toastify';
 import { roleConfig } from './roleConfig';
 import { useAuth } from '../../context/AuthContext';
@@ -33,21 +42,34 @@ import { useNavigate } from 'react-router-dom';
 function AdminDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { data: stats, isLoading, refetch } = useQuery({
-    queryKey: ['adminDashboard'],
-    queryFn: async () => {
-      try {
-        return await adminAPI.getDashboardStats();
-      } catch (error) {
-        console.warn('Using placeholder data for admin dashboard:', error);
-        toast.info('Using demo data - some features may be limited');
-        return createMockResponse(placeholderData.adminStats);
-      }
-    },
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [stats, setStats] = useState({
+    totalStudents: 0,
+    totalStaff: 0,
+    totalClasses: 0,
+    upcomingEvents: [],
+    recentAnnouncements: [],
   });
 
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      const response = await adminAPI.getDashboardStats();
+      setStats(response.data);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      setError('Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleRefresh = () => {
-    refetch();
+    fetchDashboardData();
     toast.success('Dashboard refreshed');
   };
 
@@ -67,7 +89,7 @@ function AdminDashboard() {
     }
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <Box
         sx={{

@@ -50,6 +50,8 @@ router.post('/login', async (req, res) => {
 
 // Public routes (no auth required)
 router.get('/classes/public', adminStaffController.getClasses);
+router.post('/classes/public', adminStaffController.createClass);
+router.get('/staff/teachers/public', adminStaffController.getAllTeachers);
 router.get('/students/public', adminStaffController.getAllStudents);
 router.get('/students/export', adminStaffController.exportStudents);
 router.post('/students/public', adminStaffController.registerStudent);
@@ -104,6 +106,7 @@ router.delete('/parents/:id', adminStaffController.deleteParent);
 
 // Staff Records Administration
 router.get('/staff', adminStaffController.getAllStaff);
+router.get('/staff/teachers', adminStaffController.getAllTeachers);
 router.get('/staff/:id', adminStaffController.getStaffById);
 router.post('/staff', adminStaffController.registerStaff);
 router.put('/staff/:id', adminStaffController.updateStaff);

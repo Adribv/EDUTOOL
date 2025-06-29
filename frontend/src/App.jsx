@@ -28,57 +28,19 @@ const Home = lazy(() => import('./pages/Home'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Student Pages
-const StudentDashboard = lazy(() => import('./pages/student/Dashboard'));
-const StudentProfile = lazy(() => import('./pages/student/Profile'));
-const Assignments = lazy(() => import('./pages/student/Assignments'));
-const Attendance = lazy(() => import('./pages/student/Attendance'));
-const Exams = lazy(() => import('./pages/student/Exams'));
-const Fees = lazy(() => import('./pages/student/Fees'));
-const Resources = lazy(() => import('./pages/student/Resources'));
-const Messages = lazy(() => import('./pages/student/Messages'));
-const Courses = lazy(() => import('./pages/student/Courses'));
-const Timetable = lazy(() => import('./pages/student/Timetable'));
-const Results = lazy(() => import('./pages/student/Results'));
-const Notifications = lazy(() => import('./pages/student/Notifications'));
-const Calendar = lazy(() => import('./pages/student/Calendar'));
-const Transport = lazy(() => import('./pages/student/Transport'));
-const StudyMaterials = lazy(() => import('./pages/student/StudyMaterials'));
-const Settings = lazy(() => import('./pages/student/Settings'));
-
-// Staff Pages
-const StaffDashboard = lazy(() => import('./pages/staff/Dashboard'));
-const StaffProfile = lazy(() => import('./pages/staff/Profile'));
-const ClassManagement = lazy(() => import('./pages/staff/ClassManagement'));
-const AssignmentManagement = lazy(() => import('./pages/staff/AssignmentManagement'));
-const ExamManagement = lazy(() => import('./pages/staff/ExamManagement'));
-const StudentManagement = lazy(() => import('./pages/staff/StudentManagement'));
-
-// Parent Pages
-const ParentDashboard = lazy(() => import('./pages/parent/Dashboard'));
-const ParentProfile = lazy(() => import('./pages/parent/Profile'));
-const ChildProgress = lazy(() => import('./pages/parent/ChildProgress'));
-const FeeManagement = lazy(() => import('./pages/parent/FeeManagement'));
-const Communication = lazy(() => import('./pages/parent/Communication'));
-
-// Admin Pages
-const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
-const AdminProfile = lazy(() => import('./pages/admin/Profile'));
-const StaffManagement = lazy(() => import('./pages/admin/StaffManagement'));
-const StudentRecords = lazy(() => import('./pages/admin/StudentRecords'));
-const FeeConfiguration = lazy(() => import('./pages/admin/FeeConfiguration'));
-const SystemSettings = lazy(() => import('./pages/admin/SystemSettings'));
-const UserManagement = lazy(() => import('./pages/admin/UserManagement'));
-const Reports = lazy(() => import('./pages/admin/Reports'));
-
-// Role-based Components
 const StudentRoutes = lazy(() => import('./routes/StudentRoutes'));
+// Teacher Pages
 const TeacherRoutes = lazy(() => import('./routes/TeacherRoutes'));
-const AdminRoutes = lazy(() => import('./routes/AdminRoutes'));
+// Parent Pages
 const ParentRoutes = lazy(() => import('./routes/ParentRoutes'));
+// Admin Pages
+const AdminRoutes = lazy(() => import('./routes/AdminRoutes'));
+// HOD Pages
 const HODRoutes = lazy(() => import('./routes/HODRoutes'));
+// Principal Pages
 const PrincipalRoutes = lazy(() => import('./routes/PrincipalRoutes'));
+// Counselor Pages
 const CounselorRoutes = lazy(() => import('./routes/CounselorRoutes'));
-
 // Vice Principal Pages
 const VicePrincipalDashboard = lazy(() => import('./pages/viceprincipal/VicePrincipalDashboard'));
 
@@ -122,7 +84,6 @@ function App() {
                 <Routes>
                   {/* Public Routes */}
                   <Route path="/" element={<Home />} />
-                  
                   {/* Public Auth Routes */}
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
@@ -131,41 +92,32 @@ function App() {
                   <Route path="/parent-login" element={<ParentLogin />} />
                   <Route path="/parent-register" element={<ParentRegister />} />
                   <Route path="/management-login" element={<ManagementLogin />} />
-                  
                   {/* Protected Routes */}
                   <Route element={<ProtectedRoute allowedRoles={['student']} />}>
                     <Route path="/student/*" element={<StudentRoutes />} />
                   </Route>
-
                   <Route element={<ProtectedRoute allowedRoles={['parent']} />}>
                     <Route path="/parent/*" element={<ParentRoutes />} />
                   </Route>
-
                   {/* Management Routes */}
                   <Route element={<ProtectedRoute allowedRoles={['teacher']} />}>
                     <Route path="/teacher/*" element={<TeacherRoutes />} />
                   </Route>
-
                   <Route element={<ProtectedRoute allowedRoles={['adminstaff']} />}>
                     <Route path="/admin/*" element={<AdminRoutes />} />
                   </Route>
-
                   <Route element={<ProtectedRoute allowedRoles={['hod']} />}>
                     <Route path="/hod/*" element={<HODRoutes />} />
                   </Route>
-
                   <Route element={<ProtectedRoute allowedRoles={['principal']} />}>
                     <Route path="/principal/*" element={<PrincipalRoutes />} />
                   </Route>
-
                   <Route element={<ProtectedRoute allowedRoles={['counsellor']} />}>
                     <Route path="/counselor/*" element={<CounselorRoutes />} />
                   </Route>
-
                   <Route element={<ProtectedRoute allowedRoles={['viceprincipal']} />}>
                     <Route path="/viceprincipal/dashboard" element={<VicePrincipalDashboard />} />
                   </Route>
-
                   {/* 404 Route */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>

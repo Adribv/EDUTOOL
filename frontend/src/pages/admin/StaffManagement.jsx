@@ -22,6 +22,10 @@ import {
   MenuItem,
   Grid,
   Tooltip,
+  FormControl,
+  InputLabel,
+  Select,
+  Stack,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -29,6 +33,7 @@ import {
   Delete as DeleteIcon,
   Search as SearchIcon,
   Download as DownloadIcon,
+  Sort as SortIcon,
 } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminAPI } from '../../services/api';
@@ -48,6 +53,9 @@ function StaffManagement() {
   const [open, setOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  const [sortBy, setSortBy] = useState('');
+  const [sortOrder, setSortOrder] = useState('asc');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -59,7 +67,8 @@ function StaffManagement() {
     employeeId: '',
     joiningDate: new Date().toISOString().split('T')[0],
     qualification: '',
-    experience: ''
+    experience: '',
+    coordinator: []
   });
 
   const queryClient = useQueryClient();
@@ -75,6 +84,12 @@ function StaffManagement() {
   const { data: departments, isLoading: departmentsLoading } = useQuery({
     queryKey: ['departments'],
     queryFn: adminAPI.getDepartments,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: classes, isLoading: classesLoading } = useQuery({
+    queryKey: ['classes'],
+    queryFn: adminAPI.getClasses,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -127,6 +142,7 @@ function StaffManagement() {
         joiningDate: staff.joiningDate,
         qualification: staff.qualification,
         experience: staff.experience,
+        coordinator: staff.coordinator || []
       });
     } else {
       setSelectedStaff(null);
@@ -141,7 +157,8 @@ function StaffManagement() {
         employeeId: '',
         joiningDate: new Date().toISOString().split('T')[0],
         qualification: '',
-        experience: ''
+        experience: '',
+        coordinator: []
       });
     }
     setOpen(true);
@@ -161,7 +178,8 @@ function StaffManagement() {
       employeeId: '',
       joiningDate: new Date().toISOString().split('T')[0],
       qualification: '',
-      experience: ''
+      experience: '',
+      coordinator: []
     });
   };
 
@@ -288,7 +306,7 @@ ${Object.entries(reportData.filters)
 
   const filteredStaff = staff?.filter((member) => {
     const searchLower = searchTerm.toLowerCase();
-    return (
+    const matchesSearch = (
       member.name?.toLowerCase().includes(searchLower) ||
       member.email?.toLowerCase().includes(searchLower) ||
       member.role?.toLowerCase().includes(searchLower) ||
@@ -298,6 +316,53 @@ ${Object.entries(reportData.filters)
       member.qualification?.toLowerCase().includes(searchLower) ||
       member.experience?.toString().includes(searchLower)
     );
+
+    const matchesRoleFilter = !roleFilter || member.role === roleFilter;
+
+    return matchesSearch && matchesRoleFilter;
+  });
+
+  // Sort the filtered staff
+  const sortedStaff = filteredStaff?.sort((a, b) => {
+    if (!sortBy) return 0;
+
+    let aValue, bValue;
+
+    switch (sortBy) {
+      case 'experience':
+        aValue = parseInt(a.experience) || 0;
+        bValue = parseInt(b.experience) || 0;
+        break;
+      case 'department':
+        aValue = a.department?.name || '';
+        bValue = b.department?.name || '';
+        break;
+      case 'role':
+        aValue = a.role || '';
+        bValue = b.role || '';
+        break;
+      case 'name':
+        aValue = a.name || '';
+        bValue = b.name || '';
+        break;
+      case 'email':
+        aValue = a.email || '';
+        bValue = b.email || '';
+        break;
+      default:
+        return 0;
+    }
+
+    if (typeof aValue === 'string') {
+      aValue = aValue.toLowerCase();
+      bValue = bValue.toLowerCase();
+    }
+
+    if (sortOrder === 'asc') {
+      return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+    } else {
+      return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+    }
   });
 
   if (isLoading) {
@@ -340,16 +405,68 @@ ${Object.entries(reportData.filters)
 
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <TextField
-            fullWidth
-            variant="outlined"
-            placeholder="Search staff..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            InputProps={{
-              startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
-            }}
-          />
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                placeholder="Search staff..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
+                  startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <FormControl fullWidth>
+                <InputLabel>Filter by Role</InputLabel>
+                <Select
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                  label="Filter by Role"
+                >
+                  <MenuItem value="">All Roles</MenuItem>
+                  {roles.map((role) => (
+                    <MenuItem key={role} value={role}>
+                      {role}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <FormControl fullWidth>
+                <InputLabel>Sort By</InputLabel>
+                <Select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  label="Sort By"
+                >
+                  <MenuItem value="">No Sorting</MenuItem>
+                  <MenuItem value="name">Name</MenuItem>
+                  <MenuItem value="email">Email</MenuItem>
+                  <MenuItem value="role">Role</MenuItem>
+                  <MenuItem value="department">Department</MenuItem>
+                  <MenuItem value="experience">Experience</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={2}>
+              <FormControl fullWidth>
+                <InputLabel>Order</InputLabel>
+                <Select
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value)}
+                  label="Order"
+                  disabled={!sortBy}
+                >
+                  <MenuItem value="asc">Ascending</MenuItem>
+                  <MenuItem value="desc">Descending</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
         </CardContent>
       </Card>
 
@@ -361,12 +478,14 @@ ${Object.entries(reportData.filters)
               <TableCell>Email</TableCell>
               <TableCell>Role</TableCell>
               <TableCell>Department</TableCell>
+              <TableCell>Experience</TableCell>
               <TableCell>Phone</TableCell>
+              <TableCell>Coordinated Classes</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredStaff?.map((member) => (
+            {sortedStaff?.map((member) => (
               <TableRow key={member._id}>
                 <TableCell>{member.name}</TableCell>
                 <TableCell>{member.email}</TableCell>
@@ -384,7 +503,9 @@ ${Object.entries(reportData.filters)
                   />
                 </TableCell>
                 <TableCell>{member.department?.name || 'No Department'}</TableCell>
+                <TableCell>{member.experience}</TableCell>
                 <TableCell>{member.phone}</TableCell>
+                <TableCell>{member.coordinator?.map(c => c.name).join(', ') || 'No Coordinated Classes'}</TableCell>
                 <TableCell>
                   <Tooltip title="Edit">
                     <IconButton
@@ -525,6 +646,24 @@ ${Object.entries(reportData.filters)
               InputLabelProps={{ shrink: true }}
               sx={{ mb: 2 }}
             />
+            <TextField
+              fullWidth
+              select
+              multiple
+              label="Coordinated Classes"
+              name="coordinator"
+              value={formData.coordinator}
+              onChange={handleInputChange}
+              sx={{ mb: 2 }}
+              disabled={classesLoading}
+              helperText={classesLoading ? 'Loading classes...' : 'Select classes this staff member coordinates'}
+            >
+              {classes?.map((cls) => (
+                <MenuItem key={cls._id || cls.id} value={cls._id || cls.id}>
+                  {cls.name} ({cls.grade}-{cls.section})
+                </MenuItem>
+              ))}
+            </TextField>
           </Box>
         </DialogContent>
         <DialogActions>

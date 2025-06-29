@@ -12,7 +12,7 @@ import {
   ViewWeek, ViewDay, Apps, CalendarToday, School, Book
 } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
-import teacherService from '../../services/teacherService';
+import { teacherAPI } from '../../services/api';
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -24,7 +24,7 @@ export default function Timetable() {
 
   const { data: timetableData, isLoading, error } = useQuery({
     queryKey: ['timetable'],
-    queryFn: () => teacherService.getTimetable()
+    queryFn: () => teacherAPI.getTimetable()
   });
 
   if (isLoading) {

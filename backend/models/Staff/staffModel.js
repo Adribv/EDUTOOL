@@ -117,7 +117,11 @@ const staffSchema = new mongoose.Schema({
     enum: ['active', 'inactive'],
     default: 'active'
   },
-  subjects: [String]
+  subjects: [String],
+  coordinator: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Class'
+  }]
 }, {
   timestamps: true
 });

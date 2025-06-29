@@ -40,20 +40,39 @@ router.post('/substitution-requests', timetableController.requestSubstitution);
 router.get('/substitution-requests', timetableController.getSubstitutionRequests);
 router.get('/academic-calendar', timetableController.getAcademicCalendar);
 
+// Calendar Events (placeholder routes - implement controllers as needed)
+router.get('/calendar-events', (req, res) => {
+  res.json([]); // Placeholder - implement actual calendar events logic
+});
+router.post('/events', (req, res) => {
+  res.json({ message: 'Event created successfully' }); // Placeholder
+});
+router.put('/events/:id', (req, res) => {
+  res.json({ message: 'Event updated successfully' }); // Placeholder
+});
+router.delete('/events/:id', (req, res) => {
+  res.json({ message: 'Event deleted successfully' }); // Placeholder
+});
+
 // 4. Attendance Management
 router.post('/attendance', attendanceController.markAttendance);
 router.get('/attendance/:class/:section/:date', attendanceController.getAttendance);
 router.get('/attendance-report/:class/:section/:startDate/:endDate', attendanceController.generateAttendanceReport);
+router.get('/students/:class/:section', attendanceController.getStudentsByClass);
 
 // 5. Assignment and Homework Module
 router.post('/assignments', assignmentController.createAssignment);
 router.get('/assignments', assignmentController.getAssignments);
+router.get('/assignments/:assignmentId', assignmentController.getAssignmentDetails);
+router.put('/assignments/:assignmentId', assignmentController.updateAssignment);
+router.delete('/assignments/:assignmentId', assignmentController.deleteAssignment);
 router.get('/assignments/:assignmentId/submissions', assignmentController.getSubmissions);
 router.put('/submissions/:submissionId/grade', assignmentController.gradeSubmission);
 
 // 6. Examination and Assessment
 router.post('/exams', uploadExamPaper.single('questionPaper'), examController.createExam);
 router.get('/exams', examController.getExams);
+router.get('/vp-exams', examController.getVPScheduledExams);
 router.post('/exams/:examId/results', examController.enterExamResults);
 router.get('/exams/:examId/performance-report', examController.generatePerformanceReport);
 

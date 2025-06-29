@@ -20,16 +20,22 @@ import {
   BarChart, PieChart, MoreVert, FilterList, Search, Refresh, Print, Share,
   Favorite, FavoriteBorder, ThumbUp, ThumbDown, VisibilityOff, Archive, Unarchive,
   Block, Report, Flag, Bookmark, BookmarkBorder, PlayArrow, Pause, Stop, SkipNext,
-  VolumeUp, VolumeOff, Fullscreen, FullscreenExit, ZoomIn, ZoomOut, RotateLeft, RotateRight
+  VolumeUp, VolumeOff, Fullscreen, FullscreenExit, ZoomIn, ZoomOut, RotateLeft, RotateRight,
+  SupervisorAccount, People, Cancel
 } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import teacherService from '../../services/teacherService';
+import { teacherAPI, staffAPI } from '../../services/api';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import Timetable from './Timetable';
 import Assignments from './Assignments';
 import Students from './Students';
+import Attendance from './Attendance';
+import Exams from './Exams';
+import LearningResources from './LearningResources';
+import Communication from './Communication';
+import LeaveRequests from './LeaveRequests';
 
 // Feature tabs configuration
 const featureTabs = [
@@ -42,6 +48,7 @@ const featureTabs = [
   { label: 'Exams', icon: <Assessment />, key: 'exams' },
   { label: 'Grades', icon: <Grade />, key: 'grades' },
   { label: 'Students', icon: <Group />, key: 'students' },
+  { label: 'Leave Requests', icon: <Event />, key: 'leaveRequests' },
   { label: 'Resources', icon: <Book />, key: 'resources' },
   { label: 'Lesson Plans', icon: <Work />, key: 'lessonPlans' },
   { label: 'Communication', icon: <Message />, key: 'communication' },
@@ -53,10 +60,79 @@ const featureTabs = [
 
 // Dashboard Overview Component
 function DashboardOverview() {
-  const { data: dashboardData, isLoading, error } = useQuery({
-    queryKey: ['dashboard'],
-    queryFn: () => teacherService.getDashboardStats()
+  const { user } = useAuth();
+  const staffId = user?._id || user?.id; // Try both _id and id properties
+  
+  // Show error if no valid staffId
+  if (!staffId || staffId === 'undefined') {
+    return (
+      <Card>
+        <CardContent>
+          <Alert severity="error">
+            Unable to load dashboard. User ID not found. Please try logging in again.
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  // Fetch teacher profile data
+  const { data: profileData, isLoading: profileLoading } = useQuery({
+    queryKey: ['teacherProfile', staffId],
+    queryFn: () => teacherAPI.getProfile(staffId),
+    enabled: !!staffId && staffId !== 'undefined'
   });
+
+  // Fetch teacher coordinated classes
+  const { data: classesData, isLoading: classesLoading } = useQuery({
+    queryKey: ['teacherClasses', staffId],
+    queryFn: () => teacherAPI.getClasses(staffId),
+    enabled: !!staffId && staffId !== 'undefined'
+  });
+
+  // Fetch teacher coordinated students
+  const { data: studentsData, isLoading: studentsLoading } = useQuery({
+    queryKey: ['teacherStudents', staffId],
+    queryFn: () => teacherAPI.getStudents(staffId),
+    enabled: !!staffId && staffId !== 'undefined'
+  });
+
+  // Fetch teacher coordinated parents
+  const { data: parentsData, isLoading: parentsLoading } = useQuery({
+    queryKey: ['teacherParents', staffId],
+    queryFn: () => teacherAPI.getCoordinatedParents(staffId),
+    enabled: !!staffId && staffId !== 'undefined'
+  });
+
+  // Fetch teacher assignments
+  const { data: assignmentsData, isLoading: assignmentsLoading } = useQuery({
+    queryKey: ['teacherAssignments'],
+    queryFn: () => teacherAPI.getAssignments(),
+    enabled: !!staffId && staffId !== 'undefined'
+  });
+
+  // Fetch teacher timetable
+  const { data: timetableData, isLoading: timetableLoading } = useQuery({
+    queryKey: ['teacherTimetable'],
+    queryFn: () => teacherAPI.getTimetable(),
+    enabled: !!staffId && staffId !== 'undefined'
+  });
+
+  // Fetch teacher announcements
+  const { data: announcementsData, isLoading: announcementsLoading } = useQuery({
+    queryKey: ['teacherAnnouncements'],
+    queryFn: () => teacherAPI.getAnnouncements(),
+    enabled: !!staffId && staffId !== 'undefined'
+  });
+
+  // Fetch leave requests
+  const { data: leaveRequestsData, isLoading: leaveRequestsLoading } = useQuery({
+    queryKey: ['teacherLeaveRequests', staffId],
+    queryFn: () => teacherAPI.getLeaveRequests(staffId),
+    enabled: !!staffId && staffId !== 'undefined'
+  });
+
+  const isLoading = profileLoading || classesLoading || studentsLoading || parentsLoading || assignmentsLoading || timetableLoading || announcementsLoading || leaveRequestsLoading;
 
   if (isLoading) {
     return (
@@ -75,11 +151,23 @@ function DashboardOverview() {
     );
   }
 
-  if (error) {
-    return <Alert severity="error">Failed to load dashboard data</Alert>;
-  }
+  // Calculate dashboard statistics from real data
+  const stats = {
+    totalClasses: classesData?.length || 0,
+    totalStudents: studentsData?.length || 0,
+    totalParents: parentsData?.length || 0,
+    upcomingClasses: (timetableData || []).filter(cls => new Date(cls.startTime) > new Date()).length || 0,
+    pendingAssignments: (assignmentsData || []).filter(assignment => assignment.status === 'active').length || 0,
+    pendingLeaveRequests: (leaveRequestsData || []).filter(request => request.status === 'pending').length || 0,
+    averageAttendance: 85, // This would need to be calculated from attendance data
+    averageGrade: 78, // This would need to be calculated from grades data
+    assignmentsCompleted: 65, // This would need to be calculated from assignment submissions
+    studentSatisfaction: 4.2 // This would need to be fetched from feedback data
+  };
 
-  const stats = dashboardData?.data || {};
+  const teacherName = profileData?.name || user?.name || 'Teacher';
+  const teacherRole = profileData?.role || user?.role || 'Teacher';
+  const teacherDepartment = profileData?.department?.name || profileData?.department || 'Department';
 
   return (
     <Box>
@@ -87,10 +175,13 @@ function DashboardOverview() {
       <Card sx={{ mb: 3, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
         <CardContent>
           <Typography variant="h4" gutterBottom>
-            Welcome back, Dr. Sarah Wilson! 👋
+            Welcome back, {teacherName}! 👋
           </Typography>
           <Typography variant="body1">
-            Here's what's happening in your classes today
+            Here's what's happening in your coordinated classes today
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 1, opacity: 0.8 }}>
+            {teacherRole} • {teacherDepartment}
           </Typography>
         </CardContent>
       </Card>
@@ -107,9 +198,9 @@ function DashboardOverview() {
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
                   <Typography variant="h4" fontWeight="bold">
-                    {stats.totalClasses || 0}
+                    {stats.totalClasses}
                   </Typography>
-                  <Typography variant="body2">Total Classes</Typography>
+                  <Typography variant="body2">Coordinated Classes</Typography>
                 </Box>
                 <School sx={{ fontSize: 40, opacity: 0.8 }} />
               </Box>
@@ -127,9 +218,9 @@ function DashboardOverview() {
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
                   <Typography variant="h4" fontWeight="bold">
-                    {stats.totalStudents || 0}
+                    {stats.totalStudents}
                   </Typography>
-                  <Typography variant="body2">Total Students</Typography>
+                  <Typography variant="body2">Coordinated Students</Typography>
                 </Box>
                 <Group sx={{ fontSize: 40, opacity: 0.8 }} />
               </Box>
@@ -147,11 +238,11 @@ function DashboardOverview() {
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
                   <Typography variant="h4" fontWeight="bold">
-                    {stats.upcomingClasses || 0}
+                    {stats.totalParents}
                   </Typography>
-                  <Typography variant="body2">Upcoming Classes</Typography>
+                  <Typography variant="body2">Coordinated Parents</Typography>
                 </Box>
-                <Event sx={{ fontSize: 40, opacity: 0.8 }} />
+                <SupervisorAccount sx={{ fontSize: 40, opacity: 0.8 }} />
               </Box>
             </CardContent>
           </Card>
@@ -167,213 +258,247 @@ function DashboardOverview() {
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
                   <Typography variant="h4" fontWeight="bold">
-                    {stats.pendingAssignments || 0}
+                    {stats.pendingLeaveRequests}
                   </Typography>
-                  <Typography variant="body2">Pending Assignments</Typography>
+                  <Typography variant="body2">Pending Leave Requests</Typography>
                 </Box>
-                <Assignment sx={{ fontSize: 40, opacity: 0.8 }} />
+                <Warning sx={{ fontSize: 40, opacity: 0.8 }} />
               </Box>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
 
-      {/* Performance Metrics */}
-      {stats.performanceMetrics && (
+      {/* Coordinated Classes Overview */}
+      {classesData && classesData.length > 0 && (
         <Card sx={{ mb: 3 }}>
           <CardHeader 
-            title="Performance Metrics" 
+            title="Coordinated Classes" 
             action={
-              <IconButton>
-                <TrendingUp />
-              </IconButton>
+              <Button variant="outlined" startIcon={<Visibility />}>
+                View All
+              </Button>
             }
           />
           <CardContent>
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={6} md={3}>
-                <Box textAlign="center">
-                  <Typography variant="h6" color="primary">
-                    {stats.performanceMetrics.averageAttendance}%
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    Average Attendance
-                  </Typography>
-                  <LinearProgress 
-                    variant="determinate" 
-                    value={stats.performanceMetrics.averageAttendance} 
-                    sx={{ mt: 1 }}
-                  />
-                </Box>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Box textAlign="center">
-                  <Typography variant="h6" color="primary">
-                    {stats.performanceMetrics.averageGrade}%
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    Average Grade
-                  </Typography>
-                  <LinearProgress 
-                    variant="determinate" 
-                    value={stats.performanceMetrics.averageGrade} 
-                    sx={{ mt: 1 }}
-                  />
-                </Box>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Box textAlign="center">
-                  <Typography variant="h6" color="primary">
-                    {stats.performanceMetrics.assignmentsCompleted}%
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    Assignments Completed
-                  </Typography>
-                  <LinearProgress 
-                    variant="determinate" 
-                    value={stats.performanceMetrics.assignmentsCompleted} 
-                    sx={{ mt: 1 }}
-                  />
-                </Box>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Box textAlign="center">
-                  <Rating 
-                    value={stats.performanceMetrics.studentSatisfaction} 
-                    readOnly 
-                    precision={0.1}
-                  />
-                  <Typography variant="body2" color="textSecondary">
-                    Student Satisfaction
-                  </Typography>
-                </Box>
-              </Grid>
+            <Grid container spacing={2}>
+              {classesData.slice(0, 4).map((cls, index) => (
+                <Grid item xs={12} sm={6} md={3} key={cls._id || index}>
+                  <Card variant="outlined" sx={{ p: 2 }}>
+                    <Typography variant="h6" gutterBottom>
+                      {cls.name || `${cls.grade} ${cls.section}`}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Students: {cls.studentCount || 0}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Capacity: {cls.capacity || 'N/A'}
+                    </Typography>
+                    {cls.description && (
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                        {cls.description}
+                      </Typography>
+                    )}
+                  </Card>
+                </Grid>
+              ))}
             </Grid>
           </CardContent>
         </Card>
       )}
 
-      {/* Recent Activity */}
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardHeader 
-              title="Recent Announcements" 
-              action={
-                <IconButton>
-                  <MoreVert />
-                </IconButton>
-              }
-            />
-            <CardContent>
-              <List>
-                {stats.recentAnnouncements?.map((announcement, index) => (
-                  <Box key={announcement.id}>
-                    <ListItem alignItems="flex-start">
-                      <ListItemAvatar>
-                        <Avatar sx={{ bgcolor: announcement.priority === 'high' ? 'error.main' : 'primary.main' }}>
-                          <Notifications />
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={
-                          <Box display="flex" alignItems="center" gap={1}>
-                            {announcement.title}
-                            <Chip 
-                              label={announcement.priority} 
-                              size="small" 
-                              color={announcement.priority === 'high' ? 'error' : 'default'}
-                            />
-                          </Box>
-                        }
-                        secondary={
-                          <>
-                            <Typography component="span" variant="body2" color="text.primary">
-                              {announcement.content}
-                            </Typography>
-                            <Typography variant="caption" display="block" color="text.secondary">
-                              {announcement.date}
-                            </Typography>
-                          </>
-                        }
-                      />
-                    </ListItem>
-                    {index < stats.recentAnnouncements.length - 1 && <Divider variant="inset" component="li" />}
-                  </Box>
-                ))}
-              </List>
-            </CardContent>
-          </Card>
-        </Grid>
+      {/* Recent Students */}
+      {studentsData && studentsData.length > 0 && (
+        <Card sx={{ mb: 3 }}>
+          <CardHeader 
+            title="Recent Students" 
+            action={
+              <Button variant="outlined" startIcon={<Visibility />}>
+                View All
+              </Button>
+            }
+          />
+          <CardContent>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Roll Number</TableCell>
+                    <TableCell>Class</TableCell>
+                    <TableCell>Section</TableCell>
+                    <TableCell>Status</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {studentsData.slice(0, 5).map((student, index) => (
+                    <TableRow key={student._id || index}>
+                      <TableCell>
+                        <Box display="flex" alignItems="center">
+                          <Avatar sx={{ mr: 2, width: 32, height: 32 }}>
+                            {student.name?.charAt(0) || 'S'}
+                          </Avatar>
+                          {student.name}
+                        </Box>
+                      </TableCell>
+                      <TableCell>{student.rollNumber}</TableCell>
+                      <TableCell>{student.class}</TableCell>
+                      <TableCell>{student.section}</TableCell>
+                      <TableCell>
+                        <Chip 
+                          label={student.status || 'Active'} 
+                          color={student.status === 'Active' ? 'success' : 'default'}
+                          size="small"
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+      )}
 
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardHeader 
-              title="Upcoming Events" 
-              action={
-                <IconButton>
-                  <MoreVert />
-                </IconButton>
-              }
-            />
-            <CardContent>
-              <List>
-                {stats.upcomingEvents?.map((event, index) => (
-                  <Box key={event.id}>
-                    <ListItem alignItems="flex-start">
-                      <ListItemAvatar>
-                        <Avatar sx={{ bgcolor: 'success.main' }}>
-                          <Event />
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={event.title}
-                        secondary={
-                          <>
-                            <Typography component="span" variant="body2" color="text.primary">
-                              {event.date} at {event.time}
-                            </Typography>
-                            <Typography variant="caption" display="block" color="text.secondary">
-                              {event.location}
-                            </Typography>
-                          </>
-                        }
-                      />
-                      <IconButton size="small">
-                        <AccessTime />
-                      </IconButton>
-                    </ListItem>
-                    {index < stats.upcomingEvents.length - 1 && <Divider variant="inset" component="li" />}
-                  </Box>
-                ))}
-              </List>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      {/* Recent Leave Requests */}
+      {leaveRequestsData && leaveRequestsData.length > 0 && (
+        <Card sx={{ mb: 3 }}>
+          <CardHeader 
+            title="Recent Leave Requests" 
+            action={
+              <Button variant="outlined" startIcon={<Visibility />}>
+                View All
+              </Button>
+            }
+          />
+          <CardContent>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Student</TableCell>
+                    <TableCell>Type</TableCell>
+                    <TableCell>From</TableCell>
+                    <TableCell>To</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Action</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {leaveRequestsData.slice(0, 5).map((request, index) => (
+                    <TableRow key={request._id || index}>
+                      <TableCell>
+                        {request.studentId?.name || 'Unknown Student'}
+                      </TableCell>
+                      <TableCell>{request.leaveType}</TableCell>
+                      <TableCell>{new Date(request.startDate).toLocaleDateString()}</TableCell>
+                      <TableCell>{new Date(request.endDate).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <Chip 
+                          label={request.status} 
+                          color={
+                            request.status === 'approved' ? 'success' : 
+                            request.status === 'rejected' ? 'error' : 'warning'
+                          }
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {request.status === 'pending' && (
+                          <Box>
+                            <IconButton size="small" color="success">
+                              <CheckCircle />
+                            </IconButton>
+                            <IconButton size="small" color="error">
+                              <Cancel />
+                            </IconButton>
+                          </Box>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader title="Quick Actions" />
+        <CardContent>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6} md={3}>
+              <Button
+                variant="contained"
+                fullWidth
+                startIcon={<Assignment />}
+                sx={{ mb: 1 }}
+              >
+                Create Assignment
+              </Button>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Button
+                variant="contained"
+                fullWidth
+                startIcon={<Assessment />}
+                sx={{ mb: 1 }}
+              >
+                Schedule Exam
+              </Button>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Button
+                variant="contained"
+                fullWidth
+                startIcon={<Message />}
+                sx={{ mb: 1 }}
+              >
+                Send Message
+              </Button>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Button
+                variant="contained"
+                fullWidth
+                startIcon={<Upload />}
+                sx={{ mb: 1 }}
+              >
+                Upload Resource
+              </Button>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
     </Box>
   );
 }
 
 // Profile Management Component
 function ProfileManagement() {
+  const { user } = useAuth();
+  const staffId = user?._id || user?.id; // Try both _id and id properties
+  
   const { data: profile, isLoading } = useQuery({
-    queryKey: ['profile'],
-    queryFn: () => teacherService.getProfile()
+    queryKey: ['teacherProfile', staffId],
+    queryFn: () => teacherAPI.getProfile(staffId),
+    enabled: !!staffId && staffId !== 'undefined'
   });
 
   const [editMode, setEditMode] = useState(false);
   const [editedProfile, setEditedProfile] = useState({});
 
   useEffect(() => {
-    if (profile?.data) {
-      setEditedProfile(profile.data);
+    if (profile) {
+      setEditedProfile(profile);
     }
   }, [profile]);
 
   const handleSave = async () => {
     try {
-      await teacherService.updateProfile(editedProfile);
+      await teacherAPI.updateProfile(staffId, editedProfile);
       toast.success('Profile updated successfully');
       setEditMode(false);
     } catch (error) {
@@ -381,11 +506,24 @@ function ProfileManagement() {
     }
   };
 
+  // Show error if no valid staffId
+  if (!staffId || staffId === 'undefined') {
+    return (
+      <Card>
+        <CardContent>
+          <Alert severity="error">
+            Unable to load profile. User ID not found. Please try logging in again.
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (isLoading) {
     return <CircularProgress />;
   }
 
-  const profileData = profile?.data || {};
+  const profileData = profile || {};
 
   return (
     <Box>
@@ -418,8 +556,8 @@ function ProfileManagement() {
                   <Person sx={{ fontSize: 60 }} />
                 </Avatar>
                 <Typography variant="h6">{profileData.name}</Typography>
-                <Typography variant="body2" color="textSecondary">{profileData.designation}</Typography>
-                <Chip label={profileData.department} color="primary" sx={{ mt: 1 }} />
+                <Typography variant="body2" color="textSecondary">{profileData.designation || profileData.role}</Typography>
+                <Chip label={profileData.department?.name || profileData.department || 'Department'} color="primary" sx={{ mt: 1 }} />
               </Box>
             </Grid>
             <Grid item xs={12} md={8}>
@@ -483,7 +621,7 @@ function ProfileManagement() {
         <CardContent>
           <List>
             {profileData.professionalDevelopment?.map((dev, index) => (
-              <ListItem key={dev.id}>
+              <ListItem key={dev.id || index}>
                 <ListItemAvatar>
                   <Avatar sx={{ bgcolor: 'success.main' }}>
                     <School />
@@ -507,6 +645,11 @@ function ProfileManagement() {
                 </IconButton>
               </ListItem>
             ))}
+            {(!profileData.professionalDevelopment || profileData.professionalDevelopment.length === 0) && (
+              <ListItem>
+                <ListItemText primary="No professional development records" />
+              </ListItem>
+            )}
           </List>
         </CardContent>
       </Card>
@@ -516,147 +659,655 @@ function ProfileManagement() {
 
 // Classes Management Component
 function ClassesManagement() {
-  const { data: classes, isLoading } = useQuery({
-    queryKey: ['classes'],
-    queryFn: () => teacherService.getClasses()
-  });
-
+  const { user } = useAuth();
+  const staffId = user?._id || user?.id; // Try both _id and id properties
   const [selectedClass, setSelectedClass] = useState(null);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [showClassDetails, setShowClassDetails] = useState(false);
 
-  if (isLoading) {
-    return <CircularProgress />;
+  // Show error if no valid staffId
+  if (!staffId || staffId === 'undefined') {
+    return (
+      <Card>
+        <CardContent>
+          <Alert severity="error">
+            Unable to load classes. User ID not found. Please try logging in again.
+          </Alert>
+        </CardContent>
+      </Card>
+    );
   }
 
-  const classesData = classes?.data || [];
+  // Fetch coordinated classes
+  const { data: classesData, isLoading: classesLoading, refetch: refetchClasses } = useQuery({
+    queryKey: ['teacherClasses', staffId],
+    queryFn: () => teacherAPI.getClasses(staffId),
+    enabled: !!staffId && staffId !== 'undefined'
+  });
+
+  // Fetch coordinated students
+  const { data: studentsData, isLoading: studentsLoading } = useQuery({
+    queryKey: ['teacherStudents', staffId],
+    queryFn: () => teacherAPI.getStudents(staffId),
+    enabled: !!staffId && staffId !== 'undefined'
+  });
+
+  const handleClassClick = (cls) => {
+    setSelectedClass(cls);
+    setShowClassDetails(true);
+  };
+
+  const handleCloseClassDetails = () => {
+    setShowClassDetails(false);
+    setSelectedClass(null);
+  };
+
+  if (classesLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box>
-      <Card>
-        <CardHeader 
-          title="Class Management" 
-          action={
-            <Button variant="contained" startIcon={<Add />}>
-              Add New Class
-            </Button>
-          }
-        />
-        <CardContent>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Class Name</TableCell>
-                  <TableCell>Subject</TableCell>
-                  <TableCell>Room</TableCell>
-                  <TableCell>Schedule</TableCell>
-                  <TableCell>Students</TableCell>
-                  <TableCell>Avg Grade</TableCell>
-                  <TableCell>Attendance</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {classesData
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((cls) => (
-                  <TableRow key={cls.id} hover>
-                    <TableCell>
-                      <Box>
-                        <Typography variant="subtitle2">{cls.name}</Typography>
-                        <Typography variant="caption" color="textSecondary">
-                          Grade {cls.grade} - Section {cls.section}
+      <Typography variant="h4" gutterBottom>
+        Coordinated Classes Management
+      </Typography>
+      
+      {classesData && classesData.length > 0 ? (
+        <Grid container spacing={3}>
+          {classesData.map((cls, index) => (
+            <Grid item xs={12} sm={6} md={4} key={cls._id || index}>
+              <Card 
+                sx={{ 
+                  cursor: 'pointer',
+                  '&:hover': { 
+                    transform: 'translateY(-4px)', 
+                    boxShadow: 4,
+                    transition: 'all 0.3s ease'
+                  }
+                }}
+                onClick={() => handleClassClick(cls)}
+              >
+                <CardContent>
+                  <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+                    <Typography variant="h6" color="primary">
+                      {cls.name || `${cls.grade} ${cls.section}`}
+                    </Typography>
+                    <Chip 
+                      label={`${cls.studentCount || 0} students`}
+                      color="primary"
+                      size="small"
+                    />
+                  </Box>
+                  
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    <strong>Capacity:</strong> {cls.capacity || 'N/A'}
+                  </Typography>
+                  
+                  {cls.description && (
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      {cls.description}
+                    </Typography>
+                  )}
+                  
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
+                    <Typography variant="caption" color="text.secondary">
+                      Class ID: {cls._id}
+                    </Typography>
+                    <IconButton size="small">
+                      <Visibility />
+                    </IconButton>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      ) : (
+        <Card>
+          <CardContent>
+            <Typography variant="h6" textAlign="center" color="text.secondary">
+              No coordinated classes found
+            </Typography>
+            <Typography variant="body2" textAlign="center" color="text.secondary">
+              You haven't been assigned to coordinate any classes yet.
+            </Typography>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Class Details Dialog */}
+      <Dialog 
+        open={showClassDetails} 
+        onClose={handleCloseClassDetails}
+        maxWidth="md"
+        fullWidth
+      >
+        {selectedClass && (
+          <>
+            <DialogTitle>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Typography variant="h6">
+                  {selectedClass.name || `${selectedClass.grade} ${selectedClass.section}`} - Class Details
+                </Typography>
+                <IconButton onClick={handleCloseClassDetails}>
+                  <Cancel />
+                </IconButton>
+              </Box>
+            </DialogTitle>
+            <DialogContent>
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <Card variant="outlined">
+                    <CardHeader title="Class Information" />
+                    <CardContent>
+                      <Typography variant="body1" gutterBottom>
+                        <strong>Name:</strong> {selectedClass.name || `${selectedClass.grade} ${selectedClass.section}`}
+                      </Typography>
+                      <Typography variant="body1" gutterBottom>
+                        <strong>Grade:</strong> {selectedClass.grade}
+                      </Typography>
+                      <Typography variant="body1" gutterBottom>
+                        <strong>Section:</strong> {selectedClass.section}
+                      </Typography>
+                      <Typography variant="body1" gutterBottom>
+                        <strong>Capacity:</strong> {selectedClass.capacity || 'N/A'}
+                      </Typography>
+                      <Typography variant="body1" gutterBottom>
+                        <strong>Current Students:</strong> {selectedClass.studentCount || 0}
+                      </Typography>
+                      {selectedClass.description && (
+                        <Typography variant="body1" gutterBottom>
+                          <strong>Description:</strong> {selectedClass.description}
                         </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Chip label={cls.subject} size="small" color="primary" />
-                    </TableCell>
-                    <TableCell>{cls.room}</TableCell>
-                    <TableCell>
-                      <Typography variant="body2">{cls.schedule}</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Box textAlign="center">
-                        <Typography variant="h6">{cls.totalStudents}</Typography>
-                        <Typography variant="caption">students</Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Box textAlign="center">
-                        <Typography variant="h6" color="primary">
-                          {cls.averageGrade}%
+                      )}
+                    </CardContent>
+                  </Card>
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <Card variant="outlined">
+                    <CardHeader title="Students in this Class" />
+                    <CardContent>
+                      {studentsLoading ? (
+                        <CircularProgress size={20} />
+                      ) : studentsData && studentsData.length > 0 ? (
+                        <List dense>
+                          {(studentsData || [])
+                            .filter(student => 
+                              student.class === selectedClass.name || 
+                              (student.class === selectedClass.grade && student.section === selectedClass.section)
+                            )
+                            .slice(0, 5)
+                            .map((student, index) => (
+                              <ListItem key={student._id || index}>
+                                <ListItemAvatar>
+                                  <Avatar sx={{ width: 32, height: 32 }}>
+                                    {student.name?.charAt(0) || 'S'}
+                                  </Avatar>
+                                </ListItemAvatar>
+                                <ListItemText
+                                  primary={student.name}
+                                  secondary={`Roll: ${student.rollNumber} | Status: ${student.status || 'Active'}`}
+                                />
+                              </ListItem>
+                            ))}
+                        </List>
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">
+                          No students found in this class
                         </Typography>
-                        <LinearProgress 
-                          variant="determinate" 
-                          value={cls.averageGrade} 
-                          sx={{ mt: 0.5 }}
-                        />
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Box textAlign="center">
-                        <Typography variant="h6" color="success.main">
-                          {cls.attendanceRate}%
-                        </Typography>
-                        <LinearProgress 
-                          variant="determinate" 
-                          value={cls.attendanceRate} 
-                          sx={{ mt: 0.5 }}
-                        />
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Box display="flex" gap={1}>
-                        <IconButton size="small" color="primary">
-                          <Visibility />
-                        </IconButton>
-                        <IconButton size="small" color="secondary">
-                          <Edit />
-                        </IconButton>
-                        <IconButton size="small" color="error">
-                          <Delete />
-                        </IconButton>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={classesData.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={(event, newPage) => setPage(newPage)}
-            onRowsPerPageChange={(event) => {
-              setRowsPerPage(parseInt(event.target.value, 10));
-              setPage(0);
-            }}
-          />
-        </CardContent>
-      </Card>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleCloseClassDetails}>Close</Button>
+              <Button variant="contained" startIcon={<Assignment />}>
+                Manage Assignments
+              </Button>
+              <Button variant="contained" startIcon={<Assessment />}>
+                View Attendance
+              </Button>
+            </DialogActions>
+          </>
+        )}
+      </Dialog>
     </Box>
   );
 }
 
-// Main Dashboard Component
-export default function TeacherDashboard() {
-  const [activeTab, setActiveTab] = useState(0);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [notifications, setNotifications] = useState([]);
-  const { logout } = useAuth();
-  const navigate = useNavigate();
+// Students Management Component
+function StudentsManagement() {
+  const { user } = useAuth();
+  const staffId = user?._id || user?.id; // Try both _id and id properties
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [showStudentDetails, setShowStudentDetails] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterClass, setFilterClass] = useState('all');
 
-  // Fetch notifications
+  // Show error if no valid staffId
+  if (!staffId || staffId === 'undefined') {
+    return (
+      <Card>
+        <CardContent>
+          <Alert severity="error">
+            Unable to load students. User ID not found. Please try logging in again.
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Fetch coordinated students
+  const { data: studentsData, isLoading: studentsLoading } = useQuery({
+    queryKey: ['teacherStudents', staffId],
+    queryFn: () => teacherAPI.getStudents(staffId),
+    enabled: !!staffId && staffId !== 'undefined'
+  });
+
+  // Fetch coordinated classes for filtering
+  const { data: classesData, isLoading: classesLoading } = useQuery({
+    queryKey: ['teacherClasses', staffId],
+    queryFn: () => teacherAPI.getClasses(staffId),
+    enabled: !!staffId && staffId !== 'undefined'
+  });
+
+  const handleStudentClick = (student) => {
+    setSelectedStudent(student);
+    setShowStudentDetails(true);
+  };
+
+  const handleCloseStudentDetails = () => {
+    setShowStudentDetails(false);
+    setSelectedStudent(null);
+  };
+
+  // Filter students based on search term and class
+  const filteredStudents = (studentsData || []).filter(student => {
+    const matchesSearch = student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         student.rollNumber?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesClass = filterClass === 'all' || student.class === filterClass;
+    return matchesSearch && matchesClass;
+  });
+
+  if (studentsLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  return (
+    <Box>
+      <Typography variant="h4" gutterBottom>
+        Coordinated Students Management
+      </Typography>
+
+      {/* Search and Filter Controls */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Search students"
+                variant="outlined"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth>
+                <InputLabel>Filter by Class</InputLabel>
+                <Select
+                  value={filterClass}
+                  label="Filter by Class"
+                  onChange={(e) => setFilterClass(e.target.value)}
+                >
+                  <MenuItem value="all">All Classes</MenuItem>
+                  {classesData?.map((cls) => (
+                    <MenuItem key={cls._id} value={cls.name || `${cls.grade} ${cls.section}`}>
+                      {cls.name || `${cls.grade} ${cls.section}`}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={2}>
+              <Button
+                fullWidth
+                variant="outlined"
+                startIcon={<Refresh />}
+                onClick={() => {
+                  setSearchTerm('');
+                  setFilterClass('all');
+                }}
+              >
+                Reset
+              </Button>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
+
+      {/* Students Grid */}
+      {filteredStudents.length > 0 ? (
+        <Grid container spacing={3}>
+          {filteredStudents.map((student, index) => (
+            <Grid item xs={12} sm={6} md={4} key={student._id || index}>
+              <Card 
+                sx={{ 
+                  cursor: 'pointer',
+                  '&:hover': { 
+                    transform: 'translateY(-4px)', 
+                    boxShadow: 4,
+                    transition: 'all 0.3s ease'
+                  }
+                }}
+                onClick={() => handleStudentClick(student)}
+              >
+                <CardContent>
+                  <Box display="flex" alignItems="center" mb={2}>
+                    <Avatar sx={{ mr: 2, width: 48, height: 48 }}>
+                      {student.name?.charAt(0) || 'S'}
+                    </Avatar>
+                    <Box flex={1}>
+                      <Typography variant="h6" gutterBottom>
+                        {student.name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Roll: {student.rollNumber}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                    <Typography variant="body2" color="text.secondary">
+                      Class: {student.class}
+                    </Typography>
+                    <Chip 
+                      label={student.status || 'Active'} 
+                      color={student.status === 'Active' ? 'success' : 'default'}
+                      size="small"
+                    />
+                  </Box>
+                  
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Section: {student.section}
+                  </Typography>
+                  
+                  {student.gender && (
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Gender: {student.gender}
+                    </Typography>
+                  )}
+                  
+                  {student.contactNumber && (
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Contact: {student.contactNumber}
+                    </Typography>
+                  )}
+                  
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
+                    <Typography variant="caption" color="text.secondary">
+                      Student ID: {student._id}
+                    </Typography>
+                    <IconButton size="small">
+                      <Visibility />
+                    </IconButton>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      ) : (
+        <Card>
+          <CardContent>
+            <Typography variant="h6" textAlign="center" color="text.secondary">
+              {searchTerm || filterClass !== 'all' ? 'No students found matching your criteria' : 'No coordinated students found'}
+            </Typography>
+            <Typography variant="body2" textAlign="center" color="text.secondary">
+              {searchTerm || filterClass !== 'all' 
+                ? 'Try adjusting your search or filter criteria.' 
+                : 'You haven\'t been assigned to coordinate any students yet.'
+              }
+            </Typography>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Student Details Dialog */}
+      <Dialog 
+        open={showStudentDetails} 
+        onClose={handleCloseStudentDetails}
+        maxWidth="md"
+        fullWidth
+      >
+        {selectedStudent && (
+          <>
+            <DialogTitle>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Typography variant="h6">
+                  {selectedStudent.name} - Student Details
+                </Typography>
+                <IconButton onClick={handleCloseStudentDetails}>
+                  <Cancel />
+                </IconButton>
+              </Box>
+            </DialogTitle>
+            <DialogContent>
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <Card variant="outlined">
+                    <CardHeader title="Personal Information" />
+                    <CardContent>
+                      <Typography variant="body1" gutterBottom>
+                        <strong>Name:</strong> {selectedStudent.name}
+                      </Typography>
+                      <Typography variant="body1" gutterBottom>
+                        <strong>Roll Number:</strong> {selectedStudent.rollNumber}
+                      </Typography>
+                      <Typography variant="body1" gutterBottom>
+                        <strong>Class:</strong> {selectedStudent.class}
+                      </Typography>
+                      <Typography variant="body1" gutterBottom>
+                        <strong>Section:</strong> {selectedStudent.section}
+                      </Typography>
+                      {selectedStudent.gender && (
+                        <Typography variant="body1" gutterBottom>
+                          <strong>Gender:</strong> {selectedStudent.gender}
+                        </Typography>
+                      )}
+                      {selectedStudent.dateOfBirth && (
+                        <Typography variant="body1" gutterBottom>
+                          <strong>Date of Birth:</strong> {new Date(selectedStudent.dateOfBirth).toLocaleDateString()}
+                        </Typography>
+                      )}
+                      <Typography variant="body1" gutterBottom>
+                        <strong>Status:</strong> 
+                        <Chip 
+                          label={selectedStudent.status || 'Active'} 
+                          color={selectedStudent.status === 'Active' ? 'success' : 'default'}
+                          size="small"
+                          sx={{ ml: 1 }}
+                        />
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <Card variant="outlined">
+                    <CardHeader title="Contact Information" />
+                    <CardContent>
+                      {selectedStudent.email && (
+                        <Typography variant="body1" gutterBottom>
+                          <strong>Email:</strong> {selectedStudent.email}
+                        </Typography>
+                      )}
+                      {selectedStudent.contactNumber && (
+                        <Typography variant="body1" gutterBottom>
+                          <strong>Contact Number:</strong> {selectedStudent.contactNumber}
+                        </Typography>
+                      )}
+                      {selectedStudent.address && (
+                        <Typography variant="body1" gutterBottom>
+                          <strong>Address:</strong> {selectedStudent.address}
+                        </Typography>
+                      )}
+                      {selectedStudent.emergencyContact && (
+                        <Typography variant="body1" gutterBottom>
+                          <strong>Emergency Contact:</strong> {selectedStudent.emergencyContact}
+                        </Typography>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleCloseStudentDetails}>Close</Button>
+              <Button variant="contained" startIcon={<Assessment />}>
+                View Performance
+              </Button>
+              <Button variant="contained" startIcon={<Message />}>
+                Contact Parent
+              </Button>
+            </DialogActions>
+          </>
+        )}
+      </Dialog>
+    </Box>
+  );
+}
+
+// Coordinator Portal Component
+function CoordinatorPortal() {
+  const [loading, setLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [studentDialogOpen, setStudentDialogOpen] = useState(false);
+  const [selectedParent, setSelectedParent] = useState(null);
+  const [parentDialogOpen, setParentDialogOpen] = useState(false);
+
   useEffect(() => {
-    teacherService.getNotifications().then(res => {
-      setNotifications(res.data);
-    });
+    fetchDashboardData();
   }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const response = await staffAPI.getDashboard();
+      setDashboardData(response.data);
+    } catch (error) {
+      setDashboardData(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStudentClick = (student) => {
+    setSelectedStudent(student);
+    setStudentDialogOpen(true);
+  };
+  const handleParentClick = (parent) => {
+    setSelectedParent(parent);
+    setParentDialogOpen(true);
+  };
+  const handleApproveLeave = async (leaveId) => {
+    await staffAPI.updateLeaveRequest(leaveId, { status: 'Approved' });
+    fetchDashboardData();
+  };
+  const handleRejectLeave = async (leaveId) => {
+    await staffAPI.updateLeaveRequest(leaveId, { status: 'Rejected' });
+    fetchDashboardData();
+  };
+
+  if (loading) return <CircularProgress />;
+  if (!dashboardData) return <Alert severity="error">No coordinator data</Alert>;
+
+  return (
+    <Box>
+      <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
+        <SupervisorAccount sx={{ mr: 1, verticalAlign: 'middle' }} />
+        Class Coordinator Portal
+      </Typography>
+      {/* Overview Cards */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card><CardContent><Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}><Class color="primary" /><Typography variant="h6" sx={{ ml: 1 }}>Coordinated Classes</Typography></Box><Typography variant="h4" color="primary">{dashboardData.stats?.classes || 0}</Typography><Typography variant="body2" color="text.secondary">Classes under your coordination</Typography></CardContent></Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card><CardContent><Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}><People color="success" /><Typography variant="h6" sx={{ ml: 1 }}>Total Students</Typography></Box><Typography variant="h4" color="success">{dashboardData.stats?.students || 0}</Typography><Typography variant="body2" color="text.secondary">Students in your classes</Typography></CardContent></Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card><CardContent><Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}><Group color="info" /><Typography variant="h6" sx={{ ml: 1 }}>Connected Parents</Typography></Box><Typography variant="h4" color="info">{dashboardData.stats?.parents || 0}</Typography><Typography variant="body2" color="text.secondary">Parents of your students</Typography></CardContent></Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card><CardContent><Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}><Assignment color="error" /><Typography variant="h6" sx={{ ml: 1 }}>Pending Requests</Typography></Box><Typography variant="h4" color="error">{dashboardData.stats?.pendingLeaveRequests || 0}</Typography><Typography variant="body2" color="text.secondary">Leave requests to review</Typography></CardContent></Card>
+        </Grid>
+      </Grid>
+      {/* Accordions for Classes, Leave Requests, Students, Parents, Events */}
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
+          <Accordion defaultExpanded>
+            <AccordionSummary expandIcon={<ExpandMore />}><Typography variant="h6"><School sx={{ mr: 1, verticalAlign: 'middle' }} />Coordinated Classes</Typography></AccordionSummary>
+            <AccordionDetails>
+              <Grid container spacing={2}>{dashboardData.coordinatedClasses?.map((cls) => (<Grid item xs={12} key={cls._id}><Card variant="outlined"><CardContent><Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}><School color="primary" sx={{ mr: 1 }} /><Typography variant="h6">{cls.name}</Typography></Box><Typography variant="body2" color="text.secondary" gutterBottom>Grade: {cls.grade} | Section: {cls.section}</Typography><Typography variant="body2" color="text.secondary">Capacity: {cls.capacity || 'N/A'}</Typography>{cls.description && (<Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>{cls.description}</Typography>)}</CardContent></Card></Grid>))}</Grid>
+            </AccordionDetails>
+          </Accordion>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Accordion defaultExpanded>
+            <AccordionSummary expandIcon={<ExpandMore />}><Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}><Typography variant="h6"><Assignment sx={{ mr: 1, verticalAlign: 'middle' }} />Leave Requests</Typography>{dashboardData.stats?.pendingLeaveRequests > 0 && (<Badge badgeContent={dashboardData.stats.pendingLeaveRequests} color="error" sx={{ ml: 'auto' }} />)}</Box></AccordionSummary>
+            <AccordionDetails>
+              <TableContainer><Table size="small"><TableHead><TableRow><TableCell>Student</TableCell><TableCell>Type</TableCell><TableCell>Dates</TableCell><TableCell>Status</TableCell><TableCell>Actions</TableCell></TableRow></TableHead><TableBody>{dashboardData.pendingLeaveRequests?.map((request) => (<TableRow key={request._id}><TableCell><Box><Typography variant="body2" fontWeight="bold">{request.studentId?.name || request.studentName}</Typography><Typography variant="caption" color="text.secondary">{request.studentId?.class || request.studentClass} - {request.studentId?.section || request.studentSection}</Typography></Box></TableCell><TableCell>{request.leaveType}</TableCell><TableCell><Typography variant="caption">{new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}</Typography></TableCell><TableCell><Chip label={request.status} color={request.status === 'Approved' ? 'success' : request.status === 'Rejected' ? 'error' : 'warning'} size="small" /></TableCell><TableCell>{request.status === 'Pending' && (<Box><Tooltip title="Approve"><IconButton size="small" color="success" onClick={() => handleApproveLeave(request._id)} sx={{ mr: 1 }}><CheckCircle /></IconButton></Tooltip><Tooltip title="Reject"><IconButton size="small" color="error" onClick={() => handleRejectLeave(request._id)}><Cancel /></IconButton></Tooltip></Box>)}</TableCell></TableRow>))}{(!dashboardData.pendingLeaveRequests || dashboardData.pendingLeaveRequests.length === 0) && (<TableRow><TableCell colSpan={5} align="center">No pending leave requests</TableCell></TableRow>)}</TableBody></Table></TableContainer>
+            </AccordionDetails>
+          </Accordion>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Accordion><AccordionSummary expandIcon={<ExpandMore />}><Typography variant="h6"><People sx={{ mr: 1, verticalAlign: 'middle' }} />Students ({dashboardData.students?.length || 0})</Typography></AccordionSummary><AccordionDetails><TableContainer><Table size="small"><TableHead><TableRow><TableCell>Name</TableCell><TableCell>Roll Number</TableCell><TableCell>Class</TableCell><TableCell>Actions</TableCell></TableRow></TableHead><TableBody>{dashboardData.students?.slice(0, 10).map((student) => (<TableRow key={student._id}><TableCell><Box sx={{ display: 'flex', alignItems: 'center' }}><Avatar sx={{ mr: 2, width: 24, height: 24 }}>{student.name?.charAt(0)}</Avatar>{student.name}</Box></TableCell><TableCell>{student.rollNumber}</TableCell><TableCell>{student.class} - {student.section}</TableCell><TableCell><Tooltip title="View Details"><IconButton size="small" onClick={() => handleStudentClick(student)}><Visibility /></IconButton></Tooltip></TableCell></TableRow>))}{dashboardData.students?.length > 10 && (<TableRow><TableCell colSpan={4} align="center"><Typography variant="body2" color="text.secondary">Showing first 10 students. Total: {dashboardData.students.length}</Typography></TableCell></TableRow>)}</TableBody></Table></TableContainer></AccordionDetails></Accordion>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Accordion><AccordionSummary expandIcon={<ExpandMore />}><Typography variant="h6"><Group sx={{ mr: 1, verticalAlign: 'middle' }} />Parents ({dashboardData.parents?.length || 0})</Typography></AccordionSummary><AccordionDetails><TableContainer><Table size="small"><TableHead><TableRow><TableCell>Name</TableCell><TableCell>Email</TableCell><TableCell>Contact</TableCell><TableCell>Actions</TableCell></TableRow></TableHead><TableBody>{dashboardData.parents?.slice(0, 10).map((parent) => (<TableRow key={parent._id}><TableCell><Box sx={{ display: 'flex', alignItems: 'center' }}><Avatar sx={{ mr: 2, width: 24, height: 24 }}>{parent.name?.charAt(0)}</Avatar>{parent.name}</Box></TableCell><TableCell>{parent.email}</TableCell><TableCell>{parent.contactNumber || 'N/A'}</TableCell><TableCell><Tooltip title="View Details"><IconButton size="small" onClick={() => handleParentClick(parent)}><Visibility /></IconButton></Tooltip></TableCell></TableRow>))}{dashboardData.parents?.length > 10 && (<TableRow><TableCell colSpan={4} align="center"><Typography variant="body2" color="text.secondary">Showing first 10 parents. Total: {dashboardData.parents.length}</Typography></TableCell></TableRow>)}</TableBody></Table></TableContainer></AccordionDetails></Accordion>
+        </Grid>
+        <Grid item xs={12}>
+          <Accordion><AccordionSummary expandIcon={<ExpandMore />}><Typography variant="h6"><Event sx={{ mr: 1, verticalAlign: 'middle' }} />Class Events & Activities</Typography></AccordionSummary><AccordionDetails><Grid container spacing={3}><Grid item xs={12} md={6}><Typography variant="h6" gutterBottom>Today's Class Events</Typography><List>{dashboardData.todayEvents?.map((event, index) => (<Box key={index}><ListItem><ListItemIcon><CalendarToday color="primary" /></ListItemIcon><ListItemText primary={event.title} secondary={`${new Date(event.startDate).toLocaleTimeString()} - ${event.description}`} /><Chip label="Today" color="primary" size="small" /></ListItem>{index < dashboardData.todayEvents.length - 1 && <Divider />}</Box>))}{(!dashboardData.todayEvents || dashboardData.todayEvents.length === 0) && (<ListItem><ListItemText primary="No class events scheduled for today" /></ListItem>)}</List></Grid><Grid item xs={12} md={6}><Typography variant="h6" gutterBottom>Upcoming Class Events</Typography><List>{dashboardData.upcomingEvents?.map((event, index) => (<Box key={index}><ListItem><ListItemIcon><Event color="warning" /></ListItemIcon><ListItemText primary={event.title} secondary={`${new Date(event.startDate).toLocaleDateString()} - ${event.description}`} /><Chip label="Upcoming" color="warning" size="small" /></ListItem>{index < dashboardData.upcomingEvents.length - 1 && <Divider />}</Box>))}{(!dashboardData.upcomingEvents || dashboardData.upcomingEvents.length === 0) && (<ListItem><ListItemText primary="No upcoming class events" /></ListItem>)}</List></Grid></Grid></AccordionDetails></Accordion>
+        </Grid>
+      </Grid>
+      {/* Student Details Dialog */}
+      <Dialog open={studentDialogOpen} onClose={() => setStudentDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Student Details</DialogTitle>
+        <DialogContent>{selectedStudent && (<Grid container spacing={2} sx={{ mt: 1 }}><Grid item xs={12} sm={6}><TextField fullWidth label="Name" value={selectedStudent.name || ''} InputProps={{ readOnly: true }} /></Grid><Grid item xs={12} sm={6}><TextField fullWidth label="Roll Number" value={selectedStudent.rollNumber || ''} InputProps={{ readOnly: true }} /></Grid><Grid item xs={12} sm={6}><TextField fullWidth label="Class" value={selectedStudent.class || ''} InputProps={{ readOnly: true }} /></Grid><Grid item xs={12} sm={6}><TextField fullWidth label="Section" value={selectedStudent.section || ''} InputProps={{ readOnly: true }} /></Grid><Grid item xs={12} sm={6}><TextField fullWidth label="Contact Number" value={selectedStudent.contactNumber || 'N/A'} InputProps={{ readOnly: true }} /></Grid><Grid item xs={12} sm={6}><TextField fullWidth label="Email" value={selectedStudent.email || 'N/A'} InputProps={{ readOnly: true }} /></Grid><Grid item xs={12}><TextField fullWidth label="Address" value={selectedStudent.address || 'N/A'} multiline rows={2} InputProps={{ readOnly: true }} /></Grid></Grid>)}</DialogContent><DialogActions><Button onClick={() => setStudentDialogOpen(false)}>Close</Button></DialogActions></Dialog>
+      {/* Parent Details Dialog */}
+      <Dialog open={parentDialogOpen} onClose={() => setParentDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Parent Details</DialogTitle>
+        <DialogContent>{selectedParent && (<Grid container spacing={2} sx={{ mt: 1 }}><Grid item xs={12} sm={6}><TextField fullWidth label="Name" value={selectedParent.name || ''} InputProps={{ readOnly: true }} /></Grid><Grid item xs={12} sm={6}><TextField fullWidth label="Email" value={selectedParent.email || ''} InputProps={{ readOnly: true }} /></Grid><Grid item xs={12} sm={6}><TextField fullWidth label="Contact Number" value={selectedParent.contactNumber || 'N/A'} InputProps={{ readOnly: true }} /></Grid><Grid item xs={12} sm={6}><TextField fullWidth label="Children" value={selectedParent.childRollNumbers?.join(', ') || 'N/A'} InputProps={{ readOnly: true }} /></Grid><Grid item xs={12}><TextField fullWidth label="Address" value={selectedParent.address || 'N/A'} multiline rows={2} InputProps={{ readOnly: true }} /></Grid></Grid>)}</DialogContent><DialogActions><Button onClick={() => setParentDialogOpen(false)}>Close</Button></DialogActions></Dialog>
+    </Box>
+  );
+}
+
+// Main Teacher Dashboard Component
+export default function TeacherDashboard() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState(0);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const staffId = user?._id || user?.id; // Try both _id and id properties
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -667,7 +1318,13 @@ export default function TeacherDashboard() {
     navigate('/login');
   };
 
-  const unreadNotifications = notifications.filter(n => !n.read).length;
+  const handleMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -680,124 +1337,117 @@ export default function TeacherDashboard() {
       case 3:
         return <Timetable />;
       case 4:
-        return <div>Attendance Component</div>;
+        return <Attendance />;
       case 5:
         return <Assignments />;
       case 6:
-        return <div>Exams Component</div>;
+        return <Exams />;
       case 7:
         return <div>Grades Component</div>;
       case 8:
-        return <Students />;
+        return <StudentsManagement />;
+      case 9:
+        return <LeaveRequests />;
+      case 10:
+        return <LearningResources />;
+      case 11:
+        return <div>Lesson Plans Component</div>;
+      case 12:
+        return <Communication />;
+      case 13:
+        return <div>Projects Component</div>;
+      case 14:
+        return <div>Parent Interaction Component</div>;
+      case 15:
+        return <div>Feedback Component</div>;
+      case 16:
+        return <div>Notifications Component</div>;
       default:
         return <DashboardOverview />;
     }
   };
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       {/* App Bar */}
-      <AppBar position="static" sx={{ mb: 3 }}>
+      <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             Teacher Dashboard
           </Typography>
-          
           <Box display="flex" alignItems="center" gap={2}>
-            <IconButton color="inherit" onClick={() => setNotificationsOpen(true)}>
-              <Badge badgeContent={unreadNotifications} color="error">
-                <Notifications />
-              </Badge>
-            </IconButton>
-            
             <IconButton color="inherit">
+              <Notifications />
+            </IconButton>
+            <IconButton color="inherit" onClick={handleMenuOpen}>
               <AccountCircle />
             </IconButton>
-            
-            <IconButton color="inherit" onClick={handleLogout}>
-              <Logout />
-            </IconButton>
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleMenuClose}
+            >
+              <MenuItem onClick={handleMenuClose}>
+                <ListItemIcon>
+                  <Person fontSize="small" />
+                </ListItemIcon>
+                Profile
+              </MenuItem>
+              <MenuItem onClick={handleMenuClose}>
+                <ListItemIcon>
+                  <Settings fontSize="small" />
+                </ListItemIcon>
+                Settings
+              </MenuItem>
+              <Divider />
+              <MenuItem onClick={handleLogout}>
+                <ListItemIcon>
+                  <Logout fontSize="small" />
+                </ListItemIcon>
+                Logout
+              </MenuItem>
+            </Menu>
           </Box>
         </Toolbar>
       </AppBar>
 
       {/* Main Content */}
-      <Box sx={{ p: 3 }}>
-        {/* Tabs */}
-        <Card sx={{ mb: 3 }}>
-          <Tabs 
-            value={activeTab} 
+      <Box sx={{ display: 'flex', flex: 1 }}>
+        {/* Sidebar with Tabs */}
+        <Box sx={{ width: 280, bgcolor: 'background.paper', borderRight: 1, borderColor: 'divider' }}>
+          <Tabs
+            orientation="vertical"
+            value={activeTab}
             onChange={handleTabChange}
-            variant="scrollable"
-            scrollButtons="auto"
-            sx={{ borderBottom: 1, borderColor: 'divider' }}
+            sx={{ borderRight: 1, borderColor: 'divider', minHeight: 'calc(100vh - 64px)' }}
           >
             {featureTabs.map((tab, index) => (
-              <Tab 
+              <Tab
                 key={tab.key}
-                label={tab.label}
-                icon={tab.icon}
-                iconPosition="start"
-                sx={{ minHeight: 64 }}
+                label={
+                  <Box display="flex" alignItems="center" gap={1}>
+                    {tab.icon}
+                    {tab.label}
+                  </Box>
+                }
+                sx={{
+                  alignItems: 'flex-start',
+                  textAlign: 'left',
+                  minHeight: 64,
+                  '&.Mui-selected': {
+                    bgcolor: 'action.selected',
+                  },
+                }}
               />
             ))}
           </Tabs>
-        </Card>
+        </Box>
 
-        {/* Tab Content */}
-        <Box sx={{ mt: 3 }}>
+        {/* Content Area */}
+        <Box sx={{ flex: 1, p: 3, overflow: 'auto' }}>
           {renderTabContent()}
         </Box>
       </Box>
-
-      {/* Notifications Drawer */}
-      <Drawer
-        anchor="right"
-        open={notificationsOpen}
-        onClose={() => setNotificationsOpen(false)}
-      >
-        <Box sx={{ width: 350, p: 2 }}>
-          <Typography variant="h6" gutterBottom>
-            Notifications
-          </Typography>
-          <List>
-            {notifications.map((notification) => (
-              <ListItem key={notification.id}>
-                <ListItemAvatar>
-                  <Avatar sx={{ 
-                    bgcolor: notification.read ? 'grey.300' : 'primary.main',
-                    color: notification.read ? 'grey.600' : 'white'
-                  }}>
-                    <Notifications />
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={notification.title}
-                  secondary={
-                    <>
-                      <Typography component="span" variant="body2" color="text.primary">
-                        {notification.content}
-                      </Typography>
-                      <Typography variant="caption" display="block" color="text.secondary">
-                        {new Date(notification.date).toLocaleString()}
-                      </Typography>
-                    </>
-                  }
-                />
-              </ListItem>
-            ))}
-          </List>
-        </Box>
-      </Drawer>
-
-      {/* Floating Action Button */}
-      <Fab 
-        color="primary" 
-        aria-label="add"
-        sx={{ position: 'fixed', bottom: 16, right: 16 }}
-      >
-        <Add />
-      </Fab>
     </Box>
   );
 }

@@ -1,5 +1,6 @@
 const Exam = require('../../../models/Staff/Teacher/exam.model');
 const ExamResult = require('../../../models/Staff/Teacher/examResult.model');
+const VPExam = require('../../../models/Staff/HOD/examPaper.model');
 const Staff = require('../../../models/Staff/staffModel');
 const Student = require('../../../models/Student/studentModel');
 
@@ -148,5 +149,61 @@ exports.generatePerformanceReport = async (req, res) => {
     res.json(report);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+// Get VP-scheduled exams that teachers can view
+exports.getVPScheduledExams = async (req, res) => {
+  try {
+    const { grade } = req.query;
+    console.log('Fetching VP exams with grade filter:', grade);
+    
+    // Build filter object
+    const filter = { 
+      status: { $in: ['Approved', 'Published'] }
+    };
+    
+    // Add grade filter if provided
+    if (grade && grade !== 'all') {
+      filter.class = grade;
+    }
+    
+    console.log('VP exam filter:', filter);
+    
+    // Get VP-scheduled exams that are published
+    const vpExams = await VPExam.find(filter)
+    .populate('departmentId', 'name')
+    .populate('createdBy', 'name email')
+    .sort({ examDate: 1 });
+    
+    console.log(`Found ${vpExams.length} VP exams`);
+    
+    // Transform the data to match frontend expectations
+    const transformedExams = vpExams.map(exam => ({
+      _id: exam._id,
+      id: exam._id,
+      subject: exam.subject,
+      class: exam.class,
+      grade: exam.class,
+      section: exam.section,
+      examType: exam.examType,
+      type: exam.examType,
+      examDate: exam.examDate,
+      date: exam.examDate,
+      duration: exam.duration,
+      totalMarks: exam.totalMarks,
+      passingMarks: exam.passingMarks,
+      instructions: exam.instructions,
+      departmentId: exam.departmentId,
+      status: exam.status,
+      createdBy: exam.createdBy,
+      createdAt: exam.createdAt
+    }));
+    
+    console.log('Sending transformed exams:', transformedExams.length);
+    res.json(transformedExams);
+  } catch (error) {
+    console.error('Error fetching VP-scheduled exams:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };

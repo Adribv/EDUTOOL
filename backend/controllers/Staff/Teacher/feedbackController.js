@@ -1,5 +1,6 @@
 const AcademicSuggestion = require('../../../models/Staff/Teacher/academicSuggestion.model');
 const ResourceRequest = require('../../../models/Staff/Teacher/resourceRequest.model');
+const CurriculumFeedback = require('../../../models/Staff/Teacher/curriculumFeedback.model');
 
 // Submit an academic suggestion
 exports.submitSuggestion = async (req, res) => {
@@ -59,18 +60,36 @@ exports.getResourceRequests = async (req, res) => {
 // Provide feedback on curriculum
 exports.provideCurriculumFeedback = async (req, res) => {
   try {
-    const { title, description, category, targetAudience } = req.body;
+    const { 
+      subject, 
+      class: cls, 
+      section, 
+      feedbackType, 
+      feedback, 
+      suggestions, 
+      priority, 
+      academicYear, 
+      term 
+    } = req.body;
     
-    const feedback = new AcademicSuggestion({
+    const curriculumFeedback = new CurriculumFeedback({
       teacherId: req.user.id,
-      title,
-      description,
-      category,
-      targetAudience
+      subject,
+      class: cls,
+      section,
+      feedbackType,
+      feedback,
+      suggestions,
+      priority,
+      academicYear,
+      term
     });
     
-    await feedback.save();
-    res.status(201).json({ message: 'Curriculum feedback submitted successfully', feedback });
+    await curriculumFeedback.save();
+    res.status(201).json({ 
+      message: 'Curriculum feedback submitted successfully', 
+      curriculumFeedback 
+    });
   } catch (error) {
     console.error('Error submitting curriculum feedback:', error);
     res.status(500).json({ message: 'Server error' });
@@ -80,10 +99,8 @@ exports.provideCurriculumFeedback = async (req, res) => {
 // Get all curriculum feedback provided by the teacher
 exports.getCurriculumFeedback = async (req, res) => {
   try {
-    const feedback = await AcademicSuggestion.find({ 
-      teacherId: req.user.id,
-      category: 'Curriculum'
-    });
+    const feedback = await CurriculumFeedback.find({ teacherId: req.user.id })
+      .sort({ createdAt: -1 });
     
     res.json(feedback);
   } catch (error) {

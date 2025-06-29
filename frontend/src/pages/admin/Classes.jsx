@@ -50,7 +50,7 @@ const Classes = () => {
     name: '',
     section: '',
     capacity: '',
-    teacherId: '',
+    coordinator: '',
     academicYear: '',
     description: '',
     status: 'active',
@@ -60,6 +60,7 @@ const Classes = () => {
   useEffect(() => {
     fetchClasses();
     fetchTeachers();
+    // eslint-disable-next-line
   }, [page, rowsPerPage]);
 
   const fetchClasses = async () => {
@@ -70,7 +71,7 @@ const Classes = () => {
         limit: rowsPerPage,
         search: searchQuery,
       });
-      setClasses(response.data);
+      setClasses(response);
     } catch (error) {
       console.error('Error fetching classes:', error);
       toast.error('Failed to load classes');
@@ -82,7 +83,11 @@ const Classes = () => {
   const fetchTeachers = async () => {
     try {
       const response = await adminAPI.getTeachers();
-      setTeachers(response.data);
+      console.log('Teachers API Response:', response);
+      console.log('Teachers data type:', typeof response);
+      console.log('Teachers is array:', Array.isArray(response));
+      console.log('Teachers length:', response?.length);
+      setTeachers(response);
     } catch (error) {
       console.error('Error fetching teachers:', error);
       toast.error('Failed to load teachers');
@@ -111,7 +116,7 @@ const Classes = () => {
         name: classItem.name,
         section: classItem.section,
         capacity: classItem.capacity,
-        teacherId: classItem.teacherId,
+        coordinator: classItem.coordinator?.id || classItem.coordinator?._id || classItem.coordinator || '',
         academicYear: classItem.academicYear,
         description: classItem.description,
         status: classItem.status,
@@ -122,7 +127,7 @@ const Classes = () => {
         name: '',
         section: '',
         capacity: '',
-        teacherId: '',
+        coordinator: '',
         academicYear: '',
         description: '',
         status: 'active',
@@ -147,11 +152,15 @@ const Classes = () => {
   const handleSubmit = async () => {
     try {
       let createdClass;
+      const payload = {
+        ...formData,
+        capacity: Number(formData.capacity),
+      };
       if (selectedClass) {
-        await adminAPI.updateClass(selectedClass.id, formData);
+        await adminAPI.updateClass(selectedClass.id, payload);
         toast.success('Class updated successfully');
       } else {
-        createdClass = await adminAPI.createClass(formData);
+        createdClass = await adminAPI.createClass(payload);
         toast.success('Class added successfully');
         // Auto-generate Google Sheet after class creation
         if (createdClass?.data?.id || createdClass?.data?._id) {
@@ -185,9 +194,14 @@ const Classes = () => {
     }
   };
 
-  const getTeacherName = (teacherId) => {
-    const teacher = teachers.find((t) => t.id === teacherId);
-    return teacher ? `${teacher.firstName} ${teacher.lastName}` : 'N/A';
+  const getTeacherName = (coordinator) => {
+    if (!coordinator) return 'N/A';
+    if (typeof coordinator === 'object' && coordinator.name) {
+      return coordinator.name;
+    }
+    console.log(coordinator);
+    const teacher = teachers.find((t) => t.id === coordinator || t._id === coordinator);
+    return teacher ? teacher.name : 'N/A';
   };
 
   const generateSheet = async (classId) => {
@@ -233,7 +247,7 @@ const Classes = () => {
             <TableRow>
               <TableCell>Class Name</TableCell>
               <TableCell>Section</TableCell>
-              <TableCell>Teacher</TableCell>
+              <TableCell>Coordinator</TableCell>
               <TableCell>Capacity</TableCell>
               <TableCell>Academic Year</TableCell>
               <TableCell>Status</TableCell>
@@ -244,13 +258,13 @@ const Classes = () => {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={7} align="center">
+                <TableCell colSpan={8} align="center">
                   <CircularProgress />
                 </TableCell>
               </TableRow>
             ) : classes.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} align="center">
+                <TableCell colSpan={8} align="center">
                   No classes found
                 </TableCell>
               </TableRow>
@@ -264,7 +278,7 @@ const Classes = () => {
                     </Box>
                   </TableCell>
                   <TableCell>{classItem.section}</TableCell>
-                  <TableCell>{getTeacherName(classItem.teacherId)}</TableCell>
+                  <TableCell>{getTeacherName(classItem.coordinator)}</TableCell>
                   <TableCell>{classItem.capacity}</TableCell>
                   <TableCell>{classItem.academicYear}</TableCell>
                   <TableCell>
@@ -359,16 +373,16 @@ const Classes = () => {
             </Grid>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth required>
-                <InputLabel>Class Teacher</InputLabel>
+                <InputLabel>Class Coordinator</InputLabel>
                 <Select
-                  name="teacherId"
-                  value={formData.teacherId}
+                  name="coordinator"
+                  value={formData.coordinator}
                   onChange={handleInputChange}
-                  label="Class Teacher"
+                  label="Class Coordinator"
                 >
                   {teachers.map((teacher) => (
-                    <MenuItem key={teacher.id} value={teacher.id}>
-                      {teacher.firstName} {teacher.lastName}
+                    <MenuItem key={teacher.id || teacher._id} value={teacher.id || teacher._id}>
+                      {teacher.name}
                     </MenuItem>
                   ))}
                 </Select>

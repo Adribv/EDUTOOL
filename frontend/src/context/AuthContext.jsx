@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { authAPI, api } from '../services/api';
-import { getPlaceholderData } from '../services/placeholderData';
 import { toast } from 'react-toastify';
 
 const AuthContext = createContext(null);
@@ -43,16 +42,15 @@ export const AuthProvider = ({ children }) => {
           }
         }
         if (!fetched) {
-          const fallbackRole = storedRole || 'adminstaff';
-          const placeholderProfile = getPlaceholderData(fallbackRole, 'profile');
-          setUser(placeholderProfile);
-          console.warn('Using placeholder profile data');
-          toast.info('Using demo data - some features may be limited');
+          console.error('Failed to fetch user profile from all endpoints');
+          localStorage.removeItem('token');
+          localStorage.removeItem('userRole');
         }
       }
     } catch (err) {
       console.error('Auth check failed:', err);
       localStorage.removeItem('token');
+      localStorage.removeItem('userRole');
       // No need to set an error here, as it might show up on public pages
     } finally {
       setLoading(false);
@@ -89,12 +87,9 @@ export const AuthProvider = ({ children }) => {
         try {
           const profileResponse = await api.get('/api/staffs/profile');
           userProfile = profileResponse.data;
-        } catch (_profileError) { // eslint-disable-line no-unused-vars
-          // If profile fetch fails, use placeholder data
-          const userRole = role || 'adminstaff';
-          userProfile = getPlaceholderData(userRole, 'profile');
-          console.warn('Using placeholder profile data after login');
-          toast.info('Using demo data - some features may be limited');
+        } catch (profileError) {
+          console.error('Failed to fetch user profile after login:', profileError);
+          throw new Error('Failed to fetch user profile');
         }
       } else {
         userProfile = userData;

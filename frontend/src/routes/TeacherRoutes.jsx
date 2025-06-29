@@ -5,12 +5,6 @@ import ClassManagement from '../pages/teacher/ClassManagement';
 import AssignmentManagement from '../pages/teacher/AssignmentManagement';
 import ExamManagement from '../pages/teacher/ExamManagement';
 import StudentManagement from '../pages/teacher/StudentManagement';
-import T_Assignments from '../pages/teacher/T_Assignments';
-import T_Attendance from '../pages/teacher/T_Attendance';
-import T_Classes from '../pages/teacher/T_Classes';
-import T_Communication from '../pages/teacher/T_Communication';
-import T_Dashboard from '../pages/teacher/T_Dashboard';
-import T_Grades from '../pages/teacher/T_Grades';
 import Timetable from '../pages/teacher/Timetable';
 import Exams from '../pages/teacher/Exams';
 import LearningResources from '../pages/teacher/LearningResources';
@@ -19,6 +13,7 @@ import Assignments from '../pages/teacher/Assignments';
 import Attendance from '../pages/teacher/Attendance';
 import Calendar from '../pages/teacher/Calendar';
 import Classes from '../pages/teacher/Classes';
+import LeaveRequests from '../pages/teacher/LeaveRequests';
 
 const TeacherRoutes = () => {
   return (
@@ -30,18 +25,13 @@ const TeacherRoutes = () => {
       <Route path="assignments" element={<AssignmentManagement />} />
       <Route path="exams" element={<ExamManagement />} />
       <Route path="students" element={<StudentManagement />} />
-      <Route path="t-assignments" element={<T_Assignments />} />
-      <Route path="t-attendance" element={<T_Attendance />} />
-      <Route path="t-classes" element={<T_Classes />} />
-      <Route path="t-communication" element={<T_Communication />} />
-      <Route path="t-dashboard" element={<T_Dashboard />} />
-      <Route path="t-grades" element={<T_Grades />} />
       <Route path="timetable" element={<Timetable />} />
       <Route path="exam-management" element={<Exams />} />
       <Route path="learning-resources" element={<LearningResources />} />
       <Route path="communication" element={<Communication />} />
       <Route path="assignment-management" element={<Assignments />} />
       <Route path="attendance-management" element={<Attendance />} />
+      <Route path="leave-requests" element={<LeaveRequests />} />
       <Route path="calendar" element={<Calendar />} />
       <Route path="class-management" element={<Classes />} />
     </Routes>

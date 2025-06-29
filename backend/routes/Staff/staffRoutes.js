@@ -2,6 +2,7 @@ const express3 = require('express');
 const router3 = express3.Router();
 const staffAuth = require('../../controllers/Staff/staffAuth');
 const staffController = require('../../controllers/Staff/staff.controller');
+const newStaffController = require('../../controllers/Staff/staffController');
 const { verifyToken } = require('../../middlewares/authMiddleware');
 const { permit } = require('../../middlewares/roleMiddleware');
 const upload = require('../../middlewares/uploadMiddleware');
@@ -329,5 +330,23 @@ router3.get('/reports', verifyToken, permit('Teacher', 'HOD', 'Principal'), asyn
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+// Staff Dashboard Routes
+router3.get('/dashboard', verifyToken, newStaffController.getStaffDashboard);
+router3.get('/:staffId/coordinated-students', verifyToken, newStaffController.getCoordinatedStudents);
+router3.get('/:staffId/coordinated-parents', verifyToken, newStaffController.getCoordinatedParents);
+router3.get('/:staffId/coordinated-classes', verifyToken, newStaffController.getCoordinatedClasses);
+router3.get('/:staffId/profile', verifyToken, newStaffController.getStaffProfile);
+router3.put('/:staffId/profile', verifyToken, newStaffController.updateStaffProfile);
+
+// Leave Request Routes
+router3.get('/:staffId/leave-requests', verifyToken, newStaffController.getLeaveRequests);
+router3.put('/:staffId/leave-requests/:id', verifyToken, newStaffController.updateLeaveRequest);
+
+// Student Attendance Routes
+router3.get('/:staffId/students/:studentId/attendance', verifyToken, newStaffController.getStudentAttendancePercentage);
+
+// Exam Management - Add new route for fetching published exams
+router3.get('/:staffId/published-exams', verifyToken, newStaffController.getPublishedExams);
 
 module.exports = router3;

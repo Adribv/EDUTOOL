@@ -15,7 +15,7 @@ const verifyToken = (req, res, next) => {
 
 const isVicePrincipal = (req, res, next) => {
    // console.log(`User Role: ${req.user ? req.user.role : 'No user'}`);
-   if (req.user || req.user.role === "VicePrincipal") {
+   if (req.user && req.user.role === "VicePrincipal") {
       // console.log('Access granted: Vice Principal');
       return next();
    }

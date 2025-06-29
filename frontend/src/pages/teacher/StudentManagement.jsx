@@ -29,6 +29,7 @@ import {
   Select,
   MenuItem,
   Avatar,
+  Divider,
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -36,6 +37,7 @@ import {
   Grade as GradeIcon,
   Schedule as ScheduleIcon,
   Search as SearchIcon,
+  Class as ClassIcon,
 } from '@mui/icons-material';
 import { teacherAPI } from '../../services/api';
 import { toast } from 'react-toastify';
@@ -45,24 +47,30 @@ const StudentManagement = () => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
   const [students, setStudents] = useState([]);
+  const [coordinatedClasses, setCoordinatedClasses] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedClass, setSelectedClass] = useState('all');
 
   useEffect(() => {
-    fetchStudents();
+    fetchCoordinatedData();
   }, []);
 
-  const fetchStudents = async () => {
+  const fetchCoordinatedData = async () => {
     try {
       setLoading(true);
-      const response = await teacherAPI.getStudents();
-      setStudents(response.data);
+      const [studentsResponse, classesResponse] = await Promise.all([
+        teacherAPI.getCoordinatedStudents(),
+        teacherAPI.getClasses()
+      ]);
+      
+      setStudents(studentsResponse || []);
+      setCoordinatedClasses(classesResponse || []);
     } catch (error) {
-      console.error('Error fetching students:', error);
-      setError('Failed to load students');
-      toast.error('Failed to load students');
+      console.error('Error fetching coordinated data:', error);
+      setError('Failed to load coordinated students and classes');
+      toast.error('Failed to load coordinated data');
     } finally {
       setLoading(false);
     }
@@ -91,14 +99,18 @@ const StudentManagement = () => {
   };
 
   const filteredStudents = students.filter((student) => {
-    const matchesSearch = student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      student.id.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesClass = selectedClass === 'all' || student.class === selectedClass;
+    const matchesSearch = student.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      student.rollNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      student.studentId?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesClass = selectedClass === 'all' || 
+      student.class === selectedClass || 
+      `${student.grade}${student.section}` === selectedClass;
     return matchesSearch && matchesClass;
   });
 
   const getGradeColor = (grade) => {
-    switch (grade) {
+    if (!grade) return 'default';
+    switch (grade.toUpperCase()) {
       case 'A':
         return 'success';
       case 'B':
@@ -113,6 +125,15 @@ const StudentManagement = () => {
     }
   };
 
+  const getClassOptions = () => {
+    const options = [{ value: 'all', label: 'All Classes' }];
+    coordinatedClasses.forEach(cls => {
+      const classLabel = cls.name || `${cls.grade}${cls.section}`;
+      options.push({ value: classLabel, label: classLabel });
+    });
+    return options;
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
@@ -125,6 +146,16 @@ const StudentManagement = () => {
     return (
       <Box p={3}>
         <Alert severity="error">{error}</Alert>
+      </Box>
+    );
+  }
+
+  if (coordinatedClasses.length === 0) {
+    return (
+      <Box p={3}>
+        <Alert severity="info">
+          You are not assigned as a coordinator for any classes. Please contact the administration to be assigned as a class coordinator.
+        </Alert>
       </Box>
     );
   }
@@ -150,14 +181,46 @@ const StudentManagement = () => {
               label="Class"
               onChange={handleClassFilter}
             >
-              <MenuItem value="all">All Classes</MenuItem>
-              <MenuItem value="Class A">Class A</MenuItem>
-              <MenuItem value="Class B">Class B</MenuItem>
-              <MenuItem value="Class C">Class C</MenuItem>
+              {getClassOptions().map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Box>
       </Box>
+
+      {/* Coordinated Classes Summary */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+          <ClassIcon sx={{ mr: 1 }} />
+          Your Coordinated Classes
+        </Typography>
+        <Grid container spacing={2}>
+          {coordinatedClasses.map((cls) => (
+            <Grid item xs={12} sm={6} md={4} key={cls._id || cls.id}>
+              <Card sx={{ bgcolor: 'primary.light', color: 'white' }}>
+                <CardContent>
+                  <Typography variant="h6">
+                    {cls.name || `${cls.grade}${cls.section}`}
+                  </Typography>
+                  <Typography variant="body2">
+                    Students: {cls.studentCount || 0}
+                  </Typography>
+                  {cls.capacity && (
+                    <Typography variant="body2">
+                      Capacity: {cls.capacity}
+                    </Typography>
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
+
+      <Divider sx={{ mb: 3 }} />
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
         <Tabs value={activeTab} onChange={handleTabChange}>
@@ -170,191 +233,96 @@ const StudentManagement = () => {
 
       {activeTab === 0 && (
         <Grid container spacing={3}>
-          {filteredStudents.map((student) => (
-            <Grid item xs={12} md={6} key={student.id}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <Avatar sx={{ mr: 2 }}>{student.name[0]}</Avatar>
-                    <Box>
-                      <Typography variant="h6">{student.name}</Typography>
-                      <Typography color="textSecondary">ID: {student.id}</Typography>
-                    </Box>
-                  </Box>
-                  <Grid container spacing={2}>
-                    <Grid item xs={6}>
-                      <Typography variant="body2" color="textSecondary">
-                        Class
-                      </Typography>
-                      <Typography variant="body1">{student.class}</Typography>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <Typography variant="body2" color="textSecondary">
-                        Grade
-                      </Typography>
-                      <Chip
-                        label={student.grade}
-                        color={getGradeColor(student.grade)}
-                        size="small"
-                      />
-                    </Grid>
-                    <Grid item xs={6}>
-                      <Typography variant="body2" color="textSecondary">
-                        Attendance
-                      </Typography>
-                      <Typography variant="body1">{student.attendance}%</Typography>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <Typography variant="body2" color="textSecondary">
-                        Performance
-                      </Typography>
-                      <Chip
-                        label={student.performance}
-                        color={student.performance === 'Good' ? 'success' : 'warning'}
-                        size="small"
-                      />
-                    </Grid>
-                  </Grid>
-                  <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-                    <Button
-                      size="small"
-                      onClick={() => handleOpenDialog(student)}
-                    >
-                      View Details
-                    </Button>
-                  </Box>
-                </CardContent>
-              </Card>
+          {filteredStudents.length === 0 ? (
+            <Grid item xs={12}>
+              <Alert severity="info">
+                No students found in your coordinated classes.
+              </Alert>
             </Grid>
-          ))}
+          ) : (
+            filteredStudents.map((student) => (
+              <Grid item xs={12} md={6} key={student._id || student.id}>
+                <Card>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <Avatar sx={{ mr: 2 }}>{student.name?.[0] || 'S'}</Avatar>
+                      <Box>
+                        <Typography variant="h6">{student.name || 'N/A'}</Typography>
+                        <Typography color="textSecondary">
+                          ID: {student.rollNumber || student.studentId || 'N/A'}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Grid container spacing={2}>
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="textSecondary">
+                          Class
+                        </Typography>
+                        <Typography variant="body1">
+                          {student.class || `${student.grade}${student.section}` || 'N/A'}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="textSecondary">
+                          Grade
+                        </Typography>
+                        <Chip
+                          label={student.grade || 'N/A'}
+                          color={getGradeColor(student.grade)}
+                          size="small"
+                        />
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="textSecondary">
+                          Attendance
+                        </Typography>
+                        <Typography variant="body1">
+                          {student.attendance ? `${student.attendance}%` : 'N/A'}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="textSecondary">
+                          Performance
+                        </Typography>
+                        <Chip
+                          label={student.performance || 'N/A'}
+                          color={student.performance === 'Good' ? 'success' : 'warning'}
+                          size="small"
+                        />
+                      </Grid>
+                    </Grid>
+                    <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                      <Button
+                        size="small"
+                        onClick={() => handleOpenDialog(student)}
+                      >
+                        View Details
+                      </Button>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))
+          )}
         </Grid>
       )}
 
       {activeTab === 1 && (
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Student</TableCell>
-                <TableCell>Assignment</TableCell>
-                <TableCell>Due Date</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Score</TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredStudents.flatMap((student) =>
-                student.assignments.map((assignment) => (
-                  <TableRow key={assignment.id}>
-                    <TableCell>{student.name}</TableCell>
-                    <TableCell>{assignment.title}</TableCell>
-                    <TableCell>{assignment.dueDate}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={assignment.status}
-                        color={assignment.status === 'Submitted' ? 'success' : 'warning'}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      {assignment.score ? `${assignment.score}/${assignment.totalMarks}` : '-'}
-                    </TableCell>
-                    <TableCell>
-                      <Button size="small" onClick={() => {}}>
-                        Grade
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <Alert severity="info">
+          Assignment management will be implemented in the next phase.
+        </Alert>
       )}
 
       {activeTab === 2 && (
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Student</TableCell>
-                <TableCell>Subject</TableCell>
-                <TableCell>Midterm</TableCell>
-                <TableCell>Final</TableCell>
-                <TableCell>Average</TableCell>
-                <TableCell>Grade</TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredStudents.flatMap((student) =>
-                student.grades.map((grade) => (
-                  <TableRow key={grade.id}>
-                    <TableCell>{student.name}</TableCell>
-                    <TableCell>{grade.subject}</TableCell>
-                    <TableCell>{grade.midterm}</TableCell>
-                    <TableCell>{grade.final}</TableCell>
-                    <TableCell>{grade.average}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={grade.letterGrade}
-                        color={getGradeColor(grade.letterGrade)}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Button size="small" onClick={() => {}}>
-                        Update
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <Alert severity="info">
+          Grade management will be implemented in the next phase.
+        </Alert>
       )}
 
       {activeTab === 3 && (
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Student</TableCell>
-                <TableCell>Class</TableCell>
-                <TableCell>Date</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Remarks</TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredStudents.flatMap((student) =>
-                student.attendanceRecords.map((record) => (
-                  <TableRow key={record.id}>
-                    <TableCell>{student.name}</TableCell>
-                    <TableCell>{student.class}</TableCell>
-                    <TableCell>{record.date}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={record.status}
-                        color={record.status === 'Present' ? 'success' : 'error'}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>{record.remarks}</TableCell>
-                    <TableCell>
-                      <Button size="small" onClick={() => {}}>
-                        Edit
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <Alert severity="info">
+          Attendance management will be implemented in the next phase.
+        </Alert>
       )}
 
       <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="md" fullWidth>
@@ -364,40 +332,58 @@ const StudentManagement = () => {
             <Grid container spacing={3} sx={{ mt: 1 }}>
               <Grid item xs={12}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Avatar sx={{ width: 64, height: 64, mr: 2 }}>{selectedStudent.name[0]}</Avatar>
+                  <Avatar sx={{ width: 64, height: 64, mr: 2 }}>
+                    {selectedStudent.name?.[0] || 'S'}
+                  </Avatar>
                   <Box>
-                    <Typography variant="h6">{selectedStudent.name}</Typography>
-                    <Typography color="textSecondary">ID: {selectedStudent.id}</Typography>
+                    <Typography variant="h6">{selectedStudent.name || 'N/A'}</Typography>
+                    <Typography color="textSecondary">
+                      ID: {selectedStudent.rollNumber || selectedStudent.studentId || 'N/A'}
+                    </Typography>
                   </Box>
                 </Box>
               </Grid>
               <Grid item xs={12} sm={6}>
                 <Typography variant="subtitle2" color="textSecondary">Class</Typography>
-                <Typography variant="body1">{selectedStudent.class}</Typography>
+                <Typography variant="body1">
+                  {selectedStudent.class || `${selectedStudent.grade}${selectedStudent.section}` || 'N/A'}
+                </Typography>
               </Grid>
               <Grid item xs={12} sm={6}>
                 <Typography variant="subtitle2" color="textSecondary">Grade</Typography>
                 <Chip
-                  label={selectedStudent.grade}
+                  label={selectedStudent.grade || 'N/A'}
                   color={getGradeColor(selectedStudent.grade)}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <Typography variant="subtitle2" color="textSecondary">Attendance</Typography>
-                <Typography variant="body1">{selectedStudent.attendance}%</Typography>
+                <Typography variant="body1">
+                  {selectedStudent.attendance ? `${selectedStudent.attendance}%` : 'N/A'}
+                </Typography>
               </Grid>
               <Grid item xs={12} sm={6}>
                 <Typography variant="subtitle2" color="textSecondary">Performance</Typography>
                 <Chip
-                  label={selectedStudent.performance}
+                  label={selectedStudent.performance || 'N/A'}
                   color={selectedStudent.performance === 'Good' ? 'success' : 'warning'}
                 />
               </Grid>
               <Grid item xs={12}>
                 <Typography variant="subtitle2" color="textSecondary">Contact Information</Typography>
-                <Typography variant="body1">Email: {selectedStudent.email}</Typography>
-                <Typography variant="body1">Phone: {selectedStudent.phone}</Typography>
+                <Typography variant="body1">
+                  Email: {selectedStudent.email || 'N/A'}
+                </Typography>
+                <Typography variant="body1">
+                  Phone: {selectedStudent.contactNumber || selectedStudent.phone || 'N/A'}
+                </Typography>
               </Grid>
+              {selectedStudent.address && (
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" color="textSecondary">Address</Typography>
+                  <Typography variant="body1">{selectedStudent.address}</Typography>
+                </Grid>
+              )}
             </Grid>
           )}
         </DialogContent>
