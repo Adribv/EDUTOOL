@@ -17,22 +17,24 @@ router.post('/profile/image', principalController.uploadProfileImage);
 
 // Approval System
 router.get('/approvals', principalController.getPendingApprovals);
-router.get('/approvals/:approvalId', principalController.getApprovalDetails);
+
 router.put('/approvals/:approvalId/approve', principalController.approveRequest);
 router.put('/approvals/:approvalId/reject', principalController.rejectRequest);
 router.get('/approvals/history', principalController.getApprovalHistory);
+router.get('/approvals/all', principalController.getAllApprovals);
+router.get('/approvals/:approvalId', principalController.getApprovalDetails);
 
 // Student Management
-router.get('/students', principalController.getAllStudents);
-router.get('/students/:studentId', principalController.getStudentDetails);
 router.get('/students/attendance', principalController.getStudentAttendance);
 router.get('/students/performance', principalController.getStudentPerformance);
+router.get('/students', principalController.getAllStudents);
+router.get('/students/:studentId', principalController.getStudentDetails);
 
 // Staff Management
-router.get('/staff', principalController.getStaff);
-router.get('/staff/:staffId', principalController.getStaffDetails);
 router.get('/staff/leave-requests', principalController.getLeaveRequests);
 router.get('/staff/performance', principalController.getStaffPerformance);
+router.get('/staff', principalController.getStaff);
+router.get('/staff/:staffId', principalController.getStaffDetails);
 router.put('/staff/leave-requests/:leaveId/approve', principalController.approveLeaveRequest);
 router.put('/staff/leave-requests/:leaveId/reject', principalController.rejectLeaveRequest);
 
@@ -61,6 +63,12 @@ router.get('/holidays', principalController.getHolidays);
 router.post('/holidays', principalController.createHoliday);
 router.put('/holidays/:holidayId', principalController.updateHoliday);
 router.delete('/holidays/:holidayId', principalController.deleteHoliday);
+router.get('/curriculum', principalController.getCurriculumOverview);
+router.get('/curriculum/debug', principalController.debugCurriculumData);
+router.get('/curriculum/:className', principalController.getClassCurriculumDetails);
+router.get('/examinations', principalController.getAllExaminations);
+router.get('/results', principalController.getAcademicResults);
+router.get('/attendance', principalController.getAttendanceOverview);
 
 // Reports
 router.get('/reports/school', principalController.getSchoolReports);

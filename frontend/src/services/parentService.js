@@ -10,13 +10,13 @@ const parentService = {
 
   // Students/Children
   getChildren: () => api.get('/api/parents/children').then(res => res.data),
-  getChildDetails: (rollNumber) => api.get(`/api/parents/children/${rollNumber}`),
-  getChildAttendance: (rollNumber, params) => api.get(`/api/parents/children/${rollNumber}/attendance`, { params }),
-  getChildProgress: (rollNumber) => api.get(`/api/parents/children/${rollNumber}/performance`),
+  getChildDetails: (rollNumber) => api.get(`/api/parents/children/${rollNumber}`).then(res => res.data),
+  getChildAttendance: (rollNumber, params) => api.get(`/api/parents/children/${rollNumber}/attendance`, { params }).then(res => res.data),
+  getChildProgress: (rollNumber) => api.get(`/api/parents/children/${rollNumber}/performance`).then(res => res.data),
   linkStudent: (rollNumber) => api.post('/api/parents/link-student', { rollNumber }),
 
   // Assignments
-  getChildAssignments: (rollNumber) => api.get(`/api/parents/children/${rollNumber}/assignments`),
+  getChildAssignments: (rollNumber) => api.get(`/api/parents/children/${rollNumber}/assignments`).then(res => res.data),
   getAssignmentDetails: (assignmentId) => api.get(`/api/parents/assignments/${assignmentId}`),
 
   // Events
@@ -87,6 +87,8 @@ const parentService = {
 
   // Profile Updates
   requestProfileUpdate: (rollNumber, data) => api.post(`/api/parents/children/${rollNumber}/update-request`, data),
+  
+
 };
 
 export default parentService; 

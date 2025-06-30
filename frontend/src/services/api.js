@@ -171,8 +171,8 @@ export const staffAPI = {
 export const parentAPI = {
   getDashboard: () => api.get('/api/parents/dashboard').then(res=>res.data),
   getChildren: () => api.get('/api/parents/children').then(res => res.data),
-  getChildProfile: (childId) => api.get(`/api/parents/children/${childId}`),
-  getChildProgress: (childId) => api.get(`/api/parents/children/${childId}/performance`),
+  getChildProfile: (childId) => api.get(`/api/parents/children/${childId}`).then(res => res.data),
+  getChildProgress: (childId) => api.get(`/api/parents/children/${childId}/performance`).then(res => res.data),
   getFees: (childId, params) => api.get(`/api/parents/children/${childId}/fee-structure`, { params }),
   getMessages: () => api.get('/api/parents/messages/received').then(res=>res.data),
   getSentMessages: () => api.get('/api/parents/messages/sent').then(res=>res.data),
@@ -180,13 +180,13 @@ export const parentAPI = {
   getProfile: () => api.get('/api/auth/profile'),
   updateProfile: (data) => api.put('/api/parents/profile', data),
   uploadProfileImage: (formData) => api.post('/api/parents/profile/image', formData),
-  getChildGrades: (childId) => api.get(`/api/parents/children/${childId}/exam-results`),
-  getChildAttendance: (childId, params) => api.get(`/api/parents/children/${childId}/attendance`, { params }),
-  getChildAssignments: (childId) => api.get(`/api/parents/children/${childId}/assignments`),
-  getChildExams: (childId) => api.get(`/api/parents/children/${childId}/exams`),
-  getFeeBalance: (childId) => api.get(`/api/parents/children/${childId}/payment-status`),
-  getUpcomingPayments: (childId) => api.get(`/api/parents/children/${childId}/payment-status`),
-  getPaymentHistory: (childId) => api.get(`/api/parents/children/${childId}/payment-status`),
+  getChildGrades: (childId) => api.get(`/api/parents/children/${childId}/exam-results`).then(res => res.data),
+  getChildAttendance: (childId, params) => api.get(`/api/parents/children/${childId}/attendance`, { params }).then(res => res.data),
+  getChildAssignments: (childId) => api.get(`/api/parents/children/${childId}/assignments`).then(res => res.data),
+  getChildExams: (childId) => api.get(`/api/parents/children/${childId}/exams`).then(res => res.data),
+  getFeeBalance: (childId) => api.get(`/api/parents/children/${childId}/payment-status`).then(res => res.data),
+  getUpcomingPayments: (childId) => api.get(`/api/parents/children/${childId}/payment-status`).then(res => res.data),
+  getPaymentHistory: (childId) => api.get(`/api/parents/children/${childId}/payment-status`).then(res => res.data),
   getPaymentMethods: () => api.get('/api/parents/payment-methods'),
   makePayment: (data) => api.post('/api/parents/payments', data),
   downloadReceipt: (childId, paymentId) => api.get(`/api/parents/children/${childId}/payment-receipts/${paymentId}`, { responseType: 'blob' }),
@@ -915,6 +915,7 @@ export const teacherAPI = {
 
   // Leave Request Management - Updated with staffId
   getLeaveRequests: (staffId) => api.get(`/api/staffs/${staffId}/leave-requests`).then(res => res.data),
+
   updateLeaveRequest: (staffId, leaveId, data) => api.put(`/api/staffs/${staffId}/leave-requests/${leaveId}`, data).then(res => res.data),
   
   // Student Attendance Management
@@ -928,7 +929,7 @@ export const teacherAPI = {
     const params = new URLSearchParams();
     if (filters.grade && filters.grade !== 'all') params.append('grade', filters.grade);
     if (filters.subject && filters.subject !== 'all') params.append('subject', filters.subject);
-    return api.get(`/api/staffs/${staffId}/published-exams?${params.toString()}`).then(res => res.data);
+    return api.get(`/api/staffs/${staffId}/published-examinations?${params.toString()}`).then(res => res.data);
   },
 };
 
@@ -990,6 +991,7 @@ export const principalAPI = {
   approveRequest: (approvalId, data) => api.put(`/api/principal/approvals/${approvalId}/approve`, data),
   rejectRequest: (approvalId, data) => api.put(`/api/principal/approvals/${approvalId}/reject`, data),
   getApprovalHistory: (params) => api.get('/api/principal/approvals/history', { params }),
+  getAllApprovals: () => api.get('/api/principal/approvals/all'),
   
   // Student Management
   getAllStudents: () => api.get('/api/principal/students'),
@@ -1033,6 +1035,13 @@ export const principalAPI = {
     api.put(`/api/principal/holidays/${holidayId}`, data),
   deleteHoliday: (holidayId) => 
     api.delete(`/api/principal/holidays/${holidayId}`),
+  getClassCurriculumDetails: (className) => 
+    api.get(`/api/principal/curriculum/${className}`),
+  getCurriculumOverview: () => api.get('/api/principal/curriculum'),
+  debugCurriculumData: () => api.get('/api/principal/curriculum/debug'),
+  getAllExaminations: () => api.get('/api/principal/examinations'),
+  getAcademicResults: () => api.get('/api/principal/results'),
+  getAttendanceOverview: () => api.get('/api/principal/attendance'),
   
   // Reports
   generateSchoolReport: (params) => 

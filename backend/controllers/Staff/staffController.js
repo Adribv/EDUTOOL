@@ -3,7 +3,7 @@ const Student = require('../../models/Student/studentModel');
 const ClassModel = require('../../models/Admin/classModel');
 const Parent = require('../../models/Parent/parentModel');
 const Calendar = require('../../models/Academic/calendarModel');
-const StudentLeaveRequest = require('../../models/Staff/leaveRequestModel');
+const StudentLeaveRequest = require('../../models/Student/leaveRequestModel');
 const ExamPaper = require('../../models/Staff/HOD/examPaper.model');
 
 // Staff Dashboard - Real data based on coordinator role
@@ -338,43 +338,75 @@ exports.updateStaffProfile = async (req, res) => {
 exports.getLeaveRequests = async (req, res) => {
   try {
     const staffId = req.params.staffId;
+    console.log('getLeaveRequests: Called with staffId:', staffId);
     
     // Validate staffId
     if (!staffId || staffId === 'undefined' || staffId === 'null') {
+      console.log('getLeaveRequests: Invalid staffId provided');
       return res.status(400).json({ message: 'Invalid staff ID provided' });
     }
     
     const staff = await Staff.findById(staffId)
-      .populate('coordinator', '_id name grade section')
+      .populate('coordinator', 'name grade section')
       .select('-password');
     
+    console.log('getLeaveRequests: Found staff:', staff?.name);
+    console.log('getLeaveRequests: Staff coordinator:', staff?.coordinator);
+    
     if (!staff) {
+      console.log('getLeaveRequests: Staff not found');
       return res.status(404).json({ message: 'Staff not found' });
     }
 
+    // Get coordinated classes
     const coordinatedClasses = staff.coordinator || [];
+    console.log('getLeaveRequests: Coordinated classes:', coordinatedClasses);
     
+    if (coordinatedClasses.length === 0) {
+      console.log('getLeaveRequests: No coordinated classes found');
+      return res.json([]);
+    }
+
+    // Extract class and section combinations from coordinated classes
+    const classSectionCombinations = coordinatedClasses.map(cls => ({
+      class: cls.grade,
+      section: cls.section
+    }));
+    
+    console.log('getLeaveRequests: Looking for students in:', classSectionCombinations);
+
+    // Find students in coordinated classes
     const students = await Student.find({
-      $or: [
-        { class: { $in: coordinatedClasses.map(cls => cls.name) } },
-        {
-          $and: [
-            { class: { $in: coordinatedClasses.map(cls => cls.grade) } },
-            { section: { $in: coordinatedClasses.map(cls => cls.section) } }
-          ]
-        }
-      ],
-      status: 'Active'
+      $or: classSectionCombinations.map(combo => ({
+        class: combo.class,
+        section: combo.section
+      }))
     }).select('_id name rollNumber class section');
+
+    console.log('getLeaveRequests: Found students:', students.length);
+    students.forEach(student => {
+      console.log(`- ${student.name} (${student.class}${student.section})`);
+    });
 
     const studentIds = students.map(student => student._id);
     
+    if (studentIds.length === 0) {
+      console.log('getLeaveRequests: No students found in coordinated classes');
+      return res.json([]);
+    }
+
+    // Get leave requests for these students
     const leaveRequests = await StudentLeaveRequest.find({
       studentId: { $in: studentIds }
     })
     .populate('studentId', 'name rollNumber class section')
-    .populate('approvedBy', 'name')
-    .sort({ submittedAt: -1 });
+    .populate('reviewedBy', 'name')
+    .sort({ createdAt: -1 });
+
+    console.log('getLeaveRequests: Found leave requests:', leaveRequests.length);
+    leaveRequests.forEach(request => {
+      console.log(`- ${request.studentId?.name} (${request.studentId?.class}${request.studentId?.section}): ${request.status}`);
+    });
 
     res.json(leaveRequests);
   } catch (error) {
@@ -423,8 +455,8 @@ exports.updateLeaveRequest = async (req, res) => {
 
     // Update leave request
     leaveRequest.status = status;
-    leaveRequest.approvedBy = staffId;
-    leaveRequest.approvedAt = new Date();
+    leaveRequest.reviewedBy = staffId;
+    leaveRequest.reviewedAt = new Date();
     if (comments) {
       leaveRequest.comments = comments;
     }
@@ -605,4 +637,6 @@ exports.getStudentAttendancePercentage = async (req, res) => {
     console.error('Error fetching student attendance percentage:', error);
     res.status(500).json({ message: 'Server error' });
   }
-}; 
+};
+
+ 

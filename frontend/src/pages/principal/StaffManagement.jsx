@@ -305,7 +305,7 @@ const StaffManagement = () => {
           <Tab label="All Staff" icon={<PeopleIcon />} />
           <Tab label="Leave Requests" icon={<ScheduleIcon />} />
           <Tab label="Performance" icon={<AssessmentIcon />} />
-          <Tab label="Role Management" icon={<AssignmentIcon />} />
+          
         </Tabs>
       </Paper>
 
@@ -598,82 +598,7 @@ const StaffManagement = () => {
         </Grid>
       )}
 
-      {selectedTab === 3 && (
-        <Card>
-          <CardHeader
-            title="Role Management"
-            action={
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<AddIcon />}
-                href="/principal/roles/add"
-              >
-                Assign Role
-              </Button>
-            }
-          />
-          <CardContent>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-              Manage staff roles, permissions, and department assignments
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined">
-                  <CardHeader title="Role Distribution" />
-                  <CardContent>
-                    <List>
-                      {['Principal', 'VicePrincipal', 'HOD', 'Teacher', 'AdminStaff'].map((role) => (
-                        <ListItem key={role}>
-                          <ListItemText
-                            primary={role}
-                            secondary={`${staffData.filter(staff => staff.role === role).length} staff members`}
-                          />
-                          <Chip
-                            label={role}
-                            color={getRoleColor(role)}
-                            size="small"
-                          />
-                        </ListItem>
-                      ))}
-                    </List>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined">
-                  <CardHeader title="Quick Actions" />
-                  <CardContent>
-                    <Box display="flex" flexDirection="column" gap={2}>
-                      <Button
-                        variant="outlined"
-                        startIcon={<AssignmentIcon />}
-                        href="/principal/roles/assign"
-                      >
-                        Assign New Role
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        startIcon={<WorkIcon />}
-                        href="/principal/departments"
-                      >
-                        Manage Departments
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        startIcon={<SecurityIcon />}
-                        href="/principal/permissions"
-                      >
-                        Set Permissions
-                      </Button>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
-      )}
+      
 
       {/* Staff Details Dialog */}
       <Dialog open={staffDialogOpen} onClose={() => setStaffDialogOpen(false)} maxWidth="md" fullWidth>

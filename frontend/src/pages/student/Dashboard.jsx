@@ -61,7 +61,6 @@ import {
   CheckCircle,
 } from '@mui/icons-material';
 import studentService from '../../services/studentService';
-import { toast } from 'react-toastify';
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -97,7 +96,7 @@ const Dashboard = () => {
       setLoading(true);
       setError(null);
 
-      // Fetch all dashboard data in parallel with fallback to placeholder data
+      // Fetch all dashboard data in parallel
       const [
         profileRes,
         subjectsRes,
@@ -130,7 +129,7 @@ const Dashboard = () => {
         studentService.getNotifications ? studentService.getNotifications() : Promise.resolve({ data: [] }),
       ]);
 
-      // Extract data from resolved promises, using placeholder data if rejected
+      // Extract data from resolved promises
       const profile = profileRes.status === 'fulfilled' ? profileRes.value.data : null;
       const subjects = subjectsRes.status === 'fulfilled' ? (subjectsRes.value.data?.subjects || []) : [];
       const assignments = assignmentsRes.status === 'fulfilled' ? (assignmentsRes.value.data || []) : [];
@@ -178,53 +177,9 @@ const Dashboard = () => {
       
       setTaskNotifications(taskNotifs);
 
-      // Show info toast if using placeholder data
-      const usingPlaceholder = [
-        profileRes.status === 'rejected',
-        subjectsRes.status === 'rejected',
-        assignmentsRes.status === 'rejected',
-        announcementsRes.status === 'rejected',
-        performanceRes.status === 'rejected',
-        attendanceRes.status === 'rejected',
-        examsRes.status === 'rejected',
-        messagesRes.status === 'rejected',
-        homeworkRes.status === 'rejected',
-        feeRes.status === 'rejected',
-        resourcesRes.status === 'rejected',
-        leaveRes.status === 'rejected',
-        lessonsRes.status === 'rejected',
-        notificationsRes.status === 'rejected',
-      ].some(Boolean);
-
-      if (usingPlaceholder) {
-        toast.info('Using demo data - some features may be limited');
-      }
-
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
-      setError('Failed to load dashboard data. Using demo data instead.');
-      
-      // Set empty defaults when data cannot be fetched
-      setProfile(null);
-      setSubjects([]);
-      setAssignments([]);
-      setAnnouncements([]);
-      setPerformance(null);
-      setAttendance([]);
-      setUpcomingExams([]);
-      setMessages([]);
-      setHomework([]);
-      setFeeStatus(null);
-      setLearningResources([]);
-      setLeaveRequests([]);
-      setOngoingLessons([]);
-      setNotifications([]);
-      
-      const allTasks = [];
-      
-      setTaskNotifications(allTasks);
-      
-      toast.info('Using demo data - some features may be limited');
+      setError('Failed to load dashboard data. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -287,25 +242,6 @@ const Dashboard = () => {
       default:
         return 'primary';
     }
-  };
-
-  // Mock ongoing lessons data (replace with actual API call)
-  const getMockOngoingLessons = () => {
-    const currentTime = new Date();
-    const currentHour = currentTime.getHours();
-    const currentMinute = currentTime.getMinutes();
-    
-    return subjects.slice(0, 3).map((subject, index) => ({
-      id: index + 1,
-      subject: subject.name || subject.subject,
-      teacher: subject.teacher || 'Teacher Name',
-      room: `Room ${Math.floor(Math.random() * 20) + 1}`,
-      startTime: `${currentHour}:${currentMinute.toString().padStart(2, '0')}`,
-      endTime: `${currentHour + 1}:${currentMinute.toString().padStart(2, '0')}`,
-      status: index === 0 ? 'ongoing' : index === 1 ? 'upcoming' : 'completed',
-      topic: `Chapter ${index + 1}: ${subject.name || subject.subject} Fundamentals`,
-      progress: index === 0 ? 65 : 0,
-    }));
   };
 
   // Navigation cards for different student features
@@ -897,7 +833,7 @@ const Dashboard = () => {
         <TaskNotifications notifications={taskNotifications} />
 
         {/* Ongoing Lessons Carousel */}
-        <LessonCarousel lessons={ongoingLessons.length > 0 ? ongoingLessons : getMockOngoingLessons()} />
+        <LessonCarousel lessons={ongoingLessons} />
 
         {/* Statistics Cards */}
         <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>

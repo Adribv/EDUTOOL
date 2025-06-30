@@ -217,6 +217,14 @@ const Layout = () => {
         { text: 'Assignments', icon: <Assignment />, path: '/student/assignments' },
         { text: 'Calendar', icon: <CalendarToday />, path: '/student/calendar' },
       ],
+      Principal: [
+        { text: 'Staff Management', icon: <People />, path: '/principal/staff' },
+        { text: 'Student Management', icon: <School />, path: '/principal/students' },
+        { text: 'School Management', icon: <Settings />, path: '/principal/school' },
+        { text: 'Academic Management', icon: <Book />, path: '/principal/academic' },
+        { text: 'Approvals', icon: <Approval />, path: '/principal/approvals' },
+        { text: 'Reports', icon: <Assessment />, path: '/principal/reports' },
+      ],
     };
 
     return [...commonItems, ...(roleSpecificItems[user?.role] || [])];

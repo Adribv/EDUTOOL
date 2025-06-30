@@ -23,6 +23,7 @@ import {
   Timeline,
   BarChart,
   Grade,
+  BugReport,
 } from '@mui/icons-material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart as RechartsBarChart, Bar } from 'recharts';
 import parentService from '../../services/parentService';
@@ -31,10 +32,24 @@ const ChildProgress = () => {
   const { rollNumber } = useParams();
   const navigate = useNavigate();
 
-  const { data: performanceData, isLoading, error } = useQuery({
+  const { data: performanceData, isLoading, error, refetch } = useQuery({
     queryKey: ['child_performance', rollNumber],
     queryFn: () => parentService.getChildProgress(rollNumber),
   });
+
+  // Debug function to test API directly
+  const testAPI = async () => {
+    try {
+      console.log('🧪 Testing Performance API for rollNumber:', rollNumber);
+      const response = await parentService.getChildProgress(rollNumber);
+      console.log('✅ Performance API Response:', response);
+      console.log('✅ Response data:', response.data);
+      console.log('✅ Response status:', response.status);
+    } catch (error) {
+      console.error('❌ Performance API Error:', error);
+      console.error('❌ Error response:', error.response);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -65,13 +80,35 @@ const ChildProgress = () => {
 
   return (
     <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
-      <Button startIcon={<ArrowBack />} onClick={() => navigate('/parent/children')} sx={{ mb: 2 }}>
+      <Button startIcon={<ArrowBack />} onClick={() => navigate('/parent/children')} sx={{ mb: 2, mr: 2 }}>
         Back to My Children
       </Button>
       
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
-        Child Performance Analytics
-      </Typography>
+
+      
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+          Child Performance Analytics
+        </Typography>
+        <Box>
+          <Button 
+            startIcon={<BugReport />} 
+            onClick={testAPI} 
+            variant="outlined" 
+            size="small"
+            sx={{ mr: 1 }}
+          >
+            Test API
+          </Button>
+          <Button 
+            onClick={refetch} 
+            variant="outlined" 
+            size="small"
+          >
+            Refresh
+          </Button>
+        </Box>
+      </Box>
 
       <Grid container spacing={3}>
         {/* Summary Cards */}

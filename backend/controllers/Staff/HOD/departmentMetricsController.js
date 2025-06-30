@@ -47,31 +47,88 @@ exports.recordMetrics = async (req, res) => {
   }
 };
 
-// Get department metrics
+// Get department metrics - real implementation
 exports.getDepartmentMetrics = async (req, res) => {
   try {
-    const { academicYear, term } = req.params;
-    
-    // Get department
+    // Get department for the current HOD
     const department = await Department.findOne({ headOfDepartment: req.user.id });
     if (!department) {
       return res.status(404).json({ message: 'Department not found' });
     }
     
-    const metrics = await DepartmentMetrics.findOne({
-      departmentId: department._id,
-      academicYear,
-      term
+    // Get all teachers in department
+    const teachers = await Staff.find({ 
+      _id: { $in: department.teachers },
+      role: 'Teacher'
     });
     
-    if (!metrics) {
-      return res.status(404).json({ message: 'Metrics not found for this period' });
-    }
+    // Get students in department classes
+    const students = await Student.find({
+      class: { $in: department.subjects.map(subject => {
+        // Map subjects to class names (this might need adjustment based on your data structure)
+        const subjectToClassMap = {
+          'Physics': ['9', '10', '11', '12'],
+          'Chemistry': ['9', '10', '11', '12'],
+          'Biology': ['9', '10', '11', '12'],
+          'Mathematics': ['6', '7', '8', '9', '10', '11', '12'],
+          'English': ['6', '7', '8', '9', '10', '11', '12'],
+          'History': ['6', '7', '8', '9', '10'],
+          'Geography': ['6', '7', '8', '9', '10'],
+          'Computer Science': ['9', '10', '11', '12']
+        };
+        return subjectToClassMap[subject] || [];
+      }).flat() }
+    });
     
-    res.json(metrics);
+    // Calculate attendance statistics
+    const teacherAttendance = await Attendance.find({
+      markedBy: { $in: teachers.map(t => t._id) }
+    }).sort({ date: -1 }).limit(30); // Last 30 days
+    
+    const attendanceStats = {
+      totalDays: teacherAttendance.length,
+      presentDays: teacherAttendance.filter(a => a.status === 'present').length,
+      absentDays: teacherAttendance.filter(a => a.status === 'absent').length,
+      lateDays: teacherAttendance.filter(a => a.status === 'late').length,
+      attendanceRate: teacherAttendance.length > 0 ? 
+        (teacherAttendance.filter(a => a.status === 'present').length / teacherAttendance.length) * 100 : 0
+    };
+    
+    // Get exam results for department subjects
+    const examResults = await ExamResult.find({
+      subject: { $in: department.subjects }
+    });
+    
+    const performanceStats = {
+      totalExams: examResults.length,
+      averageScore: examResults.length > 0 ? 
+        examResults.reduce((sum, result) => sum + (result.score || 0), 0) / examResults.length : 0,
+      passingRate: examResults.length > 0 ? 
+        (examResults.filter(result => (result.score || 0) >= 60).length / examResults.length) * 100 : 0
+    };
+    
+    const metrics = {
+      departmentName: department.name,
+      totalTeachers: teachers.length,
+      totalStudents: students.length,
+      subjects: department.subjects,
+      attendanceStats,
+      performanceStats,
+      activeCourses: department.subjects.length,
+      lastUpdated: new Date()
+    };
+    
+    res.json({
+      success: true,
+      data: metrics
+    });
   } catch (error) {
     console.error('Error fetching department metrics:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error',
+      error: error.message 
+    });
   }
 };
 
@@ -199,91 +256,92 @@ exports.getMetrics = async (req, res) => {
 // Get department performance
 exports.getDepartmentPerformance = async (req, res) => {
   try {
-    const { academicYear, term } = req.query;
-    
-    // Get department
     const department = await Department.findOne({ headOfDepartment: req.user.id });
     if (!department) {
       return res.status(404).json({ message: 'Department not found' });
     }
     
-    // Get all teachers in department
+    // Get teachers in department
     const teachers = await Staff.find({ 
       _id: { $in: department.teachers },
       role: 'Teacher'
     });
     
-    // Calculate teacher attendance
-    const teacherAttendanceData = await calculateTeacherAttendance(teachers, academicYear, term);
+    // Get recent exam results
+    const examResults = await ExamResult.find({
+      subject: { $in: department.subjects }
+    }).sort({ date: -1 }).limit(100);
     
-    // Calculate student performance
-    const studentPerformanceData = await calculateStudentPerformance(department, academicYear, term);
+    // Calculate performance metrics
+    const academicScore = examResults.length > 0 ? 
+      examResults.reduce((sum, result) => sum + (result.score || 0), 0) / examResults.length : 0;
     
-    // Get department metrics for this period if they exist
-    const departmentMetrics = await DepartmentMetrics.findOne({
-      departmentId: department._id,
-      academicYear,
-      term
-    });
+    // Get attendance data
+    const attendanceRecords = await Attendance.find({
+      markedBy: { $in: teachers.map(t => t._id) }
+    }).sort({ date: -1 }).limit(30);
     
-    const performanceReport = {
-      departmentName: department.name,
-      academicYear: academicYear || 'Current',
-      term: term || 'Current',
-      teacherMetrics: teacherAttendanceData,
-      studentMetrics: studentPerformanceData,
-      goals: departmentMetrics ? departmentMetrics.goals : [],
-      metrics: departmentMetrics ? departmentMetrics.metrics : {},
-      generatedAt: new Date(),
-      generatedBy: req.user.id
+    const attendanceRate = attendanceRecords.length > 0 ? 
+      (attendanceRecords.filter(a => a.status === 'present').length / attendanceRecords.length) * 100 : 0;
+    
+    const performance = {
+      academicScore: Math.round(academicScore * 100) / 100,
+      attendanceRate: Math.round(attendanceRate * 100) / 100,
+      totalTeachers: teachers.length,
+      totalExams: examResults.length,
+      totalAttendanceRecords: attendanceRecords.length
     };
     
-    res.json(performanceReport);
+    res.json({
+      success: true,
+      data: performance
+    });
   } catch (error) {
-    console.error('Error generating performance report:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error fetching department performance:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error',
+      error: error.message 
+    });
   }
 };
 
-// Get department attendance metrics
+// Get department attendance
 exports.getDepartmentAttendance = async (req, res) => {
   try {
-    const { academicYear, term } = req.query;
-    
-    // Get department
     const department = await Department.findOne({ headOfDepartment: req.user.id });
     if (!department) {
       return res.status(404).json({ message: 'Department not found' });
     }
     
-    // Get all teachers in department
     const teachers = await Staff.find({ 
       _id: { $in: department.teachers },
       role: 'Teacher'
     });
     
-    if (teachers.length === 0) {
-      return res.status(404).json({ message: 'No teachers found in this department' });
-    }
+    const attendanceRecords = await Attendance.find({
+      markedBy: { $in: teachers.map(t => t._id) }
+    }).sort({ date: -1 }).limit(50);
     
-    // Get attendance data for all teachers in the department
-    const attendanceData = await calculateTeacherAttendance(teachers, academicYear, term);
+    const attendanceData = attendanceRecords.map(record => ({
+      teacherId: record.markedBy,
+      date: record.date,
+      status: record.status,
+      timeIn: record.timeIn,
+      timeOut: record.timeOut,
+      remarks: record.remarks
+    }));
     
-    // Get student attendance data if needed
-    // This would require additional implementation based on your data model
-    
-    const attendanceReport = {
-      departmentName: department.name,
-      academicYear: academicYear || 'Current',
-      term: term || 'Current',
-      teacherAttendance: attendanceData,
-      generatedAt: new Date(),
-      generatedBy: req.user.id
-    };
-    
-    res.json(attendanceReport);
+    res.json({
+      success: true,
+      data: attendanceData
+    });
   } catch (error) {
     console.error('Error fetching department attendance:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error',
+      error: error.message 
+    });
   }
 };

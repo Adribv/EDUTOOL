@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Box,
   Grid,
@@ -87,71 +87,40 @@ import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '../../services/api';
 
-// API service for HOD
+// API service for HOD using the configured api instance
 const hodAPI = {
   // Department Overview
-  getDepartmentOverview: () => fetch('/api/hod/department/overview').then(res => res.json()),
-  getDepartmentStaff: () => fetch('/api/hod/department/staff').then(res => res.json()),
-  getDepartmentStatistics: () => fetch('/api/hod/department/statistics').then(res => res.json()),
+  getDepartmentOverview: () => api.get('/api/hod/department/overview').then(res => res.data),
+  getDepartmentStaff: () => api.get('/api/hod/department/staff').then(res => res.data),
+  getDepartmentStatistics: () => api.get('/api/hod/department/statistics').then(res => res.data),
   
   // Staff Management (all staff in department)
-  getAllStaff: () => fetch('/api/hod/teacher-management/teachers').then(res => res.json()),
-  getStaffDetails: (staffId) => fetch(`/api/hod/teacher-management/teachers/${staffId}`).then(res => res.json()),
-  addStaff: (staffData) => fetch('/api/hod/teacher-management/teachers', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(staffData)
-  }).then(res => res.json()),
-  updateStaff: (staffId, staffData) => fetch(`/api/hod/teacher-management/teachers/${staffId}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(staffData)
-  }).then(res => res.json()),
-  deleteStaff: (staffId) => fetch(`/api/hod/teacher-management/teachers/${staffId}`, {
-    method: 'DELETE'
-  }).then(res => res.json()),
+  getAllStaff: () => api.get('/api/hod/teacher-management/teachers').then(res => res.data),
+  getStaffDetails: (staffId) => api.get(`/api/hod/teacher-management/teachers/${staffId}`).then(res => res.data),
+  addStaff: (staffData) => api.post('/api/hod/teacher-management/teachers', staffData).then(res => res.data),
+  updateStaff: (staffId, staffData) => api.put(`/api/hod/teacher-management/teachers/${staffId}`, staffData).then(res => res.data),
+  deleteStaff: (staffId) => api.delete(`/api/hod/teacher-management/teachers/${staffId}`).then(res => res.data),
   
   // Teacher Attendance
-  getTeacherAttendance: () => fetch('/api/hod/teacher-attendance').then(res => res.json()),
-  markAttendance: (attendanceData) => fetch('/api/hod/teacher-attendance', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(attendanceData)
-  }).then(res => res.json()),
-  updateAttendance: (attendanceId, attendanceData) => fetch(`/api/hod/teacher-attendance/${attendanceId}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(attendanceData)
-  }).then(res => res.json()),
+  getTeacherAttendance: () => api.get('/api/hod/teacher-attendance').then(res => res.data),
+  markAttendance: (attendanceData) => api.post('/api/hod/teacher-attendance', attendanceData).then(res => res.data),
+  updateAttendance: (attendanceId, attendanceData) => api.put(`/api/hod/teacher-attendance/${attendanceId}`, attendanceData).then(res => res.data),
   
   // Teacher Evaluation
-  getAllEvaluations: () => fetch('/api/hod/teacher-evaluations').then(res => res.json()),
-  createEvaluation: (evaluationData) => fetch('/api/hod/teacher-evaluations', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(evaluationData)
-  }).then(res => res.json()),
-  updateEvaluation: (evaluationId, evaluationData) => fetch(`/api/hod/teacher-evaluations/${evaluationId}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(evaluationData)
-  }).then(res => res.json()),
-  deleteEvaluation: (evaluationId) => fetch(`/api/hod/teacher-evaluations/${evaluationId}`, {
-    method: 'DELETE'
-  }).then(res => res.json()),
+  getAllEvaluations: () => api.get('/api/hod/teacher-evaluations').then(res => res.data),
+  createEvaluation: (evaluationData) => api.post('/api/hod/teacher-evaluations', evaluationData).then(res => res.data),
+  updateEvaluation: (evaluationId, evaluationData) => api.put(`/api/hod/teacher-evaluations/${evaluationId}`, evaluationData).then(res => res.data),
+  deleteEvaluation: (evaluationId) => api.delete(`/api/hod/teacher-evaluations/${evaluationId}`).then(res => res.data),
   
   // Class Allocation
-  getClassAllocationRecommendations: () => fetch('/api/hod/class-allocation/recommendations').then(res => res.json()),
-  allocateClass: (allocationData) => fetch('/api/hod/class-allocation', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(allocationData)
-  }).then(res => res.json()),
+  getClassAllocationRecommendations: () => api.get('/api/hod/class-allocation/recommendations').then(res => res.data),
+  allocateClass: (allocationData) => api.post('/api/hod/class-allocation', allocationData).then(res => res.data),
   
   // Department Reports
-  generateDepartmentReport: () => fetch('/api/hod/reports/department').then(res => res.json()),
-  getPerformanceMetrics: () => fetch('/api/hod/reports/performance-metrics').then(res => res.json()),
+  generateDepartmentReport: () => api.get('/api/hod/reports/department').then(res => res.data),
+  getPerformanceMetrics: () => api.get('/api/hod/reports/performance-metrics').then(res => res.data),
 };
 
 // Tab Panel Component
@@ -171,15 +140,14 @@ function TabPanel({ children, value, index, ...other }) {
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const queryClient = useQueryClient();
   
   const [tabValue, setTabValue] = useState(0);
-  const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [evaluationDialog, setEvaluationDialog] = useState(false);
   const [allocationDialog, setAllocationDialog] = useState(false);
+  const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [reviewDialog, setReviewDialog] = useState(false);
   
   // Teacher Management States

@@ -9,10 +9,10 @@ exports.markAttendance = async (req, res) => {
     const { date, class: cls, section, attendanceData } = req.body;
     
     // Check if teacher is coordinator of this class or assigned to this class
-    const staff = await Staff.findById(req.user.id).populate('coordinatedClasses');
+    const staff = await Staff.findById(req.user.id).populate('coordinator');
     
     // Check if teacher coordinates this class
-    const isCoordinator = staff.coordinatedClasses.some(
+    const isCoordinator = staff.coordinator && staff.coordinator.some(
       classObj => (classObj.name === cls || `${classObj.grade} ${classObj.section}` === cls)
     );
     
@@ -65,10 +65,10 @@ exports.getAttendance = async (req, res) => {
     const { class: cls, section, date } = req.params;
     
     // Check if teacher is coordinator of this class or assigned to this class
-    const staff = await Staff.findById(req.user.id).populate('coordinatedClasses');
+    const staff = await Staff.findById(req.user.id).populate('coordinator');
     
     // Check if teacher coordinates this class
-    const isCoordinator = staff.coordinatedClasses.some(
+    const isCoordinator = staff.coordinator && staff.coordinator.some(
       classObj => (classObj.name === cls || `${classObj.grade} ${classObj.section}` === cls)
     );
     
@@ -106,10 +106,10 @@ exports.generateAttendanceReport = async (req, res) => {
     const { format } = req.query; // Check if CSV format is requested
     
     // Check if teacher is coordinator of this class or assigned to this class
-    const staff = await Staff.findById(req.user.id).populate('coordinatedClasses');
+    const staff = await Staff.findById(req.user.id).populate('coordinator');
     
     // Check if teacher coordinates this class
-    const isCoordinator = staff.coordinatedClasses.some(
+    const isCoordinator = staff.coordinator && staff.coordinator.some(
       classObj => (classObj.name === cls || `${classObj.grade} ${classObj.section}` === cls)
     );
     
@@ -216,10 +216,10 @@ exports.getStudentsByClass = async (req, res) => {
     const { class: cls, section } = req.params;
     
     // Check if teacher is coordinator of this class or assigned to this class
-    const staff = await Staff.findById(req.user.id).populate('coordinatedClasses');
+    const staff = await Staff.findById(req.user.id).populate('coordinator');
     
     // Check if teacher coordinates this class
-    const isCoordinator = staff.coordinatedClasses.some(
+    const isCoordinator = staff.coordinator && staff.coordinator.some(
       classObj => (classObj.name === cls || `${classObj.grade} ${classObj.section}` === cls)
     );
     

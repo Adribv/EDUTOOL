@@ -10,6 +10,8 @@ const ApprovalRequest = require('../../../models/Staff/HOD/approvalRequest.model
 const Communication = require('../../../models/Communication/communicationModel');
 const FeePayment = require('../../../models/Finance/feePaymentModel');
 const TeacherLeaveRequest = require('../../../models/Staff/HOD/teacherLeaveRequest.model');
+const TeacherEvaluation = require('../../../models/Staff/HOD/teacherEvaluation.model');
+const Attendance = require('../../../models/Staff/Teacher/attendance.model');
 const ExamResult = require('../../../models/Staff/Teacher/examResult.model');
 const ReportCard = require('../../../models/Student/reportCardModel');
 const Admission = require('../../../models/Admin/admissionModel');
@@ -519,6 +521,39 @@ exports.getApprovalHistory = async (req, res) => {
   }
 };
 
+// Get all approvals for principal (for tabs functionality)
+exports.getAllApprovals = async (req, res) => {
+  try {
+    const { type, status } = req.query;
+    
+    let query = {
+      $or: [
+        { 'approvalHistory.role': 'Principal' },
+        { currentApprover: 'Principal' }
+      ]
+    };
+
+    if (type) {
+      query.requestType = type;
+    }
+
+    if (status) {
+      query.status = status;
+    }
+
+    const approvals = await ApprovalRequest.find(query)
+      .populate('requesterId', 'name email role')
+      .sort({ createdAt: -1 });
+
+    console.log(`📋 Found ${approvals.length} total approval requests for Principal`);
+
+    res.json(approvals);
+  } catch (error) {
+    console.error('Error fetching all approvals:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // School Management
 exports.getSchoolInfo = async (req, res) => {
   try {
@@ -554,7 +589,7 @@ exports.updateSchoolInfo = async (req, res) => {
 exports.getDepartments = async (req, res) => {
   try {
     const departments = await Department.find()
-      .populate('hod', 'name email')
+      .populate('headOfDepartment', 'name email')
       .populate('vicePrincipal', 'name email');
 
     res.json(departments);
@@ -601,7 +636,7 @@ exports.getDepartmentDetails = async (req, res) => {
   try {
     const { departmentId } = req.params;
     const department = await Department.findById(departmentId)
-      .populate('hod', 'name email')
+      .populate('headOfDepartment', 'name email')
       .populate('vicePrincipal', 'name email');
     
     if (!department) {
@@ -619,7 +654,7 @@ exports.getDepartmentDetails = async (req, res) => {
 exports.getAllStudents = async (req, res) => {
   try {
     const students = await Student.find()
-      .populate('parentId', 'name email contactNumber')
+      .populate('parents', 'name email contactNumber')
       .sort({ name: 1 });
 
     console.log(`📚 Found ${students.length} students`);
@@ -634,7 +669,7 @@ exports.getStudentDetails = async (req, res) => {
   try {
     const { studentId } = req.params;
     const student = await Student.findById(studentId)
-      .populate('parentId', 'name email contactNumber');
+      .populate('parents', 'name email contactNumber');
 
     if (!student) {
       return res.status(404).json({ message: 'Student not found' });
@@ -649,21 +684,40 @@ exports.getStudentDetails = async (req, res) => {
 
 exports.getStudentAttendance = async (req, res) => {
   try {
-    // Get real attendance data from the database
-    const students = await Student.find({ status: 'Active' })
-      .populate('attendance')
-      .select('name class attendance');
-
+    // Get all students
+    const students = await Student.find({ status: 'Active' }).select('name class section rollNumber');
+    
+    // Get all attendance records
+    const attendanceRecords = await Attendance.find();
+    
     const attendanceData = students.map(student => {
-      // Calculate attendance from actual attendance records
-      const totalDays = student.attendance?.length || 0;
-      const presentDays = student.attendance?.filter(att => att.status === 'Present').length || 0;
+      // Find attendance records for this student
+      const studentAttendance = attendanceRecords.filter(record => 
+        record.attendanceData.some(data => data.studentRollNumber === student.rollNumber)
+      );
+      
+      // Calculate attendance statistics
+      let totalDays = 0;
+      let presentDays = 0;
+      
+      studentAttendance.forEach(record => {
+        const studentData = record.attendanceData.find(data => data.studentRollNumber === student.rollNumber);
+        if (studentData) {
+          totalDays++;
+          if (studentData.status === 'Present') {
+            presentDays++;
+          }
+        }
+      });
+      
       const attendancePercentage = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0;
 
       return {
         _id: student._id,
         studentName: student.name,
         class: student.class,
+        section: student.section,
+        rollNumber: student.rollNumber,
         presentDays,
         totalDays,
         attendancePercentage
@@ -745,24 +799,33 @@ exports.getLeaveRequests = async (req, res) => {
 // Staff Performance (REAL DATA)
 exports.getStaffPerformance = async (req, res) => {
   try {
-    // Optionally, you can join with teacherEvaluation.model.js for richer data
+    // Get staff members with Teacher or HOD role
     const staff = await Staff.find({ role: { $in: ['Teacher', 'HOD'] } });
     const performanceData = await Promise.all(staff.map(async member => {
-      // Attendance: count present days from attendance model if available
-      // For now, just count total days in the system as a placeholder
-      // You can enhance this with a real attendance model
-      const attendance = member.attendanceRecords || [];
+      // Get attendance data
+      const attendance = member.attendance || [];
       const totalDays = attendance.length;
-      const presentDays = attendance.filter(a => a.status === 'Present').length;
+      const presentDays = attendance.filter(a => a.status === 'present').length;
       const attendancePercent = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0;
-      // Performance: use teacherEvaluation.model.js if available
+      
+      // Get latest evaluation data
+      const latestEvaluation = await TeacherEvaluation.findOne({
+        teacherId: member._id,
+        status: 'Completed'
+      }).sort({ date: -1 });
+      
+      const performanceScore = latestEvaluation?.overallRating || 0;
+      const rating = latestEvaluation?.overallRating || 0;
+      
       return {
         _id: member._id,
         staffName: member.name,
         role: member.role,
+        department: member.department,
         attendance: attendancePercent,
-        performanceScore: member.performanceScore || 0, // Replace with real evaluation if available
-        rating: member.rating || 0 // Replace with real evaluation if available
+        performanceScore: performanceScore,
+        rating: rating,
+        lastEvaluation: latestEvaluation?.date || null
       };
     }));
     res.json(performanceData);
@@ -920,12 +983,28 @@ exports.updateAdmissionStatus = async (req, res) => {
 exports.approveLeaveRequest = async (req, res) => {
   try {
     const { leaveId } = req.params;
-    const { status } = req.body;
+    const { status, comments } = req.body;
 
-    // In real implementation, this would update the leave request record
-    console.log(`✅ Leave request ${leaveId} ${status} by Principal`);
+    const leaveRequest = await TeacherLeaveRequest.findById(leaveId);
+    if (!leaveRequest) {
+      return res.status(404).json({ message: 'Leave request not found' });
+    }
 
-    res.json({ message: `Leave request ${status} successfully` });
+    leaveRequest.status = status || 'Approved';
+    leaveRequest.processedBy = req.user.id;
+    leaveRequest.processedAt = new Date();
+    if (comments) {
+      leaveRequest.hodComments = comments;
+    }
+
+    await leaveRequest.save();
+
+    console.log(`✅ Leave request ${leaveId} approved by Principal`);
+
+    res.json({ 
+      message: `Leave request ${leaveRequest.status} successfully`,
+      leaveRequest 
+    });
   } catch (error) {
     console.error('Error approving leave request:', error);
     res.status(500).json({ message: 'Server error' });
@@ -935,12 +1014,28 @@ exports.approveLeaveRequest = async (req, res) => {
 exports.rejectLeaveRequest = async (req, res) => {
   try {
     const { leaveId } = req.params;
-    const { status } = req.body;
+    const { status, comments } = req.body;
 
-    // In real implementation, this would update the leave request record
-    console.log(`❌ Leave request ${leaveId} ${status} by Principal`);
+    const leaveRequest = await TeacherLeaveRequest.findById(leaveId);
+    if (!leaveRequest) {
+      return res.status(404).json({ message: 'Leave request not found' });
+    }
 
-    res.json({ message: `Leave request ${status} successfully` });
+    leaveRequest.status = status || 'Rejected';
+    leaveRequest.processedBy = req.user.id;
+    leaveRequest.processedAt = new Date();
+    if (comments) {
+      leaveRequest.hodComments = comments;
+    }
+
+    await leaveRequest.save();
+
+    console.log(`❌ Leave request ${leaveId} rejected by Principal`);
+
+    res.json({ 
+      message: `Leave request ${leaveRequest.status} successfully`,
+      leaveRequest 
+    });
   } catch (error) {
     console.error('Error rejecting leave request:', error);
     res.status(500).json({ message: 'Server error' });
@@ -970,7 +1065,7 @@ exports.getSchoolReports = async (req, res) => {
 exports.getDepartmentReports = async (req, res) => {
   try {
     const departments = await Department.find()
-      .populate('hod', 'name email')
+      .populate('headOfDepartment', 'name email')
       .populate('vicePrincipal', 'name email');
 
     res.json(departments);
@@ -1101,6 +1196,483 @@ exports.deleteHoliday = async (req, res) => {
     res.json({ message: 'Holiday deleted successfully' });
   } catch (error) {
     console.error('Error deleting holiday:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Get curriculum details for a specific class
+exports.getClassCurriculumDetails = async (req, res) => {
+  try {
+    const { className } = req.params;
+    console.log(`🔍 Fetching curriculum details for class: ${className}`);
+    
+    // Get all staff members who teach this class
+    const teachers = await Staff.find({
+      role: 'Teacher',
+      'assignedSubjects.class': className
+    }).select('name email assignedSubjects');
+
+    console.log(`👨‍🏫 Found ${teachers.length} teachers for class ${className}`);
+
+    // Get students in this class
+    const students = await Student.find({ class: className })
+      .select('name rollNumber section')
+      .sort({ section: 1, rollNumber: 1 });
+
+    console.log(`👥 Found ${students.length} students for class ${className}`);
+
+    // Get subjects for this class - more robust query
+    const subjects = await Staff.aggregate([
+      { $unwind: '$assignedSubjects' },
+      { $match: { 'assignedSubjects.class': className } },
+      { $group: { 
+        _id: '$assignedSubjects.subject',
+        teachers: { $addToSet: { 
+          teacherId: '$_id',
+          name: '$name',
+          email: '$email'
+        }}
+      }},
+      { $project: {
+        subject: '$_id',
+        teachers: 1,
+        _id: 0
+      }}
+    ]);
+
+    console.log(`📚 Found ${subjects.length} subjects for class ${className}:`, subjects.map(s => s.subject));
+
+    // Get class statistics
+    const classStats = {
+      totalStudents: students.length,
+      totalSubjects: subjects.length,
+      totalTeachers: teachers.length,
+      sections: [...new Set(students.map(s => s.section))].length
+    };
+
+    // Fix teacher count - count unique teachers from subjects
+    const uniqueTeacherIds = new Set();
+    subjects.forEach(subject => {
+      subject.teachers.forEach(teacher => {
+        uniqueTeacherIds.add(teacher.teacherId.toString());
+      });
+    });
+    classStats.totalTeachers = uniqueTeacherIds.size;
+
+    console.log(`📊 Class statistics:`, classStats);
+
+    // Group students by section
+    const studentsBySection = students.reduce((acc, student) => {
+      if (!acc[student.section]) {
+        acc[student.section] = [];
+      }
+      acc[student.section].push(student);
+      return acc;
+    }, {});
+
+    const curriculumDetails = {
+      className,
+      classStats,
+      subjects,
+      teachers: teachers.map(teacher => ({
+        teacherId: teacher._id,
+        name: teacher.name,
+        email: teacher.email,
+        subjects: teacher.assignedSubjects.filter(sub => sub.class === className)
+      })),
+      studentsBySection,
+      totalStudents: students
+    };
+
+    console.log(`📚 Curriculum details fetched for class ${className}:`, {
+      students: students.length,
+      teachers: teachers.length,
+      subjects: subjects.length,
+      sections: Object.keys(studentsBySection).length
+    });
+
+    res.json(curriculumDetails);
+  } catch (error) {
+    console.error('Error fetching class curriculum details:', error);
+    res.status(500).json({ 
+      message: 'Server error',
+      error: error.message,
+      className: req.params.className 
+    });
+  }
+};
+
+// Get curriculum overview for all classes
+exports.getCurriculumOverview = async (req, res) => {
+  try {
+    // Get all unique classes from staff assignments
+    const classData = await Staff.aggregate([
+      { $unwind: '$assignedSubjects' },
+      { 
+        $group: { 
+          _id: '$assignedSubjects.class',
+          subjects: { $addToSet: '$assignedSubjects.subject' },
+          teachers: { $addToSet: '$_id' }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    // Get student counts for each class
+    const studentCounts = await Student.aggregate([
+      { $group: { _id: '$class', count: { $sum: 1 } } }
+    ]);
+
+    // Create a map of class to student count
+    const studentCountMap = {};
+    studentCounts.forEach(item => {
+      studentCountMap[item._id] = item.count;
+    });
+
+    // Transform the data for frontend
+    const curriculumOverview = classData.map(classInfo => {
+      const className = classInfo._id;
+      const subjects = classInfo.subjects;
+      const teacherCount = classInfo.teachers.length;
+      const studentCount = studentCountMap[className] || 0;
+
+      return {
+        className,
+        subjects: subjects.join(', '),
+        teacherCount,
+        studentCount,
+        hasData: true
+      };
+    });
+
+    // If no data found, return empty array
+    if (curriculumOverview.length === 0) {
+      console.log('📚 No curriculum data found in database');
+      res.json([]);
+      return;
+    }
+
+    console.log(`📚 Curriculum overview: Found ${curriculumOverview.length} classes`);
+
+    res.json(curriculumOverview);
+  } catch (error) {
+    console.error('Error fetching curriculum overview:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Debug function to check database data
+exports.debugCurriculumData = async (req, res) => {
+  try {
+    console.log('🔍 Debugging curriculum data...');
+    
+    // Check staff data
+    const allStaff = await Staff.find({ role: 'Teacher' }).select('name assignedSubjects');
+    console.log(`👨‍🏫 Total teachers: ${allStaff.length}`);
+    
+    const staffWithAssignments = allStaff.filter(staff => 
+      staff.assignedSubjects && staff.assignedSubjects.length > 0
+    );
+    console.log(`👨‍🏫 Teachers with assignments: ${staffWithAssignments.length}`);
+    
+    // Check student data
+    const allStudents = await Student.find().select('name class section');
+    console.log(`👥 Total students: ${allStudents.length}`);
+    
+    const studentsByClass = {};
+    allStudents.forEach(student => {
+      if (!studentsByClass[student.class]) {
+        studentsByClass[student.class] = 0;
+      }
+      studentsByClass[student.class]++;
+    });
+    console.log(`👥 Students by class:`, studentsByClass);
+    
+    // Check staff assignments
+    const assignments = [];
+    allStaff.forEach(staff => {
+      if (staff.assignedSubjects) {
+        staff.assignedSubjects.forEach(assignment => {
+          assignments.push({
+            teacher: staff.name,
+            class: assignment.class,
+            subject: assignment.subject
+          });
+        });
+      }
+    });
+    console.log(`📚 Staff assignments:`, assignments);
+    
+    const debugData = {
+      totalTeachers: allStaff.length,
+      teachersWithAssignments: staffWithAssignments.length,
+      totalStudents: allStudents.length,
+      studentsByClass,
+      assignments,
+      sampleStaff: allStaff.slice(0, 3).map(s => ({
+        name: s.name,
+        assignedSubjects: s.assignedSubjects
+      })),
+      sampleStudents: allStudents.slice(0, 3).map(s => ({
+        name: s.name,
+        class: s.class,
+        section: s.section
+      }))
+    };
+    
+    res.json(debugData);
+  } catch (error) {
+    console.error('Error debugging curriculum data:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Get all examinations for principal
+exports.getAllExaminations = async (req, res) => {
+  try {
+    const Exam = require('../../../models/Staff/Teacher/exam.model');
+    const VPExam = require('../../../models/Staff/HOD/examPaper.model');
+    
+    // Get both teacher-created exams and VP-scheduled exams
+    const [teacherExams, vpExams] = await Promise.all([
+      Exam.find().populate('createdBy', 'name'),
+      VPExam.find().populate('createdBy', 'name')
+    ]);
+
+    // Transform and combine the exams
+    const allExams = [
+      ...teacherExams.map(exam => ({
+        ...exam.toObject(),
+        source: 'Teacher',
+        examType: 'Regular'
+      })),
+      ...vpExams.map(exam => ({
+        ...exam.toObject(),
+        source: 'VP',
+        examType: 'Scheduled'
+      }))
+    ];
+
+    // Sort by date
+    allExams.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    console.log(`📝 Found ${allExams.length} total examinations`);
+
+    res.json(allExams);
+  } catch (error) {
+    console.error('Error fetching examinations:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Get academic results for principal
+exports.getAcademicResults = async (req, res) => {
+  try {
+    const ExamResult = require('../../../models/Staff/Teacher/examResult.model');
+    const Exam = require('../../../models/Staff/Teacher/exam.model');
+    
+    // Get all exam results with exam details
+    const examResults = await ExamResult.find()
+      .populate('examId', 'title class section subject date type')
+      .populate('studentId', 'name rollNumber class section')
+      .populate('enteredBy', 'name')
+      .sort({ createdAt: -1 });
+
+    // Group results by class and subject
+    const resultsByClass = {};
+    const resultsBySubject = {};
+
+    examResults.forEach(result => {
+      if (result.examId && result.studentId) {
+        const classKey = `${result.examId.class}-${result.examId.section}`;
+        const subjectKey = result.examId.subject;
+
+        // Group by class
+        if (!resultsByClass[classKey]) {
+          resultsByClass[classKey] = {
+            class: result.examId.class,
+            section: result.examId.section,
+            totalStudents: 0,
+            totalExams: 0,
+            averageScore: 0,
+            results: []
+          };
+        }
+
+        // Group by subject
+        if (!resultsBySubject[subjectKey]) {
+          resultsBySubject[subjectKey] = {
+            subject: subjectKey,
+            totalStudents: 0,
+            totalExams: 0,
+            averageScore: 0,
+            results: []
+          };
+        }
+
+        // Add to class results
+        resultsByClass[classKey].results.push(result);
+        resultsByClass[classKey].totalStudents = new Set(resultsByClass[classKey].results.map(r => r.studentId._id)).size;
+        resultsByClass[classKey].totalExams = new Set(resultsByClass[classKey].results.map(r => r.examId._id)).size;
+
+        // Add to subject results
+        resultsBySubject[subjectKey].results.push(result);
+        resultsBySubject[subjectKey].totalStudents = new Set(resultsBySubject[subjectKey].results.map(r => r.studentId._id)).size;
+        resultsBySubject[subjectKey].totalExams = new Set(resultsBySubject[subjectKey].results.map(r => r.examId._id)).size;
+      }
+    });
+
+    // Calculate averages
+    Object.keys(resultsByClass).forEach(classKey => {
+      const classData = resultsByClass[classKey];
+      const totalScore = classData.results.reduce((sum, r) => sum + (r.score || 0), 0);
+      classData.averageScore = classData.results.length > 0 ? totalScore / classData.results.length : 0;
+    });
+
+    Object.keys(resultsBySubject).forEach(subjectKey => {
+      const subjectData = resultsBySubject[subjectKey];
+      const totalScore = subjectData.results.reduce((sum, r) => sum + (r.score || 0), 0);
+      subjectData.averageScore = subjectData.results.length > 0 ? totalScore / subjectData.results.length : 0;
+    });
+
+    const academicResults = {
+      totalResults: examResults.length,
+      resultsByClass,
+      resultsBySubject,
+      recentResults: examResults.slice(0, 20) // Last 20 results
+    };
+
+    console.log(`📊 Found ${examResults.length} academic results`);
+
+    res.json(academicResults);
+  } catch (error) {
+    console.error('Error fetching academic results:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Get attendance overview for principal
+exports.getAttendanceOverview = async (req, res) => {
+  try {
+    const Attendance = require('../../../models/Staff/Teacher/attendance.model');
+    const Student = require('../../../models/Student/studentModel');
+    
+    // Get all students
+    const students = await Student.find({ status: 'Active' })
+      .select('name rollNumber class section')
+      .sort({ class: 1, section: 1, rollNumber: 1 });
+
+    // Get all attendance records
+    const attendanceRecords = await Attendance.find()
+      .sort({ date: -1 })
+      .limit(100); // Last 100 attendance records
+
+    // Calculate attendance statistics by class
+    const attendanceByClass = {};
+    const today = new Date();
+    const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    students.forEach(student => {
+      const classKey = `${student.class}-${student.section}`;
+      
+      if (!attendanceByClass[classKey]) {
+        attendanceByClass[classKey] = {
+          class: student.class,
+          section: student.section,
+          totalStudents: 0,
+          presentToday: 0,
+          absentToday: 0,
+          presentThisMonth: 0,
+          totalDaysThisMonth: 0,
+          averageAttendance: 0,
+          students: []
+        };
+      }
+
+      attendanceByClass[classKey].totalStudents++;
+      attendanceByClass[classKey].students.push({
+        name: student.name,
+        rollNumber: student.rollNumber,
+        attendancePercentage: 0
+      });
+    });
+
+    // Calculate attendance for each student
+    students.forEach(student => {
+      const classKey = `${student.class}-${student.section}`;
+      const studentAttendance = attendanceRecords.filter(record => 
+        record.attendanceData.some(data => data.studentRollNumber === student.rollNumber)
+      );
+
+      let totalDays = 0;
+      let presentDays = 0;
+      let presentToday = false;
+      let presentThisMonth = 0;
+      let totalDaysThisMonth = 0;
+
+      studentAttendance.forEach(record => {
+        const studentData = record.attendanceData.find(data => data.studentRollNumber === student.rollNumber);
+        if (studentData) {
+          totalDays++;
+          if (studentData.status === 'Present') {
+            presentDays++;
+            
+            // Check if present today
+            if (record.date.toDateString() === today.toDateString()) {
+              presentToday = true;
+            }
+            
+            // Check if present this month
+            if (record.date >= thisMonth) {
+              presentThisMonth++;
+            }
+          }
+          
+          // Count total days this month
+          if (record.date >= thisMonth) {
+            totalDaysThisMonth++;
+          }
+        }
+      });
+
+      const attendancePercentage = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0;
+
+      // Update class statistics
+      if (presentToday) {
+        attendanceByClass[classKey].presentToday++;
+      } else {
+        attendanceByClass[classKey].absentToday++;
+      }
+
+      attendanceByClass[classKey].presentThisMonth += presentThisMonth;
+      attendanceByClass[classKey].totalDaysThisMonth = Math.max(attendanceByClass[classKey].totalDaysThisMonth, totalDaysThisMonth);
+
+      // Update student attendance percentage
+      const studentIndex = attendanceByClass[classKey].students.findIndex(s => s.rollNumber === student.rollNumber);
+      if (studentIndex !== -1) {
+        attendanceByClass[classKey].students[studentIndex].attendancePercentage = attendancePercentage;
+      }
+    });
+
+    // Calculate class averages
+    Object.keys(attendanceByClass).forEach(classKey => {
+      const classData = attendanceByClass[classKey];
+      const totalPercentage = classData.students.reduce((sum, s) => sum + s.attendancePercentage, 0);
+      classData.averageAttendance = classData.students.length > 0 ? Math.round(totalPercentage / classData.students.length) : 0;
+    });
+
+    const attendanceOverview = {
+      totalStudents: students.length,
+      totalClasses: Object.keys(attendanceByClass).length,
+      attendanceByClass,
+      recentAttendance: attendanceRecords.slice(0, 10) // Last 10 attendance records
+    };
+
+    console.log(`📊 Attendance overview generated for ${students.length} students`);
+
+    res.json(attendanceOverview);
+  } catch (error) {
+    console.error('Error fetching attendance overview:', error);
     res.status(500).json({ message: 'Server error' });
   }
 }; 

@@ -17,7 +17,7 @@ import {
   Card,
   CardContent,
 } from '@mui/material';
-import { ArrowBack, Assignment, CheckCircle, HourglassEmpty, Grade } from '@mui/icons-material';
+import { ArrowBack, Assignment, CheckCircle, HourglassEmpty, Grade, BugReport } from '@mui/icons-material';
 import parentService from '../../services/parentService';
 import { useState } from 'react';
 
@@ -26,7 +26,7 @@ const Assignments = () => {
   const navigate = useNavigate();
   const [tabIndex, setTabIndex] = useState(0);
 
-  const { data: assignmentsData, isLoading, error } = useQuery({
+  const { data: assignmentsData, isLoading, error, refetch } = useQuery({
     queryKey: ['child_assignments', rollNumber],
     queryFn: () => parentService.getChildAssignments(rollNumber),
   });
@@ -35,6 +35,20 @@ const Assignments = () => {
   console.log('🔍 Assignments data:', assignmentsData);
   console.log('🔍 Assignments data type:', typeof assignmentsData);
   console.log('🔍 Is array:', Array.isArray(assignmentsData));
+
+  // Debug function to test API directly
+  const testAPI = async () => {
+    try {
+      console.log('🧪 Testing API for rollNumber:', rollNumber);
+      const response = await parentService.getChildAssignments(rollNumber);
+      console.log('✅ API Response:', response);
+      console.log('✅ Response type:', typeof response);
+      console.log('✅ Is array:', Array.isArray(response));
+    } catch (error) {
+      console.error('❌ API Error:', error);
+      console.error('❌ Error response:', error.response);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -68,12 +82,34 @@ const Assignments = () => {
 
   return (
     <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
-      <Button startIcon={<ArrowBack />} onClick={() => navigate(-1)} sx={{ mb: 2 }}>
+      <Button startIcon={<ArrowBack />} onClick={() => navigate(-1)} sx={{ mb: 2, mr: 2 }}>
         Back to Progress
       </Button>
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
-        Assignments
-      </Typography>
+      
+
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+          Assignments
+        </Typography>
+        <Box>
+          <Button 
+            startIcon={<BugReport />} 
+            onClick={testAPI} 
+            variant="outlined" 
+            size="small"
+            sx={{ mr: 1 }}
+          >
+            Test API
+          </Button>
+          <Button 
+            onClick={refetch} 
+            variant="outlined" 
+            size="small"
+          >
+            Refresh
+          </Button>
+        </Box>
+      </Box>
       
       <Paper>
         <Tabs value={tabIndex} onChange={handleTabChange} centered>
