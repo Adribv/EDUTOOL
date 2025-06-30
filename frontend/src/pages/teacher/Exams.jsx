@@ -94,7 +94,7 @@ const Exams = () => {
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   });
 
-  // Fetch teacher's own exams
+  // Fetch all exams for teacher (both teacher-created and VP-scheduled)
   const { data: teacherExams, isLoading: teacherExamsLoading } = useQuery({
     queryKey: ['teacherExams'],
     queryFn: () => teacherAPI.getExams(),
@@ -150,7 +150,10 @@ const Exams = () => {
       const gradeMatch = filterGrade === 'all' || exam.class === filterGrade || exam.grade === filterGrade;
       const subjectMatch = filterSubject === 'all' || exam.subject === filterSubject;
       
-      if (selectedTab === 1) {
+      if (selectedTab === 0) {
+        // VP Scheduled exams only
+        return exam.isVPScheduled && gradeMatch && subjectMatch;
+      } else if (selectedTab === 1) {
         // Upcoming exams
         const daysLeft = getDaysLeft(exam.examDate || exam.date);
         return daysLeft >= 0 && gradeMatch && subjectMatch;
@@ -174,8 +177,9 @@ const Exams = () => {
     return [...new Set(exams.map(exam => exam[field]).filter(Boolean))];
   };
 
-  const allExams = [...(vpExams || []), ...(teacherExams || [])];
-  const filteredExams = getFilteredExams(selectedTab === 0 ? vpExams : allExams);
+  // Use teacherExams which now includes both teacher-created and VP-scheduled exams
+  const allExams = teacherExams || [];
+  const filteredExams = getFilteredExams(allExams);
   const uniqueGrades = getUniqueValues(allExams, 'class').concat(getUniqueValues(allExams, 'grade'));
   const uniqueSubjects = getUniqueValues(allExams, 'subject');
 
@@ -271,7 +275,7 @@ const Exams = () => {
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
                   <Typography variant="h4" fontWeight="bold">
-                    {(vpExams || []).length}
+                    {(allExams || []).filter(exam => exam.isVPScheduled).length}
                   </Typography>
                   <Typography variant="body2">VP Scheduled Exams</Typography>
                 </Box>
@@ -290,7 +294,7 @@ const Exams = () => {
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
                   <Typography variant="h4" fontWeight="bold">
-                    {(vpExams || []).filter(exam => getDaysLeft(exam.examDate) >= 0).length}
+                    {(allExams || []).filter(exam => getDaysLeft(exam.examDate || exam.date) >= 0).length}
                   </Typography>
                   <Typography variant="body2">Upcoming Exams</Typography>
                 </Box>
@@ -309,7 +313,7 @@ const Exams = () => {
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
                   <Typography variant="h4" fontWeight="bold">
-                    {(vpExams || []).filter(exam => getDaysLeft(exam.examDate) === 0).length}
+                    {(allExams || []).filter(exam => getDaysLeft(exam.examDate || exam.date) === 0).length}
                   </Typography>
                   <Typography variant="body2">Today's Exams</Typography>
                 </Box>
@@ -328,7 +332,10 @@ const Exams = () => {
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
                   <Typography variant="h4" fontWeight="bold">
-                    {(vpExams || []).filter(exam => getDaysLeft(exam.examDate) <= 7 && getDaysLeft(exam.examDate) >= 0).length}
+                    {(allExams || []).filter(exam => {
+                      const daysLeft = getDaysLeft(exam.examDate || exam.date);
+                      return daysLeft <= 7 && daysLeft >= 0;
+                    }).length}
                   </Typography>
                   <Typography variant="body2">This Week</Typography>
                 </Box>
@@ -347,28 +354,28 @@ const Exams = () => {
       >
         <Tab 
           label={
-            <Badge badgeContent={(vpExams || []).length} color="primary">
+            <Badge badgeContent={(allExams || []).filter(exam => exam.isVPScheduled).length} color="primary">
               VP Scheduled Exams
             </Badge>
           } 
         />
         <Tab 
           label={
-            <Badge badgeContent={(vpExams || []).filter(exam => getDaysLeft(exam.examDate) >= 0).length} color="warning">
+            <Badge badgeContent={(allExams || []).filter(exam => getDaysLeft(exam.examDate || exam.date) >= 0).length} color="warning">
               Upcoming Exams
             </Badge>
           } 
         />
         <Tab 
           label={
-            <Badge badgeContent={(vpExams || []).filter(exam => getDaysLeft(exam.examDate) === 0).length} color="error">
+            <Badge badgeContent={(allExams || []).filter(exam => getDaysLeft(exam.examDate || exam.date) === 0).length} color="error">
               Today's Exams
             </Badge>
           } 
         />
         <Tab 
           label={
-            <Badge badgeContent={(vpExams || []).filter(exam => getDaysLeft(exam.examDate) < 0).length} color="success">
+            <Badge badgeContent={(allExams || []).filter(exam => getDaysLeft(exam.examDate || exam.date) < 0).length} color="success">
               Completed Exams
             </Badge>
           } 
@@ -408,9 +415,20 @@ const Exams = () => {
                     }
                     title={
                       <Box>
-                        <Typography variant="h6" noWrap>
-                          {exam.subject}
-                        </Typography>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Typography variant="h6" noWrap>
+                            {exam.subject}
+                          </Typography>
+                          {exam.isVPScheduled && (
+                            <Chip 
+                              label="VP Scheduled" 
+                              size="small" 
+                              color="primary" 
+                              variant="outlined"
+                              sx={{ fontSize: '0.7rem' }}
+                            />
+                          )}
+                        </Box>
                         <Typography variant="caption" color="text.secondary">
                           {exam.examType || exam.type || 'Regular Exam'}
                         </Typography>
@@ -503,7 +521,7 @@ const Exams = () => {
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 {selectedTab === 0 ? 
-                  'No VP-scheduled exams are currently available. The Vice Principal may not have scheduled any exams yet, or they may not be published.' :
+                  'No VP-scheduled exams are currently available for your classes. The Vice Principal may not have scheduled any exams yet, or they may not be published.' :
                  selectedTab === 1 ? 'No upcoming exams' :
                  selectedTab === 2 ? 'No exams scheduled for today' :
                  'No completed exams'}
@@ -534,9 +552,19 @@ const Exams = () => {
                     <Assessment />
                   </Avatar>
                   <Box>
-                    <Typography variant="h6">
-                      {selectedExam.subject} Exam
-                    </Typography>
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <Typography variant="h6">
+                        {selectedExam.subject} Exam
+                      </Typography>
+                      {selectedExam.isVPScheduled && (
+                        <Chip 
+                          label="VP Scheduled" 
+                          size="small" 
+                          color="primary" 
+                          variant="outlined"
+                        />
+                      )}
+                    </Box>
                     <Typography variant="caption" color="text.secondary">
                       {selectedExam.examType || selectedExam.type || 'Regular Exam'}
                     </Typography>
