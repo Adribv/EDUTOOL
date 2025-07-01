@@ -57,7 +57,7 @@ function ParentLogin() {
 
   const loginMutation = useMutation({
     mutationFn: async (values) => {
-      const response = await axios.post('http://localhost:5000/api/parents/login', values);
+      const response = await axios.post('https://edulives.com/api/api/parents/login', values);
       return response.data;
     },
     onSuccess: (data) => {
