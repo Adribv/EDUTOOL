@@ -72,9 +72,12 @@ const StudentDetails = () => {
       try {
         const attendanceRes = await parentService.getChildAttendance(rollNumber);
         console.log('✅ Attendance data:', attendanceRes);
+        console.log('✅ Attendance records:', attendanceRes.records);
+        console.log('✅ Attendance statistics:', attendanceRes.statistics);
         setAttendance(attendanceRes.records || []);
-      } catch {
+      } catch (error) {
         console.log('⚠️ No attendance data available');
+        console.error('❌ Attendance error:', error);
         setAttendance([]);
       }
 
@@ -136,9 +139,27 @@ const StudentDetails = () => {
 
   return (
     <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
-      <Button startIcon={<ArrowBack />} onClick={() => navigate(-1)} sx={{ mb: 2 }}>
-        Back
-      </Button>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Button startIcon={<ArrowBack />} onClick={() => navigate(-1)}>
+          Back
+        </Button>
+        <Button 
+          variant="outlined" 
+          onClick={async () => {
+            try {
+              console.log('🧪 Testing attendance API for rollNumber:', rollNumber);
+              const response = await parentService.getChildAttendance(rollNumber);
+              console.log('✅ Attendance API Response:', response);
+              alert(`Attendance API Test: Found ${response.records?.length || 0} records`);
+            } catch (error) {
+              console.error('❌ Attendance API Error:', error);
+              alert('Attendance API Error: ' + (error.response?.data?.message || error.message));
+            }
+          }}
+        >
+          Test Attendance API
+        </Button>
+      </Box>
       
       <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
         Student Details
@@ -250,6 +271,15 @@ const StudentDetails = () => {
 
         {selectedTab === 0 && (
           <Box>
+            <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+              <Typography variant="body2" color="text.secondary">
+                Debug Info: Attendance records loaded: {attendance.length}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Roll Number: {rollNumber}
+              </Typography>
+            </Box>
+            
             {attendance.length > 0 ? (
               <TableContainer>
                 <Table>
@@ -257,6 +287,7 @@ const StudentDetails = () => {
                     <TableRow>
                       <TableCell>Date</TableCell>
                       <TableCell>Status</TableCell>
+                      <TableCell>Remarks</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -270,6 +301,7 @@ const StudentDetails = () => {
                             size="small"
                           />
                         </TableCell>
+                        <TableCell>{record.remarks || '-'}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -277,7 +309,13 @@ const StudentDetails = () => {
               </TableContainer>
             ) : (
               <Typography sx={{ textAlign: 'center', p: 3 }}>
-                No attendance records available
+                No attendance records available. This could be because:
+                <br />
+                1. No attendance has been marked for this student
+                <br />
+                2. The parent is not linked to this student
+                <br />
+                3. There's an issue with the API connection
               </Typography>
             )}
           </Box>

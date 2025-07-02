@@ -106,7 +106,7 @@ const StudentManagement = () => {
       ]);
 
       setStudents(studentsResponse.data || []);
-      setAdmissions(admissionsResponse.data || []);
+      setAdmissions(admissionsResponse.data?.admissions || []);
       setAttendanceData(attendanceResponse.data || []);
       setPerformanceData(performanceResponse.data || []);
     } catch (err) {
@@ -269,7 +269,7 @@ const StudentManagement = () => {
                     Pending Admissions
                   </Typography>
                   <Typography variant="h4">
-                    {admissions.filter(admission => admission.status === 'Pending').length}
+                    {Array.isArray(admissions) ? admissions.filter(admission => admission.status === 'Pending').length : 0}
                   </Typography>
                 </Box>
                 <Avatar sx={{ bgcolor: 'warning.main', width: 56, height: 56 }}>
@@ -289,7 +289,7 @@ const StudentManagement = () => {
                     Average Attendance
                   </Typography>
                   <Typography variant="h4">
-                    {attendanceData.length > 0 
+                    {Array.isArray(attendanceData) && attendanceData.length > 0 
                       ? Math.round(attendanceData.reduce((sum, item) => sum + item.attendancePercentage, 0) / attendanceData.length)
                       : 0}%
                   </Typography>
@@ -310,7 +310,7 @@ const StudentManagement = () => {
           <Tab label="Admissions" icon={<AddIcon />} />
           <Tab label="Attendance" icon={<ScheduleIcon />} />
           <Tab label="Performance" icon={<AssessmentIcon />} />
-          <Tab label="Academic Records" icon={<BookIcon />} />
+          
         </Tabs>
       </Paper>
 
@@ -422,7 +422,7 @@ const StudentManagement = () => {
             action={
               <Box display="flex" gap={1}>
                 <Chip
-                  label={`${admissions.filter(admission => admission.status === 'Pending').length} Pending`}
+                  label={`${Array.isArray(admissions) ? admissions.filter(admission => admission.status === 'Pending').length : 0} Pending`}
                   color="warning"
                 />
                 <Button startIcon={<DownloadIcon />} variant="outlined">
@@ -433,7 +433,7 @@ const StudentManagement = () => {
           />
           <CardContent>
             <List>
-              {admissions.map((admission) => (
+              {Array.isArray(admissions) && admissions.map((admission) => (
                 <React.Fragment key={admission._id}>
                   <ListItem>
                     <ListItemAvatar>
@@ -446,10 +446,10 @@ const StudentManagement = () => {
                       secondary={
                         <Box>
                           <Typography variant="body2">
-                            Class: {admission.class} | Age: {admission.age} | Previous School: {admission.previousSchool}
+                            Class: {admission.applyingForClass} | Age: {admission.age} | Previous School: {admission.previousSchool}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            Applied: {new Date(admission.createdAt).toLocaleDateString()}
+                            Applied: {new Date(admission.applicationDate).toLocaleDateString()}
                           </Typography>
                         </Box>
                       }
@@ -485,7 +485,7 @@ const StudentManagement = () => {
                   <Divider />
                 </React.Fragment>
               ))}
-              {admissions.length === 0 && (
+              {(!Array.isArray(admissions) || admissions.length === 0) && (
                 <ListItem>
                   <ListItemText
                     primary="No admission requests"
@@ -517,7 +517,7 @@ const StudentManagement = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {attendanceData.map((attendance) => (
+                      {Array.isArray(attendanceData) && attendanceData.map((attendance) => (
                         <TableRow key={attendance._id}>
                           <TableCell>{attendance.studentName}</TableCell>
                           <TableCell>{attendance.class}</TableCell>
@@ -563,7 +563,7 @@ const StudentManagement = () => {
                     </ListItemIcon>
                     <ListItemText
                       primary="Good Attendance (≥90%)"
-                      secondary={`${attendanceData.filter(a => a.attendancePercentage >= 90).length} students`}
+                      secondary={`${Array.isArray(attendanceData) ? attendanceData.filter(a => a.attendancePercentage >= 90).length : 0} students`}
                     />
                   </ListItem>
                   <ListItem>
@@ -572,7 +572,7 @@ const StudentManagement = () => {
                     </ListItemIcon>
                     <ListItemText
                       primary="Needs Attention (<90%)"
-                      secondary={`${attendanceData.filter(a => a.attendancePercentage < 90).length} students`}
+                      secondary={`${Array.isArray(attendanceData) ? attendanceData.filter(a => a.attendancePercentage < 90).length : 0} students`}
                     />
                   </ListItem>
                   <ListItem>
@@ -581,7 +581,7 @@ const StudentManagement = () => {
                     </ListItemIcon>
                     <ListItemText
                       primary="Average Attendance"
-                      secondary={`${attendanceData.length > 0 
+                      secondary={`${Array.isArray(attendanceData) && attendanceData.length > 0 
                         ? Math.round(attendanceData.reduce((sum, item) => sum + item.attendancePercentage, 0) / attendanceData.length)
                         : 0}%`}
                     />
@@ -612,7 +612,7 @@ const StudentManagement = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {performanceData.map((performance) => (
+                      {Array.isArray(performanceData) && performanceData.map((performance) => (
                         <TableRow key={performance._id}>
                           <TableCell>{performance.studentName}</TableCell>
                           <TableCell>{performance.class}</TableCell>
@@ -675,7 +675,7 @@ const StudentManagement = () => {
                     </ListItemIcon>
                     <ListItemText
                       primary="High Performers (≥90%)"
-                      secondary={`${performanceData.filter(p => p.overallGrade >= 90).length} students`}
+                      secondary={`${Array.isArray(performanceData) ? performanceData.filter(p => p.overallGrade >= 90).length : 0} students`}
                     />
                   </ListItem>
                   <ListItem>
@@ -684,7 +684,7 @@ const StudentManagement = () => {
                     </ListItemIcon>
                     <ListItemText
                       primary="Good Performance (80-89%)"
-                      secondary={`${performanceData.filter(p => p.overallGrade >= 80 && p.overallGrade < 90).length} students`}
+                      secondary={`${Array.isArray(performanceData) ? performanceData.filter(p => p.overallGrade >= 80 && p.overallGrade < 90).length : 0} students`}
                     />
                   </ListItem>
                   <ListItem>
@@ -693,7 +693,7 @@ const StudentManagement = () => {
                     </ListItemIcon>
                     <ListItemText
                       primary="Needs Improvement (<80%)"
-                      secondary={`${performanceData.filter(p => p.overallGrade < 80).length} students`}
+                      secondary={`${Array.isArray(performanceData) ? performanceData.filter(p => p.overallGrade < 80).length : 0} students`}
                     />
                   </ListItem>
                 </List>
@@ -701,98 +701,6 @@ const StudentManagement = () => {
             </Card>
           </Grid>
         </Grid>
-      )}
-
-      {selectedTab === 4 && (
-        <Card>
-          <CardHeader
-            title="Academic Records"
-            action={
-              <Box display="flex" gap={1}>
-                <Button startIcon={<DownloadIcon />} variant="outlined">
-                  Export Records
-                </Button>
-                <Button startIcon={<PrintIcon />} variant="outlined">
-                  Print Reports
-                </Button>
-              </Box>
-            }
-          />
-          <CardContent>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-              Access comprehensive academic records, report cards, and historical performance data
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined">
-                  <CardHeader title="Quick Actions" />
-                  <CardContent>
-                    <Box display="flex" flexDirection="column" gap={2}>
-                      <Button
-                        variant="outlined"
-                        startIcon={<AssessmentIcon />}
-                        href="/principal/reports/performance"
-                      >
-                        Generate Performance Reports
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        startIcon={<GradeIcon />}
-                        href="/principal/reports/report-cards"
-                      >
-                        View Report Cards
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        startIcon={<TrendingUpIcon />}
-                        href="/principal/reports/analytics"
-                      >
-                        Performance Analytics
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        startIcon={<GroupIcon />}
-                        href="/principal/reports/class-wise"
-                      >
-                        Class-wise Reports
-                      </Button>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined">
-                  <CardHeader title="Recent Academic Activities" />
-                  <CardContent>
-                    <List>
-                      <ListItem>
-                        <ListItemIcon><AssessmentIcon /></ListItemIcon>
-                        <ListItemText
-                          primary="Mid-term examinations completed"
-                          secondary="2 days ago"
-                        />
-                      </ListItem>
-                      <ListItem>
-                        <ListItemIcon><GradeIcon /></ListItemIcon>
-                        <ListItemText
-                          primary="Report cards generated for Class 10"
-                          secondary="1 week ago"
-                        />
-                      </ListItem>
-                      <ListItem>
-                        <ListItemIcon><TrendingUpIcon /></ListItemIcon>
-                        <ListItemText
-                          primary="Performance analysis updated"
-                          secondary="2 weeks ago"
-                        />
-                      </ListItem>
-                    </List>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
       )}
 
       {/* Student Details Dialog */}

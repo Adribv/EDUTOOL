@@ -246,12 +246,31 @@ exports.getChildAssignments = async (req, res) => {
     
     console.log('✅ Child found:', { name: child.name, class: child.class, section: child.section });
     
+    // Log the query parameters
+    console.log('🔍 Querying assignments with:', {
+      class: child.class,
+      section: child.section,
+      status: ['Active', 'Completed']
+    });
+    
     const assignments = await Assignment.find({
       class: child.class,
-      section: child.section
+      section: child.section,
+      status: { $in: ['Active', 'Completed'] }
     }).sort({ dueDate: 1 });
     
     console.log('📚 Found assignments:', assignments.length);
+    if (assignments.length === 0) {
+      // Check if there are any assignments without status filter
+      const allAssignments = await Assignment.find({
+        class: child.class,
+        section: child.section
+      });
+      console.log('🔍 Total assignments for this class/section (any status):', allAssignments.length);
+      allAssignments.forEach(assignment => {
+        console.log(`  - ${assignment.title} (Status: ${assignment.status})`);
+      });
+    }
     
     // Get submission status for each assignment
     const assignmentsWithStatus = await Promise.all(assignments.map(async (assignment) => {
@@ -299,9 +318,20 @@ exports.getChildPerformance = async (req, res) => {
       return res.status(404).json({ message: 'Child not found' });
     }
     
+    console.log('✅ Child found for performance:', { 
+      _id: child._id, 
+      name: child.name, 
+      rollNumber: child.rollNumber 
+    });
+    
     const examResults = await ExamResult.find({
       studentId: child._id
     }).populate('examId', 'title date type subject');
+    
+    console.log('📊 Found exam results:', examResults.length);
+    examResults.forEach(result => {
+      console.log(`  - ${result.examId.title} (${result.examId.subject}): ${result.score}%`);
+    });
     
     // Group results by subject
     const subjectPerformance = {};
@@ -377,7 +407,7 @@ exports.getChildAttendance = async (req, res) => {
     
     // Build query based on provided filters
     const query = {
-      studentRollNumber: child.rollNumber
+      'attendanceData.studentRollNumber': child.rollNumber
     };
     
     if (month && year) {
@@ -388,14 +418,27 @@ exports.getChildAttendance = async (req, res) => {
     
     const attendanceRecords = await Attendance.find(query).sort({ date: -1 });
     
+    // Extract the specific student's attendance data from each record
+    const studentAttendanceRecords = attendanceRecords.map(record => {
+      const studentData = record.attendanceData.find(data => data.studentRollNumber === child.rollNumber);
+      return {
+        _id: record._id,
+        date: record.date,
+        status: studentData ? studentData.status : 'Not Marked',
+        remarks: studentData ? studentData.remarks : '',
+        class: record.class,
+        section: record.section
+      };
+    }).filter(record => record.status !== 'Not Marked');
+    
     // Calculate attendance statistics
-    const totalDays = attendanceRecords.length;
-    const presentDays = attendanceRecords.filter(record => record.status === 'Present').length;
-    const absentDays = attendanceRecords.filter(record => record.status === 'Absent').length;
-    const leaveDays = attendanceRecords.filter(record => record.status === 'Leave').length;
+    const totalDays = studentAttendanceRecords.length;
+    const presentDays = studentAttendanceRecords.filter(record => record.status === 'Present').length;
+    const absentDays = studentAttendanceRecords.filter(record => record.status === 'Absent').length;
+    const leaveDays = studentAttendanceRecords.filter(record => record.status === 'Leave').length;
     
     res.json({
-      records: attendanceRecords,
+      records: studentAttendanceRecords,
       statistics: {
         totalDays,
         presentDays,
@@ -1562,59 +1605,13 @@ exports.linkStudent = async (req, res) => {
   }
 };
 
-// Debug endpoint to check parent and student data
+// Debug endpoint
 exports.debugParentData = async (req, res) => {
   try {
-    console.log('🔍 Debug request for parent ID:', req.user.id);
-    
     const parent = await Parent.findById(req.user.id);
-    if (!parent) {
-      return res.status(404).json({ message: 'Parent not found' });
-    }
-
-    console.log('📊 Parent data:', {
-      _id: parent._id,
-      name: parent.name,
-      email: parent.email,
-      childRollNumbers: parent.childRollNumbers
-    });
-
-    // Find all students with these roll numbers
-    const students = await Student.find({
-      rollNumber: { $in: parent.childRollNumbers }
-    });
-
-    console.log('👶 Students found:', students.map(s => ({
-      _id: s._id,
-      name: s.name,
-      rollNumber: s.rollNumber,
-      parentId: s.parentId
-    })));
-
-    // Find all students that reference this parent in their parents array
-    const studentsByParentRef = await Student.find({
-      parents: parent._id
-    });
-
-    console.log('👶 Students by parent ref:', studentsByParentRef.map(s => ({
-      _id: s._id,
-      name: s.name,
-      rollNumber: s.rollNumber,
-      parents: s.parents
-    })));
-
-    res.json({
-      parent: {
-        _id: parent._id,
-        name: parent.name,
-        email: parent.email,
-        childRollNumbers: parent.childRollNumbers
-      },
-      studentsByRollNumbers: students,
-      studentsByParentRef: studentsByParentRef
-    });
+    res.json({ parent, message: 'Debug data' });
   } catch (error) {
-    console.error('❌ Debug error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
+

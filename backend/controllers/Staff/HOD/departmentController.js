@@ -1,5 +1,6 @@
 const Department = require('../../../models/Staff/HOD/department.model');
 const Staff = require('../../../models/Staff/staffModel');
+const Student = require('../../../models/Student/studentModel');
 
 // Create a new department
 exports.createDepartment = async (req, res) => {
@@ -154,19 +155,61 @@ exports.getDepartmentTeachers = async (req, res) => {
  * Handles department overview, staff, and statistics
  */
 
-// Get department overview
+// Get department overview - real implementation
 exports.getDepartmentOverview = async (req, res) => {
   try {
-    // Implementation to fetch department overview data
+    // Get department for the current HOD
+    const department = await Department.findOne({ headOfDepartment: req.user.id })
+      .populate('headOfDepartment', 'name email')
+      .populate('teachers', 'name email role');
+    
+    if (!department) {
+      return res.status(404).json({ message: 'Department not found' });
+    }
+    
+    // Get teachers in department
+    const teachers = await Staff.find({ 
+      _id: { $in: department.teachers },
+      role: 'Teacher'
+    });
+    
+    // Get students in department classes
+    const students = await Student.find({
+      class: { $in: department.subjects.map(subject => {
+        // Map subjects to class names
+        const subjectToClassMap = {
+          'Physics': ['9', '10', '11', '12'],
+          'Chemistry': ['9', '10', '11', '12'],
+          'Biology': ['9', '10', '11', '12'],
+          'Mathematics': ['6', '7', '8', '9', '10', '11', '12'],
+          'English': ['6', '7', '8', '9', '10', '11', '12'],
+          'History': ['6', '7', '8', '9', '10'],
+          'Geography': ['6', '7', '8', '9', '10'],
+          'Computer Science': ['9', '10', '11', '12']
+        };
+        return subjectToClassMap[subject] || [];
+      }).flat() }
+    });
+    
+    const overview = {
+      departmentName: department.name,
+      description: department.description,
+      totalTeachers: teachers.length,
+      totalStudents: students.length,
+      subjects: department.subjects,
+      headOfDepartment: department.headOfDepartment,
+      teachers: teachers.map(teacher => ({
+        id: teacher._id,
+        name: teacher.name,
+        email: teacher.email,
+        role: teacher.role
+      }))
+    };
+    
     res.status(200).json({
       success: true,
       message: "Department overview retrieved successfully",
-      data: {
-        departmentName: "Science Department",
-        totalTeachers: 12,
-        totalStudents: 450,
-        subjects: ["Physics", "Chemistry", "Biology"]
-      }
+      data: overview
     });
   } catch (error) {
     console.error("Error in getDepartmentOverview:", error);
@@ -178,14 +221,37 @@ exports.getDepartmentOverview = async (req, res) => {
   }
 };
 
-// Get department staff
+// Get department staff - real implementation
 exports.getDepartmentStaff = async (req, res) => {
   try {
-    // Implementation to fetch department staff data
+    // Get department for the current HOD
+    const department = await Department.findOne({ headOfDepartment: req.user.id });
+    
+    if (!department) {
+      return res.status(404).json({ message: 'Department not found' });
+    }
+    
+    // Get all staff in department
+    const staff = await Staff.find({ 
+      _id: { $in: department.teachers }
+    }).populate('department', 'name');
+    
+    const staffData = staff.map(member => ({
+      id: member._id,
+      name: member.name,
+      email: member.email,
+      role: member.role,
+      phone: member.phone,
+      joiningDate: member.joiningDate,
+      qualification: member.qualification,
+      experience: member.experience,
+      status: member.status
+    }));
+    
     res.status(200).json({
       success: true,
       message: "Department staff retrieved successfully",
-      data: []
+      data: staffData
     });
   } catch (error) {
     console.error("Error in getDepartmentStaff:", error);

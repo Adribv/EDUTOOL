@@ -292,10 +292,10 @@ exports.analyzeLearningTrends = async (req, res) => {
   }
 };
 
-// Compare class and teacher performance metrics
+// Compare performance metrics - real implementation
 exports.comparePerformanceMetrics = async (req, res) => {
   try {
-    const { academicYear, term, subject } = req.query;
+    const { academicYear, term } = req.query;
     
     // Get department
     const department = await Department.findOne({ headOfDepartment: req.user.id });
@@ -303,111 +303,64 @@ exports.comparePerformanceMetrics = async (req, res) => {
       return res.status(404).json({ message: 'Department not found' });
     }
     
-    // Build query
-    const query = {};
-    if (academicYear) query.academicYear = academicYear;
-    if (term) query.term = term;
-    if (subject) query.subject = subject;
-    else query.subject = { $in: department.subjects };
-    
-    // Get exam results
-    const examResults = await ExamResult.find(query)
-      .populate('gradedBy', 'name')
-      .populate('studentId', 'name class section');
-    
-    // Group by class
-    const classSectionData = {};
-    
-    examResults.forEach(result => {
-      if (result.studentId) {
-        const classKey = `${result.studentId.class}-${result.studentId.section}`;
-        
-        if (!classSectionData[classKey]) {
-          classSectionData[classKey] = {
-            class: result.studentId.class,
-            section: result.studentId.section,
-            totalScore: 0,
-            count: 0,
-            passingCount: 0,
-            teacherData: {}
-          };
-        }
-        
-        classSectionData[classKey].totalScore += result.score;
-        classSectionData[classKey].count++;
-        if (result.score >= 60) classSectionData[classKey].passingCount++;
-        
-        // Group by teacher within class
-        if (result.gradedBy) {
-          const teacherId = result.gradedBy._id.toString();
-          
-          if (!classSectionData[classKey].teacherData[teacherId]) {
-            classSectionData[classKey].teacherData[teacherId] = {
-              teacherId,
-              teacherName: result.gradedBy.name,
-              totalScore: 0,
-              count: 0,
-              passingCount: 0
-            };
-          }
-          
-          classSectionData[classKey].teacherData[teacherId].totalScore += result.score;
-          classSectionData[classKey].teacherData[teacherId].count++;
-          if (result.score >= 60) classSectionData[classKey].teacherData[teacherId].passingCount++;
-        }
-      }
+    // Get teachers in department
+    const teachers = await Staff.find({ 
+      _id: { $in: department.teachers },
+      role: 'Teacher'
     });
     
-    // Calculate averages and prepare comparison data
-    const comparisonData = {
-      academicYear: academicYear || 'All',
-      term: term || 'All',
-      subject: subject || 'All Subjects',
-      classData: []
+    // Build query for exam results
+    const examQuery = {};
+    if (academicYear) examQuery.academicYear = academicYear;
+    if (term) examQuery.term = term;
+    
+    // Get exam results for department subjects
+    const examResults = await ExamResult.find({
+      ...examQuery,
+      subject: { $in: department.subjects }
+    });
+    
+    // Calculate performance metrics
+    const performanceMetrics = {
+      academicScore: 0,
+      attendanceRate: 0,
+      totalExams: examResults.length,
+      totalStudents: 0,
+      averageScore: 0,
+      passingRate: 0
     };
     
-    for (const classKey in classSectionData) {
-      const classData = classSectionData[classKey];
-      
-      if (classData.count > 0) {
-        const classAverage = classData.totalScore / classData.count;
-        const classPassingRate = (classData.passingCount / classData.count) * 100;
-        
-        const teacherComparison = [];
-        
-        for (const teacherId in classData.teacherData) {
-          const teacherData = classData.teacherData[teacherId];
-          
-          if (teacherData.count > 0) {
-            const teacherAverage = teacherData.totalScore / teacherData.count;
-            const teacherPassingRate = (teacherData.passingCount / teacherData.count) * 100;
-            
-            teacherComparison.push({
-              teacherId: teacherData.teacherId,
-              teacherName: teacherData.teacherName,
-              averageScore: teacherAverage,
-              passingRate: teacherPassingRate,
-              studentCount: teacherData.count,
-              comparedToClassAverage: ((teacherAverage - classAverage) / classAverage) * 100
-            });
-          }
-        }
-        
-        comparisonData.classData.push({
-          class: classData.class,
-          section: classData.section,
-          averageScore: classAverage,
-          passingRate: classPassingRate,
-          studentCount: classData.count,
-          teacherComparison
-        });
-      }
+    if (examResults.length > 0) {
+      const totalScore = examResults.reduce((sum, result) => sum + (result.score || 0), 0);
+      performanceMetrics.averageScore = totalScore / examResults.length;
+      performanceMetrics.passingRate = (examResults.filter(result => (result.score || 0) >= 60).length / examResults.length) * 100;
+      performanceMetrics.academicScore = performanceMetrics.averageScore;
     }
     
-    res.json(comparisonData);
+    // Get attendance data
+    const attendanceRecords = await Attendance.find({
+      markedBy: { $in: teachers.map(t => t._id) }
+    }).sort({ date: -1 }).limit(30);
+    
+    if (attendanceRecords.length > 0) {
+      performanceMetrics.attendanceRate = (attendanceRecords.filter(a => a.status === 'present').length / attendanceRecords.length) * 100;
+    }
+    
+    // Get unique students from exam results
+    const uniqueStudents = new Set(examResults.map(result => result.studentId?.toString()).filter(Boolean));
+    performanceMetrics.totalStudents = uniqueStudents.size;
+    
+    res.json({
+      success: true,
+      data: performanceMetrics
+    });
   } catch (error) {
     console.error('Error comparing performance metrics:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error',
+      error: error.message 
+    });
   }
 };
 

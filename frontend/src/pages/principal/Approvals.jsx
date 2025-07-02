@@ -65,8 +65,9 @@ const Approvals = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await principalAPI.getPendingApprovals();
-      console.log('📋 Approvals data:', response.data);
+      // Fetch all approvals (not just pending ones) to show in all tabs
+      const response = await principalAPI.getAllApprovals();
+      console.log('📋 All approvals data:', response.data);
       setApprovals(response.data);
     } catch (err) {
       console.error('❌ Error fetching approvals:', err);

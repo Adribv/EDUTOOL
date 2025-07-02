@@ -83,6 +83,9 @@ const LeaveRequests = () => {
     queryKey: ['leaveRequests', user?.id],
     queryFn: () => {
       const staffId = user?._id || user?.id;
+      console.log('LeaveRequests: Fetching with staffId:', staffId);
+      console.log('LeaveRequests: User object:', user);
+      
       if (!staffId) {
         throw new Error('User ID not available');
       }
@@ -90,6 +93,21 @@ const LeaveRequests = () => {
     },
     enabled: !!user?.id || !!user?._id,
     refetchInterval: 2 * 60 * 1000, // Refetch every 2 minutes
+    onSuccess: (data) => {
+      console.log('LeaveRequests: API call successful, data:', data);
+      console.log('LeaveRequests: Data type:', typeof data);
+      console.log('LeaveRequests: Data length:', Array.isArray(data) ? data.length : 'Not an array');
+      if (Array.isArray(data)) {
+        data.forEach((item, index) => {
+          console.log(`LeaveRequests: Item ${index}:`, item);
+        });
+      }
+    },
+    onError: (error) => {
+      console.error('LeaveRequests: API call failed:', error);
+      console.error('LeaveRequests: Error response:', error.response);
+      console.error('LeaveRequests: Error message:', error.message);
+    }
   });
 
   // Fetch attendance data for students when leave requests are loaded
@@ -272,19 +290,70 @@ const LeaveRequests = () => {
         <Typography variant="h4">
           Leave Request Management
         </Typography>
-        <FormControl size="small" sx={{ minWidth: 120 }}>
-          <InputLabel>Filter Status</InputLabel>
-          <Select
-            value={filterStatus}
-            label="Filter Status"
-            onChange={(e) => setFilterStatus(e.target.value)}
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button 
+            variant="outlined" 
+            onClick={() => {
+              console.log('=== DEBUG INFO ===');
+              console.log('User:', user);
+              console.log('Leave Requests Data:', leaveRequests);
+              console.log('Is Loading:', isLoading);
+              console.log('Error:', error);
+              console.log('Filtered Requests:', filteredRequests);
+              alert(`Debug info logged to console. Check browser console for details.\n\nLeave Requests: ${leaveRequests?.length || 0}\nFiltered: ${filteredRequests?.length || 0}\nLoading: ${isLoading}\nError: ${error ? 'Yes' : 'No'}`);
+            }}
+            sx={{ mr: 1 }}
           >
-            <MenuItem value="all">All Status</MenuItem>
-            <MenuItem value="Pending">Pending</MenuItem>
-            <MenuItem value="Approved">Approved</MenuItem>
-            <MenuItem value="Rejected">Rejected</MenuItem>
-          </Select>
-        </FormControl>
+            Debug Info
+          </Button>
+          <Button 
+            variant="contained" 
+            color="secondary"
+            onClick={async () => {
+              try {
+                console.log('=== TESTING API CALL ===');
+                const staffId = user?._id || user?.id;
+                console.log('Calling API with staffId:', staffId);
+                
+                const response = await teacherAPI.getLeaveRequests(staffId);
+                console.log('API Response:', response);
+                console.log('Response data:', response.data);
+                console.log('Response type:', typeof response.data);
+                console.log('Is array:', Array.isArray(response.data));
+                
+                if (Array.isArray(response.data)) {
+                  console.log('Array length:', response.data.length);
+                  response.data.forEach((item, index) => {
+                    console.log(`Item ${index}:`, item);
+                  });
+                }
+                
+                alert(`API Test Complete!\n\nResponse received: ${response ? 'Yes' : 'No'}\nData type: ${typeof response.data}\nIs array: ${Array.isArray(response.data)}\nLength: ${Array.isArray(response.data) ? response.data.length : 'N/A'}\n\nCheck console for full details.`);
+              } catch (error) {
+                console.error('API Test Error:', error);
+                console.error('Error response:', error.response);
+                alert(`API Test Failed!\n\nError: ${error.message}\nStatus: ${error.response?.status}\nResponse: ${JSON.stringify(error.response?.data)}\n\nCheck console for full details.`);
+              }
+            }}
+            sx={{ mr: 1 }}
+          >
+            Test API
+          </Button>
+
+          <FormControl size="small" sx={{ minWidth: 120 }}>
+            <InputLabel>Filter Status</InputLabel>
+            <Select
+              value={filterStatus}
+              label="Filter Status"
+              onChange={(e) => setFilterStatus(e.target.value)}
+            >
+              <MenuItem value="all">All Status</MenuItem>
+              <MenuItem value="Pending">Pending</MenuItem>
+              <MenuItem value="Approved">Approved</MenuItem>
+              <MenuItem value="Rejected">Rejected</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
       </Box>
 
       {/* Statistics Cards */}

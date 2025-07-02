@@ -35,16 +35,38 @@ exports.getSubjectsAndTeachers = async (req, res) => {
       return res.status(404).json({ message: 'Student not found' });
     }
     
-    // This would typically query a class-subject-teacher mapping model
-    // For now, return a placeholder response
+    // Get subjects from timetable for this class and section
+    const timetable = await Timetable.findOne({
+      class: student.class,
+      section: student.section
+    });
+    
+    let subjects = [];
+    
+    if (timetable && timetable.schedule) {
+      // Extract unique subjects from timetable
+      const subjectMap = new Map();
+      
+      timetable.schedule.forEach(day => {
+        day.periods.forEach(period => {
+          if (period.subject && period.teacher) {
+            subjectMap.set(period.subject, {
+              name: period.subject,
+              teacher: period.teacher,
+              subjectCode: period.subjectCode || period.subject
+            });
+          }
+        });
+      });
+      
+      subjects = Array.from(subjectMap.values());
+    }
+    
+    // If no subjects found in timetable, return empty array
     res.json({
       class: student.class,
       section: student.section,
-      subjects: [
-        { name: 'Mathematics', teacher: 'Mr. John Smith' },
-        { name: 'Science', teacher: 'Ms. Jane Doe' },
-        { name: 'English', teacher: 'Mrs. Emily Johnson' }
-      ]
+      subjects: subjects
     });
   } catch (error) {
     console.error('Error fetching subjects and teachers:', error);
@@ -267,103 +289,43 @@ exports.getSubmissionFeedback = async (req, res) => {
   }
 };
 
-// Placeholder methods for missing routes - these should be implemented based on your requirements
-exports.getAttendance = async (req, res) => {
-  try {
-    // Placeholder implementation
-    res.json({ message: 'Attendance data not implemented yet' });
-  } catch (error) {
-    console.error('Error fetching attendance:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
+// Remove placeholder methods - these are handled by other controllers
+// exports.getAttendance = async (req, res) => {
+//   // This is handled by attendanceController.js
+// };
 
-exports.submitLeaveRequest = async (req, res) => {
-  try {
-    // Placeholder implementation
-    res.json({ message: 'Leave request submission not implemented yet' });
-  } catch (error) {
-    console.error('Error submitting leave request:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
+// exports.submitLeaveRequest = async (req, res) => {
+//   // This is handled by attendanceController.js
+// };
 
-exports.getLeaveRequests = async (req, res) => {
-  try {
-    // Placeholder implementation
-    res.json([]);
-  } catch (error) {
-    console.error('Error fetching leave requests:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
+// exports.getLeaveRequests = async (req, res) => {
+//   // This is handled by attendanceController.js
+// };
 
-exports.getExams = async (req, res) => {
-  try {
-    // Placeholder implementation
-    res.json([]);
-  } catch (error) {
-    console.error('Error fetching exams:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
+// exports.getExams = async (req, res) => {
+//   // This is handled by examinationController.js
+// };
 
-exports.getAdmitCard = async (req, res) => {
-  try {
-    // Placeholder implementation
-    res.json({ message: 'Admit card not implemented yet' });
-  } catch (error) {
-    console.error('Error fetching admit card:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
+// exports.getAdmitCard = async (req, res) => {
+//   // This is handled by examinationController.js
+// };
 
-exports.getExamResults = async (req, res) => {
-  try {
-    // Placeholder implementation
-    res.json([]);
-  } catch (error) {
-    console.error('Error fetching exam results:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
+// exports.getExamResults = async (req, res) => {
+//   // This is handled by examinationController.js
+// };
 
-exports.getReportCards = async (req, res) => {
-  try {
-    // Placeholder implementation
-    res.json([]);
-  } catch (error) {
-    console.error('Error fetching report cards:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
+// exports.getReportCards = async (req, res) => {
+//   // This is handled by examinationController.js
+// };
 
-exports.getPerformanceAnalytics = async (req, res) => {
-  try {
-    // Placeholder implementation
-    res.json({ message: 'Performance analytics not implemented yet' });
-  } catch (error) {
-    console.error('Error fetching performance analytics:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
+// exports.getPerformanceAnalytics = async (req, res) => {
+//   // This is handled by examinationController.js
+// };
 
-exports.getResources = async (req, res) => {
-  try {
-    // Placeholder implementation
-    res.json([]);
-  } catch (error) {
-    console.error('Error fetching resources:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
+// exports.getResources = async (req, res) => {
+//   // This is handled by learningResourcesController.js
+// };
 
-exports.getResourceDetails = async (req, res) => {
-  try {
-    // Placeholder implementation
-    res.json({ message: 'Resource details not implemented yet' });
-  } catch (error) {
-    console.error('Error fetching resource details:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
+// exports.getResourceDetails = async (req, res) => {
+//   // This is handled by learningResourcesController.js
+// };

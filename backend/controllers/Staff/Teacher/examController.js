@@ -4,6 +4,73 @@ const VPExam = require('../../../models/Staff/HOD/examPaper.model');
 const Staff = require('../../../models/Staff/staffModel');
 const Student = require('../../../models/Student/studentModel');
 
+// Import ExamTimetable model for VP-scheduled exams
+const mongoose = require('mongoose');
+const examTimetableSchema = new mongoose.Schema({
+  departmentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Department',
+    required: true
+  },
+  examId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Exam',
+    required: true
+  },
+  examName: {
+    type: String,
+    required: true
+  },
+  subject: {
+    type: String,
+    required: true
+  },
+  grade: {
+    type: String,
+    required: true
+  },
+  examDate: {
+    type: Date,
+    required: true
+  },
+  startTime: {
+    type: String,
+    required: true
+  },
+  endTime: {
+    type: String,
+    required: true
+  },
+  duration: {
+    type: Number,
+    required: true
+  },
+  examType: {
+    type: String,
+    required: true
+  },
+  room: {
+    type: String,
+    default: 'Main Hall'
+  },
+  invigilator: {
+    type: String,
+    default: 'To be assigned'
+  },
+  status: {
+    type: String,
+    enum: ['Scheduled', 'In Progress', 'Completed', 'Cancelled'],
+    default: 'Scheduled'
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Staff',
+    required: true
+  }
+}, { timestamps: true });
+
+const ExamTimetable = mongoose.models.ExamTimetable || mongoose.model('ExamTimetable', examTimetableSchema);
+
 // Create exam
 exports.createExam = async (req, res) => {
   try {
@@ -12,12 +79,24 @@ exports.createExam = async (req, res) => {
     
     // Check if teacher is assigned to this class and subject
     const staff = await Staff.findById(req.user.id);
-    const isAssigned = staff.assignedSubjects.some(
+    
+    // Check if teacher is assigned as a subject teacher
+    const isSubjectAssigned = staff.assignedSubjects.some(
       sub => sub.class === cls && sub.section === section && sub.subject === subject
     );
     
-    if (!isAssigned) {
-      return res.status(403).json({ message: 'You are not assigned to this class/subject' });
+    // Check if teacher is assigned as a class coordinator
+    let isCoordinatorAssigned = false;
+    if (staff.coordinator && staff.coordinator.length > 0) {
+      const Class = require('../../../models/Admin/classModel');
+      const coordinatedClasses = await Class.find({ _id: { $in: staff.coordinator } });
+      isCoordinatorAssigned = coordinatedClasses.some(
+        coord => coord.grade === cls && coord.section === section
+      );
+    }
+    
+    if (!isSubjectAssigned && !isCoordinatorAssigned) {
+      return res.status(403).json({ message: 'You are not assigned to this class/subject as a teacher or coordinator' });
     }
     
     const exam = new Exam({
@@ -40,12 +119,119 @@ exports.createExam = async (req, res) => {
   }
 };
 
-// Get exams created by teacher
+// Get exams for teacher (both created by teacher and VP-scheduled for teacher's classes)
 exports.getExams = async (req, res) => {
   try {
-    const exams = await Exam.find({ createdBy: req.user.id });
-    res.json(exams);
+    // Get teacher's assigned subjects to determine which classes they teach
+    const staff = await Staff.findById(req.user.id);
+    if (!staff) {
+      return res.status(404).json({ message: 'Teacher not found' });
+    }
+
+    // Get teacher's assigned classes and subjects
+    const assignedSubjects = staff.assignedSubjects || [];
+    
+    // Build teacher classes from assigned subjects
+    const subjectClasses = assignedSubjects.map(subject => ({
+      class: subject.class,
+      section: subject.section,
+      subject: subject.subject,
+      type: 'subject'
+    }));
+    
+    // Build teacher classes from coordinator assignments (for Class Coordinators)
+    let coordinatorClasses = [];
+    if (staff.coordinator && staff.coordinator.length > 0) {
+      // Populate coordinator classes to get grade and section
+      const Class = require('../../../models/Admin/classModel');
+      const coordinatedClasses = await Class.find({ _id: { $in: staff.coordinator } });
+      
+      coordinatorClasses = coordinatedClasses.map(cls => ({
+        class: cls.grade,
+        section: cls.section,
+        subject: 'All', // Class coordinators see all subjects for their class
+        type: 'coordinator'
+      }));
+    }
+    
+    // Combine both types of assignments
+    const teacherClasses = [...subjectClasses, ...coordinatorClasses];
+
+    console.log('Teacher assigned classes:', teacherClasses);
+    console.log('Subject assignments:', subjectClasses.length);
+    console.log('Coordinator assignments:', coordinatorClasses.length);
+
+    // Get teacher-created exams
+    const teacherExams = await Exam.find({ createdBy: req.user.id });
+    console.log(`Found ${teacherExams.length} teacher-created exams`);
+
+    // Get VP-scheduled exams for teacher's classes
+    const vpExamFilter = {
+      status: { $in: ['Scheduled', 'In Progress'] }, // ExamTimetable uses different status values
+      $or: teacherClasses.map(cls => {
+        if (cls.type === 'coordinator') {
+          // Class coordinators see all subjects for their specific coordinated class grade
+          return {
+            grade: cls.class // ExamTimetable uses 'grade' instead of 'class'
+          };
+        } else {
+          // Subject teachers see specific subjects for their class/section
+          return {
+            grade: cls.class, // ExamTimetable uses 'grade' instead of 'class'
+            subject: cls.subject
+            // Note: ExamTimetable doesn't have section field
+          };
+        }
+      })
+    };
+
+    console.log('VP exam filter:', JSON.stringify(vpExamFilter, null, 2));
+
+    const vpExams = await ExamTimetable.find(vpExamFilter)
+      .populate('departmentId', 'name')
+      .populate('createdBy', 'name email')
+      .sort({ examDate: 1 });
+
+    console.log(`Found ${vpExams.length} VP-scheduled exams for teacher's classes`);
+
+    // Transform VP exams to match teacher exam format
+    const transformedVpExams = vpExams.map(exam => ({
+      _id: exam._id,
+      title: exam.examName + ' - ' + exam.examType,
+      description: `${exam.subject} exam scheduled by VP`,
+      class: exam.grade, // Map grade to class for consistency
+      section: null, // ExamTimetable doesn't have section
+      subject: exam.subject,
+      date: exam.examDate,
+      examDate: exam.examDate,
+      duration: exam.duration,
+      totalMarks: null, // ExamTimetable doesn't have totalMarks
+      passingMarks: null, // ExamTimetable doesn't have passingMarks
+      createdBy: exam.createdBy,
+      createdAt: exam.createdAt,
+      status: exam.status,
+      examType: exam.examType,
+      isVPScheduled: true, // Flag to identify VP-scheduled exams
+      departmentId: exam.departmentId,
+      startTime: exam.startTime,
+      endTime: exam.endTime,
+      room: exam.room,
+      invigilator: exam.invigilator
+    }));
+
+    // Combine teacher exams and VP exams
+    const allExams = [
+      ...teacherExams.map(exam => ({ ...exam.toObject(), isVPScheduled: false })),
+      ...transformedVpExams
+    ];
+
+    // Sort by date
+    allExams.sort((a, b) => new Date(a.date || a.examDate) - new Date(b.date || b.examDate));
+
+    console.log(`Returning ${allExams.length} total exams for teacher`);
+    res.json(allExams);
   } catch (error) {
+    console.error('Error fetching teacher exams:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -56,9 +242,24 @@ exports.enterExamResults = async (req, res) => {
     const { examId } = req.params;
     const { results } = req.body; // Array of { studentId, marksObtained, feedback }
     
-    // Check if teacher created this exam
+    // Check if teacher created this exam or is coordinator for the class
     const exam = await Exam.findById(examId);
-    if (!exam || exam.createdBy.toString() !== req.user.id) {
+    if (!exam) {
+      return res.status(404).json({ message: 'Exam not found' });
+    }
+    
+    const staff = await Staff.findById(req.user.id);
+    const isCreator = exam.createdBy.toString() === req.user.id;
+    let isCoordinator = false;
+    if (staff.coordinator && staff.coordinator.length > 0) {
+      const Class = require('../../../models/Admin/classModel');
+      const coordinatedClasses = await Class.find({ _id: { $in: staff.coordinator } });
+      isCoordinator = coordinatedClasses.some(
+        coord => coord.grade === exam.class && coord.section === exam.section
+      );
+    }
+    
+    if (!isCreator && !isCoordinator) {
       return res.status(403).json({ message: 'You do not have access to this exam' });
     }
     
@@ -86,9 +287,24 @@ exports.generatePerformanceReport = async (req, res) => {
   try {
     const { examId } = req.params;
     
-    // Check if teacher created this exam
+    // Check if teacher created this exam or is coordinator for the class
     const exam = await Exam.findById(examId);
-    if (!exam || exam.createdBy.toString() !== req.user.id) {
+    if (!exam) {
+      return res.status(404).json({ message: 'Exam not found' });
+    }
+    
+    const staff = await Staff.findById(req.user.id);
+    const isCreator = exam.createdBy.toString() === req.user.id;
+    let isCoordinator = false;
+    if (staff.coordinator && staff.coordinator.length > 0) {
+      const Class = require('../../../models/Admin/classModel');
+      const coordinatedClasses = await Class.find({ _id: { $in: staff.coordinator } });
+      isCoordinator = coordinatedClasses.some(
+        coord => coord.grade === exam.class && coord.section === exam.section
+      );
+    }
+    
+    if (!isCreator && !isCoordinator) {
       return res.status(403).json({ message: 'You do not have access to this exam' });
     }
     

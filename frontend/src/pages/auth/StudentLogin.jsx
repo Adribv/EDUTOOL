@@ -56,7 +56,7 @@ function StudentLogin() {
 
   const loginMutation = useMutation({
     mutationFn: async (values) => {
-      const response = await axios.post('http://localhost:5000/api/students/login', values);
+      const response = await axios.post('https://api.edulives.com/api/students/login', values);
       return response.data;
     },
     onSuccess: (data) => {

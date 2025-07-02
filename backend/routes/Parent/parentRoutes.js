@@ -79,6 +79,8 @@ router.post('/link-student', parentController.linkStudent);
 // Debug endpoint
 router.get('/debug', parentController.debugParentData);
 
+
+
 // Add/remove students under a parent
 router.put('/:parentId/add-student', parentAuthController.addStudent);
 router.put('/:parentId/remove-student', parentAuthController.removeStudent);

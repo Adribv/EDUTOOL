@@ -343,6 +343,8 @@ router3.put('/:staffId/profile', verifyToken, newStaffController.updateStaffProf
 router3.get('/:staffId/leave-requests', verifyToken, newStaffController.getLeaveRequests);
 router3.put('/:staffId/leave-requests/:id', verifyToken, newStaffController.updateLeaveRequest);
 
+
+
 // Student Attendance Routes
 router3.get('/:staffId/students/:studentId/attendance', verifyToken, newStaffController.getStudentAttendancePercentage);
 

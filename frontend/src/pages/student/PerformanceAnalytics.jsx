@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Box,
   Typography,
@@ -26,7 +27,9 @@ import {
   ListItemAvatar,
   Divider,
   Tabs,
-  Tab
+  Tab,
+  CircularProgress,
+  Alert
 } from '@mui/material';
 import {
   TrendingUp as TrendingUpIcon,
@@ -54,33 +57,59 @@ import {
   Pie,
   Cell
 } from 'recharts';
+import { studentAPI } from '../../services/api';
 
 const PerformanceAnalytics = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('current');
   const [selectedSubject, setSelectedSubject] = useState('all');
   const [tabValue, setTabValue] = useState(0);
 
-  // Mock data for analytics
-  const performanceData = {
-    current: {
-      overallGPA: 3.8,
-      previousGPA: 3.6,
-      improvement: '+0.2',
-      subjects: [
-        { name: 'Mathematics', current: 92, previous: 88, trend: 'up', grade: 'A' },
-        { name: 'English', current: 88, previous: 85, trend: 'up', grade: 'A-' },
-        { name: 'Science', current: 85, previous: 87, trend: 'down', grade: 'B+' },
-        { name: 'History', current: 90, previous: 82, trend: 'up', grade: 'A' },
-        { name: 'Geography', current: 82, previous: 80, trend: 'up', grade: 'B' }
-      ],
-      attendance: 95,
-      behavior: 'Excellent',
-      rank: 5,
-      totalStudents: 120
-    }
-  };
+  // Fetch real performance data
+  const { data: performanceData, isLoading, error } = useQuery({
+    queryKey: ['studentPerformance'],
+    queryFn: async () => {
+      try {
+        const response = await studentAPI.getPerformanceAnalytics();
+        return response.data || {};
+      } catch (error) {
+        console.error('Error fetching performance data:', error);
+        throw error;
+      }
+    },
+    retry: 3,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
-  const chartData = [
+  if (isLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box>
+        <Alert severity="error">Failed to load performance data: {error.message}</Alert>
+      </Box>
+    );
+  }
+
+  // Transform the data for display
+  const { subjectPerformance, overallPerformance } = performanceData || {};
+
+  // Create chart data from subject performance
+  const realChartData = subjectPerformance ? Object.keys(subjectPerformance).map(subject => ({
+    subject,
+    average: subjectPerformance[subject].average,
+    highest: subjectPerformance[subject].highest,
+    lowest: subjectPerformance[subject].lowest,
+  })) : [];
+
+  // Use real data if available, otherwise use fallback
+  const chartData = realChartData.length > 0 ? realChartData : [
     { month: 'Jan', Mathematics: 88, English: 85, Science: 87, History: 82, Geography: 80 },
     { month: 'Feb', Mathematics: 90, English: 86, Science: 86, History: 84, Geography: 81 },
     { month: 'Mar', Mathematics: 92, English: 88, Science: 85, History: 90, Geography: 82 },
@@ -190,12 +219,11 @@ const PerformanceAnalytics = () => {
                 <Typography variant="h6">Current GPA</Typography>
               </Box>
               <Typography variant="h4" color="primary.main" fontWeight="bold">
-                {performanceData.current.overallGPA}
+                {overallPerformance ? overallPerformance.averageScore?.toFixed(1) || 'N/A' : 'N/A'}
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                {getTrendIcon('up')}
-                <Typography variant="body2" color="success.main" sx={{ ml: 0.5 }}>
-                  {performanceData.current.improvement} from previous
+                <Typography variant="body2" color="text.secondary" sx={{ ml: 0.5 }}>
+                  {overallPerformance ? `${overallPerformance.examsTaken} exams taken` : 'No data available'}
                 </Typography>
               </Box>
             </CardContent>
