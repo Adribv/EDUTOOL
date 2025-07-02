@@ -3,13 +3,29 @@ const bcrypt2 = require('bcryptjs');
 const jwt2 = require('jsonwebtoken');
 
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
-  const parent = await Parent.findOne({ email });
-  if (!parent || !(await bcrypt2.compare(password, parent.password)))
-    return res.status(401).json({ message: 'Invalid credentials' });
+  try {
+    const { email, password } = req.body;
+    const parent = await Parent.findOne({ email });
+    if (!parent || !(await bcrypt2.compare(password, parent.password)))
+      return res.status(401).json({ message: 'Invalid credentials' });
 
-  const token = jwt2.sign({ id: parent._id, role: 'Parent' }, process.env.JWT_SECRET);
-  res.json({ token , childRollNumbers: parent.childRollNumbers });
+    const token = jwt2.sign({ id: parent._id, role: 'Parent' }, process.env.JWT_SECRET);
+    
+    // Return user information along with token
+    res.json({ 
+      token,
+      user: {
+        id: parent._id,
+        name: parent.name,
+        email: parent.email,
+        role: 'Parent'
+      },
+      childRollNumbers: parent.childRollNumbers 
+    });
+  } catch (error) {
+    console.error('Parent login error:', error);
+    res.status(500).json({ message: 'Server error during login' });
+  }
 };
 
 exports.register = async (req, res) => {

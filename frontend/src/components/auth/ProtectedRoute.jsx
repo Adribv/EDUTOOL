@@ -10,20 +10,23 @@ const ProtectedRoute = ({ allowedRoles }) => {
 
   useEffect(() => {
     const checkAuthorization = () => {
-      // Check for student token if student role is allowed
+      const generalToken = localStorage.getItem('token');
+      const userRole = localStorage.getItem('userRole');
+
+      // Check for student access
       if (allowedRoles.includes('student')) {
         const studentToken = localStorage.getItem('studentToken');
-        if (studentToken) {
+        if (studentToken || (generalToken && userRole === 'Student')) {
           setIsAuthorized(true);
           setIsLoading(false);
           return;
         }
       }
 
-      // Check for parent token if parent role is allowed
+      // Check for parent access
       if (allowedRoles.includes('parent')) {
         const parentToken = localStorage.getItem('parentToken');
-        if (parentToken) {
+        if (parentToken || (generalToken && userRole === 'Parent')) {
           setIsAuthorized(true);
           setIsLoading(false);
           return;
@@ -62,8 +65,6 @@ const ProtectedRoute = ({ allowedRoles }) => {
     if (!isLoading && !isAuthorized) {
       if (allowedRoles.includes('student')) {
         toast.error('Please login as a student to access this page');
-      } else if (allowedRoles.includes('parent')) {
-        toast.error('Please login as a parent to access this page');
       } else {
         toast.error('Please login to access this page');
       }

@@ -16,7 +16,7 @@ import {
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { useMutation } from '@tanstack/react-query';
-import axios from 'axios';
+import { authAPI } from '../../services/api';
 import { toast } from 'react-toastify';
 import SchoolIcon from '@mui/icons-material/School';
 import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
@@ -57,17 +57,30 @@ function ParentLogin() {
 
   const loginMutation = useMutation({
     mutationFn: async (values) => {
-      const response = await axios.post('http://localhost:5000/api/parents/login', values);
+      const response = await authAPI.parentLogin(values);
       return response.data;
     },
     onSuccess: (data) => {
+      // Store all necessary tokens and user info
       localStorage.setItem('token', data.token);
+      localStorage.setItem('parentToken', data.token); // For ProtectedRoute
+      
+      // Store user role - check different possible response structures
+      if (data.user && data.user.role) {
+        localStorage.setItem('userRole', data.user.role);
+      } else if (data.role) {
+        localStorage.setItem('userRole', data.role);
+      } else {
+        localStorage.setItem('userRole', 'Parent'); // Fallback
+      }
+      
       toast.success('Login successful!');
       navigate('/parent');
     },
     onError: (error) => {
       console.error('Login failed:', error);
-      toast.error(error.response?.data?.message || 'Login failed');
+      const errorMessage = error.response?.data?.message || error.message || 'Login failed. Please check your credentials.';
+      toast.error(errorMessage);
     },
   });
 
