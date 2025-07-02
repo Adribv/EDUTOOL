@@ -147,7 +147,7 @@ const A_Inventory = () => {
     try {
       toast.info('Exporting inventory...');
       
-      const response = await axios.get('https://edulives.com/api/api/admin-staff/inventory/export?format=csv', {
+      const response = await axios.get('https://api.edulives.com/api/admin-staff/inventory/export?format=csv', {
         responseType: 'blob'
       });
       
@@ -192,7 +192,7 @@ const A_Inventory = () => {
   const bulkImportMutation = {
     mutate: async (items) => {
       try {
-        const response = await axios.post('https://edulives.com/api/api/admin-staff/inventory/bulk', { items });
+        const response = await axios.post('https://api.edulives.com/api/admin-staff/inventory/bulk', { items });
         return response.data;
       } catch (error) {
         throw error;

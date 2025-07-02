@@ -192,7 +192,7 @@ const Fees = () => {
         await adminAPI.updateFeeStructure(selectedItem.id, formData);
         toast.success('Fee structure updated successfully');
       } else {
-        await axios.post('https://edulives.com/api/api/admin-staff/fee-structure/approval', formData);
+        await axios.post('https://api.edulives.com/api/admin-staff/fee-structure/approval', formData);
         toast.success('Fee approval request submitted successfully. Waiting for principal approval.');
       }
       handleCloseDialog();

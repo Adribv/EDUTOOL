@@ -88,7 +88,7 @@ function StudentRecords() {
   const { data: students = [], isLoading: studentsLoading } = useQuery({
     queryKey: ['students'],
     queryFn: async () => {
-      const response = await axios.get('https://edulives.com/api/api/admin-staff/students/public');
+      const response = await axios.get('https://api.edulives.com/api/admin-staff/students/public');
       return response.data;
     },
     onError: (error) => {
@@ -101,7 +101,7 @@ function StudentRecords() {
   const { data: classes = [], isLoading: classesLoading } = useQuery({
     queryKey: ['classes'],
     queryFn: async () => {
-      const response = await axios.get('https://edulives.com/api/api/admin-staff/classes/public');
+      const response = await axios.get('https://api.edulives.com/api/admin-staff/classes/public');
       return response.data;
     },
     onError: (error) => {
@@ -114,9 +114,9 @@ function StudentRecords() {
   const mutation = useMutation({
     mutationFn: async (values) => {
       if (selectedStudent) {
-        await axios.put(`https://edulives.com/api/api/admin-staff/students/public/${selectedStudent._id}`, values);
+        await axios.put(`https://api.edulives.com/api/admin-staff/students/public/${selectedStudent._id}`, values);
       } else {
-        await axios.post('https://edulives.com/api/api/admin-staff/students/public', values);
+        await axios.post('https://api.edulives.com/api/admin-staff/students/public', values);
       }
     },
     onSuccess: (data) => {
@@ -141,7 +141,7 @@ function StudentRecords() {
   // Delete student mutation
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
-      await axios.delete(`https://edulives.com/api/api/admin-staff/students/public/${id}`);
+      await axios.delete(`https://api.edulives.com/api/admin-staff/students/public/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['students']);
@@ -206,7 +206,7 @@ function StudentRecords() {
       if (filters.gender) params.append('gender', filters.gender);
       params.append('format', 'csv');
       
-      const response = await axios.get(`https://edulives.com/api/api/admin-staff/students/export?${params.toString()}`, {
+      const response = await axios.get(`https://api.edulives.com/api/admin-staff/students/export?${params.toString()}`, {
         responseType: 'blob'
       });
       
@@ -258,7 +258,7 @@ function StudentRecords() {
 
   const bulkImportMutation = useMutation({
     mutationFn: async (students) => {
-      const response = await axios.post('https://edulives.com/api/api/admin-staff/students/bulk', { students });
+      const response = await axios.post('https://api.edulives.com/api/admin-staff/students/bulk', { students });
       return response.data;
     },
     onSuccess: (data) => {

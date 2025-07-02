@@ -34,7 +34,7 @@ const StudentDashboard = () => {
   const { data: studentData, isLoading } = useQuery({
     queryKey: ['studentDashboard'],
     queryFn: async () => {
-      const response = await axios.get('https://edulives.com/api/api/students/dashboard', {
+      const response = await axios.get('https://api.edulives.com/api/students/dashboard', {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('studentToken')}`,
         },
