@@ -26,6 +26,7 @@ import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import BusinessIcon from '@mui/icons-material/Business';
 import GroupIcon from '@mui/icons-material/Group';
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import logo from '../assets/logo.jpg';
 
 const Home = () => {
@@ -61,6 +62,14 @@ const Home = () => {
       color: '#7c3aed',
       path: '/management-login',
       gradient: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+    },
+    {
+      title: 'Accountant Login',
+      description: 'Access financial dashboard and manage school expenses',
+      icon: <AccountBalanceWalletIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: '#f59e0b' }} />,
+      color: '#f59e0b',
+      path: '/accountant-login',
+      gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
     },
   ], []);
 

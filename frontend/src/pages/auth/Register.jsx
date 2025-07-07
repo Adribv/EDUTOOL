@@ -50,7 +50,8 @@ const roles = [
   { value: 'Principal', label: 'Principal' },
   { value: 'AdminStaff', label: 'Admin Staff' },
   { value: 'ITAdmin', label: 'IT Admin' },
-  { value: 'Counsellor', label: 'Counsellor' }
+  { value: 'Counsellor', label: 'Counsellor' },
+  { value: 'Accountant', label: 'Accountant' },
 ];
 
 // Animation variants
@@ -79,7 +80,7 @@ function Register() {
 
   const registerMutation = useMutation({
     mutationFn: async (values) => {
-      const response = await axios.post('https://api.edulives.com/api/staffs/register', values);
+      const response = await axios.post('http://localhost:5000/api/staffs/register', values);
       return response.data;
     },
     onSuccess: (data) => {

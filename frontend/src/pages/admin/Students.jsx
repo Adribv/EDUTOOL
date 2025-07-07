@@ -56,7 +56,7 @@ function Students() {
   const { data: students, isLoading: studentsLoading } = useQuery({
     queryKey: ['students'],
     queryFn: async () => {
-      const response = await axios.get('https://api.edulives.com/api/admin-staff/students');
+      const response = await axios.get('http://localhost:5000/api/admin-staff/students');
       return response.data;
     }
   });
@@ -65,7 +65,7 @@ function Students() {
   const { data: classes, isLoading: classesLoading } = useQuery({
     queryKey: ['classes'],
     queryFn: async () => {
-      const response = await axios.get('https://api.edulives.com/api/admin-staff/classes');
+      const response = await axios.get('http://localhost:5000/api/admin-staff/classes');
       return response.data;
     }
   });
@@ -74,9 +74,9 @@ function Students() {
   const mutation = useMutation({
     mutationFn: async (values) => {
       if (selectedStudent) {
-        await axios.put(`https://api.edulives.com/api/admin-staff/students/${selectedStudent.id}`, values);
+        await axios.put(`http://localhost:5000/api/admin-staff/students/${selectedStudent.id}`, values);
       } else {
-        await axios.post('https://api.edulives.com/api/admin-staff/students', values);
+        await axios.post('http://localhost:5000/api/admin-staff/students', values);
       }
     },
     onSuccess: () => {
@@ -100,7 +100,7 @@ function Students() {
   // Delete student mutation
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
-      await axios.delete(`https://api.edulives.com/api/admin-staff/students/${id}`);
+      await axios.delete(`http://localhost:5000/api/admin-staff/students/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['students']);

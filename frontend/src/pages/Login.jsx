@@ -24,6 +24,7 @@ const roles = [
   { value: 'hod', label: 'HOD' },
   { value: 'principal', label: 'Principal' },
   { value: 'counselor', label: 'Counselor' },
+  { value: 'accountant', label: 'Accountant' },
 ];
 
 const validationSchema = Yup.object({

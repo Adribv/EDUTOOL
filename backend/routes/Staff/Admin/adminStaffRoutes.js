@@ -114,6 +114,10 @@ router.delete('/staff/:id', adminStaffController.deleteStaff);
 router.get('/staff/:id/id-card', adminStaffController.generateStaffID);
 router.post('/staff/attendance', adminStaffController.trackStaffAttendance);
 
+// Accountant Management
+router.get('/accountants', adminStaffController.getAllAccountants);
+router.post('/accountants', adminStaffController.registerAccountant);
+
 // Department Management
 router.get('/departments', adminStaffController.getAllDepartments);
 

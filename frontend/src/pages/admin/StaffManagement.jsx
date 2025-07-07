@@ -44,6 +44,7 @@ const roles = [
   'HOD',
   'VicePrincipal',
   'Principal',
+  'Accountant',
   'AdminStaff',
   'ITAdmin',
   'Counsellor',

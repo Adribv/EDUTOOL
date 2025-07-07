@@ -26,6 +26,9 @@ const ParentRegister = lazy(() => import('./pages/auth/ParentRegister'));
 const ManagementLogin = lazy(() => import('./pages/auth/ManagementLogin'));
 const Home = lazy(() => import('./pages/Home'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+const AccountantLogin = lazy(() => import('./pages/auth/AccountantLogin'));
+const AccountantDashboard = lazy(() => import('./pages/accountant/AccountantDashboard'));
+const AccountantProfile = lazy(() => import('./pages/accountant/AccountantProfile'));
 
 // Student Pages
 const StudentRoutes = lazy(() => import('./routes/StudentRoutes'));
@@ -92,6 +95,7 @@ function App() {
                   <Route path="/parent-login" element={<ParentLogin />} />
                   <Route path="/parent-register" element={<ParentRegister />} />
                   <Route path="/management-login" element={<ManagementLogin />} />
+                  <Route path="/accountant-login" element={<AccountantLogin />} />
                   {/* Protected Routes */}
                   <Route element={<ProtectedRoute allowedRoles={['student']} />}>
                     <Route path="/student/*" element={<StudentRoutes />} />
@@ -117,6 +121,10 @@ function App() {
                   </Route>
                   <Route element={<ProtectedRoute allowedRoles={['viceprincipal']} />}>
                     <Route path="/viceprincipal/dashboard" element={<VicePrincipalDashboard />} />
+                  </Route>
+                  <Route element={<ProtectedRoute allowedRoles={['accountant']} />}>
+                    <Route path="/accountant/dashboard" element={<AccountantDashboard />} />
+                    <Route path="/accountant/profile" element={<AccountantProfile />} />
                   </Route>
                   {/* 404 Route */}
                   <Route path="*" element={<NotFound />} />

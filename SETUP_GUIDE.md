@@ -52,7 +52,7 @@
    MONGO_URI=mongodb://localhost:27017/edurays
    JWT_SECRET=your_super_secret_jwt_key_here_change_in_production
    PORT=5000
-   FRONTEND_URL=http://localhost:3000
+   FRONTEND_URL=http://localhost:5000
    ```
 
 4. **Start Backend Server**
@@ -92,14 +92,14 @@
 
 ## 🔗 Access the Application
 
-1. **Frontend**: http://localhost:3000
-2. **Parent Login**: http://localhost:3000/parent/login
+1. **Frontend**: http://localhost:5000
+2. **Parent Login**: http://localhost:5000/parent/login
 3. **Backend API**: http://localhost:5000
 
 ## 📱 Using the Parent Portal
 
 ### 1. **Login as Parent**
-- Go to: http://localhost:3000/parent/login
+- Go to: http://localhost:5000/parent/login
 - Use credentials: parent@test.com / password123
 
 ### 2. **Link Students**

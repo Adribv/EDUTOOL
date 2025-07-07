@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://api.edulives.com',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -291,13 +291,12 @@ export const adminAPI = {
         },
         childRollNumbers: payload.childRollNumbers || []
       };
+    } else if (role === 'teacher') {
+      dataToSend.role = 'Teacher';
+    } else if (role === 'accountant') {
+      dataToSend.role = 'Accountant';
     } else {
-      // staff / teacher
-      if (role === 'teacher') {
-        dataToSend.role = 'Teacher';
-      } else {
-        dataToSend.role = 'AdminStaff';
-      }
+      dataToSend.role = 'AdminStaff';
     }
 
     return api.post(endpoint, dataToSend);
@@ -337,12 +336,12 @@ export const adminAPI = {
         },
         childRollNumbers: payload.childRollNumbers || []
       };
+    } else if (role === 'teacher') {
+      dataToSend.role = 'Teacher';
+    } else if (role === 'accountant') {
+      dataToSend.role = 'Accountant';
     } else {
-      if (role === 'teacher') {
-        dataToSend.role = 'Teacher';
-      } else {
-        dataToSend.role = 'AdminStaff';
-      }
+      dataToSend.role = 'AdminStaff';
     }
 
     return api.put(endpoint, dataToSend);
@@ -1062,6 +1061,14 @@ export const principalAPI = {
   getNotifications: () => api.get('/api/principal/notifications'),
   getMessages: () => api.get('/api/principal/messages'),
   sendMessage: (data) => api.post('/api/principal/messages', data),
+};
+
+export const accountantAPI = {
+  getSummary: () => api.get('/api/accountant/summary').then(res=>res.data),
+  getExpenses: (params={}) => api.get('/api/accountant/expenses', { params }).then(res=>res.data),
+  createExpense: (data) => api.post('/api/accountant/expenses', data),
+  getIncomes: (params={}) => api.get('/api/accountant/incomes', { params }).then(res=>res.data),
+  generateSampleData: () => api.post('/api/accountant/sample-data'),
 };
 
 export default api;

@@ -10,7 +10,7 @@ const staffSchema = new mongoose.Schema({
     type: String,
     enum: [
       'Teacher', 'HOD', 'VicePrincipal',
-      'Principal', 'AdminStaff', 'ITAdmin', 'Counsellor', "ClassCoord"
+      'Principal', 'AdminStaff', 'ITAdmin', 'Counsellor', 'Accountant', "ClassCoord"
     ]
   },
   department: {

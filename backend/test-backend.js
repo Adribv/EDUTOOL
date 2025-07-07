@@ -125,7 +125,7 @@ async function testBackend() {
     console.log('\n📋 Test Credentials:');
     console.log('   Email: parent@test.com');
     console.log('   Password: password123');
-    console.log('\n🔗 You can now test the parent portal at: http://localhost:3000/parent');
+    console.log('\n🔗 You can now test the parent portal at: http://localhost:5000/parent');
 
   } catch (error) {
     console.error('❌ Test failed:', error);

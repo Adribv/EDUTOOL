@@ -41,7 +41,7 @@ A comprehensive school management system with role-based access for administrato
    MONGO_URI=mongodb://localhost:27017/edurays
    JWT_SECRET=your_super_secret_jwt_key_here
    PORT=5000
-   FRONTEND_URL=http://localhost:3000
+   FRONTEND_URL=http://localhost:5000
    ```
 
 4. **Create Test Data**
@@ -65,7 +65,7 @@ A comprehensive school management system with role-based access for administrato
 
 After running `setup-mongo.js`, you can use:
 
-- **Parent Login**: http://localhost:3000/parent/login
+- **Parent Login**: http://localhost:5000/parent/login
 - **Email**: parent@test.com
 - **Password**: password123
 - **Student Roll Numbers**: TEST001, TEST002

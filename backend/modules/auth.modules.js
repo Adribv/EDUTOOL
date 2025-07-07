@@ -22,6 +22,7 @@ router.get('/auth/profile', verifyToken, async (req, res) => {
       case 'Teacher':
       case 'HOD':
       case 'Principal':
+      case 'Accountant':
         user = await Staff.findById(req.user.id).select('-password');
         break;
       default:
@@ -50,5 +51,6 @@ router.use('/admin-staff',require('../routes/Staff/Admin/adminStaffRoutes'))
 router.use('/vp', require('../routes/Staff/VP/vicePrincipalRoutes'));
 // Add Principal routes
 router.use('/principal', require('../routes/Staff/Principal/principalRoutes'));
+router.use('/accountant', require('../routes/Staff/accountantRoutes'));
 
 module.exports = router;

@@ -3131,3 +3131,75 @@ exports.bookFacility = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+// 2. Staff Records Administration
+exports.getAllAccountants = async (req, res) => {
+  try {
+    const accountants = await Staff.find({ role: 'Accountant' })
+      .select('-password')
+      .populate('department', '_id name description');
+    res.json(accountants);
+  } catch (error) {
+    console.error('Error fetching accountants:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.registerAccountant = async (req, res) => {
+  // Reuse registerStaff logic but force role to Accountant
+  try {
+    const {
+      name,
+      employeeId,
+      password,
+      department,
+      joiningDate,
+      qualification,
+      experience,
+      contactNumber,
+      email,
+      address,
+    } = req.body;
+
+    // Check if staff with employee ID already exists
+    const existing = await Staff.findOne({ employeeId });
+    if (existing) {
+      return res.status(400).json({ message: 'Staff with this employee ID already exists' });
+    }
+
+    // Validate department if provided
+    let departmentId = null;
+    if (department) {
+      const depDoc = await Department.findById(department);
+      if (!depDoc) {
+        return res.status(400).json({ message: 'Invalid department ID' });
+      }
+      departmentId = department;
+    }
+
+    const newAccountant = new Staff({
+      name,
+      email,
+      password,
+      role: 'Accountant',
+      department: departmentId,
+      employeeId,
+      joiningDate,
+      qualification,
+      experience,
+      contactNumber,
+      address,
+    });
+
+    await newAccountant.save();
+
+    if (departmentId) {
+      await Department.findByIdAndUpdate(departmentId, { $addToSet: { staff: newAccountant._id } });
+    }
+
+    res.status(201).json({ message: 'Accountant registered successfully', staff: newAccountant });
+  } catch (error) {
+    console.error('Error registering accountant:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
