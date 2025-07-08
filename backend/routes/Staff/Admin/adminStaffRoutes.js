@@ -77,6 +77,9 @@ router.get('/approvals/:id', adminStaffController.getApprovalRequestById);
 router.put('/approvals/:id', adminStaffController.updateApprovalRequest);
 router.delete('/approvals/:id', adminStaffController.deleteApprovalRequest);
 
+// Public routes additions (before auth middleware)
+router.post('/enquiries', adminStaffController.createEnquiry);
+
 // Apply authentication middleware to all routes below this line
 router.use(verifyToken);
 router.use(permit('AdminStaff'));
@@ -151,10 +154,10 @@ router.put('/visitors/:id/exit', adminStaffController.updateVisitorExit);
 router.get('/visitors', adminStaffController.getVisitorLog);
 
 // Enquiry Management
-router.get('/enquiries', enquiryController.getAllEnquiries);
-router.post('/enquiries', enquiryController.createEnquiry);
-router.put('/enquiries/:id', enquiryController.updateEnquiry);
-router.get('/enquiries/stats', enquiryController.getEnquiryStats);
+router.route('/enquiries')
+  .get(adminStaffController.getEnquiries);
+router.put('/enquiries/:id/reply', adminStaffController.replyEnquiry);
+router.put('/enquiries/:id/status', adminStaffController.updateEnquiryStatus);
 
 // Supplier Request Management
 router.get('/supplier-requests', supplierRequestController.getAllSupplierRequests);
@@ -209,5 +212,16 @@ router.route('/schedules')
 router.route('/schedules/:id')
   .put(adminStaffController.updateSchedule)
   .delete(adminStaffController.deleteSchedule);
+
+// Supplier & Supply Request Management
+router.route('/suppliers')
+  .get(adminStaffController.getSuppliers)
+  .post(adminStaffController.addSupplier);
+
+router.route('/supply-requests')
+  .get(adminStaffController.getSupplyRequests)
+  .post(adminStaffController.createSupplyRequest);
+
+router.put('/supply-requests/:id/status', adminStaffController.updateSupplyRequestStatus);
 
 module.exports = router;

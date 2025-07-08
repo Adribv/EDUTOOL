@@ -20,6 +20,7 @@ export const roleConfig = {
       'FeeConfiguration',
       'Inventory_Management',
       'UserManagement',
+      'Enquiries',
       'Visitors',
       'A_Reports',
       'A_Events',

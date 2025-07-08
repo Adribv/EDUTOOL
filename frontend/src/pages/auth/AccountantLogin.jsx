@@ -15,11 +15,15 @@ import {
   Alert,
   useTheme,
   useMediaQuery,
+  InputAdornment,
+  IconButton,
 } from '@mui/material';
 import {
   AccountBalanceWallet as WalletIcon,
   Lock as LockIcon,
   Email as EmailIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import logo from '../../assets/logo.jpg';
@@ -35,6 +39,9 @@ const AccountantLogin = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const handleClickShowPassword = () => setShowPassword(!showPassword);
+  const handleMouseDownPassword = (e) => e.preventDefault();
 
   const loginMutation = useMutation({
     mutationFn: async (values) => {
@@ -128,7 +135,7 @@ const AccountantLogin = () => {
 
               <Box component="form" onSubmit={formik.handleSubmit}>
                 <TextField fullWidth id="email" name="email" label="Email" value={formik.values.email} onChange={formik.handleChange} error={formik.touched.email && Boolean(formik.errors.email)} helperText={formik.touched.email && formik.errors.email} margin="normal" InputProps={{ startAdornment: <EmailIcon sx={{ mr: 1, color: 'text.secondary' }} /> }} />
-                <TextField fullWidth id="password" name="password" label="Password" type="password" value={formik.values.password} onChange={formik.handleChange} error={formik.touched.password && Boolean(formik.errors.password)} helperText={formik.touched.password && formik.errors.password} margin="normal" InputProps={{ startAdornment: <LockIcon sx={{ mr: 1, color: 'text.secondary' }} /> }} />
+                <TextField fullWidth id="password" name="password" label="Password" type={showPassword ? 'text' : 'password'} value={formik.values.password} onChange={formik.handleChange} error={formik.touched.password && Boolean(formik.errors.password)} helperText={formik.touched.password && formik.errors.password} margin="normal" InputProps={{ startAdornment: <LockIcon sx={{ mr: 1, color: 'text.secondary' }} />, endAdornment: (<InputAdornment position="end"><IconButton aria-label="toggle password visibility" onClick={handleClickShowPassword} onMouseDown={handleMouseDownPassword} edge="end">{showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}</IconButton></InputAdornment>) }} />
                 <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }} disabled={loginMutation.isLoading}>
                   {loginMutation.isLoading ? <CircularProgress size={24} /> : 'Sign In'}
                 </Button>

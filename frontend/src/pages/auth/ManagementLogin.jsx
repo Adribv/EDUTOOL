@@ -15,11 +15,15 @@ import {
   Alert,
   useTheme,
   useMediaQuery,
+  InputAdornment,
+  IconButton,
 } from '@mui/material';
 import {
   Business as BusinessIcon,
   Lock as LockIcon,
   Email as EmailIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -41,6 +45,9 @@ const StaffLogin = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const handleClickShowPassword = () => setShowPassword(!showPassword);
+  const handleMouseDownPassword = (e) => e.preventDefault();
 
   const loginMutation = useMutation({
     mutationFn: async (values) => {
@@ -310,7 +317,7 @@ const StaffLogin = () => {
                   id="password"
                   name="password"
                   label="Password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={formik.values.password}
                   onChange={formik.handleChange}
                   error={formik.touched.password && Boolean(formik.errors.password)}
@@ -318,6 +325,18 @@ const StaffLogin = () => {
                   margin="normal"
                   InputProps={{
                     startAdornment: <LockIcon sx={{ mr: 1, color: 'text.secondary' }} />,
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="toggle password visibility"
+                          onClick={handleClickShowPassword}
+                          onMouseDown={handleMouseDownPassword}
+                          edge="end"
+                        >
+                          {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
                   }}
                 />
                 <Button

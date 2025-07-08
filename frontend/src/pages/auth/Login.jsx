@@ -12,12 +12,20 @@ import {
   Alert,
   Grid,
   useTheme,
+  InputAdornment,
+  IconButton,
 } from '@mui/material';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
+import {
+  Lock as LockIcon,
+  Email as EmailIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon,
+} from '@mui/icons-material';
 
 const validationSchema = yup.object({
   email: yup
@@ -51,6 +59,9 @@ const itemVariants = {
 function Login() {
   const navigate = useNavigate();
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const handleClickShowPassword = () => setShowPassword(!showPassword);
+  const handleMouseDownPassword = (e) => e.preventDefault();
   const { login } = useAuth();
 
   const loginMutation = useMutation({
@@ -274,9 +285,7 @@ function Login() {
                   fullWidth
                   name="password"
                   label="Password"
-                  type="password"
-                  id="password"
-                  autoComplete="current-password"
+                  type={showPassword ? 'text' : 'password'}
                   value={formik.values.password}
                   onChange={formik.handleChange}
                   error={formik.touched.password && Boolean(formik.errors.password)}
@@ -290,6 +299,21 @@ function Login() {
                         borderColor: 'primary.main',
                       },
                     },
+                  }}
+                  InputProps={{
+                    startAdornment: <LockIcon sx={{ mr: 1, color: 'text.secondary' }} />,
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="toggle password visibility"
+                          onClick={handleClickShowPassword}
+                          onMouseDown={handleMouseDownPassword}
+                          edge="end"
+                        >
+                          {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
                   }}
                 />
               </motion.div>

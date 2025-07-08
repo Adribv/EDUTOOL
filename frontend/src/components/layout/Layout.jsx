@@ -143,6 +143,7 @@ const Layout = () => {
             'Exams': <Assignment />, 
             'Results': <Assessment />, 
             'SystemSettings': <Settings />,
+            'Enquiries': <Message />,
             'Visitors': <GroupIcon />,
           };
           return {
@@ -201,6 +202,7 @@ const Layout = () => {
         { text: 'System Settings', icon: <Settings />, path: '/admin/settings' },
         { text: 'User Management', icon: <People />, path: '/admin/users' },
         { text: 'Reports', icon: <Assessment />, path: '/admin/reports' },
+        { text: 'Enquiries', icon: <Message />, path: '/admin/Enquiries' },
         { text: 'Visitors', icon: <GroupIcon />, path: '/admin/Visitors' },
       ],
       ITAdmin: [

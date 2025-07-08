@@ -26,6 +26,9 @@ import {
   Chip,
   Card,
   CardContent,
+  Tabs,
+  Tab,
+  InputAdornment,
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -35,9 +38,10 @@ import {
   School as SchoolIcon,
   Download as DownloadIcon,
   Upload as UploadIcon,
+  Description as DescriptionIcon,
+  Contacts as ContactsIcon,
 } from '@mui/icons-material';
 import { adminAPI } from '../../services/api';
-import axios from 'axios';
 import { toast } from 'react-toastify';
 import Papa from 'papaparse';
 
@@ -62,9 +66,18 @@ const A_Inventory = () => {
     lastRestocked: '',
     unitPrice: '',
   });
+  const [tab, setTab] = useState(0);
+  const [suppliers, setSuppliers] = useState([]);
+  const [requests, setRequests] = useState([]);
+  const [requestDialog, setRequestDialog] = useState(false);
+  const [reqForm, setReqForm] = useState({ itemName:'', supplier:'', quantity:'', unit:'', expectedDate:'', quotation:'', message:'' });
+  const [supplierDialog, setSupplierDialog] = useState(false);
+  const [supplierForm, setSupplierForm] = useState({ name:'', category:'', location:'', phone:'', email:'' });
 
   useEffect(() => {
     fetchInventory();
+    adminAPI.getSuppliers().then(setSuppliers);
+    adminAPI.getSupplyRequests().then(setRequests);
   }, []);
 
   const fetchInventory = async () => {
@@ -147,9 +160,7 @@ const A_Inventory = () => {
     try {
       toast.info('Exporting inventory...');
       
-      const response = await axios.get('http://localhost:5000/api/admin-staff/inventory/export?format=csv', {
-        responseType: 'blob'
-      });
+      const response = await adminAPI.exportInventory();
       
       // Create blob and download
       const blob = new Blob([response.data], { type: 'text/csv' });
@@ -192,7 +203,7 @@ const A_Inventory = () => {
   const bulkImportMutation = {
     mutate: async (items) => {
       try {
-        const response = await axios.post('http://localhost:5000/api/admin-staff/inventory/bulk', { items });
+        const response = await adminAPI.bulkImportInventory(items);
         return response.data;
       } catch (error) {
         throw error;
@@ -227,6 +238,29 @@ const A_Inventory = () => {
     }
   };
 
+  const handleReqChange=(e)=>{const {name,value}=e.target; setReqForm(prev=>({...prev,[name]:value}));};
+  const submitSupplyRequest = async () => {
+    if (!reqForm.itemName || !reqForm.quantity) {
+      toast.error('Item name and quantity are required');
+      return;
+    }
+    const payload = {
+      ...reqForm,
+      quantity: Number(reqForm.quantity),   // convert to number
+    };
+    try {
+      const saved = await adminAPI.createSupplyRequest(payload);
+      setRequests(prev => [saved, ...prev]);
+      setRequestDialog(false);
+      setReqForm({ itemName:'', supplier:'', quantity:'', unit:'', expectedDate:'', quotation:'', message:'' });
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Request failed');
+    }
+  };
+  const updateRequestStatus=async(id,status)=>{try{const updated=await adminAPI.updateSupplyRequestStatus(id,status); setRequests(prev=>prev.map(r=>r._id===id?updated:r));}catch(err){console.error(err);}}
+  const handleSupplierChange=e=>{const {name,value}=e.target; setSupplierForm(prev=>({...prev,[name]:value}));};
+  const submitSupplier=async()=>{try{const saved=await adminAPI.addSupplier(supplierForm); setSuppliers(prev=>[...prev,saved]); setSupplierDialog(false); setSupplierForm({ name:'', category:'', location:'', phone:'', email:'' });}catch(err){console.error(err);}}
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
@@ -248,6 +282,12 @@ const A_Inventory = () => {
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h4">Inventory Management</Typography>
         <Box>
+          <Button variant="outlined" sx={{ mr:2 }} onClick={()=>{setTab(1);}}>
+            Supply Requests
+          </Button>
+          <Button variant="outlined" sx={{ mr:2 }} onClick={()=>{setTab(2);}}>
+            Suppliers
+          </Button>
           <Button
             variant="outlined"
             color="primary"
@@ -264,110 +304,145 @@ const A_Inventory = () => {
             onClick={() => setImportDialog(true)}
             sx={{ mr: 2 }}
           >
-            Import from Google Sheet
+            Import
           </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<AddIcon />}
-            onClick={() => handleOpenDialog()}
-          >
-            Add New Item
+          <Button variant="contained" startIcon={<AddIcon />} onClick={()=>handleOpenDialog()}>
+            Add Item
           </Button>
         </Box>
       </Box>
 
-      <Grid container spacing={3}>
-        {/* Inventory Statistics */}
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center" mb={2}>
-                <InventoryIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Total Items</Typography>
-              </Box>
-              <Typography variant="h4">{inventory.length}</Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center" mb={2}>
-                <SchoolIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Categories</Typography>
-              </Box>
-              <Typography variant="h4">
-                {new Set(inventory.map((item) => item.category)).size}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center" mb={2}>
-                <InventoryIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Low Stock Items</Typography>
-              </Box>
-              <Typography variant="h4">
-                {inventory.filter((item) => item.quantity < 10).length}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
+      <Tabs value={tab} onChange={(_,v)=>setTab(v)} sx={{ mb:3 }}>
+        <Tab label="Inventory" />
+        <Tab label="Supply Requests" />
+        <Tab label="Suppliers" />
+      </Tabs>
 
-        {/* Inventory List */}
-        <Grid item xs={12}>
+      {tab===0 && (
+        <Grid container spacing={3}>
+          {/* Inventory Statistics */}
+          <Grid item xs={12} md={4}>
+            <Card>
+              <CardContent>
+                <Box display="flex" alignItems="center" mb={2}>
+                  <InventoryIcon color="primary" sx={{ mr: 1 }} />
+                  <Typography variant="h6">Total Items</Typography>
+                </Box>
+                <Typography variant="h4">{inventory.length}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Card>
+              <CardContent>
+                <Box display="flex" alignItems="center" mb={2}>
+                  <SchoolIcon color="primary" sx={{ mr: 1 }} />
+                  <Typography variant="h6">Categories</Typography>
+                </Box>
+                <Typography variant="h4">
+                  {new Set(inventory.map((item) => item.category)).size}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Card>
+              <CardContent>
+                <Box display="flex" alignItems="center" mb={2}>
+                  <InventoryIcon color="primary" sx={{ mr: 1 }} />
+                  <Typography variant="h6">Low Stock Items</Typography>
+                </Box>
+                <Typography variant="h4">
+                  {inventory.filter((item) => item.quantity < 10).length}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Inventory List */}
+          <Grid item xs={12}>
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Category</TableCell>
+                    <TableCell>Quantity</TableCell>
+                    <TableCell>Location</TableCell>
+                    <TableCell>Supplier</TableCell>
+                    <TableCell>Last Restocked</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {inventory.map((item) => (
+                    <TableRow key={item._id || item.id}>
+                      <TableCell>{item.name}</TableCell>
+                      <TableCell>{item.category}</TableCell>
+                      <TableCell>
+                        {item.quantity} {item.unit}
+                      </TableCell>
+                      <TableCell>{item.location}</TableCell>
+                      <TableCell>{item.supplier?.name ?? '-'}</TableCell>
+                      <TableCell>
+                        {new Date(item.lastRestocked).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={item.quantity < 10 ? 'Low Stock' : 'In Stock'}
+                          color={item.quantity < 10 ? 'error' : 'success'}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <IconButton onClick={() => handleOpenDialog(item)} color="primary">
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton onClick={() => handleDelete(item._id)} color="error">
+                          <DeleteIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Grid>
+        </Grid>
+      )}
+
+      {tab===1 && (
+        <Box>
+          <Button variant="contained" sx={{ mb:2 }} startIcon={<AddIcon />} onClick={()=>setRequestDialog(true)}>
+            New Supply Request
+          </Button>
           <TableContainer component={Paper}>
-            <Table>
+            <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Category</TableCell>
-                  <TableCell>Quantity</TableCell>
-                  <TableCell>Location</TableCell>
-                  <TableCell>Supplier</TableCell>
-                  <TableCell>Last Restocked</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Actions</TableCell>
+                  <TableCell>Item</TableCell><TableCell>Supplier</TableCell><TableCell>Qty</TableCell><TableCell>Date</TableCell><TableCell>Status</TableCell><TableCell>Action</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {inventory.map((item) => (
-                  <TableRow key={item._id || item.id}>
-                    <TableCell>{item.name}</TableCell>
-                    <TableCell>{item.category}</TableCell>
-                    <TableCell>
-                      {item.quantity} {item.unit}
-                    </TableCell>
-                    <TableCell>{item.location}</TableCell>
-                    <TableCell>{item.supplier?.name ?? '-'}</TableCell>
-                    <TableCell>
-                      {new Date(item.lastRestocked).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={item.quantity < 10 ? 'Low Stock' : 'In Stock'}
-                        color={item.quantity < 10 ? 'error' : 'success'}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <IconButton onClick={() => handleOpenDialog(item)} color="primary">
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton onClick={() => handleDelete(item._id)} color="error">
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
+              {requests.map(r=>(
+               <TableRow key={r._id}><TableCell>{r.itemName}</TableCell><TableCell>{r.supplier?.name}</TableCell><TableCell>{r.quantity} {r.unit}</TableCell><TableCell>{new Date(r.createdAt).toLocaleDateString()}</TableCell><TableCell>{r.status}</TableCell><TableCell>{r.status!=='Received'&&<Button size="small" onClick={()=>updateRequestStatus(r._id,'Received')}>Received</Button>} {r.status!=='Delayed'&&<Button size="small" color="secondary" onClick={()=>updateRequestStatus(r._id,'Delayed')}>Delayed</Button>}</TableCell></TableRow>
+              ))}
               </TableBody>
             </Table>
           </TableContainer>
-        </Grid>
-      </Grid>
+        </Box>
+      )}
+
+      {tab===2 && (
+        <Box>
+          <Button variant="contained" sx={{ mb:2 }} startIcon={<AddIcon />} onClick={()=>setSupplierDialog(true)}>
+            Add Supplier
+          </Button>
+          <TableContainer component={Paper}>
+            <Table size="small"><TableHead><TableRow><TableCell>Name</TableCell><TableCell>Category</TableCell><TableCell>Location</TableCell><TableCell>Phone</TableCell><TableCell>Email</TableCell></TableRow></TableHead><TableBody>{suppliers.map(s=>(<TableRow key={s._id}><TableCell>{s.name}</TableCell><TableCell>{s.category}</TableCell><TableCell>{s.location}</TableCell><TableCell>{s.phone}</TableCell><TableCell>{s.email}</TableCell></TableRow>))}</TableBody></Table></TableContainer>
+        </Box>
+      )}
 
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
         <DialogTitle>
@@ -554,6 +629,160 @@ const A_Inventory = () => {
             disabled={bulkImportMutation.isLoading}
           >
             {bulkImportMutation.isLoading ? <CircularProgress size={24} /> : `Import All (${sheetData?.length || 0})`}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={requestDialog} onClose={() => setRequestDialog(false)}>
+        <DialogTitle>New Supply Request</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="itemName"
+                label="Item Name"
+                value={reqForm.itemName}
+                onChange={handleReqChange}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                select
+                name="supplier"
+                label="Supplier"
+                value={reqForm.supplier}
+                onChange={handleReqChange}
+                fullWidth
+                required
+              >
+                {suppliers.map((s)=>(<MenuItem key={s._id} value={s._id}>{s.name}</MenuItem>))}
+              </TextField>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="quantity"
+                label="Quantity"
+                type="number"
+                value={reqForm.quantity}
+                onChange={handleReqChange}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="unit"
+                label="Unit"
+                value={reqForm.unit}
+                onChange={handleReqChange}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="expectedDate"
+                label="Expected Date"
+                type="date"
+                value={reqForm.expectedDate}
+                onChange={handleReqChange}
+                fullWidth
+                required
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="quotation"
+                label="Quotation"
+                value={reqForm.quotation}
+                onChange={handleReqChange}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                name="message"
+                label="Message"
+                value={reqForm.message}
+                onChange={handleReqChange}
+                fullWidth
+                multiline
+                rows={3}
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRequestDialog(false)}>Cancel</Button>
+          <Button onClick={submitSupplyRequest} variant="contained" color="primary">
+            Submit Request
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={supplierDialog} onClose={() => setSupplierDialog(false)}>
+        <DialogTitle>Add Supplier</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="name"
+                label="Name"
+                value={supplierForm.name}
+                onChange={handleSupplierChange}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="category"
+                label="Category"
+                value={supplierForm.category}
+                onChange={handleSupplierChange}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="location"
+                label="Location"
+                value={supplierForm.location}
+                onChange={handleSupplierChange}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="phone"
+                label="Phone"
+                value={supplierForm.phone}
+                onChange={handleSupplierChange}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="email"
+                label="Email"
+                value={supplierForm.email}
+                onChange={handleSupplierChange}
+                fullWidth
+                required
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSupplierDialog(false)}>Cancel</Button>
+          <Button onClick={submitSupplier} variant="contained" color="primary">
+            Add Supplier
           </Button>
         </DialogActions>
       </Dialog>
