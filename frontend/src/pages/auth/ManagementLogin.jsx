@@ -99,6 +99,9 @@ const StaffLogin = () => {
           case 'itadmin':
             navigate('/admin');
             break;
+          case 'accountant':
+            navigate('/accountant/dashboard');
+            break;
           default:
             console.warn('Unknown role:', userRole, 'Navigating to home');
             navigate('/');

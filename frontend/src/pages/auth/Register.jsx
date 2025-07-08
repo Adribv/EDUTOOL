@@ -50,7 +50,8 @@ const roles = [
   { value: 'Principal', label: 'Principal' },
   { value: 'AdminStaff', label: 'Admin Staff' },
   { value: 'ITAdmin', label: 'IT Admin' },
-  { value: 'Counsellor', label: 'Counsellor' }
+  { value: 'Counsellor', label: 'Counsellor' },
+  { value: 'Accountant', label: 'Accountant' },
 ];
 
 // Animation variants

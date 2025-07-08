@@ -37,7 +37,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminAPI } from '../../services/api';
 import { toast } from 'react-toastify';
 
-const roles = ['admin', 'staff', 'teacher', 'parent', 'student'];
+const roles = ['admin', 'staff', 'accountant', 'teacher', 'parent', 'student'];
 const statuses = ['active', 'inactive', 'suspended'];
 
 function UserManagement() {

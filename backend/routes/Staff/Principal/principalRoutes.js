@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const principalController = require('../../../controllers/Staff/Principal/principalController');
 const { verifyToken, isPrincipal } = require('../../../middlewares/authMiddleware');
+const expenseController = require('../../../controllers/Finance/expenseController');
 
 // All routes require authentication and Principal role
 router.use(verifyToken, isPrincipal);
@@ -79,5 +80,8 @@ router.get('/reports/staff', principalController.getStaffReports);
 router.get('/notifications', principalController.getNotifications);
 router.get('/messages', principalController.getMessages);
 router.post('/messages', principalController.sendMessage);
+
+// Expense Management
+router.put('/expenses/:expenseId/approve', expenseController.approveExpense);
 
 module.exports = router; 
