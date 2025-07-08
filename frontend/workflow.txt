@@ -1,4 +1,4 @@
-EDURAYS 
+EDULIVES 
 
  ┣ src
  ┃  ┣ Pages
@@ -25,9 +25,9 @@ EDURAYS
  ┃  ┃  ┃  ┃  ┣ Counselor_Medical_Helpline.jsx
  ┃  ┃  ┃  ┃  ┗ Counselor_Wellness_Reports.jsx
  ┃  ┃  ┃  ┣ EdTech_Coordinator
- ┃  ┃  ┃  ┃  ┣ Edurays_Complaints.jsx
- ┃  ┃  ┃  ┃  ┣ Edurays_Credential_Management.jsx
- ┃  ┃  ┃  ┃  ┗ Edurays_Management.jsx
+ ┃  ┃  ┃  ┃  ┣ EDULIVES_Complaints.jsx
+ ┃  ┃  ┃  ┃  ┣ EDULIVES_Credential_Management.jsx
+ ┃  ┃  ┃  ┃  ┗ EDULIVES_Management.jsx
  ┃  ┃  ┃  ┣ Exam_Controller
  ┃  ┃  ┃  ┃  ┣ Exam_Document_Generator.jsx
  ┃  ┃  ┃  ┃  ┣ Exam_Grading.jsx

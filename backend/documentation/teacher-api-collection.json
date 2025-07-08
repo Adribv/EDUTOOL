@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "EduRays - Teacher API",
-    "description": "API collection for the Teacher module in Edurays application",
+    "name": "EDULIVES - Teacher API",
+    "description": "API collection for the Teacher module in EDULIVES application",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [

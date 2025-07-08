@@ -259,7 +259,7 @@ const Home = () => {
                 mb: 3,
                 flexDirection: { xs: 'column', sm: 'row' }
               }}>
-                <img src={logo} alt="EDURAYS Logo" style={{ height: isMobile ? 60 : 80, width: 'auto', marginRight: isMobile ? 0 : 16, marginBottom: isMobile ? 16 : 0 }} />
+                <img src={logo} alt="EDULIVES Logo" style={{ height: isMobile ? 60 : 80, width: 'auto', marginRight: isMobile ? 0 : 16, marginBottom: isMobile ? 16 : 0 }} />
               </Box>
               <Typography
                 variant="h2"
@@ -394,7 +394,7 @@ const Home = () => {
                   fontSize: '0.875rem',
                 }}
               >
-                © 2024 EDURAYS. All rights reserved.
+                © 2024 EDULIVES. All rights reserved.
               </Typography>
             </Box>
           </motion.div>

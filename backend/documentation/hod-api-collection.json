@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "EduRays - HOD API",
-    "description": "API collection for the Head of Department (HOD) module in Edurays application",
+    "name": "EDULIVES - HOD API",
+    "description": "API collection for the Head of Department (HOD) module in EDULIVES application",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [

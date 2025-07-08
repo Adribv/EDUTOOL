@@ -3,13 +3,13 @@ const FeeStructure = require('./models/Finance/feeStructureModel');
 const ClassModel = require('./models/Admin/classModel');
 
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/edurays')
+mongoose.connect('mongodb://localhost:27017/EDULIVES')
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
 const sampleFees = [
   {
-    class: 'Class 6A',
+    class: '6',
     term: 'Term 1',
     components: [
       { name: 'Tuition Fee', amount: 5000, description: 'Monthly tuition fee', isOptional: false },
@@ -19,10 +19,10 @@ const sampleFees = [
     totalAmount: 6300,
     dueDate: new Date('2024-12-31'),
     latePaymentFee: 100,
-    academicYear: '2024-2025'
+    academicYear: '2024'
   },
   {
-    class: 'Class 7A',
+    class: '7',
     term: 'Term 1',
     components: [
       { name: 'Tuition Fee', amount: 5500, description: 'Monthly tuition fee', isOptional: false },
@@ -32,10 +32,10 @@ const sampleFees = [
     totalAmount: 6800,
     dueDate: new Date('2024-12-31'),
     latePaymentFee: 100,
-    academicYear: '2024-2025'
+    academicYear: '2024'
   },
   {
-    class: 'Class 8A',
+    class: '8',
     term: 'Term 1',
     components: [
       { name: 'Tuition Fee', amount: 6000, description: 'Monthly tuition fee', isOptional: false },
@@ -45,10 +45,10 @@ const sampleFees = [
     totalAmount: 7300,
     dueDate: new Date('2024-12-31'),
     latePaymentFee: 100,
-    academicYear: '2024-2025'
+    academicYear: '2024'
   },
   {
-    class: 'Class 9A',
+    class: '9',
     term: 'Term 1',
     components: [
       { name: 'Tuition Fee', amount: 6500, description: 'Monthly tuition fee', isOptional: false },
@@ -58,10 +58,10 @@ const sampleFees = [
     totalAmount: 7800,
     dueDate: new Date('2024-12-31'),
     latePaymentFee: 100,
-    academicYear: '2024-2025'
+    academicYear: '2024'
   },
   {
-    class: 'Class 10A',
+    class: '10',
     term: 'Term 1',
     components: [
       { name: 'Tuition Fee', amount: 7000, description: 'Monthly tuition fee', isOptional: false },
@@ -71,7 +71,33 @@ const sampleFees = [
     totalAmount: 8300,
     dueDate: new Date('2024-12-31'),
     latePaymentFee: 100,
-    academicYear: '2024-2025'
+    academicYear: '2024'
+  },
+  {
+    class: '11',
+    term: 'Term 1',
+    components: [
+      { name: 'Tuition Fee', amount: 7500, description: 'Monthly tuition fee', isOptional: false },
+      { name: 'Library Fee', amount: 500, description: 'Library membership fee', isOptional: true },
+      { name: 'Sports Fee', amount: 800, description: 'Sports facility fee', isOptional: true }
+    ],
+    totalAmount: 8800,
+    dueDate: new Date('2024-12-31'),
+    latePaymentFee: 100,
+    academicYear: '2024'
+  },
+  {
+    class: '12',
+    term: 'Term 1',
+    components: [
+      { name: 'Tuition Fee', amount: 8000, description: 'Monthly tuition fee', isOptional: false },
+      { name: 'Library Fee', amount: 500, description: 'Library membership fee', isOptional: true },
+      { name: 'Sports Fee', amount: 800, description: 'Sports facility fee', isOptional: true }
+    ],
+    totalAmount: 9300,
+    dueDate: new Date('2024-12-31'),
+    latePaymentFee: 100,
+    academicYear: '2024'
   }
 ];
 

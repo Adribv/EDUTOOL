@@ -22,7 +22,13 @@ const staffSchema = new mongoose.Schema({
   },
   profileImage: String,
   contactNumber: String,
-  address: String,
+  address: {
+    street: String,
+    city: String,
+    state: String,
+    postalCode: String,
+    country: String
+  },
   employeeId: {
     type: String,
     unique: true,

@@ -1,4 +1,4 @@
-# 🎓 EduRays - School Management System
+# 🎓 EDULIVES - School Management System
 
 A comprehensive school management system with role-based access for administrators, teachers, students, and parents.
 
@@ -38,7 +38,7 @@ A comprehensive school management system with role-based access for administrato
 3. **Create Environment File**
    Create `.env` file in `backend` folder:
    ```
-   MONGO_URI=mongodb://localhost:27017/edurays
+   MONGO_URI=mongodb://localhost:27017/EDULIVES
    JWT_SECRET=your_super_secret_jwt_key_here
    PORT=5000
    FRONTEND_URL=http://localhost:5000
@@ -171,4 +171,4 @@ This project is for educational purposes.
 
 ---
 
-**🎉 Happy Learning with EduRays!** 
+**🎉 Happy Learning with EDULIVES!** 

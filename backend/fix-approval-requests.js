@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const ApprovalRequest = require('./models/Staff/HOD/approvalRequest.model');
 
 // Connect to MongoDB
-mongoose.connect('mongodb+srv://edurays:edurays123@ac-l2bmyna-shard-00-00.uno4ffz.mongodb.net/edurays?retryWrites=true&w=majority', {
+mongoose.connect('mongodb+srv://EDULIVES:EDULIVES123@ac-l2bmyna-shard-00-00.uno4ffz.mongodb.net/EDULIVES?retryWrites=true&w=majority', {
   useNewUrlParser: true,
   useUnifiedTopology: true
 });

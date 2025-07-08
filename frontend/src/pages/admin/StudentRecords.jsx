@@ -59,6 +59,7 @@ const validationSchema = yup.object({
   gender: yup.string().required('Gender is required'),
   parentName: yup.string().required('Parent Name is required'),
   parentPhone: yup.string().required('Parent Phone is required'),
+  city: yup.string().required('City is required'),
   address: yup.string().required('Address is required'),
 });
 
@@ -161,6 +162,7 @@ function StudentRecords() {
       gender: '',
       parentName: '',
       parentPhone: '',
+      city: '',
       address: '',
     },
     validationSchema: validationSchema,
@@ -618,6 +620,18 @@ function StudentRecords() {
                   onChange={formik.handleChange}
                   error={formik.touched.parentPhone && Boolean(formik.errors.parentPhone)}
                   helperText={formik.touched.parentPhone && formik.errors.parentPhone}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  id="city"
+                  name="city"
+                  label="City"
+                  value={formik.values.city}
+                  onChange={formik.handleChange}
+                  error={formik.touched.city && Boolean(formik.errors.city)}
+                  helperText={formik.touched.city && formik.errors.city}
                 />
               </Grid>
               <Grid item xs={12}>

@@ -4,7 +4,7 @@ const Student = require('./models/Student/studentModel');
 const bcrypt = require('bcryptjs');
 
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/edurays', {
+mongoose.connect('mongodb://localhost:27017/EDULIVES', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
