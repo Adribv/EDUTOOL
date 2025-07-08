@@ -1,4 +1,4 @@
-# 🚀 EduRays Parent Portal Setup Guide
+# 🚀 EDULIVES Parent Portal Setup Guide
 
 ## 📋 Prerequisites
 
@@ -49,7 +49,7 @@
 3. **Create Environment File**
    Create `.env` file in `backend` folder:
    ```
-   MONGO_URI=mongodb://localhost:27017/edurays
+   MONGO_URI=mongodb://localhost:27017/EDULIVES
    JWT_SECRET=your_super_secret_jwt_key_here_change_in_production
    PORT=5000
    FRONTEND_URL=http://localhost:3000

@@ -5,7 +5,7 @@ import logo from '../../assets/logo.jpg';
 const Logo = ({ collapsed }) => {
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-      <img src={logo} alt="EDURAYS Logo" style={{ height: 40, width: 'auto' }} />
+              <img src={logo} alt="EDULIVES Logo" style={{ height: 40, width: 'auto' }} />
       {!collapsed && (
         <Typography
           variant="h6"
@@ -16,7 +16,7 @@ const Logo = ({ collapsed }) => {
             color: 'secondary.main',
           }}
         >
-          EDURAYS
+          EDULIVES
         </Typography>
       )}
     </Box>

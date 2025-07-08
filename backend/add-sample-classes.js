@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const ClassModel = require('./models/Admin/classModel');
 
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/edurays')
+mongoose.connect('mongodb://localhost:27017/EDULIVES')
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 

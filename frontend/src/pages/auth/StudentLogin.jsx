@@ -12,6 +12,8 @@ import {
   Alert,
   Grid,
   useTheme,
+  InputAdornment,
+  IconButton,
 } from '@mui/material';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
@@ -20,6 +22,8 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import SchoolIcon from '@mui/icons-material/School';
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 const validationSchema = yup.object({
   rollNumber: yup
@@ -52,11 +56,20 @@ const itemVariants = {
 function StudentLogin() {
   const navigate = useNavigate();
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const theme = useTheme();
+
+  const handleClickShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const handleMouseDownPassword = (event) => {
+    event.preventDefault();
+  };
 
   const loginMutation = useMutation({
     mutationFn: async (values) => {
-      const response = await axios.post('https://api.edulives.com/api/students/login', values);
+      const response = await axios.post('http://localhost:5000/api/students/login', values);
       return response.data;
     },
     onSuccess: (data) => {
@@ -148,7 +161,7 @@ function StudentLogin() {
                 color: 'white',
               }}
             >
-              EDURAYS
+              EDULIVES
             </Typography>
             <Typography
               variant="h2"
@@ -264,13 +277,27 @@ function StudentLogin() {
                   fullWidth
                   name="password"
                   label="Password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   id="password"
                   autoComplete="current-password"
                   value={formik.values.password}
                   onChange={formik.handleChange}
                   error={formik.touched.password && Boolean(formik.errors.password)}
                   helperText={formik.touched.password && formik.errors.password}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="toggle password visibility"
+                          onClick={handleClickShowPassword}
+                          onMouseDown={handleMouseDownPassword}
+                          edge="end"
+                        >
+                          {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
                   sx={{
                     mb: 3,
                     '& .MuiOutlinedInput-root': {

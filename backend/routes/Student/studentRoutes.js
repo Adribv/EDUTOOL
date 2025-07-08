@@ -15,6 +15,7 @@ const documentController = require('../../controllers/Student/documentController
 const attendanceController = require('../../controllers/Student/attendanceController');
 const examinationController = require('../../controllers/Student/examinationController');
 const learningResourcesController = require('../../controllers/Student/learningResourcesController');
+const passwordLookupController = require('../../controllers/Student/passwordLookupController');
 
 // Auth routes
 router.post('/login', studentAuth.login);
@@ -54,6 +55,7 @@ router.get('/performance-analytics', examinationController.getPerformanceAnalyti
 router.get('/fee-structure', feeController.getFeeStructure);
 router.get('/payment-status', feeController.getPaymentStatus);
 router.get('/payment-receipts/:paymentId', feeController.getPaymentReceipt);
+router.post('/payments', feeController.makePayment);
 
 // Learning Resources routes
 router.get('/learning-resources', learningResourcesController.getLearningResources);
@@ -76,5 +78,11 @@ router.get('/homework-submissions', homeworkController.getHomeworkSubmissions);
 
 // Document routes
 router.get('/documents', documentController.getDocuments);
+
+// Password Lookup routes (public routes - no authentication required)
+router.post('/password-lookup/request', passwordLookupController.requestPasswordLookup);
+router.get('/password-lookup/verify/:resetToken', passwordLookupController.verifyResetToken);
+router.post('/password-lookup/reset', passwordLookupController.resetPassword);
+router.delete('/password-lookup/cancel/:resetToken', passwordLookupController.cancelPasswordReset);
 
 module.exports = router;

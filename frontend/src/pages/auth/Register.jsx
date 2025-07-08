@@ -79,7 +79,7 @@ function Register() {
 
   const registerMutation = useMutation({
     mutationFn: async (values) => {
-      const response = await axios.post('https://api.edulives.com/api/staffs/register', values);
+      const response = await axios.post('http://localhost:5000/api/staffs/register', values);
       return response.data;
     },
     onSuccess: (data) => {
@@ -177,7 +177,7 @@ function Register() {
                 color: 'white',
               }}
             >
-              EDURAYS
+              EDULIVES
             </Typography>
             <Typography
               variant="h2"
@@ -242,7 +242,7 @@ function Register() {
                 fontSize: { xs: '0.875rem', sm: '1rem' },
               }}
             >
-              Join EDURAYS to start your journey
+              Join EDULIVES to start your journey
             </Typography>
 
             {error && (

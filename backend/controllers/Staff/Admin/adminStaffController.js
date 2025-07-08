@@ -56,7 +56,8 @@ exports.registerStudent = async (req, res) => {
       address,
       contactNumber,
       email,
-      parentInfo
+      parentInfo,
+      city
     } = req.body;
 
     const finalClass = studentClass || grade;
@@ -76,6 +77,12 @@ exports.registerStudent = async (req, res) => {
       return res.status(400).json({ message: 'Student with this roll number already exists' });
     }
 
+    // Handle address with city field
+    const finalAddress = address || {};
+    if (city) {
+      finalAddress.city = city;
+    }
+
     const newStudent = new Student({
       name,
       rollNumber,
@@ -84,7 +91,7 @@ exports.registerStudent = async (req, res) => {
       section,
       dateOfBirth,
       gender: finalGender,
-      address,
+      address: finalAddress,
       contactNumber,
       email,
       parentInfo,
@@ -125,7 +132,8 @@ exports.bulkImportStudents = async (req, res) => {
           gender,
           parentName,
           parentPhone,
-          address
+          address,
+          city
         } = studentData;
 
         // Validate required fields
@@ -164,6 +172,12 @@ exports.bulkImportStudents = async (req, res) => {
           relationship: 'Parent'
         } : null;
 
+        // Handle address with city field
+        const finalAddress = address || {};
+        if (city) {
+          finalAddress.city = city;
+        }
+
         const newStudent = new Student({
           name,
           rollNumber,
@@ -172,7 +186,7 @@ exports.bulkImportStudents = async (req, res) => {
           section,
           dateOfBirth,
           gender: finalGender,
-          address,
+          address: finalAddress,
           contactNumber: parentPhone,
           email,
           parentInfo,
@@ -224,7 +238,7 @@ exports.exportStudents = async (req, res) => {
       const csvData = students.map(student => {
         // Format address
         const address = student.address ? 
-          `${student.address.street || ''} ${student.address.city || ''} ${student.address.state || ''} ${student.address.postalCode || ''} ${student.address.country || ''}`.trim() : '';
+          `${student.address.street || ''} ${student.address.state || ''} ${student.address.postalCode || ''} ${student.address.country || ''}`.trim() : '';
         
         return {
           'Student ID': student._id,
@@ -236,6 +250,7 @@ exports.exportStudents = async (req, res) => {
           'Date of Birth': student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString() : '',
           'Gender': student.gender || '',
           'Contact Number': student.contactNumber || '',
+          'City': student.address?.city || '',
           'Address': address,
           'Status': student.status || '',
           'Emergency Contact Name': student.emergencyContact?.name || '',
@@ -482,7 +497,13 @@ exports.registerStaff = async (req, res) => {
       qualification,
       experience,
       contactNumber,
-      address,
+      address: {
+        street: address?.street || '',
+        city: address?.city || '',
+        state: address?.state || '',
+        postalCode: address?.postalCode || '',
+        country: address?.country || 'India'
+      },
       coordinator: coordinatorClasses,
       assignedSubjects: []
     });

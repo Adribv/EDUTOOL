@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "EduRays - Admin Staff API",
-    "description": "API collection for the Admin Staff module in Edurays application",
+    "name": "EDULIVES - Admin Staff API",
+    "description": "API collection for the Admin Staff module in EDULIVES application",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -1174,7 +1174,7 @@
               "formdata": [
                 {
                   "key": "name",
-                  "value": "EduRays International School",
+                  "value": "EDULIVES International School",
                   "type": "text"
                 },
                 {
@@ -1189,12 +1189,12 @@
                 },
                 {
                   "key": "email",
-                  "value": "info@edurays.edu",
+                  "value": "info@EDULIVES.edu",
                   "type": "text"
                 },
                 {
                   "key": "website",
-                  "value": "www.edurays.edu",
+                  "value": "www.EDULIVES.edu",
                   "type": "text"
                 },
                 {

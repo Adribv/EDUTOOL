@@ -4,7 +4,7 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-console.log('🚀 EDURAYS Frontend Optimization Script');
+console.log('🚀 EDULIVES Frontend Optimization Script');
 console.log('=====================================\n');
 
 // Function to run commands

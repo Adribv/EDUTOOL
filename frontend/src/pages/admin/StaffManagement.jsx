@@ -63,7 +63,13 @@ function StaffManagement() {
     role: '',
     department: '',
     contactNumber: '',
-    address: '',
+    address: {
+      street: '',
+      city: '',
+      state: '',
+      postalCode: '',
+      country: 'India'
+    },
     employeeId: '',
     joiningDate: new Date().toISOString().split('T')[0],
     qualification: '',
@@ -137,7 +143,13 @@ function StaffManagement() {
         role: staff.role,
         department: staff.department?._id || staff.department || '',
         contactNumber: staff.phone,
-        address: staff.address,
+        address: {
+          street: staff.address?.street || '',
+          city: staff.address?.city || '',
+          state: staff.address?.state || '',
+          postalCode: staff.address?.postalCode || '',
+          country: staff.address?.country || 'India'
+        },
         employeeId: staff.employeeId,
         joiningDate: staff.joiningDate,
         qualification: staff.qualification,
@@ -174,7 +186,13 @@ function StaffManagement() {
       role: '',
       department: '',
       contactNumber: '',
-      address: '',
+      address: {
+        street: '',
+        city: '',
+        state: '',
+        postalCode: '',
+        country: 'India'
+      },
       employeeId: '',
       joiningDate: new Date().toISOString().split('T')[0],
       qualification: '',
@@ -610,16 +628,71 @@ ${Object.entries(reportData.filters)
               onChange={handleInputChange}
               sx={{ mb: 2 }}
             />
-            <TextField
-              fullWidth
-              label="Address"
-              name="address"
-              value={formData.address}
-              onChange={handleInputChange}
-              multiline
-              rows={3}
-              sx={{ mb: 2 }}
-            />
+            <Grid container spacing={2} sx={{ mb: 2 }}>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Street Address"
+                  name="address.street"
+                  value={formData.address.street}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    address: { ...prev.address, street: e.target.value }
+                  }))}
+                  multiline
+                  rows={2}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="City"
+                  name="address.city"
+                  value={formData.address.city}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    address: { ...prev.address, city: e.target.value }
+                  }))}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="State"
+                  name="address.state"
+                  value={formData.address.state}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    address: { ...prev.address, state: e.target.value }
+                  }))}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Postal Code"
+                  name="address.postalCode"
+                  value={formData.address.postalCode}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    address: { ...prev.address, postalCode: e.target.value }
+                  }))}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Country"
+                  name="address.country"
+                  value={formData.address.country}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    address: { ...prev.address, country: e.target.value }
+                  }))}
+                />
+              </Grid>
+            </Grid>
             <TextField
               fullWidth
               label="Qualification"

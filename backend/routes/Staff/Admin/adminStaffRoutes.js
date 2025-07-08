@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const adminStaffController = require('../../../controllers/Staff/Admin/adminStaffController');
+const enquiryController = require('../../../controllers/Staff/Admin/enquiryController');
+const supplierRequestController = require('../../../controllers/Staff/Admin/supplierRequestController');
 const { permit } = require('../../../middlewares/roleMiddleware');
 const { verifyToken } = require('../../../middlewares/authMiddleware');
 const uploadProfileImage = require('../../../middlewares/uploadProfileImageMiddleware');
@@ -143,6 +145,22 @@ router.post('/transport/maintenance', adminStaffController.scheduleVehicleMainte
 router.post('/visitors', adminStaffController.recordVisitor);
 router.put('/visitors/:id/exit', adminStaffController.updateVisitorExit);
 router.get('/visitors', adminStaffController.getVisitorLog);
+
+// Enquiry Management
+router.get('/enquiries', enquiryController.getAllEnquiries);
+router.post('/enquiries', enquiryController.createEnquiry);
+router.put('/enquiries/:id', enquiryController.updateEnquiry);
+router.get('/enquiries/stats', enquiryController.getEnquiryStats);
+
+// Supplier Request Management
+router.get('/supplier-requests', supplierRequestController.getAllSupplierRequests);
+router.get('/supplier-requests/:id', supplierRequestController.getSupplierRequestById);
+router.post('/supplier-requests', supplierRequestController.createSupplierRequest);
+router.put('/supplier-requests/:id', supplierRequestController.updateSupplierRequest);
+router.delete('/supplier-requests/:id', supplierRequestController.deleteSupplierRequest);
+router.post('/supplier-requests/:id/notes', supplierRequestController.addNote);
+router.get('/supplier-requests/stats', supplierRequestController.getSupplierRequestStats);
+router.post('/supplier-requests/:id/submit', supplierRequestController.submitForApproval);
 
 // Event and Facility Coordination
 router.post('/events', adminStaffController.createEvent);

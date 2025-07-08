@@ -174,7 +174,7 @@ const StaffLogin = () => {
           <Box sx={{ mb: 4 }}>
             <img 
               src={logo} 
-              alt="EDURAYS Logo" 
+                              alt="EDULIVES Logo" 
               style={{ 
                 height: isMobile ? 80 : 120, 
                 width: 'auto',
@@ -192,7 +192,7 @@ const StaffLogin = () => {
               color: 'white',
             }}
           >
-            EDURAYS
+                          EDULIVES
           </Typography>
           <Typography
             variant="h2"

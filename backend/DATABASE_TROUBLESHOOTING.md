@@ -18,7 +18,7 @@ Create a `.env` file in the backend directory with:
 
 ```env
 # MongoDB Atlas Connection String
-MONGO_URI=mongodb+srv://edurays:edurays123@ac-l2bmyna-shard-00-00.uno4ffz.mongodb.net:27017,ac-l2bmyna-shard-00-01.uno4ffz.mongodb.net:27017,ac-l2bmyna-shard-00-02.uno4ffz.mongodb.net:27017/edurays?ssl=true&replicaSet=atlas-14b8sh-shard-0&authSource=admin&retryWrites=true&w=majority
+MONGO_URI=mongodb+srv://EDULIVES:EDULIVES123@ac-l2bmyna-shard-00-00.uno4ffz.mongodb.net:27017,ac-l2bmyna-shard-00-01.uno4ffz.mongodb.net:27017,ac-l2bmyna-shard-00-02.uno4ffz.mongodb.net:27017/EDULIVES?ssl=true&replicaSet=atlas-14b8sh-shard-0&authSource=admin&retryWrites=true&w=majority
 
 # Server Configuration
 PORT=5000
@@ -110,7 +110,7 @@ If connection issues persist, you can temporarily use a local MongoDB instance:
 
 ```javascript
 // In config/dbRetry.js, change the fallback URI to:
-const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/edurays';
+const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/EDULIVES';
 ```
 
 ### 10. Monitoring

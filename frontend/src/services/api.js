@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://api.edulives.com',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -103,6 +103,8 @@ export const studentAPI = {
   getFeeStructure: (params) => api.get('/api/students/fee-structure', { params }),
   getFees: (params) => api.get('/api/students/payment-status', { params }),
   getPaymentReceipt: (paymentId) => api.get(`/api/students/payment-receipts/${paymentId}`),
+  makePayment: (paymentData) => api.post('/api/students/payments', paymentData),
+  submitPayment: (paymentData) => api.post('/api/students/payments', paymentData),
   
   // Learning Resources
   getResources: (params) => api.get('/api/students/learning-resources', { params }),
@@ -372,6 +374,22 @@ export const adminAPI = {
   createInventoryItem: (data) => api.post('/api/admin-staff/inventory', data),
   updateInventoryItem: (id, data) => api.put(`/api/admin-staff/inventory/${id}`, data),
   deleteInventoryItem: (id) => api.delete(`/api/admin-staff/inventory/${id}`),
+
+  // Enquiry Management
+  getEnquiries: (params) => api.get('/api/admin-staff/enquiries', { params }),
+  createEnquiry: (data) => api.post('/api/admin-staff/enquiries', data),
+  updateEnquiry: (id, data) => api.put(`/api/admin-staff/enquiries/${id}`, data),
+  getEnquiryStats: () => api.get('/api/admin-staff/enquiries/stats'),
+
+  // Supplier Request Management
+  getSupplierRequests: (params) => api.get('/api/admin-staff/supplier-requests', { params }),
+  getSupplierRequestById: (id) => api.get(`/api/admin-staff/supplier-requests/${id}`),
+  createSupplierRequest: (data) => api.post('/api/admin-staff/supplier-requests', data),
+  updateSupplierRequest: (id, data) => api.put(`/api/admin-staff/supplier-requests/${id}`, data),
+  deleteSupplierRequest: (id) => api.delete(`/api/admin-staff/supplier-requests/${id}`),
+  addSupplierRequestNote: (id, data) => api.post(`/api/admin-staff/supplier-requests/${id}/notes`, data),
+  getSupplierRequestStats: () => api.get('/api/admin-staff/supplier-requests/stats'),
+  submitSupplierRequest: (id) => api.post(`/api/admin-staff/supplier-requests/${id}/submit`),
 
   // Event Management
   getEvents: () => api.get('/api/admin-staff/calendar').then(res=>{

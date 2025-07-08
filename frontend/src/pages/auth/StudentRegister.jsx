@@ -34,6 +34,9 @@ const validationSchema = yup.object({
   section: yup
     .string()
     .required('Section is required'),
+  city: yup
+    .string()
+    .required('City is required'),
   password: yup
     .string()
     .min(6, 'Password should be of minimum 6 characters length')
@@ -65,7 +68,7 @@ function StudentRegister() {
 
   const registerMutation = useMutation({
     mutationFn: async (values) => {
-      const response = await axios.post('https://api.edulives.com/api/students/register', values);
+      const response = await axios.post('http://localhost:5000/api/students/register', values);
       console.log(response.data);
       return response.data;
     },
@@ -88,6 +91,7 @@ function StudentRegister() {
       rollNumber: '',
       class: '',
       section: '',
+      city: '',
       password: '',
     },
     validationSchema: validationSchema,
@@ -161,7 +165,7 @@ function StudentRegister() {
                 color: 'white',
               }}
             >
-              EDURAYS
+              EDULIVES
             </Typography>
             <Typography
               variant="h2"
@@ -350,6 +354,31 @@ function StudentRegister() {
                   </motion.div>
                 </Grid>
               </Grid>
+
+              <motion.div variants={itemVariants}>
+                <TextField
+                  margin="normal"
+                  required
+                  fullWidth
+                  id="city"
+                  label="City"
+                  name="city"
+                  value={formik.values.city}
+                  onChange={formik.handleChange}
+                  error={formik.touched.city && Boolean(formik.errors.city)}
+                  helperText={formik.touched.city && formik.errors.city}
+                  sx={{
+                    mb: 2,
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 1.5,
+                      backgroundColor: '#f8fafc',
+                      '&:hover fieldset': {
+                        borderColor: 'primary.main',
+                      },
+                    },
+                  }}
+                />
+              </motion.div>
 
               <motion.div variants={itemVariants}>
                 <TextField

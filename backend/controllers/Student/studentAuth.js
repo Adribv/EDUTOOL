@@ -14,8 +14,8 @@ exports.login = async (req, res) => {
 
 exports.register = async (req, res) => {
   console.log('Registration request body:', req.body);
-  const { name, rollNumber, password, class: cls, section } = req.body;
-  console.log('Destructured values:', { name, rollNumber, class: cls, section });
+  const { name, rollNumber, password, class: cls, section, city } = req.body;
+  console.log('Destructured values:', { name, rollNumber, class: cls, section, city });
   
   const student = await Student.create({
     name,
@@ -23,6 +23,9 @@ exports.register = async (req, res) => {
     password,
     class: cls,
     section,
+    address: {
+      city: city
+    }
   });
   res.status(201).json(student);
 };

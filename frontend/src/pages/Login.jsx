@@ -107,9 +107,9 @@ const Login = () => {
             width: '100%',
           }}
         >
-          <img src={logo} alt="EDURAYS Logo" style={{ height: 60, width: 'auto', marginBottom: 16 }} />
+                          <img src={logo} alt="EDULIVES Logo" style={{ height: 60, width: 'auto', marginBottom: 16 }} />
           <Typography component="h1" variant="h5">
-            Sign in to EDURAYS
+                          Sign in to EDULIVES
           </Typography>
           <Box
             component="form"
