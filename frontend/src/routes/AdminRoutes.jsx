@@ -31,6 +31,7 @@ import Attendance from '../pages/admin/Attendance';
 import Classes from '../pages/admin/Classes';
 import Exams from '../pages/admin/Exams';
 import A_Dashboard from '../pages/admin/A_Dashboard';
+import Visitors from '../pages/admin/Visitors';
 
 const AdminRoutes = () => {
   return (
@@ -68,6 +69,7 @@ const AdminRoutes = () => {
         <Route path="class-management" element={<Classes />} />
         <Route path="exam-management" element={<Exams />} />
         <Route path="a-dashboard" element={<A_Dashboard />} />
+        <Route path="Visitors" element={<Visitors />} />
       </Route>
     </Routes>
   );
