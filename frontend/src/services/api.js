@@ -128,6 +128,13 @@ export const studentAPI = {
   // Documents
   getDocuments: () => api.get('/api/students/documents'),
   
+  // MCQ Assignments
+  getMCQAssignments: () => api.get('/api/students/mcq-assignments'),
+  getMCQAssignmentDetails: (assignmentId) => api.get(`/api/students/mcq-assignments/${assignmentId}`),
+  startMCQAssignment: (assignmentId) => api.post(`/api/students/mcq-assignments/${assignmentId}/start`),
+  submitMCQAssignment: (assignmentId, data) => api.post(`/api/students/mcq-assignments/${assignmentId}/submit`, data),
+  getMCQSubmissionResults: (assignmentId) => api.get(`/api/students/mcq-assignments/${assignmentId}/results`),
+  
   // Legacy endpoints for backward compatibility
   getDashboard: () => api.get('/api/students/profile'),
 };
@@ -787,6 +794,14 @@ export const teacherAPI = {
   getSubmissions: (assignmentId) => api.get(`/api/teachers/assignments/${assignmentId}/submissions`).then(res => res.data),
   gradeSubmission: (submissionId, data) => api.put(`/api/teachers/submissions/${submissionId}/grade`, data).then(res => res.data),
 
+  // MCQ Assignment Management
+  createMCQAssignment: (data) => api.post('/api/teachers/mcq-assignments', data).then(res => res.data),
+  getMCQAssignments: () => api.get('/api/teachers/mcq-assignments').then(res => res.data),
+  getMCQAssignmentDetails: (assignmentId) => api.get(`/api/teachers/mcq-assignments/${assignmentId}`).then(res => res.data),
+  updateMCQAssignment: (assignmentId, data) => api.put(`/api/teachers/mcq-assignments/${assignmentId}`, data).then(res => res.data),
+  deleteMCQAssignment: (assignmentId) => api.delete(`/api/teachers/mcq-assignments/${assignmentId}`).then(res => res.data),
+  getMCQSubmissions: (assignmentId) => api.get(`/api/teachers/mcq-assignments/${assignmentId}/submissions`).then(res => res.data),
+
   // Exam Management
   createExam: (data) => {
     const formData = new FormData();
@@ -945,6 +960,13 @@ export const teacherAPI = {
   getLeaveRequests: (staffId) => api.get(`/api/staffs/${staffId}/leave-requests`).then(res => res.data),
 
   updateLeaveRequest: (staffId, leaveId, data) => api.put(`/api/staffs/${staffId}/leave-requests/${leaveId}`, data).then(res => res.data),
+  
+  // Teacher's Own Leave Request Management
+  submitMyLeaveRequest: (data) => api.post('/api/teachers/leave-requests', data).then(res => res.data),
+  getMyLeaveRequests: () => api.get('/api/teachers/leave-requests').then(res => res.data),
+  getMyLeaveRequestById: (requestId) => api.get(`/api/teachers/leave-requests/${requestId}`).then(res => res.data),
+  cancelMyLeaveRequest: (requestId) => api.put(`/api/teachers/leave-requests/${requestId}/cancel`).then(res => res.data),
+  getMyLeaveStatistics: () => api.get('/api/teachers/leave-requests/stats/statistics').then(res => res.data),
   
   // Student Attendance Management
   getStudentAttendancePercentage: (staffId, studentId) => api.get(`/api/staffs/${staffId}/students/${studentId}/attendance`).then(res => res.data),

@@ -14,6 +14,8 @@ import Attendance from '../pages/teacher/Attendance';
 import Calendar from '../pages/teacher/Calendar';
 import Classes from '../pages/teacher/Classes';
 import LeaveRequests from '../pages/teacher/LeaveRequests';
+import MCQBuilder from '../pages/teacher/MCQBuilder';
+import MCQManagement from '../pages/teacher/MCQManagement';
 
 const TeacherRoutes = () => {
   return (
@@ -34,6 +36,8 @@ const TeacherRoutes = () => {
       <Route path="leave-requests" element={<LeaveRequests />} />
       <Route path="calendar" element={<Calendar />} />
       <Route path="class-management" element={<Classes />} />
+      <Route path="mcq-builder" element={<MCQBuilder />} />
+      <Route path="mcq-management" element={<MCQManagement />} />
     </Routes>
   );
 };

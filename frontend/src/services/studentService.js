@@ -66,6 +66,9 @@ const studentService = {
   getNotifications: studentAPI.getAnnouncements,
   getOngoingLessons: studentAPI.getTimetable,
   getCalendarEvents: studentAPI.getTimetable,
+  
+  // MCQ Assignments
+  getMCQAssignments: studentAPI.getMCQAssignments,
 };
 
 export default studentService; 

@@ -23,6 +23,9 @@ import PerformanceAnalytics from '../pages/student/PerformanceAnalytics';
 import LearningResources from '../pages/student/LearningResources';
 import ClassDiscussions from '../pages/student/ClassDiscussions';
 import PaymentReceipts from '../pages/student/PaymentReceipts';
+import MCQTest from '../pages/student/MCQTest';
+import MCQResults from '../pages/student/MCQResults';
+import MCQAssignmentsList from '../pages/student/MCQAssignmentsList';
 
 const StudentRoutes = () => {
   return (
@@ -68,6 +71,11 @@ const StudentRoutes = () => {
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/notifications" element={<Notifications />} />
+        
+        {/* MCQ Assignments */}
+        <Route path="/mcq-assignments-list" element={<MCQAssignmentsList />} />
+        <Route path="/mcq-test/:assignmentId" element={<MCQTest />} />
+        <Route path="/mcq-results/:assignmentId" element={<MCQResults />} />
       </Routes>
     </StudentLayout>
   );

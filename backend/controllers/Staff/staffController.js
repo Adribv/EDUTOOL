@@ -403,12 +403,17 @@ exports.getLeaveRequests = async (req, res) => {
     .populate('reviewedBy', 'name')
     .sort({ createdAt: -1 });
 
-    console.log('getLeaveRequests: Found leave requests:', leaveRequests.length);
-    leaveRequests.forEach(request => {
-      console.log(`- ${request.studentId?.name} (${request.studentId?.class}${request.studentId?.section}): ${request.status}`);
+    // Map type to leaveType if leaveType is missing
+    const mappedLeaveRequests = leaveRequests.map(req => {
+      // If leaveType is missing but type exists, add leaveType
+      if (!req.leaveType && req.type) {
+        req = req.toObject();
+        req.leaveType = req.type;
+      }
+      return req;
     });
 
-    res.json(leaveRequests);
+    res.json(mappedLeaveRequests);
   } catch (error) {
     console.error('Error fetching leave requests:', error);
     res.status(500).json({ message: 'Server error' });

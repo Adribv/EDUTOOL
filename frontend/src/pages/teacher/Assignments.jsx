@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -76,16 +76,16 @@ import {
   Close,
   Save,
   FilterList,
-  Refresh
+  Refresh,
+  Quiz
 } from '@mui/icons-material';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { teacherAPI } from '../../services/api';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
 
 const Assignments = () => {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const [selectedTab, setSelectedTab] = useState(0);
   const [createDialog, setCreateDialog] = useState(false);
   const [editDialog, setEditDialog] = useState(false);
@@ -483,8 +483,19 @@ const Assignments = () => {
         </Grid>
       </Grid>
 
-      {/* Assignments Grid */}
-      {filteredAssignments.length > 0 ? (
+      {/* Tabs */}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs value={selectedTab} onChange={(e, newValue) => setSelectedTab(newValue)}>
+          <Tab icon={<Assignment />} label="Regular Assignments" />
+          <Tab icon={<Quiz />} label="MCQ Assignments" />
+        </Tabs>
+      </Box>
+
+      {/* Tab Content */}
+      {selectedTab === 0 && (
+        <>
+          {/* Regular Assignments Grid */}
+          {filteredAssignments.length > 0 ? (
         <Grid container spacing={3}>
           {filteredAssignments.map((assignment) => (
             <Grid item xs={12} md={6} lg={4} key={assignment._id}>
@@ -620,6 +631,48 @@ const Assignments = () => {
             </Box>
           </CardContent>
         </Card>
+      )}
+        </>
+      )}
+
+      {selectedTab === 1 && (
+        <Box>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h6">MCQ Assignment Management</Typography>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => window.location.href = '/teacher/mcq-builder'}
+            >
+              Create MCQ Assignment
+            </Button>
+          </Box>
+          
+          <Card>
+            <CardContent>
+              <Typography variant="body1" color="text.secondary" align="center" sx={{ py: 4 }}>
+                MCQ Assignment Builder is now available! 
+                <br />
+                Click "Create MCQ Assignment" to build interactive multiple choice questions with automatic grading.
+              </Typography>
+              
+              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => window.location.href = '/teacher/mcq-builder'}
+                >
+                  Go to MCQ Builder
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => window.location.href = '/teacher/mcq-management'}
+                >
+                  View MCQ Assignments
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
+        </Box>
       )}
 
       {/* Create/Edit Assignment Dialog */}

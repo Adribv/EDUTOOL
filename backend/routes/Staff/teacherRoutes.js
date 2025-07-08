@@ -19,6 +19,8 @@ const studentPerformanceController = require('../../controllers/Staff/Teacher/st
 const projectActivityController = require('../../controllers/Staff/Teacher/projectActivityController');
 const parentInteractionController = require('../../controllers/Staff/Teacher/parentInteractionController');
 const feedbackController = require('../../controllers/Staff/Teacher/feedbackController');
+const teacherLeaveRequestController = require('../../controllers/Staff/Teacher/teacherLeaveRequestController');
+const mcqAssignmentController = require('../../controllers/Staff/Teacher/mcqAssignmentController');
 
 // Apply auth middleware to all routes
 router.use(verifyToken, permit('Teacher'));
@@ -123,5 +125,20 @@ router.post('/resource-requests', feedbackController.requestResource);
 router.get('/resource-requests', feedbackController.getResourceRequests);
 router.post('/curriculum-feedback', feedbackController.provideCurriculumFeedback);
 router.get('/curriculum-feedback', feedbackController.getCurriculumFeedback);
+
+// 13. Teacher Leave Request Management
+router.post('/leave-requests', teacherLeaveRequestController.submitLeaveRequest);
+router.get('/leave-requests', teacherLeaveRequestController.getMyLeaveRequests);
+router.get('/leave-requests/:requestId', teacherLeaveRequestController.getLeaveRequestById);
+router.put('/leave-requests/:requestId/cancel', teacherLeaveRequestController.cancelLeaveRequest);
+router.get('/leave-requests/stats/statistics', teacherLeaveRequestController.getLeaveStatistics);
+
+// 14. MCQ Assignment Management
+router.post('/mcq-assignments', mcqAssignmentController.createMCQAssignment);
+router.get('/mcq-assignments', mcqAssignmentController.getMCQAssignments);
+router.get('/mcq-assignments/:assignmentId', mcqAssignmentController.getMCQAssignmentById);
+router.put('/mcq-assignments/:assignmentId', mcqAssignmentController.updateMCQAssignment);
+router.delete('/mcq-assignments/:assignmentId', mcqAssignmentController.deleteMCQAssignment);
+router.get('/mcq-assignments/:assignmentId/submissions', mcqAssignmentController.getMCQSubmissions);
 
 module.exports = router;

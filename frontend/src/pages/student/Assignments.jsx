@@ -43,7 +43,8 @@ import {
   Send,
   School,
   Subject,
-  CalendarToday
+  CalendarToday,
+  Quiz as QuizIcon
 } from '@mui/icons-material';
 import { studentAPI } from '../../services/api';
 import { toast } from 'react-toastify';
@@ -231,7 +232,8 @@ const Assignments = () => {
 
   const currentAssignments = selectedTab === 0 ? pendingAssignments :
                             selectedTab === 1 ? submittedAssignments :
-                            gradedAssignments;
+                            selectedTab === 2 ? gradedAssignments :
+                            []; // MCQ assignments will be handled separately
 
   return (
     <Box sx={{ flexGrow: 1, p: 3 }}>
@@ -326,11 +328,50 @@ const Assignments = () => {
             </Badge>
           } 
         />
+        <Tab 
+          icon={<QuizIcon />}
+          label={
+            <Badge badgeContent={0} color="primary">
+              MCQ Tests
+            </Badge>
+          } 
+        />
       </Tabs>
 
       {/* Assignment Cards */}
-      <Grid container spacing={3}>
-        {currentAssignments.map((assignment) => (
+      {selectedTab === 3 ? (
+        // MCQ Assignments Section
+        <Box>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                MCQ Tests
+              </Typography>
+              <Typography variant="body2" color="text.secondary" paragraph>
+                Take interactive multiple choice question tests with automatic grading.
+              </Typography>
+              
+              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 3 }}>
+                <Button
+                  variant="contained"
+                  startIcon={<QuizIcon />}
+                  onClick={() => window.location.href = '/student/mcq-assignments-list'}
+                >
+                  View MCQ Tests
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => window.location.href = '/student/mcq-results'}
+                >
+                  View Results
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
+        </Box>
+      ) : (
+        <Grid container spacing={3}>
+          {currentAssignments.map((assignment) => (
           <Grid item xs={12} md={6} lg={4} key={assignment._id}>
             <Card sx={{ 
               height: '100%',
@@ -434,9 +475,10 @@ const Assignments = () => {
           </Grid>
         ))}
       </Grid>
+      )}
 
       {/* Empty State */}
-      {currentAssignments.length === 0 && (
+      {selectedTab !== 3 && currentAssignments.length === 0 && (
         <Card>
           <CardContent>
             <Box textAlign="center" py={4}>
@@ -447,7 +489,8 @@ const Assignments = () => {
               <Typography variant="body2" color="text.secondary">
                 {selectedTab === 0 ? 'No pending assignments at the moment' :
                  selectedTab === 1 ? 'No submitted assignments yet' :
-                 'No graded assignments available'}
+                 selectedTab === 2 ? 'No graded assignments available' :
+                 'No assignments available'}
               </Typography>
             </Box>
           </CardContent>

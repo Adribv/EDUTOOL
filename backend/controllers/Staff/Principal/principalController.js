@@ -431,6 +431,31 @@ exports.approveRequest = async (req, res) => {
       });
       createdItem = await newFee.save();
       console.log(`💰 Fee structure created: ${newFee.term} for ${newFee.class}`);
+    } else if (approval.requestType === 'Leave') {
+      // Handle teacher leave request approval
+      const leaveData = approval.requestData || {};
+      console.log('📋 Leave approval data:', {
+        approvalId: approval._id,
+        requestData: approval.requestData,
+        leaveData: leaveData
+      });
+      
+      if (leaveData.leaveRequestId) {
+        // Update the linked TeacherLeaveRequest
+        const leaveRequest = await TeacherLeaveRequest.findById(leaveData.leaveRequestId);
+        if (leaveRequest) {
+          leaveRequest.status = 'Approved';
+          leaveRequest.processedBy = req.user.id;
+          leaveRequest.processedAt = new Date();
+          leaveRequest.hodComments = comments || 'Approved by Principal';
+          await leaveRequest.save();
+          
+          createdItem = leaveRequest;
+          console.log(`✅ Teacher leave request approved: ${leaveRequest._id}`);
+        } else {
+          console.log(`⚠️ Linked leave request not found: ${leaveData.leaveRequestId}`);
+        }
+      }
     }
 
     await approval.save();
@@ -469,6 +494,23 @@ exports.rejectRequest = async (req, res) => {
 
     approval.status = 'Rejected';
     approval.currentApprover = 'Completed';
+
+    // Handle teacher leave request rejection
+    if (approval.requestType === 'Leave') {
+      const leaveData = approval.requestData || {};
+      if (leaveData.leaveRequestId) {
+        const leaveRequest = await TeacherLeaveRequest.findById(leaveData.leaveRequestId);
+        if (leaveRequest) {
+          leaveRequest.status = 'Rejected';
+          leaveRequest.processedBy = req.user.id;
+          leaveRequest.processedAt = new Date();
+          leaveRequest.hodComments = comments || 'Rejected by Principal';
+          await leaveRequest.save();
+          
+          console.log(`❌ Teacher leave request rejected: ${leaveRequest._id}`);
+        }
+      }
+    }
 
     await approval.save();
 

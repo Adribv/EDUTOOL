@@ -26,7 +26,7 @@ const teacherLeaveRequestSchema = new mongoose.Schema({
   attachmentUrl: String,
   status: { 
     type: String, 
-    enum: ['Pending', 'Approved', 'Rejected'], 
+    enum: ['Pending', 'Approved', 'Rejected', 'Cancelled'], 
     default: 'Pending' 
   },
   hodComments: String,

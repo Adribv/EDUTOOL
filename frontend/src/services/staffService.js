@@ -1,4 +1,5 @@
 import api from './api';
+import teacherAPI from './teacherAPI';
 
 const staffService = {
   // Calendar
@@ -31,6 +32,8 @@ const staffService = {
   // Profile
   getProfile: () => api.get('/staff/profile'),
   updateProfile: (data) => api.put('/staff/profile', data),
+  // MCQ Assignments
+  getMCQAssignments: teacherAPI.getMCQAssignments,
 };
 
 export default staffService; 

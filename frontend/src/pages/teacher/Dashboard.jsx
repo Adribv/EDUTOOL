@@ -36,6 +36,7 @@ import Exams from './Exams';
 import LearningResources from './LearningResources';
 import Communication from './Communication';
 import LeaveRequests from './LeaveRequests';
+import TeacherLeaveRequests from './TeacherLeaveRequests';
 
 // Feature tabs configuration
 const featureTabs = [
@@ -49,6 +50,7 @@ const featureTabs = [
   { label: 'Grades', icon: <Grade />, key: 'grades' },
   { label: 'Students', icon: <Group />, key: 'students' },
   { label: 'Leave Requests', icon: <Event />, key: 'leaveRequests' },
+  { label: "Teacher's Leave", icon: <Assignment />, key: 'teacherLeaveRequests' },
   { label: 'Resources', icon: <Book />, key: 'resources' },
   { label: 'Lesson Plans', icon: <Work />, key: 'lessonPlans' },
   { label: 'Communication', icon: <Message />, key: 'communication' },
@@ -390,7 +392,7 @@ function DashboardOverview() {
                       <TableCell>
                         {request.studentId?.name || 'Unknown Student'}
                       </TableCell>
-                      <TableCell>{request.leaveType}</TableCell>
+                      <TableCell>{request.leaveType || request.type || 'General'}</TableCell>
                       <TableCell>{new Date(request.startDate).toLocaleDateString()}</TableCell>
                       <TableCell>{new Date(request.endDate).toLocaleDateString()}</TableCell>
                       <TableCell>
@@ -1275,7 +1277,7 @@ function CoordinatorPortal() {
           <Accordion defaultExpanded>
             <AccordionSummary expandIcon={<ExpandMore />}><Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}><Typography variant="h6"><Assignment sx={{ mr: 1, verticalAlign: 'middle' }} />Leave Requests</Typography>{dashboardData.stats?.pendingLeaveRequests > 0 && (<Badge badgeContent={dashboardData.stats.pendingLeaveRequests} color="error" sx={{ ml: 'auto' }} />)}</Box></AccordionSummary>
             <AccordionDetails>
-              <TableContainer><Table size="small"><TableHead><TableRow><TableCell>Student</TableCell><TableCell>Type</TableCell><TableCell>Dates</TableCell><TableCell>Status</TableCell><TableCell>Actions</TableCell></TableRow></TableHead><TableBody>{dashboardData.pendingLeaveRequests?.map((request) => (<TableRow key={request._id}><TableCell><Box><Typography variant="body2" fontWeight="bold">{request.studentId?.name || request.studentName}</Typography><Typography variant="caption" color="text.secondary">{request.studentId?.class || request.studentClass} - {request.studentId?.section || request.studentSection}</Typography></Box></TableCell><TableCell>{request.leaveType}</TableCell><TableCell><Typography variant="caption">{new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}</Typography></TableCell><TableCell><Chip label={request.status} color={request.status === 'Approved' ? 'success' : request.status === 'Rejected' ? 'error' : 'warning'} size="small" /></TableCell><TableCell>{request.status === 'Pending' && (<Box><Tooltip title="Approve"><IconButton size="small" color="success" onClick={() => handleApproveLeave(request._id)} sx={{ mr: 1 }}><CheckCircle /></IconButton></Tooltip><Tooltip title="Reject"><IconButton size="small" color="error" onClick={() => handleRejectLeave(request._id)}><Cancel /></IconButton></Tooltip></Box>)}</TableCell></TableRow>))}{(!dashboardData.pendingLeaveRequests || dashboardData.pendingLeaveRequests.length === 0) && (<TableRow><TableCell colSpan={5} align="center">No pending leave requests</TableCell></TableRow>)}</TableBody></Table></TableContainer>
+              <TableContainer><Table size="small"><TableHead><TableRow><TableCell>Student</TableCell><TableCell>Type</TableCell><TableCell>Dates</TableCell><TableCell>Status</TableCell><TableCell>Actions</TableCell></TableRow></TableHead><TableBody>{dashboardData.pendingLeaveRequests?.map((request) => (<TableRow key={request._id}><TableCell><Box><Typography variant="body2" fontWeight="bold">{request.studentId?.name || request.studentName}</Typography><Typography variant="caption" color="text.secondary">{request.studentId?.class || request.studentClass} - {request.studentId?.section || request.studentSection}</Typography></Box></TableCell><TableCell>{request.leaveType || request.type || 'General'}</TableCell><TableCell><Typography variant="caption">{new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}</Typography></TableCell><TableCell><Chip label={request.status} color={request.status === 'Approved' ? 'success' : request.status === 'Rejected' ? 'error' : 'warning'} size="small" /></TableCell><TableCell>{request.status === 'Pending' && (<Box><Tooltip title="Approve"><IconButton size="small" color="success" onClick={() => handleApproveLeave(request._id)} sx={{ mr: 1 }}><CheckCircle /></IconButton></Tooltip><Tooltip title="Reject"><IconButton size="small" color="error" onClick={() => handleRejectLeave(request._id)}><Cancel /></IconButton></Tooltip></Box>)}</TableCell></TableRow>))}{(!dashboardData.pendingLeaveRequests || dashboardData.pendingLeaveRequests.length === 0) && (<TableRow><TableCell colSpan={5} align="center">No pending leave requests</TableCell></TableRow>)}</TableBody></Table></TableContainer>
             </AccordionDetails>
           </Accordion>
         </Grid>
@@ -1349,8 +1351,10 @@ export default function TeacherDashboard() {
       case 9:
         return <LeaveRequests />;
       case 10:
-        return <LearningResources />;
+        return <TeacherLeaveRequests />;
       case 11:
+        return <LearningResources />;
+      case 12:
         return <div>Lesson Plans Component</div>;
       case 12:
         return <Communication />;

@@ -16,6 +16,7 @@ const attendanceController = require('../../controllers/Student/attendanceContro
 const examinationController = require('../../controllers/Student/examinationController');
 const learningResourcesController = require('../../controllers/Student/learningResourcesController');
 const passwordLookupController = require('../../controllers/Student/passwordLookupController');
+const mcqController = require('../../controllers/Student/mcqController');
 
 // Auth routes
 router.post('/login', studentAuth.login);
@@ -78,6 +79,13 @@ router.get('/homework-submissions', homeworkController.getHomeworkSubmissions);
 
 // Document routes
 router.get('/documents', documentController.getDocuments);
+
+// MCQ Assignment routes
+router.get('/mcq-assignments', mcqController.getMCQAssignments);
+router.get('/mcq-assignments/:assignmentId', mcqController.getMCQAssignmentById);
+router.post('/mcq-assignments/:assignmentId/start', mcqController.startMCQAssignment);
+router.post('/mcq-assignments/:assignmentId/submit', mcqController.submitMCQAssignment);
+router.get('/mcq-assignments/:assignmentId/results', mcqController.getMCQSubmissionResults);
 
 // Password Lookup routes (public routes - no authentication required)
 router.post('/password-lookup/request', passwordLookupController.requestPasswordLookup);

@@ -37,6 +37,7 @@ import {
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
   Schedule as ScheduleIcon,
+  Quiz as QuizIcon,
 } from '@mui/icons-material';
 import { teacherAPI } from '../../services/api';
 import { toast } from 'react-toastify';
@@ -194,6 +195,7 @@ const AssignmentManagement = () => {
           <Tab icon={<AssignmentIcon />} label="Assignments" />
           <Tab icon={<CheckCircleIcon />} label="Submissions" />
           <Tab icon={<ScheduleIcon />} label="Schedule" />
+          <Tab icon={<QuizIcon />} label="MCQ Assignments" />
         </Tabs>
       </Box>
 
@@ -346,6 +348,46 @@ const AssignmentManagement = () => {
             </TableBody>
           </Table>
         </TableContainer>
+      )}
+
+      {activeTab === 3 && (
+        <Box>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h6">MCQ Assignment Management</Typography>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => window.location.href = '/teacher/mcq-builder'}
+            >
+              Create MCQ Assignment
+            </Button>
+          </Box>
+          
+          <Card>
+            <CardContent>
+              <Typography variant="body1" color="text.secondary" align="center" sx={{ py: 4 }}>
+                MCQ Assignment Builder is now available! 
+                <br />
+                Click "Create MCQ Assignment" to build interactive multiple choice questions with automatic grading.
+              </Typography>
+              
+              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => window.location.href = '/teacher/mcq-builder'}
+                >
+                  Go to MCQ Builder
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => window.location.href = '/teacher/mcq-management'}
+                >
+                  View MCQ Assignments
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
+        </Box>
       )}
 
       <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
