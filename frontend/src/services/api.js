@@ -692,6 +692,11 @@ export const adminAPI = {
   createSchedule: (data)=>api.post('/api/admin-staff/schedules', data),
   updateSchedule:(id,data)=>api.put(`/api/admin-staff/schedules/${id}`,data),
   deleteSchedule:(id)=>api.delete(`/api/admin-staff/schedules/${id}`),
+
+  // Visitor Management
+  getVisitors: () => api.get('/api/admin-staff/visitors').then(res => res.data),
+  addVisitor: (data) => api.post('/api/admin-staff/visitors', data),
+  updateVisitorExit: (id, data={}) => api.put(`/api/admin-staff/visitors/${id}/exit`, data),
 };
 
 // Teacher API functions

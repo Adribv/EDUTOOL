@@ -26,6 +26,11 @@ const visitorSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  parentName: String,
+  wardPickup: {
+    type: Boolean,
+    default: false,
+  },
   entryTime: {
     type: Date,
     default: Date.now

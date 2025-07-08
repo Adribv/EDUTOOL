@@ -2877,10 +2877,12 @@ exports.recordVisitor = async (req, res) => {
       contactNumber,
       purpose,
       whomToMeet,
+      parentName,
       idProofType,
       idProofNumber,
       entryTime,
-      expectedExitTime
+      expectedExitTime,
+      wardPickup
     } = req.body;
 
     const newVisitor = new Visitor({
@@ -2888,10 +2890,12 @@ exports.recordVisitor = async (req, res) => {
       contactNumber,
       purpose,
       whomToMeet,
+      parentName,
       idProofType,
       idProofNumber,
       entryTime: entryTime || new Date(),
       expectedExitTime,
+      wardPickup,
       status: 'Inside'
     });
 
@@ -2905,6 +2909,7 @@ exports.recordVisitor = async (req, res) => {
         name: newVisitor.name,
         purpose: newVisitor.purpose,
         whomToMeet: newVisitor.whomToMeet,
+        parentName: newVisitor.parentName,
         entryTime: newVisitor.entryTime,
         expectedExitTime: newVisitor.expectedExitTime
       }

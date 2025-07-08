@@ -46,6 +46,7 @@ import {
   Book,
   Psychology,
   Security,
+  Group as GroupIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import Logo from './Logo';
@@ -141,7 +142,8 @@ const Layout = () => {
             'A_Schedules': <CalendarToday />,
             'Exams': <Assignment />, 
             'Results': <Assessment />, 
-            'SystemSettings': <Settings />
+            'SystemSettings': <Settings />,
+            'Visitors': <GroupIcon />,
           };
           return {
             text: item.replace(/_/g, ' '),
@@ -199,6 +201,7 @@ const Layout = () => {
         { text: 'System Settings', icon: <Settings />, path: '/admin/settings' },
         { text: 'User Management', icon: <People />, path: '/admin/users' },
         { text: 'Reports', icon: <Assessment />, path: '/admin/reports' },
+        { text: 'Visitors', icon: <GroupIcon />, path: '/admin/Visitors' },
       ],
       ITAdmin: [
         { text: 'IT Admin Dashboard', icon: <Dashboard />, path: '/itadmin/dashboard' },
@@ -289,13 +292,13 @@ const Layout = () => {
               mb: 0.5,
               minHeight: 48,
               '&.Mui-selected': {
-                backgroundColor: 'rgba(59, 130, 246, 0.15)',
-                color: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.25)',
+                color: 'white',
                 '&:hover': {
-                  backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                  backgroundColor: 'rgba(59, 130, 246, 0.3)',
                 },
                 '& .MuiListItemIcon-root': {
-                  color: '#3b82f6',
+                  color: 'white',
                 },
               },
               '&:hover': {
@@ -316,7 +319,8 @@ const Layout = () => {
                 sx={{ 
                   '& .MuiTypography-root': { 
                     fontSize: '0.875rem',
-                    fontWeight: isActiveRoute(item.path) ? 600 : 500
+                    fontWeight: isActiveRoute(item.path) ? 600 : 500,
+                    color: 'white'
                   } 
                 }} 
               />
