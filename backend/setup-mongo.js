@@ -3,14 +3,14 @@ const bcrypt = require('bcryptjs');
 const Parent = require('./models/Parent/parentModel');
 const Student = require('./models/Student/studentModel');
 
-console.log('🚀 EduRays Parent Portal Setup');
+console.log('🚀 EDULIVES Parent Portal Setup');
 console.log('================================\n');
 
 // Check if MongoDB is available
 async function checkMongoDB() {
   try {
     // Try to connect to MongoDB
-    const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/edurays';
+    const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/EDULIVES';
     console.log('🔍 Checking MongoDB connection...');
     console.log(`📡 Connection string: ${mongoURI}`);
     

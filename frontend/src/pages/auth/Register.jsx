@@ -178,7 +178,7 @@ function Register() {
                 color: 'white',
               }}
             >
-              EDURAYS
+              EDULIVES
             </Typography>
             <Typography
               variant="h2"
@@ -243,7 +243,7 @@ function Register() {
                 fontSize: { xs: '0.875rem', sm: '1rem' },
               }}
             >
-              Join EDURAYS to start your journey
+              Join EDULIVES to start your journey
             </Typography>
 
             {error && (

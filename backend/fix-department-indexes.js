@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 // Connect to MongoDB
-const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/edurays';
+const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/EDULIVES';
 
 async function fixDepartmentIndexes() {
   try {

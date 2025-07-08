@@ -161,7 +161,7 @@ function ParentLogin() {
                 color: 'white',
               }}
             >
-              EDURAYS
+              EDULIVES
             </Typography>
             <Typography
               variant="h2"

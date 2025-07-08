@@ -117,7 +117,7 @@ const Fees = () => {
       </Typography>
 
       <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+        <Grid xs={12} md={6}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -139,7 +139,7 @@ const Fees = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid xs={12} md={6}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -156,7 +156,7 @@ const Fees = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12}>
+        <Grid xs={12}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -199,7 +199,7 @@ const Fees = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12}>
+        <Grid xs={12}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>

@@ -165,7 +165,7 @@ function Login() {
                 color: 'white',
               }}
             >
-              EDURAYS
+              EDULIVES
             </Typography>
             <Typography
               variant="h2"

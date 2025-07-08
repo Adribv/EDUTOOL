@@ -559,11 +559,11 @@ exports.getSchoolInfo = async (req, res) => {
   try {
     // This would typically fetch from a school settings model
     const schoolInfo = {
-      name: 'EduRays School',
+      name: 'EDULIVES School',
       address: '123 Education Street, Learning City',
       phone: '+1234567890',
-      email: 'info@edurays.edu',
-      website: 'www.edurays.edu',
+      email: 'info@EDULIVES.edu',
+      website: 'www.EDULIVES.edu',
       established: '2010',
       principal: req.user.name
     };

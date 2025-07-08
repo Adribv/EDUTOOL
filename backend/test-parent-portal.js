@@ -5,7 +5,7 @@ const Announcement = require('./models/Communication/announcementModel');
 const Event = require('./models/Admin/eventModel');
 
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/edurays', {
+mongoose.connect('mongodb://localhost:27017/EDULIVES', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });

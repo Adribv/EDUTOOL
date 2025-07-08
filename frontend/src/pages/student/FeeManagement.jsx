@@ -46,13 +46,21 @@ const FeeManagement = () => {
         studentService.getFeeStructure(),
         studentService.getPaymentStatus(),
       ]);
-      const structure = structureResponse.data;
+      
+      console.log('Fee structure response:', structureResponse);
+      console.log('Payment status response:', statusResponse);
+      
+      // Handle fee structure data
+      const structure = structureResponse.data || structureResponse;
       const components = Array.isArray(structure) ? structure : (structure.components || []);
       setFeeStructure(components);
-      const paymentsData = statusResponse.data;
+      
+      // Handle payment status data
+      const paymentsData = statusResponse.data || statusResponse;
       const payments = Array.isArray(paymentsData) ? paymentsData : (paymentsData.paymentHistory || []);
       setPaymentStatus(payments);
-    } catch {
+    } catch (error) {
+      console.error('Error fetching fee data:', error);
       toast.error('Failed to load fee data');
     } finally {
       setLoading(false);
@@ -81,6 +89,8 @@ const FeeManagement = () => {
   };
 
   const getStatusColor = (status) => {
+    if (!status) return 'default';
+    
     switch (status.toLowerCase()) {
       case 'paid':
         return 'success';
@@ -107,6 +117,40 @@ const FeeManagement = () => {
         Fee Management
       </Typography>
 
+      {/* Fee Summary */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid item xs={12} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>Current Balance</Typography>
+              <Typography variant="h4" color="success.main">
+                ₹{paymentStatus.currentBalance || 0}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>Due Amount</Typography>
+              <Typography variant="h4" color="error.main">
+                ₹{paymentStatus.dueAmount || 0}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>Due Date</Typography>
+              <Typography variant="h4" color="warning.main">
+                {paymentStatus.dueDate || 'Not specified'}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
           <Card>
@@ -126,39 +170,61 @@ const FeeManagement = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {feeStructure.map((fee) => (
-                      <TableRow key={fee.id}>
-                        <TableCell>{fee.type}</TableCell>
-                        <TableCell>₹{fee.amount}</TableCell>
-                        <TableCell>{new Date(fee.dueDate).toLocaleDateString()}</TableCell>
-                        <TableCell>
-                          <Chip
-                            label={fee.status}
-                            color={getStatusColor(fee.status)}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {fee.status.toLowerCase() === 'pending' && (
-                            <Button
-                              variant="contained"
-                              color="primary"
+                    {feeStructure.length > 0 ? (
+                      feeStructure.map((fee, index) => (
+                        <TableRow key={fee._id || fee.id || `fee-${index}`}>
+                          <TableCell>{fee.name || fee.type || 'Fee Component'}</TableCell>
+                          <TableCell>₹{fee.amount || 0}</TableCell>
+                          <TableCell>
+                            {fee.dueDate ? 
+                              (fee.dueDate instanceof Date ? 
+                                fee.dueDate.toLocaleDateString() : 
+                                new Date(fee.dueDate).toLocaleDateString()
+                              ) : 
+                              'Not specified'
+                            }
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={fee.status || 'Pending'}
+                              color={getStatusColor(fee.status)}
                               size="small"
-                              onClick={() => {
-                                setSelectedFee(fee);
-                                setPaymentDetails({
-                                  ...paymentDetails,
-                                  amount: fee.amount,
-                                });
-                                setPaymentDialog(true);
-                              }}
-                            >
-                              Pay Now
-                            </Button>
-                          )}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            {(fee.status && fee.status.toLowerCase() === 'pending') || !fee.status ? (
+                              <Button
+                                variant="contained"
+                                color="primary"
+                                size="small"
+                                onClick={() => {
+                                  setSelectedFee(fee);
+                                  setPaymentDetails({
+                                    ...paymentDetails,
+                                    amount: fee.amount || 0,
+                                  });
+                                  setPaymentDialog(true);
+                                }}
+                              >
+                                Pay Now
+                              </Button>
+                            ) : (
+                              <Typography variant="body2" color="text.secondary">
+                                {fee.status}
+                              </Typography>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={5} align="center">
+                          <Typography variant="body2" color="text.secondary">
+                            No fee structure available
+                          </Typography>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -184,21 +250,39 @@ const FeeManagement = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {paymentStatus.map((payment) => (
-                      <TableRow key={payment.id}>
-                        <TableCell>{new Date(payment.date).toLocaleDateString()}</TableCell>
-                        <TableCell>{payment.feeType}</TableCell>
-                        <TableCell>₹{payment.amount}</TableCell>
-                        <TableCell>{payment.paymentMethod}</TableCell>
-                        <TableCell>
-                          <Chip
-                            label={payment.status}
-                            color={getStatusColor(payment.status)}
-                            size="small"
-                          />
+                    {paymentStatus.length > 0 ? (
+                      paymentStatus.map((payment, index) => (
+                        <TableRow key={payment._id || payment.id || `payment-${index}`}>
+                          <TableCell>
+                            {payment.date ? 
+                              (payment.date instanceof Date ? 
+                                payment.date.toLocaleDateString() : 
+                                new Date(payment.date).toLocaleDateString()
+                              ) : 
+                              'Not specified'
+                            }
+                          </TableCell>
+                          <TableCell>{payment.description || payment.feeType || 'Fee Payment'}</TableCell>
+                          <TableCell>₹{payment.amount || payment.amountPaid || 0}</TableCell>
+                          <TableCell>{payment.method || payment.paymentMethod || 'Not specified'}</TableCell>
+                          <TableCell>
+                            <Chip
+                              label={payment.status || 'Completed'}
+                              color={getStatusColor(payment.status)}
+                              size="small"
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={5} align="center">
+                          <Typography variant="body2" color="text.secondary">
+                            No payment history available
+                          </Typography>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </TableContainer>
