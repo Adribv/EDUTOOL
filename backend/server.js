@@ -12,8 +12,7 @@ const app = express();
 
 // Enable CORS for all routes
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000' || 'https://edulives.com' || 'https://api.edulives.com', // Your frontend URL
-  credentials: true
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3000' || 'https://edulives.com',
 }));
 
 app.use(express.json());
