@@ -10,10 +10,20 @@ const fs = require('fs');
 dotenv.config();
 const app = express();
 
-// Enable CORS for all routes
+const allowedOrigins = ['http://localhost:3000', 'https://edulives.com'];
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000' || 'https://edulives.com',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS: ' + origin));
+    }
+  },
+  credentials: true, // Optional: needed if you send cookies
 }));
+
 
 app.use(express.json());
 
