@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const BASE_URL = 'https://api.edulives.com';
+const BASE_URL = 'https://api.edulives.com/api';
 
 async function testHODAPI() {
   try {

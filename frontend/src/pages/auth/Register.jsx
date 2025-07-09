@@ -80,7 +80,7 @@ function Register() {
 
   const registerMutation = useMutation({
     mutationFn: async (values) => {
-      const response = await axios.post('https://api.edulives.com/staffs/register', values);
+      const response = await axios.post('https://api.edulives.com/api/staffs/register', values);
       return response.data;
     },
     onSuccess: (data) => {
