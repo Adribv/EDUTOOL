@@ -58,7 +58,7 @@ function Teachers() {
   const { data: teachers, isLoading } = useQuery({
     queryKey: ['teachers'],
     queryFn: async () => {
-      const response = await axios.get('https://api.edulives.com/admin/teachers');
+      const response = await axios.get('https://api.edulives.com/api/admin/teachers');
       return response.data;
     }
   });
@@ -67,9 +67,9 @@ function Teachers() {
   const mutation = useMutation({
     mutationFn: async (values) => {
       if (selectedTeacher) {
-        await axios.put(`https://api.edulives.com/admin/teachers/${selectedTeacher.id}`, values);
+        await axios.put(`https://api.edulives.com/api/admin/teachers/${selectedTeacher.id}`, values);
       } else {
-        await axios.post('https://api.edulives.com/admin/teachers', values);
+        await axios.post('https://api.edulives.com/api/admin/teachers', values);
       }
     },
     onSuccess: () => {
@@ -93,7 +93,7 @@ function Teachers() {
   // Delete teacher mutation
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
-      await axios.delete(`https://api.edulives.com/admin/teachers/${id}`);
+      await axios.delete(`https://api.edulives.com/api/admin/teachers/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['teachers']);
