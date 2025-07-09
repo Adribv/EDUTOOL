@@ -65,12 +65,13 @@ const MCQResults = () => {
   const loadResults = async () => {
     try {
       setLoading(true);
-      const response = await studentAPI.getMCQResults(assignmentId);
+      const response = await studentAPI.getMCQSubmissionResults(assignmentId);
+      console.log('MCQ Results response:', response.data);
       setResults(response.data);
     } catch (error) {
       console.error('Error loading MCQ results:', error);
       toast.error('Failed to load results');
-      navigate('/student/assignments');
+      navigate('/student/mcq-assignments-list');
     } finally {
       setLoading(false);
     }
@@ -124,7 +125,17 @@ const MCQResults = () => {
     );
   }
 
+  // Destructure with null checks
   const { assignment, submission, performance } = results;
+
+  // Additional safety checks
+  if (!assignment || !submission || !performance) {
+    return (
+      <Box p={3}>
+        <Alert severity="error">Invalid results data structure</Alert>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ p: 3, maxWidth: 1200, mx: 'auto' }}>
@@ -241,65 +252,73 @@ const MCQResults = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {submission.answers.map((answer, index) => {
-                      const question = assignment.questions[index];
-                      const isCorrect = answer.isCorrect;
-                      const selectedOption = question.options[answer.selectedOption];
-                      const correctOption = question.options.find(opt => opt.isCorrect);
-                      
-                      return (
-                        <TableRow key={index}>
-                          <TableCell>
-                            <Typography variant="body2">
-                              {question.question.substring(0, 50)}...
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              {isCorrect ? (
-                                <CheckCircleIcon color="success" fontSize="small" />
-                              ) : (
-                                <CancelIcon color="error" fontSize="small" />
-                              )}
+                    {submission.answers
+                      .map((answer, index) => {
+                        const question = assignment.questions.find(q => q._id.toString() === answer.questionId);
+                        if (!question) {
+                          console.warn('Question not found for answer:', answer);
+                          return null;
+                        }
+                        
+                        const isCorrect = answer.isCorrect;
+                        const selectedOption = question.options[answer.selectedOption];
+                        const correctOption = question.options.find(opt => opt.isCorrect);
+                        
+                        return (
+                          <TableRow key={answer.questionId || index}>
+                            <TableCell>
                               <Typography variant="body2">
-                                {selectedOption?.text || 'Not answered'}
+                                {question.question.substring(0, 50)}...
                               </Typography>
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2">
-                              {correctOption?.text}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              label={isCorrect ? 'Correct' : 'Incorrect'}
-                              color={isCorrect ? 'success' : 'error'}
-                              size="small"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2">
-                              {isCorrect ? question.points : 0} / {question.points}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Tooltip title="View Details">
-                              <IconButton
+                            </TableCell>
+                            <TableCell>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                {isCorrect ? (
+                                  <CheckCircleIcon color="success" fontSize="small" />
+                                ) : (
+                                  <CancelIcon color="error" fontSize="small" />
+                                )}
+                                <Typography variant="body2">
+                                  {selectedOption?.text || 'Not answered'}
+                                </Typography>
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="body2">
+                                {correctOption?.text}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                label={isCorrect ? 'Correct' : 'Incorrect'}
+                                color={isCorrect ? 'success' : 'error'}
                                 size="small"
-                                onClick={() => handleViewQuestionDetails({
-                                  ...question,
-                                  studentAnswer: answer,
-                                  questionIndex: index
-                                })}
-                              >
-                                <VisibilityIcon />
-                              </IconButton>
-                            </Tooltip>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="body2">
+                                {isCorrect ? question.points : 0} / {question.points}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Tooltip title="View Details">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleViewQuestionDetails({
+                                    ...question,
+                                    studentAnswer: answer,
+                                    questionIndex: index
+                                  })}
+                                >
+                                  <VisibilityIcon />
+                                </IconButton>
+                              </Tooltip>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                      .filter(Boolean)
+                    }
                   </TableBody>
                 </Table>
               </TableContainer>

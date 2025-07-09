@@ -301,11 +301,11 @@ export const adminAPI = {
         childRollNumbers: payload.childRollNumbers || []
       };
     } else if (role === 'teacher') {
-      dataToSend.role = 'Teacher';
+        dataToSend.role = 'Teacher';
     } else if (role === 'accountant') {
       dataToSend.role = 'Accountant';
-    } else {
-      dataToSend.role = 'AdminStaff';
+      } else {
+        dataToSend.role = 'AdminStaff';
     }
 
     return api.post(endpoint, dataToSend);
@@ -346,11 +346,11 @@ export const adminAPI = {
         childRollNumbers: payload.childRollNumbers || []
       };
     } else if (role === 'teacher') {
-      dataToSend.role = 'Teacher';
+        dataToSend.role = 'Teacher';
     } else if (role === 'accountant') {
       dataToSend.role = 'Accountant';
-    } else {
-      dataToSend.role = 'AdminStaff';
+      } else {
+        dataToSend.role = 'AdminStaff';
     }
 
     return api.put(endpoint, dataToSend);
@@ -381,15 +381,16 @@ export const adminAPI = {
   updateInventoryItem: (id, data) => api.put(`/api/admin-staff/inventory/${id}`, data),
   deleteInventoryItem: (id) => api.delete(`/api/admin-staff/inventory/${id}`),
 
-  // Enquiries
-  getEnquiries: () => api.get('/api/admin-staff/enquiries').then(res=>res.data),
-  replyEnquiry: (id, reply) => api.put(`/api/admin-staff/enquiries/${id}/reply`, { reply }).then(res=>res.data),
-  updateEnquiryStatus: (id, status) => api.put(`/api/admin-staff/enquiries/${id}/status`, { status }).then(res=>res.data),
+  // Enquiry Management
+  getEnquiries: (params) => api.get('/api/admin-staff/enquiries', { params }),
+  createEnquiry: (data) => api.post('/api/admin-staff/enquiries', data),
+  updateEnquiry: (id, data) => api.put(`/api/admin-staff/enquiries/${id}`, data),
+  getEnquiryStats: () => api.get('/api/admin-staff/enquiries/stats'),
 
   // Supplier Request Management
   getSupplierRequests: (params) => api.get('/api/admin-staff/supplier-requests', { params }),
   getSupplierRequestById: (id) => api.get(`/api/admin-staff/supplier-requests/${id}`),
-  createSupplierRequest: (data) => api.post('/api/admin-staff/supplier-requests', data).then(res=>res.data),
+  createSupplierRequest: (data) => api.post('/api/admin-staff/supplier-requests', data),
   updateSupplierRequest: (id, data) => api.put(`/api/admin-staff/supplier-requests/${id}`, data),
   deleteSupplierRequest: (id) => api.delete(`/api/admin-staff/supplier-requests/${id}`),
   addSupplierRequestNote: (id, data) => api.post(`/api/admin-staff/supplier-requests/${id}/notes`, data),
@@ -721,13 +722,6 @@ export const adminAPI = {
   getVisitors: () => api.get('/api/admin-staff/visitors').then(res => res.data),
   addVisitor: (data) => api.post('/api/admin-staff/visitors', data),
   updateVisitorExit: (id, data={}) => api.put(`/api/admin-staff/visitors/${id}/exit`, data),
-
-  // Supplier & Supply Request
-  getSuppliers: () => api.get('/api/admin-staff/suppliers').then(res=>res.data),
-  addSupplier: (data) => api.post('/api/admin-staff/suppliers', data).then(res=>res.data),
-  createSupplyRequest: (data) => api.post('/api/admin-staff/supply-requests', data).then(res=>res.data),
-  getSupplyRequests: () => api.get('/api/admin-staff/supply-requests').then(res=>res.data),
-  updateSupplyRequestStatus: (id,status) => api.put(`/api/admin-staff/supply-requests/${id}/status`, { status }).then(res=>res.data),
 };
 
 // Teacher API functions

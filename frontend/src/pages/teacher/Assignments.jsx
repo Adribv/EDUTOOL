@@ -495,7 +495,7 @@ const Assignments = () => {
       {selectedTab === 0 && (
         <>
           {/* Regular Assignments Grid */}
-          {filteredAssignments.length > 0 ? (
+      {filteredAssignments.length > 0 ? (
         <Grid container spacing={3}>
           {filteredAssignments.map((assignment) => (
             <Grid item xs={12} md={6} lg={4} key={assignment._id}>

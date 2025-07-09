@@ -74,7 +74,7 @@ const MCQAssignmentsList = () => {
                 </Typography>
                 <Button
                   variant="contained"
-                  onClick={() => navigate(`/mcq-test/${assignment._id}`)}
+                  onClick={() => navigate(`/student/mcq-test/${assignment._id}`)}
                   disabled={assignment.isOverdue}
                 >
                   {assignment.isOverdue ? 'Closed' : 'Start Test'}

@@ -5,25 +5,8 @@ const Staff = require('./models/Staff/staffModel');
 
 async function debugMCQ() {
   try {
-    // Use the same MongoDB Atlas connection string as the main app
-    const mongoURI = 'mongodb+srv://EDULIVES:EDULIVES123@ac-l2bmyna-shard-00-00.uno4ffz.mongodb.net:27017,ac-l2bmyna-shard-00-01.uno4ffz.mongodb.net:27017,ac-l2bmyna-shard-00-02.uno4ffz.mongodb.net:27017/EDULIVES?ssl=true&replicaSet=atlas-14b8sh-shard-0&authSource=admin&retryWrites=true&w=majority';
-    
-    await mongoose.connect(mongoURI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 30000,
-      socketTimeoutMS: 60000,
-      connectTimeoutMS: 30000,
-      maxPoolSize: 10,
-      minPoolSize: 2,
-      maxIdleTimeMS: 30000,
-      retryWrites: true,
-      retryReads: true,
-      heartbeatFrequencyMS: 10000,
-      bufferCommands: true,
-    });
-    
-    console.log('Connected to MongoDB Atlas');
+    await mongoose.connect('mongodb://localhost:27017/edulives');
+    console.log('Connected to database');
 
     console.log('\n=== MCQ ASSIGNMENTS ===');
     const assignments = await MCQAssignment.find({}).populate('createdBy', 'name email');

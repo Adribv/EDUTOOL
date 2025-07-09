@@ -2,6 +2,72 @@ const MCQAssignment = require('../../models/Staff/Teacher/mcqAssignment.model');
 const MCQSubmission = require('../../models/Staff/Teacher/mcqSubmission.model');
 const Student = require('../../models/Student/studentModel');
 
+// Helper function to normalize class formats for comparison
+const normalizeClass = (classValue) => {
+  if (!classValue) return '';
+  
+  // Remove any non-alphanumeric characters and convert to string
+  const cleanClass = String(classValue).replace(/[^a-zA-Z0-9]/g, '');
+  
+  // Extract numeric part (grade) and alphabetic part (section)
+  const gradeMatch = cleanClass.match(/^(\d+)/);
+  const sectionMatch = cleanClass.match(/([A-Za-z]+)$/);
+  
+  if (gradeMatch && sectionMatch) {
+    // Format like "12C" -> grade: "12", section: "C"
+    return {
+      grade: gradeMatch[1],
+      section: sectionMatch[1].toUpperCase(),
+      fullClass: cleanClass
+    };
+  } else if (gradeMatch) {
+    // Format like "12" -> grade: "12", section: ""
+    return {
+      grade: gradeMatch[1],
+      section: '',
+      fullClass: cleanClass
+    };
+  } else {
+    // Fallback
+    return {
+      grade: cleanClass,
+      section: '',
+      fullClass: cleanClass
+    };
+  }
+};
+
+// Helper function to check if classes match (handles different formats)
+const classesMatch = (studentClass, assignmentClass, studentSection, assignmentSection) => {
+  const studentNormalized = normalizeClass(studentClass);
+  const assignmentNormalized = normalizeClass(assignmentClass);
+  
+  // Direct match
+  if (studentClass === assignmentClass && studentSection === assignmentSection) {
+    return true;
+  }
+  
+  // Handle cases like student: "12C" vs assignment: "12" + "C"
+  if (studentNormalized.grade === assignmentNormalized.grade && 
+      (studentNormalized.section === assignmentSection || 
+       studentSection === assignmentNormalized.section ||
+       studentNormalized.section === assignmentNormalized.section)) {
+    return true;
+  }
+  
+  // Handle cases where student class includes section (e.g., "12C") and assignment has separate class/section
+  if (studentNormalized.fullClass === assignmentClass && studentSection === assignmentSection) {
+    return true;
+  }
+  
+  // Handle cases where assignment class includes section (e.g., "12C") and student has separate class/section
+  if (assignmentNormalized.fullClass === studentClass && studentSection === assignmentSection) {
+    return true;
+  }
+  
+  return false;
+};
+
 // Get MCQ assignments for student
 exports.getMCQAssignments = async (req, res) => {
   try {
@@ -10,14 +76,17 @@ exports.getMCQAssignments = async (req, res) => {
       return res.status(404).json({ message: 'Student not found' });
     }
 
-    // Get MCQ assignments for student's class
-    const assignments = await MCQAssignment.find({
-      class: student.class,
-      section: student.section,
+    // Get MCQ assignments for student's class (with flexible class matching)
+    const allAssignments = await MCQAssignment.find({
       status: 'Active'
     })
     .populate('createdBy', 'name email')
     .sort({ dueDate: 1 });
+
+    // Filter assignments that match the student's class using flexible matching
+    const assignments = allAssignments.filter(assignment => 
+      classesMatch(student.class, assignment.class, student.section, assignment.section)
+    );
 
     // Get student's submissions
     const submissions = await MCQSubmission.find({
@@ -74,8 +143,8 @@ exports.getMCQAssignmentById = async (req, res) => {
       return res.status(404).json({ message: 'MCQ Assignment not found' });
     }
 
-    // Check if student is in the correct class
-    if (assignment.class !== student.class || assignment.section !== student.section) {
+    // Check if student is in the correct class (with flexible matching)
+    if (!classesMatch(student.class, assignment.class, student.section, assignment.section)) {
       return res.status(403).json({ message: 'You do not have access to this assignment' });
     }
 
@@ -148,18 +217,32 @@ exports.startMCQAssignment = async (req, res) => {
   try {
     const { assignmentId } = req.params;
     
+    console.log('Starting MCQ assignment for student:', req.user.id, 'assignment:', assignmentId);
+    
     const student = await Student.findById(req.user.id);
     if (!student) {
+      console.log('Student not found:', req.user.id);
       return res.status(404).json({ message: 'Student not found' });
     }
 
+    console.log('Student found:', student.name, 'Class:', student.class, 'Section:', student.section);
+
     const assignment = await MCQAssignment.findById(assignmentId);
     if (!assignment) {
+      console.log('MCQ Assignment not found:', assignmentId);
       return res.status(404).json({ message: 'MCQ Assignment not found' });
     }
 
-    // Check if student is in the correct class
-    if (assignment.class !== student.class || assignment.section !== student.section) {
+    console.log('Assignment found:', assignment.title, 'Class:', assignment.class, 'Section:', assignment.section);
+
+    // Check if student is in the correct class (with flexible matching)
+    const classMatches = classesMatch(student.class, assignment.class, student.section, assignment.section);
+    console.log('Class matching result:', classMatches);
+    console.log('Student class:', student.class, 'Student section:', student.section);
+    console.log('Assignment class:', assignment.class, 'Assignment section:', assignment.section);
+    
+    if (!classMatches) {
+      console.log('Class mismatch - access denied');
       return res.status(403).json({ message: 'You do not have access to this assignment' });
     }
 
@@ -176,12 +259,16 @@ exports.startMCQAssignment = async (req, res) => {
       studentId: req.user.id
     });
 
+    console.log('Existing submission found:', submission ? submission.status : 'None');
+
     if (submission && submission.status === 'Submitted') {
+      console.log('Student has already submitted this assignment');
       return res.status(400).json({ message: 'You have already submitted this assignment' });
     }
 
     // Create new submission if doesn't exist
     if (!submission) {
+      console.log('Creating new submission for student');
       submission = new MCQSubmission({
         assignmentId,
         studentId: req.user.id,
@@ -189,6 +276,7 @@ exports.startMCQAssignment = async (req, res) => {
         startedAt: new Date()
       });
       await submission.save();
+      console.log('New submission created:', submission._id);
     }
 
     // Prepare questions for student
@@ -242,8 +330,8 @@ exports.submitMCQAssignment = async (req, res) => {
       return res.status(404).json({ message: 'MCQ Assignment not found' });
     }
 
-    // Check if student is in the correct class
-    if (assignment.class !== student.class || assignment.section !== student.section) {
+    // Check if student is in the correct class (with flexible matching)
+    if (!classesMatch(student.class, assignment.class, student.section, assignment.section)) {
       return res.status(403).json({ message: 'You do not have access to this assignment' });
     }
 
@@ -286,17 +374,20 @@ exports.submitMCQAssignment = async (req, res) => {
       };
     }).filter(Boolean);
 
-    // Update submission
-    submission.answers = processedAnswers;
-    submission.submittedAt = new Date();
-    submission.status = 'Submitted';
-
-    await submission.save();
-
     // Calculate final score
     const totalScore = processedAnswers.reduce((sum, answer) => sum + answer.points, 0);
     const maxPossibleScore = assignment.questions.reduce((sum, question) => sum + question.points, 0);
     const percentage = maxPossibleScore > 0 ? Math.round((totalScore / maxPossibleScore) * 100) : 0;
+
+    // Update submission
+    submission.answers = processedAnswers;
+    submission.submittedAt = new Date();
+    submission.status = 'Submitted';
+    submission.totalScore = totalScore;
+    submission.maxPossibleScore = maxPossibleScore;
+    submission.percentage = percentage;
+
+    await submission.save();
 
     res.json({
       message: 'MCQ Assignment submitted successfully',
@@ -339,25 +430,38 @@ exports.getMCQSubmissionResults = async (req, res) => {
       return res.status(400).json({ message: 'Assignment has not been submitted yet' });
     }
 
-    // Prepare results with correct answers if allowed
+    // Calculate performance metrics
+    const correctAnswers = submission.answers.filter(answer => answer.isCorrect).length;
+    const totalQuestions = assignment.questions.length;
+    const questionsAnswered = submission.answers.length;
+
+    // Prepare results in the expected format
     const results = {
-      score: submission.totalScore,
-      percentage: submission.percentage,
-      maxPossibleScore: assignment.questions.reduce((sum, q) => sum + q.points, 0),
-      timeTaken: submission.timeTaken,
-      submittedAt: submission.submittedAt,
-      answers: submission.answers.map(answer => {
-        const question = assignment.questions.find(q => q._id.toString() === answer.questionId);
-        return {
-          question: question.question,
-          selectedOption: question.options[answer.selectedOption]?.text || 'No answer',
-          correctOption: question.options.find(opt => opt.isCorrect)?.text || 'No correct answer',
-          isCorrect: answer.isCorrect,
-          points: answer.points,
-          maxPoints: question.points,
-          explanation: question.explanation
-        };
-      })
+      assignment: {
+        title: assignment.title,
+        description: assignment.description,
+        class: assignment.class,
+        section: assignment.section,
+        subject: assignment.subject,
+        questions: assignment.questions,
+        maxMarks: assignment.maxMarks,
+        dueDate: assignment.dueDate
+      },
+      submission: {
+        answers: submission.answers,
+        timeTaken: submission.timeTaken,
+        submittedAt: submission.submittedAt,
+        status: submission.status
+      },
+      performance: {
+        score: submission.totalScore,
+        totalMarks: assignment.questions.reduce((sum, q) => sum + q.points, 0),
+        percentage: submission.percentage,
+        correctAnswers: correctAnswers,
+        incorrectAnswers: questionsAnswered - correctAnswers,
+        questionsAnswered: questionsAnswered,
+        totalQuestions: totalQuestions
+      }
     };
 
     res.json(results);

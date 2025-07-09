@@ -1356,15 +1356,15 @@ export default function TeacherDashboard() {
         return <LearningResources />;
       case 12:
         return <div>Lesson Plans Component</div>;
-      case 12:
-        return <Communication />;
       case 13:
-        return <div>Projects Component</div>;
+        return <Communication />;
       case 14:
-        return <div>Parent Interaction Component</div>;
+        return <div>Projects Component</div>;
       case 15:
-        return <div>Feedback Component</div>;
+        return <div>Parent Interaction Component</div>;
       case 16:
+        return <div>Feedback Component</div>;
+      case 17:
         return <div>Notifications Component</div>;
       default:
         return <DashboardOverview />;

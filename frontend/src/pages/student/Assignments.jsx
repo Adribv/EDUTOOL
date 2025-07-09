@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Paper,
@@ -51,6 +52,7 @@ import { toast } from 'react-toastify';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const Assignments = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedTab, setSelectedTab] = useState(0);
   const [selectedAssignment, setSelectedAssignment] = useState(null);
@@ -355,13 +357,13 @@ const Assignments = () => {
                 <Button
                   variant="contained"
                   startIcon={<QuizIcon />}
-                  onClick={() => window.location.href = '/student/mcq-assignments-list'}
+                  onClick={() => navigate('/student/mcq-assignments-list')}
                 >
                   View MCQ Tests
                 </Button>
                 <Button
                   variant="outlined"
-                  onClick={() => window.location.href = '/student/mcq-results'}
+                  onClick={() => navigate('/student/mcq-assignments-list')}
                 >
                   View Results
                 </Button>

@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const BASE_URL = 'http://localhost:5000/api';
+const BASE_URL = 'https://api.edulives.com';
 const TEACHER_ID = '685ac0b4d60acdac26b2f9f1'; // From the console log
 
 async function testLeaveRequests() {

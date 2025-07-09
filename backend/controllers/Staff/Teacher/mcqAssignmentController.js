@@ -20,7 +20,8 @@ exports.createMCQAssignment = async (req, res) => {
       allowReview,
       showResults,
       randomizeQuestions,
-      randomizeOptions
+      randomizeOptions,
+      status
     } = req.body;
     
     // Get staff details with coordinated classes
@@ -88,6 +89,7 @@ exports.createMCQAssignment = async (req, res) => {
       showResults: showResults !== undefined ? showResults : true,
       randomizeQuestions: randomizeQuestions || false,
       randomizeOptions: randomizeOptions || false,
+      status: status || 'Draft', // Use the status from request body, default to 'Draft'
       createdBy: req.user.id
     });
     
@@ -110,19 +112,19 @@ exports.createMCQAssignment = async (req, res) => {
 // Get MCQ assignments created by teacher
 exports.getMCQAssignments = async (req, res) => {
   try {
-    const { class: classFilter, subject: subjectFilter, status } = req.query;
+    const { class: classFilter, subject: subjectFilter, status, all } = req.query;
     
     // Build filter object
-    const filter = { createdBy: req.user.id };
-    
+    const filter = {};
+    if (!all || all !== 'true') {
+      filter.createdBy = req.user.id;
+    }
     if (classFilter && classFilter !== 'all') {
       filter.class = classFilter;
     }
-    
     if (subjectFilter && subjectFilter !== 'all') {
       filter.subject = subjectFilter;
     }
-    
     if (status && status !== 'all') {
       filter.status = status;
     }

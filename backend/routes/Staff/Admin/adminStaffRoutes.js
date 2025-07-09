@@ -78,7 +78,7 @@ router.put('/approvals/:id', adminStaffController.updateApprovalRequest);
 router.delete('/approvals/:id', adminStaffController.deleteApprovalRequest);
 
 // Public routes additions (before auth middleware)
-router.post('/enquiries', adminStaffController.createEnquiry);
+router.post('/enquiries', enquiryController.createEnquiry);
 
 // Apply authentication middleware to all routes below this line
 router.use(verifyToken);
@@ -155,9 +155,9 @@ router.get('/visitors', adminStaffController.getVisitorLog);
 
 // Enquiry Management
 router.route('/enquiries')
-  .get(adminStaffController.getEnquiries);
-router.put('/enquiries/:id/reply', adminStaffController.replyEnquiry);
-router.put('/enquiries/:id/status', adminStaffController.updateEnquiryStatus);
+  .get(enquiryController.getAllEnquiries);
+router.put('/enquiries/:id/reply', enquiryController.updateEnquiry);
+router.put('/enquiries/:id/status', enquiryController.updateEnquiry);
 
 // Supplier Request Management
 router.get('/supplier-requests', supplierRequestController.getAllSupplierRequests);

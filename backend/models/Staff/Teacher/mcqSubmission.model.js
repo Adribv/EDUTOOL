@@ -88,7 +88,8 @@ const mcqSubmissionSchema = new mongoose.Schema({
 mcqSubmissionSchema.pre('save', function(next) {
   if (this.answers && this.answers.length > 0) {
     this.totalScore = this.answers.reduce((sum, answer) => sum + answer.points, 0);
-    this.maxPossibleScore = this.answers.reduce((sum, answer) => sum + (answer.isCorrect ? answer.points : 0), 0);
+    // Note: maxPossibleScore should be calculated from the assignment, not from answers
+    // This will be set when the submission is processed
     this.percentage = this.maxPossibleScore > 0 ? Math.round((this.totalScore / this.maxPossibleScore) * 100) : 0;
   }
   

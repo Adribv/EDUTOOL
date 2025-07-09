@@ -97,7 +97,7 @@ const MCQTest = () => {
     } catch (error) {
       console.error('Error loading MCQ assignment:', error);
       toast.error('Failed to load assignment');
-      navigate('/student/assignments');
+      navigate('/student/mcq-assignments-list');
     } finally {
       setLoading(false);
     }

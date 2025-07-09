@@ -17,6 +17,8 @@ const ClassModel = require('../../../models/Admin/classModel');
 const SubjectModel = require('../../../models/Admin/subjectModel');
 const ScheduleModel = require('../../../models/Admin/scheduleModel');
 const Parent = require('../../../models/Parent/parentModel');
+const Supplier = require('../../../models/Admin/supplierModel');
+const SupplyRequest = require('../../../models/Admin/supplyRequestModel');
 
 // 1. Student Records Management
 exports.getAllStudents = async (req, res) => {
@@ -3230,22 +3232,11 @@ exports.registerAccountant = async (req, res) => {
   }
 };
 
-// 11. Supplier and Supply Requests
-exports.getSuppliers = async (_req, res) => {
+// Supplier Management
+exports.getSuppliers = async (req, res) => {
   try {
-    const Supplier = require('../../../models/Admin/supplierModel');
-    const suppliers = await Supplier.find();
-
-    // If db empty insert few samples automatically (one-time)
-    if (suppliers.length === 0) {
-      await Supplier.insertMany([
-        { name: 'EduBooks Co.', category: 'Stationery', location: 'Delhi', phone: '9876543210' },
-        { name: 'ClassTech Labs', category: 'Lab Equipment', location: 'Mumbai', phone: '9123456780' },
-        { name: 'SportsPro', category: 'Sports Equipment', location: 'Bengaluru', phone: '9988776655' },
-      ]);
-    }
-    const list = await Supplier.find();
-    res.json(list);
+    const suppliers = await Supplier.find().sort({ createdAt: -1 });
+    res.json(suppliers);
   } catch (error) {
     console.error('Error fetching suppliers:', error);
     res.status(500).json({ message: 'Server error' });
@@ -3254,33 +3245,40 @@ exports.getSuppliers = async (_req, res) => {
 
 exports.addSupplier = async (req, res) => {
   try {
-    const Supplier = require('../../../models/Admin/supplierModel');
-    const created = await Supplier.create(req.body);
-    res.status(201).json(created);
+    const supplier = new Supplier(req.body);
+    await supplier.save();
+    res.status(201).json(supplier);
   } catch (error) {
     console.error('Error adding supplier:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-exports.createSupplyRequest = async (req, res) => {
+// Supply Request Management
+exports.getSupplyRequests = async (req, res) => {
   try {
-    const SupplyRequest = require('../../../models/Admin/supplyRequestModel');
-    const newReq = await SupplyRequest.create(req.body);
-    res.status(201).json(newReq);
+    const supplyRequests = await SupplyRequest.find()
+      .populate('supplier', 'name contactNumber')
+      .populate('requestedBy', 'name email')
+      .sort({ createdAt: -1 });
+    res.json(supplyRequests);
   } catch (error) {
-    console.error('Error creating supply request:', error);
+    console.error('Error fetching supply requests:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-exports.getSupplyRequests = async (_req, res) => {
+exports.createSupplyRequest = async (req, res) => {
   try {
-    const SupplyRequest = require('../../../models/Admin/supplyRequestModel');
-    const docs = await SupplyRequest.find().populate('supplier', 'name category');
-    res.json(docs);
+    const supplyRequest = new SupplyRequest({
+      ...req.body,
+      requestedBy: req.user.id,
+      status: 'Pending'
+    });
+    await supplyRequest.save();
+    res.status(201).json(supplyRequest);
   } catch (error) {
-    console.error('Error fetching supply requests:', error);
+    console.error('Error creating supply request:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -3288,72 +3286,26 @@ exports.getSupplyRequests = async (_req, res) => {
 exports.updateSupplyRequestStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
-    const SupplyRequest = require('../../../models/Admin/supplyRequestModel');
-    const updated = await SupplyRequest.findByIdAndUpdate(id, { status }, { new: true });
-    if (!updated) return res.status(404).json({ message: 'Request not found' });
-    res.json(updated);
+    const { status, comments } = req.body;
+    
+    const supplyRequest = await SupplyRequest.findByIdAndUpdate(
+      id,
+      { 
+        status,
+        comments,
+        updatedBy: req.user.id,
+        updatedAt: new Date()
+      },
+      { new: true }
+    );
+    
+    if (!supplyRequest) {
+      return res.status(404).json({ message: 'Supply request not found' });
+    }
+    
+    res.json(supplyRequest);
   } catch (error) {
     console.error('Error updating supply request status:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-// 12. Enquiries Management
-exports.createEnquiry = async (req, res) => {
-  try {
-    const Enquiry = require('../../../models/Admin/enquiryModel');
-    const doc = await Enquiry.create(req.body);
-    res.status(201).json(doc);
-  } catch (err) {
-    console.error('Error creating enquiry:', err);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-exports.getEnquiries = async (_req, res) => {
-  try {
-    const Enquiry = require('../../../models/Admin/enquiryModel');
-    let list = await Enquiry.find().sort({ createdAt: -1 });
-    if (list.length === 0) {
-      await Enquiry.insertMany([
-        { name: 'Rahul Sharma', email: 'rahul@example.com', subject: 'Admission Enquiry', message: 'I would like to know the admission process for grade 5.' },
-        { name: 'Sneha Rao', email: 'sneha@example.com', subject: 'Fee Structure', message: 'Please share the fee structure for the upcoming academic year.' },
-        { name: 'Parent Kumar', email: 'parent.kumar@example.com', subject: 'Transportation', message: 'Is bus facility available for sector 21?' }
-      ]);
-      list = await Enquiry.find().sort({ createdAt: -1 });
-    }
-    res.json(list);
-  } catch (err) {
-    console.error('Error fetching enquiries:', err);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-exports.replyEnquiry = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { reply } = req.body;
-    const Enquiry = require('../../../models/Admin/enquiryModel');
-    const updated = await Enquiry.findByIdAndUpdate(id, { reply, status: 'Replied' }, { new: true });
-    if (!updated) return res.status(404).json({ message: 'Enquiry not found' });
-    res.json(updated);
-  } catch (err) {
-    console.error('Error replying enquiry:', err);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-exports.updateEnquiryStatus = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
-    const Enquiry = require('../../../models/Admin/enquiryModel');
-    const updated = await Enquiry.findByIdAndUpdate(id, { status }, { new: true });
-    if (!updated) return res.status(404).json({ message: 'Enquiry not found' });
-    res.json(updated);
-  } catch (err) {
-    console.error('Error updating enquiry status:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };

@@ -184,30 +184,30 @@ const FeeManagement = () => {
                               'Not specified'
                             }
                           </TableCell>
-                          <TableCell>
-                            <Chip
+                        <TableCell>
+                          <Chip
                               label={fee.status || 'Pending'}
-                              color={getStatusColor(fee.status)}
-                              size="small"
-                            />
-                          </TableCell>
-                          <TableCell>
+                            color={getStatusColor(fee.status)}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
                             {(fee.status && fee.status.toLowerCase() === 'pending') || !fee.status ? (
-                              <Button
-                                variant="contained"
-                                color="primary"
-                                size="small"
-                                onClick={() => {
-                                  setSelectedFee(fee);
-                                  setPaymentDetails({
-                                    ...paymentDetails,
+                            <Button
+                              variant="contained"
+                              color="primary"
+                              size="small"
+                              onClick={() => {
+                                setSelectedFee(fee);
+                                setPaymentDetails({
+                                  ...paymentDetails,
                                     amount: fee.amount || 0,
-                                  });
-                                  setPaymentDialog(true);
-                                }}
-                              >
-                                Pay Now
-                              </Button>
+                                });
+                                setPaymentDialog(true);
+                              }}
+                            >
+                              Pay Now
+                            </Button>
                             ) : (
                               <Typography variant="body2" color="text.secondary">
                                 {fee.status}
@@ -265,12 +265,12 @@ const FeeManagement = () => {
                           <TableCell>{payment.description || payment.feeType || 'Fee Payment'}</TableCell>
                           <TableCell>₹{payment.amount || payment.amountPaid || 0}</TableCell>
                           <TableCell>{payment.method || payment.paymentMethod || 'Not specified'}</TableCell>
-                          <TableCell>
-                            <Chip
+                        <TableCell>
+                          <Chip
                               label={payment.status || 'Completed'}
-                              color={getStatusColor(payment.status)}
-                              size="small"
-                            />
+                            color={getStatusColor(payment.status)}
+                            size="small"
+                          />
                           </TableCell>
                         </TableRow>
                       ))
