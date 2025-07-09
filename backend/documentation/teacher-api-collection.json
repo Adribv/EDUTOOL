@@ -1632,11 +1632,11 @@
       }
     ],
     "variable": [
-      {
-        "key": "base_url",
-        "value": "http://localhost:5000",
-        "type": "string"
-      },
+          {
+      "key": "base_url",
+      "value": "https://api.edulives.com",
+      "type": "string"
+    },
       {
         "key": "token",
         "value": "123456789",
