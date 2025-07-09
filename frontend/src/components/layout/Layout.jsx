@@ -244,7 +244,14 @@ const Layout = () => {
 
   const handleProfileClick = useCallback(() => {
     // Navigate to appropriate profile page based on user role
-    const profilePath = user?.role === 'HOD' ? '/hod/profile' : 'profile';
+    let profilePath = '/profile';
+    if (user?.role === 'AdminStaff') profilePath = '/admin/profile';
+    else if (user?.role === 'HOD') profilePath = '/hod/profile';
+    else if (user?.role === 'Teacher') profilePath = '/teacher/profile';
+    else if (user?.role === 'Student') profilePath = '/student/profile';
+    else if (user?.role === 'Parent') profilePath = '/parent/profile';
+    else if (user?.role === 'Principal') profilePath = '/principal/profile';
+    else if (user?.role === 'Counsellor') profilePath = '/counselor/profile';
     handleNavigation(profilePath);
     handleProfileMenuClose();
   }, [user?.role, handleNavigation, handleProfileMenuClose]);

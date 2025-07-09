@@ -27,7 +27,7 @@ import PsychologyIcon from '@mui/icons-material/Psychology';
 import BusinessIcon from '@mui/icons-material/Business';
 import GroupIcon from '@mui/icons-material/Group';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
-import logo from '../assets/logo.jpg';
+import logo from '../assets/logo.png';
 
 const Home = () => {
   const navigate = useNavigate();

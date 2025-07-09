@@ -123,46 +123,60 @@ const StudentLayout = ({ children }) => {
   };
 
   const drawer = (
-    <Box>
-      <Box sx={{ p: 2, textAlign: 'center' }}>
-        <Avatar sx={{ width: 80, height: 80, mx: 'auto', mb: 2 }}>
-          <School />
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: '#0f172a' }}>
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Avatar sx={{ width: 80, height: 80, mx: 'auto', mb: 2, bgcolor: '#334155' }}>
+          <School sx={{ fontSize: 48, color: '#fff' }} />
         </Avatar>
-        <Typography variant="h6" gutterBottom>
+        <Typography variant="h6" gutterBottom sx={{ color: '#fff', fontWeight: 700, letterSpacing: 1 }}>
           Student Portal
         </Typography>
-        <Chip label="Student" color="primary" size="small" />
+        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+          Student
+        </Typography>
       </Box>
-      <Divider />
-      <List>
+      <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)', mb: 1 }} />
+      <List sx={{ flex: 1, px: 1, py: 2 }}>
         {menuItems.map((item) => (
           <ListItemButton
             key={item.text}
             onClick={() => handleNavigation(item.path)}
             selected={location.pathname === item.path}
             sx={{
+              borderRadius: 2,
+              mb: 0.5,
+              minHeight: 48,
+              color: '#fff',
+              '& .MuiListItemIcon-root': {
+                color: '#fff',
+                minWidth: 40,
+              },
               '&.Mui-selected': {
-                backgroundColor: 'primary.light',
-                '&:hover': {
-                  backgroundColor: 'primary.light',
+                backgroundColor: 'rgba(59,130,246,0.15)',
+                color: '#fff',
+                '& .MuiListItemIcon-root': {
+                  color: '#fff',
                 },
+              },
+              '&:hover': {
+                backgroundColor: 'rgba(255,255,255,0.08)',
               },
             }}
           >
             <ListItemIcon>{item.icon}</ListItemIcon>
-            <ListItemText primary={item.text} />
+            <ListItemText primary={item.text} sx={{ '& .MuiTypography-root': { fontSize: '1rem', fontWeight: 500, color: '#fff' } }} />
           </ListItemButton>
         ))}
       </List>
-      <Divider />
+      <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)', mt: 1, mb: 1 }} />
       <List>
-        <ListItemButton onClick={() => handleNavigation('/student/notifications')}>
+        <ListItemButton onClick={() => handleNavigation('/student/notifications')} sx={{ color: '#fff', '& .MuiListItemIcon-root': { color: '#fff' } }}>
           <ListItemIcon>
             <Notifications />
           </ListItemIcon>
           <ListItemText primary="Notifications" />
         </ListItemButton>
-        <ListItemButton onClick={() => navigate('/logout')}>
+        <ListItemButton onClick={() => navigate('/logout')} sx={{ color: '#fff', '& .MuiListItemIcon-root': { color: '#fff' } }}>
           <ListItemIcon>
             <Logout />
           </ListItemIcon>
@@ -210,7 +224,12 @@ const StudentLayout = ({ children }) => {
           }}
           sx={{
             display: { xs: 'block', sm: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            '& .MuiDrawer-paper': {
+              boxSizing: 'border-box',
+              width: drawerWidth,
+              backgroundColor: '#0f172a',
+              color: '#fff',
+            },
           }}
         >
           {drawer}
@@ -219,7 +238,12 @@ const StudentLayout = ({ children }) => {
           variant="permanent"
           sx={{
             display: { xs: 'none', sm: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            '& .MuiDrawer-paper': {
+              boxSizing: 'border-box',
+              width: drawerWidth,
+              backgroundColor: '#0f172a',
+              color: '#fff',
+            },
           }}
           open
         >

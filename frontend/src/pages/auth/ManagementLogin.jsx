@@ -27,7 +27,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
-import logo from '../../assets/logo.jpg';
+import logo from '../../assets/logo.png';
 import { roleConfig } from '../admin/roleConfig';
 
 const validationSchema = Yup.object({
