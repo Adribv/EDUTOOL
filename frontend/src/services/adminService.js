@@ -74,6 +74,20 @@ const adminService = {
   createInventoryItem: (data) => api.post('/api/admin-staff/inventory', data),
   updateInventoryItem: (id, data) => api.put(`/api/admin-staff/inventory/${id}`, data),
   deleteInventoryItem: (id) => api.delete(`/api/admin-staff/inventory/${id}`),
+  exportInventory: () => api.get('/api/admin-staff/inventory/export', { responseType: 'blob' }),
+  bulkImportInventory: (data) => api.post('/api/admin-staff/inventory/bulk-import', data),
+  
+  // Supplier Management
+  getSuppliers: () => api.get('/api/admin-staff/suppliers'),
+  addSupplier: (data) => api.post('/api/admin-staff/suppliers', data),
+  updateSupplier: (id, data) => api.put(`/api/admin-staff/suppliers/${id}`, data),
+  deleteSupplier: (id) => api.delete(`/api/admin-staff/suppliers/${id}`),
+  
+  // Supply Requests
+  getSupplyRequests: () => api.get('/api/admin-staff/supply-requests'),
+  createSupplyRequest: (data) => api.post('/api/admin-staff/supply-requests', data),
+  updateSupplyRequestStatus: (id, status) => api.put(`/api/admin-staff/supply-requests/${id}/status`, { status }),
+  deleteSupplyRequest: (id) => api.delete(`/api/admin-staff/supply-requests/${id}`),
   
   // Event Management
   getEvents: () => api.get('/api/admin-staff/events'),
