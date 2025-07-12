@@ -288,7 +288,7 @@ const LeaveRequests = () => {
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4">
-          Leave Request Management
+          Student's Approvals Management
         </Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button 

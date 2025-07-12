@@ -204,7 +204,7 @@ const TeacherLeaveRequests = () => {
     <Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h4" gutterBottom>
-          Teacher's Leave Requests
+        Leave Request
         </Typography>
         <Button
           variant="contained"

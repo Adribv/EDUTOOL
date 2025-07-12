@@ -37,6 +37,7 @@ import LearningResources from './LearningResources';
 import Communication from './Communication';
 import LeaveRequests from './LeaveRequests';
 import TeacherLeaveRequests from './TeacherLeaveRequests';
+import LessonPlans from './LessonPlans';
 
 // Feature tabs configuration
 const featureTabs = [
@@ -49,8 +50,8 @@ const featureTabs = [
   { label: 'Exams', icon: <Assessment />, key: 'exams' },
   { label: 'Grades', icon: <Grade />, key: 'grades' },
   { label: 'Students', icon: <Group />, key: 'students' },
-  { label: 'Leave Requests', icon: <Event />, key: 'leaveRequests' },
-  { label: "Teacher's Leave", icon: <Assignment />, key: 'teacherLeaveRequests' },
+  { label: "Student's Approvals", icon: <Event />, key: 'leaveRequests' },
+  { label: "Leave Request", icon: <Assignment />, key: 'teacherLeaveRequests' },
   { label: 'Resources', icon: <Book />, key: 'resources' },
   { label: 'Lesson Plans', icon: <Work />, key: 'lessonPlans' },
   { label: 'Communication', icon: <Message />, key: 'communication' },
@@ -127,7 +128,7 @@ function DashboardOverview() {
     enabled: !!staffId && staffId !== 'undefined'
   });
 
-  // Fetch leave requests
+  // Fetch Students Approvals
   const { data: leaveRequestsData, isLoading: leaveRequestsLoading } = useQuery({
     queryKey: ['teacherLeaveRequests', staffId],
     queryFn: () => teacherAPI.getLeaveRequests(staffId),
@@ -262,7 +263,7 @@ function DashboardOverview() {
                   <Typography variant="h4" fontWeight="bold">
                     {stats.pendingLeaveRequests}
                   </Typography>
-                  <Typography variant="body2">Pending Leave Requests</Typography>
+                  <Typography variant="body2">Pending Students Approvals</Typography>
                 </Box>
                 <Warning sx={{ fontSize: 40, opacity: 0.8 }} />
               </Box>
@@ -362,11 +363,11 @@ function DashboardOverview() {
         </Card>
       )}
 
-      {/* Recent Leave Requests */}
+      {/* Recent Students Approvals */}
       {leaveRequestsData && leaveRequestsData.length > 0 && (
         <Card sx={{ mb: 3 }}>
           <CardHeader 
-            title="Recent Leave Requests" 
+            title="Recent Students Approvals" 
             action={
               <Button variant="outlined" startIcon={<Visibility />}>
                 View All
@@ -1260,10 +1261,10 @@ function CoordinatorPortal() {
           <Card><CardContent><Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}><Group color="info" /><Typography variant="h6" sx={{ ml: 1 }}>Connected Parents</Typography></Box><Typography variant="h4" color="info">{dashboardData.stats?.parents || 0}</Typography><Typography variant="body2" color="text.secondary">Parents of your students</Typography></CardContent></Card>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Card><CardContent><Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}><Assignment color="error" /><Typography variant="h6" sx={{ ml: 1 }}>Pending Requests</Typography></Box><Typography variant="h4" color="error">{dashboardData.stats?.pendingLeaveRequests || 0}</Typography><Typography variant="body2" color="text.secondary">Leave requests to review</Typography></CardContent></Card>
+          <Card><CardContent><Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}><Assignment color="error" /><Typography variant="h6" sx={{ ml: 1 }}>Pending Requests</Typography></Box><Typography variant="h4" color="error">{dashboardData.stats?.pendingLeaveRequests || 0}</Typography><Typography variant="body2" color="text.secondary">Students Approvals to review</Typography></CardContent></Card>
         </Grid>
       </Grid>
-      {/* Accordions for Classes, Leave Requests, Students, Parents, Events */}
+      {/* Accordions for Classes, Students Approvals, Students, Parents, Events */}
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
           <Accordion defaultExpanded>
@@ -1275,9 +1276,9 @@ function CoordinatorPortal() {
         </Grid>
         <Grid item xs={12} md={6}>
           <Accordion defaultExpanded>
-            <AccordionSummary expandIcon={<ExpandMore />}><Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}><Typography variant="h6"><Assignment sx={{ mr: 1, verticalAlign: 'middle' }} />Leave Requests</Typography>{dashboardData.stats?.pendingLeaveRequests > 0 && (<Badge badgeContent={dashboardData.stats.pendingLeaveRequests} color="error" sx={{ ml: 'auto' }} />)}</Box></AccordionSummary>
+            <AccordionSummary expandIcon={<ExpandMore />}><Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}><Typography variant="h6"><Assignment sx={{ mr: 1, verticalAlign: 'middle' }} />Students Approvals</Typography>{dashboardData.stats?.pendingLeaveRequests > 0 && (<Badge badgeContent={dashboardData.stats.pendingLeaveRequests} color="error" sx={{ ml: 'auto' }} />)}</Box></AccordionSummary>
             <AccordionDetails>
-              <TableContainer><Table size="small"><TableHead><TableRow><TableCell>Student</TableCell><TableCell>Type</TableCell><TableCell>Dates</TableCell><TableCell>Status</TableCell><TableCell>Actions</TableCell></TableRow></TableHead><TableBody>{dashboardData.pendingLeaveRequests?.map((request) => (<TableRow key={request._id}><TableCell><Box><Typography variant="body2" fontWeight="bold">{request.studentId?.name || request.studentName}</Typography><Typography variant="caption" color="text.secondary">{request.studentId?.class || request.studentClass} - {request.studentId?.section || request.studentSection}</Typography></Box></TableCell><TableCell>{request.leaveType || request.type || 'General'}</TableCell><TableCell><Typography variant="caption">{new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}</Typography></TableCell><TableCell><Chip label={request.status} color={request.status === 'Approved' ? 'success' : request.status === 'Rejected' ? 'error' : 'warning'} size="small" /></TableCell><TableCell>{request.status === 'Pending' && (<Box><Tooltip title="Approve"><IconButton size="small" color="success" onClick={() => handleApproveLeave(request._id)} sx={{ mr: 1 }}><CheckCircle /></IconButton></Tooltip><Tooltip title="Reject"><IconButton size="small" color="error" onClick={() => handleRejectLeave(request._id)}><Cancel /></IconButton></Tooltip></Box>)}</TableCell></TableRow>))}{(!dashboardData.pendingLeaveRequests || dashboardData.pendingLeaveRequests.length === 0) && (<TableRow><TableCell colSpan={5} align="center">No pending leave requests</TableCell></TableRow>)}</TableBody></Table></TableContainer>
+              <TableContainer><Table size="small"><TableHead><TableRow><TableCell>Student</TableCell><TableCell>Type</TableCell><TableCell>Dates</TableCell><TableCell>Status</TableCell><TableCell>Actions</TableCell></TableRow></TableHead><TableBody>{dashboardData.pendingLeaveRequests?.map((request) => (<TableRow key={request._id}><TableCell><Box><Typography variant="body2" fontWeight="bold">{request.studentId?.name || request.studentName}</Typography><Typography variant="caption" color="text.secondary">{request.studentId?.class || request.studentClass} - {request.studentId?.section || request.studentSection}</Typography></Box></TableCell><TableCell>{request.leaveType || request.type || 'General'}</TableCell><TableCell><Typography variant="caption">{new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}</Typography></TableCell><TableCell><Chip label={request.status} color={request.status === 'Approved' ? 'success' : request.status === 'Rejected' ? 'error' : 'warning'} size="small" /></TableCell><TableCell>{request.status === 'Pending' && (<Box><Tooltip title="Approve"><IconButton size="small" color="success" onClick={() => handleApproveLeave(request._id)} sx={{ mr: 1 }}><CheckCircle /></IconButton></Tooltip><Tooltip title="Reject"><IconButton size="small" color="error" onClick={() => handleRejectLeave(request._id)}><Cancel /></IconButton></Tooltip></Box>)}</TableCell></TableRow>))}{(!dashboardData.pendingLeaveRequests || dashboardData.pendingLeaveRequests.length === 0) && (<TableRow><TableCell colSpan={5} align="center">No pending Students Approvals</TableCell></TableRow>)}</TableBody></Table></TableContainer>
             </AccordionDetails>
           </Accordion>
         </Grid>
@@ -1355,7 +1356,7 @@ export default function TeacherDashboard() {
       case 11:
         return <LearningResources />;
       case 12:
-        return <div>Lesson Plans Component</div>;
+        return <LessonPlans />;
       case 13:
         return <Communication />;
       case 14:

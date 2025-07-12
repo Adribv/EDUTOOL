@@ -23,9 +23,9 @@ exports.getLessonPlansForReview = async (req, res) => {
     
     // Get lesson plans submitted by department teachers
     const lessonPlans = await LessonPlan.find({
-      createdBy: { $in: teacherIds },
-      status: 'Submitted'
-    }).populate('createdBy', 'name email').sort({ createdAt: -1 });
+      submittedBy: { $in: teacherIds },
+      status: 'Pending'
+    }).populate('submittedBy', 'name email').sort({ createdAt: -1 });
     
     res.json(lessonPlans);
   } catch (error) {
@@ -53,12 +53,13 @@ exports.reviewLessonPlan = async (req, res) => {
     }
     
     // Check if teacher belongs to this department
-    if (!department.teachers.includes(lessonPlan.createdBy)) {
+    if (!department.teachers.includes(lessonPlan.submittedBy)) {
       return res.status(403).json({ message: 'Teacher does not belong to your department' });
     }
     
-    // Update lesson plan status
+    // Update lesson plan status and publication
     lessonPlan.status = status;
+    lessonPlan.isPublished = status === 'Approved';
     lessonPlan.feedback = feedback;
     lessonPlan.reviewedBy = req.user.id;
     lessonPlan.reviewedAt = new Date();

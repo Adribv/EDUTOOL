@@ -69,7 +69,11 @@ const fileFilter = (req, file, cb) => {
     'text/plain': ['.txt'],
     'text/csv': ['.csv'],
     'application/zip': ['.zip'],
-    'application/x-rar-compressed': ['.rar']
+    'application/x-rar-compressed': ['.rar'],
+    // Newly added video mime types for lesson plan uploads
+    'video/mp4': ['.mp4'],
+    'video/mpeg': ['.mpeg', '.mpg'],
+    'video/avi': ['.avi']
   };
 
   if (allowedTypes[file.mimetype]) {

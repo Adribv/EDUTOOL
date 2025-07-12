@@ -62,6 +62,10 @@ router.post('/payments', feeController.makePayment);
 router.get('/learning-resources', learningResourcesController.getLearningResources);
 router.get('/learning-resources/:resourceId', learningResourcesController.getResourceDetails);
 
+// Lesson Plan access
+router.get('/lesson-plans', learningResourcesController.getLearningResources);
+router.get('/lesson-plans/:resourceId', learningResourcesController.getResourceDetails);
+
 // Communication routes
 router.get('/announcements', communicationController.getAnnouncements);
 router.get('/messages', communicationController.getMessages);
