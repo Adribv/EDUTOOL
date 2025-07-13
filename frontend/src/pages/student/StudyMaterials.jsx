@@ -30,7 +30,8 @@ import {
   FilterList as FilterIcon,
   Person as PersonIcon,
   School as SchoolIcon,
-  Subject as SubjectIcon
+  Subject as SubjectIcon,
+  Visibility as VisibilityIcon
 } from '@mui/icons-material';
 import studentService from '../../services/studentService';
 
@@ -42,6 +43,7 @@ function StudyMaterials() {
   const [error, setError] = useState('');
   const [selectedLessonPlan, setSelectedLessonPlan] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState(null);
 
   useEffect(() => {
     fetchLessonPlans();
@@ -79,9 +81,12 @@ function StudyMaterials() {
 
   const handleDownload = (url, filename) => {
     if (url) {
+      // Use the correct backend URL
+      const backendUrl = url.startsWith('http') ? url : `http://localhost:5000/${url}`;
       const link = document.createElement('a');
-      link.href = url;
+      link.href = backendUrl;
       link.download = filename;
+      link.target = '_blank';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -247,22 +252,39 @@ function StudyMaterials() {
                   >
                     View Details
                   </Button>
-                  
-                  {lessonPlan.pdfUrl && (
+                  {(lessonPlan.pdfUrl || lessonPlan.fileUrl) && getFileTypeLabel(lessonPlan.pdfUrl || lessonPlan.fileUrl) === 'PDF' && (
+                    <>
+                      <Button
+                        size="small"
+                        startIcon={<DownloadIcon />}
+                        onClick={() => handleDownload(lessonPlan.pdfUrl || lessonPlan.fileUrl, `${lessonPlan.title}${getFileExtension(lessonPlan.pdfUrl || lessonPlan.fileUrl)}`)}
+                      >
+                        {getFileTypeLabel(lessonPlan.pdfUrl || lessonPlan.fileUrl)}
+                      </Button>
+                      <Button
+                        size="small"
+                        startIcon={<VisibilityIcon />}
+                        onClick={() => setPreviewUrl(lessonPlan.pdfUrl || lessonPlan.fileUrl)}
+                      >
+                        Preview
+                      </Button>
+                    </>
+                  )}
+                  {(lessonPlan.pdfUrl || lessonPlan.fileUrl) && getFileTypeLabel(lessonPlan.pdfUrl || lessonPlan.fileUrl) !== 'PDF' && (
                     <Button
                       size="small"
                       startIcon={<DownloadIcon />}
-                      onClick={() => handleDownload(lessonPlan.pdfUrl, `${lessonPlan.title}${getFileExtension(lessonPlan.pdfUrl)}`)}
+                      onClick={() => handleDownload(lessonPlan.pdfUrl || lessonPlan.fileUrl, `${lessonPlan.title}${getFileExtension(lessonPlan.pdfUrl || lessonPlan.fileUrl)}`)}
                     >
-                      {getFileTypeLabel(lessonPlan.pdfUrl)}
+                      {getFileTypeLabel(lessonPlan.pdfUrl || lessonPlan.fileUrl)}
                     </Button>
                   )}
                   
-                  {lessonPlan.videoUrl && (
+                  {(lessonPlan.videoUrl || lessonPlan.videoLink) && (
                     <Button
                       size="small"
                       startIcon={<PlayIcon />}
-                      onClick={() => window.open(lessonPlan.videoUrl, '_blank')}
+                      onClick={() => window.open(lessonPlan.videoUrl || lessonPlan.videoLink, '_blank')}
                     >
                       Video
                     </Button>
@@ -328,27 +350,27 @@ function StudyMaterials() {
                 </Grid>
               </Grid>
 
-              {(selectedLessonPlan.pdfUrl || selectedLessonPlan.videoUrl) && (
+              {((selectedLessonPlan.pdfUrl || selectedLessonPlan.fileUrl) || (selectedLessonPlan.videoUrl || selectedLessonPlan.videoLink)) && (
                 <>
                   <Divider sx={{ my: 2 }} />
                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                     Attachments
                   </Typography>
                   <Box display="flex" gap={1}>
-                    {selectedLessonPlan.pdfUrl && (
+                    {(selectedLessonPlan.pdfUrl || selectedLessonPlan.fileUrl) && (
                       <Button
                         variant="outlined"
                         startIcon={<DownloadIcon />}
-                        onClick={() => handleDownload(selectedLessonPlan.pdfUrl, `${selectedLessonPlan.title}${getFileExtension(selectedLessonPlan.pdfUrl)}`)}
+                        onClick={() => handleDownload(selectedLessonPlan.pdfUrl || selectedLessonPlan.fileUrl, `${selectedLessonPlan.title}${getFileExtension(selectedLessonPlan.pdfUrl || selectedLessonPlan.fileUrl)}`)}
                       >
-                        Download {getFileTypeLabel(selectedLessonPlan.pdfUrl)}
+                        Download {getFileTypeLabel(selectedLessonPlan.pdfUrl || selectedLessonPlan.fileUrl)}
                       </Button>
                     )}
-                    {selectedLessonPlan.videoUrl && (
+                    {(selectedLessonPlan.videoUrl || selectedLessonPlan.videoLink) && (
                       <Button
                         variant="outlined"
                         startIcon={<PlayIcon />}
-                        onClick={() => window.open(selectedLessonPlan.videoUrl, '_blank')}
+                        onClick={() => window.open(selectedLessonPlan.videoUrl || selectedLessonPlan.videoLink, '_blank')}
                       >
                         Watch Video
                       </Button>
@@ -362,6 +384,16 @@ function StudyMaterials() {
             </DialogActions>
           </>
         )}
+      </Dialog>
+      {/* PDF Preview Modal */}
+      <Dialog open={!!previewUrl} onClose={() => setPreviewUrl(null)} maxWidth="md" fullWidth>
+        <DialogTitle>Preview PDF</DialogTitle>
+        <DialogContent>
+          <iframe src={previewUrl} width="100%" height="600px" style={{ border: 'none' }} title="PDF Preview" />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPreviewUrl(null)}>Close</Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );

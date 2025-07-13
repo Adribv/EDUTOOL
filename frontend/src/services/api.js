@@ -837,7 +837,16 @@ export const teacherAPI = {
 
   // Learning Materials
   getLessonPlanOptions: () => api.get('/teachers/lesson-plan-options').then(res => res.data),
-  submitLessonPlan: (data) => api.post('/teachers/lesson-plans', data).then(res => res.data),
+  submitLessonPlan: (data) => {
+    // Check if data is FormData (for file uploads) or regular object
+    if (data instanceof FormData) {
+      return api.post('/teachers/lesson-plans', data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      }).then(res => res.data);
+    } else {
+      return api.post('/teachers/lesson-plans', data).then(res => res.data);
+    }
+  },
   getLessonPlans: () => api.get('/teachers/lesson-plans').then(res => res.data),
   uploadResource: (data) => api.post('/teachers/resources', data).then(res => res.data),
   getResources: () => api.get('/teachers/resources').then(res => res.data),
