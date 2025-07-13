@@ -39,9 +39,18 @@ const Calendar = () => {
   const fetchEvents = async () => {
     try {
       const response = await studentService.getCalendarEvents();
-      setEvents(response.data);
-    } catch {
+      console.log('📅 Calendar events response:', response);
+      
+      // Handle nested data structure similar to timetable
+      const eventsData = Array.isArray(response?.data?.data) ? response.data.data :
+                        Array.isArray(response?.data) ? response.data : [];
+      
+      console.log('📅 Processed events data:', eventsData);
+      setEvents(eventsData);
+    } catch (error) {
+      console.error('❌ Error fetching calendar events:', error);
       toast.error('Failed to load calendar events');
+      setEvents([]); // Set empty array to prevent map error
     } finally {
       setLoading(false);
     }
@@ -103,40 +112,49 @@ const Calendar = () => {
               Upcoming Events
             </Typography>
             <List>
-              {events.map((event) => (
-                <ListItem
-                  key={event.id}
-                  button
-                  onClick={() => handleEventClick(event)}
-                  sx={{
-                    mb: 2,
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    borderRadius: 1,
-                  }}
-                >
-                  <ListItemIcon>{getEventIcon(event.type)}</ListItemIcon>
+              {Array.isArray(events) && events.length > 0 ? (
+                events.map((event) => (
+                  <ListItem
+                    key={event.id}
+                    button
+                    onClick={() => handleEventClick(event)}
+                    sx={{
+                      mb: 2,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 1,
+                    }}
+                  >
+                    <ListItemIcon>{getEventIcon(event.type)}</ListItemIcon>
+                    <ListItemText
+                      primary={event.title}
+                      secondary={
+                        <Box>
+                          <Typography variant="body2" color="textSecondary">
+                            {new Date(event.date).toLocaleDateString()} at{' '}
+                            {new Date(event.date).toLocaleTimeString()}
+                          </Typography>
+                          <Typography variant="body2" color="textSecondary">
+                            Location: {event.location}
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                    <Chip
+                      label={event.type}
+                      color={getEventColor(event.type)}
+                      size="small"
+                    />
+                  </ListItem>
+                ))
+              ) : (
+                <ListItem>
                   <ListItemText
-                    primary={event.title}
-                    secondary={
-                      <Box>
-                        <Typography variant="body2" color="textSecondary">
-                          {new Date(event.date).toLocaleDateString()} at{' '}
-                          {new Date(event.date).toLocaleTimeString()}
-                        </Typography>
-                        <Typography variant="body2" color="textSecondary">
-                          Location: {event.location}
-                        </Typography>
-                      </Box>
-                    }
-                  />
-                  <Chip
-                    label={event.type}
-                    color={getEventColor(event.type)}
-                    size="small"
+                    primary="No calendar events found"
+                    secondary="Check back later for upcoming events"
                   />
                 </ListItem>
-              ))}
+              )}
             </List>
           </Paper>
         </Grid>

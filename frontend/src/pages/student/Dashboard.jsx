@@ -142,7 +142,7 @@ const Dashboard = () => {
       const _feeStatus = feeRes.status === 'fulfilled' ? feeRes.value.data : null;
       const learningResources = resourcesRes.status === 'fulfilled' ? (resourcesRes.value.data || []) : [];
       const leaveRequests = leaveRes.status === 'fulfilled' ? (leaveRes.value.data || []) : [];
-      const ongoingLessons = lessonsRes.status === 'fulfilled' ? (lessonsRes.value.data || []) : [];
+      const ongoingLessons = lessonsRes.status === 'fulfilled' ? (Array.isArray(lessonsRes.value.data) ? lessonsRes.value.data : []) : [];
       const _notifications = notificationsRes.status === 'fulfilled' ? (notificationsRes.value.data || []) : [];
 
       setProfile(profile);
@@ -162,8 +162,8 @@ const Dashboard = () => {
 
       // Generate task notifications from assignments and homework
       const allTasks = [
-        ...assignments.filter(a => a.status === 'pending'),
-        ...homework.filter(h => h.status === 'pending'),
+        ...(Array.isArray(assignments) ? assignments.filter(a => a.status === 'pending') : []),
+        ...(Array.isArray(homework) ? homework.filter(h => h.status === 'pending') : []),
       ];
       
       const taskNotifs = allTasks.map(task => ({
@@ -252,7 +252,7 @@ const Dashboard = () => {
       icon: <Assignment color="primary" sx={{ fontSize: 40 }} />,
       color: '#1976d2',
       path: '/student/assignments',
-      count: assignments.filter(a => a.status === 'pending').length,
+      count: Array.isArray(assignments) ? assignments.filter(a => a.status === 'pending').length : 0,
     },
     {
       title: 'Homework',
@@ -260,7 +260,7 @@ const Dashboard = () => {
       icon: <Book color="primary" sx={{ fontSize: 40 }} />,
       color: '#388e3c',
       path: '/student/homework',
-      count: homework.filter(h => h.status === 'pending').length,
+      count: Array.isArray(homework) ? homework.filter(h => h.status === 'pending').length : 0,
     },
     {
       title: 'Exam Results',
@@ -268,7 +268,7 @@ const Dashboard = () => {
       icon: <Grade color="primary" sx={{ fontSize: 40 }} />,
       color: '#f57c00',
       path: '/student/examinations',
-      count: upcomingExams.length,
+      count: Array.isArray(upcomingExams) ? upcomingExams.length : 0,
     },
     {
       title: 'School Timetable',
@@ -291,7 +291,7 @@ const Dashboard = () => {
       icon: <LibraryBooks color="primary" sx={{ fontSize: 40 }} />,
       color: '#388e3c',
       path: '/student/study-materials',
-      count: learningResources.length,
+      count: Array.isArray(learningResources) ? learningResources.length : 0,
     },
     {
       title: 'Communication',
@@ -299,7 +299,7 @@ const Dashboard = () => {
       icon: <Forum color="primary" sx={{ fontSize: 40 }} />,
       color: '#f57c00',
       path: '/student/communication',
-      count: messages.filter(m => !m.read).length,
+      count: Array.isArray(messages) ? messages.filter(m => !m.read).length : 0,
     },
     {
       title: 'Fee Management',
@@ -328,7 +328,7 @@ const Dashboard = () => {
       icon: <Event color="primary" sx={{ fontSize: 40 }} />,
       color: '#1976d2',
       path: '/student/leave-requests',
-      count: leaveRequests.filter(l => l.status === 'pending').length,
+      count: Array.isArray(leaveRequests) ? leaveRequests.filter(l => l.status === 'pending').length : 0,
     },
     {
       title: 'Profile Settings',
@@ -341,7 +341,8 @@ const Dashboard = () => {
 
   // Task notification component
   const TaskNotifications = ({ notifications }) => {
-    if (notifications.length === 0) return null;
+    const safeNotifications = Array.isArray(notifications) ? notifications : [];
+    if (safeNotifications.length === 0) return null;
 
     return (
       <Box sx={{ mb: 3 }}>
@@ -349,7 +350,7 @@ const Dashboard = () => {
           Recent Task Notifications
         </Typography>
         <Grid container spacing={2}>
-          {notifications.slice(0, 3).map((notification) => (
+          {safeNotifications.slice(0, 3).map((notification) => (
             <Grid item xs={12} key={notification.id}>
               <Card sx={{ 
                 border: `1px solid ${getPriorityColor(notification.priority)}.main`,
@@ -390,14 +391,14 @@ const Dashboard = () => {
             </Grid>
           ))}
         </Grid>
-        {notifications.length > 3 && (
+        {safeNotifications.length > 3 && (
           <Box sx={{ mt: 2, textAlign: 'center' }}>
             <Button
               variant="text"
               size="small"
               onClick={() => setShowNotifications(true)}
             >
-              View All Notifications ({notifications.length})
+              View All Notifications ({safeNotifications.length})
             </Button>
           </Box>
         )}
@@ -456,18 +457,21 @@ const Dashboard = () => {
     </Card>
   );
 
-  const ListCard = ({ title, items, icon, emptyMessage = "No items to display", emptyAction }) => (
-    <Card sx={{ height: '100%' }}>
-      <CardContent>
-        <Box display="flex" alignItems="center" mb={2}>
-          {icon}
-          <Typography variant="h6" component="div" sx={{ ml: 1 }}>
-            {title}
-          </Typography>
-        </Box>
-        {items.length > 0 ? (
+  const ListCard = ({ title, items, icon, emptyMessage = "No items to display", emptyAction }) => {
+    const safeItems = Array.isArray(items) ? items : [];
+    
+    return (
+      <Card sx={{ height: '100%' }}>
+        <CardContent>
+          <Box display="flex" alignItems="center" mb={2}>
+            {icon}
+            <Typography variant="h6" component="div" sx={{ ml: 1 }}>
+              {title}
+            </Typography>
+          </Box>
+          {safeItems.length > 0 ? (
           <List>
-            {items.map((item, index) => (
+            {safeItems.map((item, index) => (
               <div key={index}>
                 <ListItem>
                   <ListItemText
@@ -482,7 +486,7 @@ const Dashboard = () => {
                     />
                   )}
                 </ListItem>
-                {index < items.length - 1 && <Divider />}
+                {index < safeItems.length - 1 && <Divider />}
               </div>
             ))}
           </List>
@@ -592,7 +596,8 @@ const Dashboard = () => {
         )}
       </CardContent>
     </Card>
-  );
+    );
+  };
 
   const NavigationCard = ({ title, description, icon, color, path, count }) => (
     <Card 
@@ -640,7 +645,9 @@ const Dashboard = () => {
 
   // Carousel component for ongoing lessons and student details
   const LessonCarousel = ({ lessons }) => {
-    const maxSteps = lessons.length;
+    // Ensure lessons is always an array
+    const safeLessons = Array.isArray(lessons) ? lessons : [];
+    const maxSteps = safeLessons.length;
     
     if (maxSteps === 0) {
       return (
@@ -671,7 +678,7 @@ const Dashboard = () => {
           </Box>
           
           <Box sx={{ position: 'relative', height: 200 }}>
-            {lessons.map((lesson, index) => (
+            {safeLessons.map((lesson, index) => (
               <Box
                 key={lesson.id}
                 sx={{
@@ -843,7 +850,7 @@ const Dashboard = () => {
           <Grid item xs={12} sm={6} md={3}>
             <StatCard
               title="Pending Assignments"
-              value={assignments.filter(a => a.status === 'pending').length}
+              value={Array.isArray(assignments) ? assignments.filter(a => a.status === 'pending').length : 0}
               icon={<Assignment color="primary" />}
               subtitle="Due soon"
             />
@@ -851,7 +858,7 @@ const Dashboard = () => {
           <Grid item xs={12} sm={6} md={3}>
             <StatCard
               title="Upcoming Exams"
-              value={upcomingExams.length}
+              value={Array.isArray(upcomingExams) ? upcomingExams.length : 0}
               icon={<School color="primary" />}
               subtitle="Next 30 days"
             />
@@ -867,7 +874,7 @@ const Dashboard = () => {
           <Grid item xs={12} sm={6} md={3}>
             <StatCard
               title="Unread Messages"
-              value={messages.filter(m => !m.read).length}
+              value={Array.isArray(messages) ? messages.filter(m => !m.read).length : 0}
               icon={<Message color="primary" />}
               subtitle="New notifications"
             />
@@ -894,7 +901,7 @@ const Dashboard = () => {
           <Grid item xs={12} md={6}>
             <ListCard
               title="Recent Assignments"
-              items={assignments.slice(0, 5)}
+              items={Array.isArray(assignments) ? assignments.slice(0, 5) : []}
               icon={<Assignment color="primary" />}
               emptyMessage="No recent assignments"
             />
@@ -902,7 +909,7 @@ const Dashboard = () => {
           <Grid item xs={12} md={6}>
             <ListCard
               title="Recent Announcements"
-              items={announcements.slice(0, 5)}
+              items={Array.isArray(announcements) ? announcements.slice(0, 5) : []}
               icon={<Notifications color="primary" />}
               emptyMessage="No recent announcements"
             />
@@ -910,7 +917,7 @@ const Dashboard = () => {
           <Grid item xs={12} md={6}>
             <ListCard
               title="Upcoming Exams"
-              items={upcomingExams.slice(0, 5)}
+              items={Array.isArray(upcomingExams) ? upcomingExams.slice(0, 5) : []}
               icon={<School color="primary" />}
               emptyMessage="No upcoming exams"
             />
@@ -918,7 +925,7 @@ const Dashboard = () => {
           <Grid item xs={12} md={6}>
             <ListCard
               title="Recent Messages"
-              items={messages.slice(0, 5)}
+              items={Array.isArray(messages) ? messages.slice(0, 5) : []}
               icon={<Message color="primary" />}
               emptyMessage="No recent messages"
             />
@@ -955,7 +962,7 @@ const Dashboard = () => {
                           Total Subjects
                         </Typography>
                         <Typography variant="h4" color="primary">
-                          {subjects.length}
+                          {Array.isArray(subjects) ? subjects.length : 0}
                         </Typography>
                       </Grid>
                     </Grid>
@@ -977,7 +984,7 @@ const Dashboard = () => {
                           Present Days
                         </Typography>
                         <Typography variant="h4" color="success.main">
-                          {attendance.filter(a => a.status === 'present').length}
+                          {Array.isArray(attendance) ? attendance.filter(a => a.status === 'present').length : 0}
                         </Typography>
                       </Grid>
                       <Grid item xs={6}>
@@ -985,7 +992,7 @@ const Dashboard = () => {
                           Absent Days
                         </Typography>
                         <Typography variant="h4" color="error.main">
-                          {attendance.filter(a => a.status === 'absent').length}
+                          {Array.isArray(attendance) ? attendance.filter(a => a.status === 'absent').length : 0}
                         </Typography>
                       </Grid>
                     </Grid>
@@ -1010,10 +1017,10 @@ const Dashboard = () => {
           sx={{ width: '100%' }}
         >
           <Typography variant="h6" gutterBottom>
-            All Notifications ({taskNotifications.length})
+            All Notifications ({Array.isArray(taskNotifications) ? taskNotifications.length : 0})
           </Typography>
           <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
-            {taskNotifications.map((notification) => (
+            {Array.isArray(taskNotifications) ? taskNotifications.map((notification) => (
               <Box key={notification.id} sx={{ mb: 2, p: 1, border: '1px solid #e0e0e0', borderRadius: 1 }}>
                 <Box display="flex" alignItems="center" justifyContent="space-between">
                   <Box display="flex" alignItems="center">
@@ -1034,13 +1041,13 @@ const Dashboard = () => {
                   />
                 </Box>
               </Box>
-            ))}
+            )) : []}
           </Box>
         </Alert>
       </Snackbar>
 
       {/* Auto-show notification for new tasks */}
-      {taskNotifications.length > 0 && (
+      {Array.isArray(taskNotifications) && taskNotifications.length > 0 && (
         <Snackbar
           open={true}
           autoHideDuration={4000}

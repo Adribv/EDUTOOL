@@ -785,6 +785,9 @@ export const teacherAPI = {
 
   // Timetable
   getTimetable: () => api.get('/teachers/timetable').then(res => res.data),
+  addTimetableEntry: (data) => api.post('/teachers/timetable', data).then(res => res.data),
+  updateTimetableEntry: (entryId, data) => api.put(`/teachers/timetable/${entryId}`, data).then(res => res.data),
+  deleteTimetableEntry: (entryId) => api.delete(`/teachers/timetable/${entryId}`).then(res => res.data),
   requestSubstitution: (data) => api.post('/teachers/substitution-requests', data).then(res => res.data),
   getSubstitutionRequests: () => api.get('/teachers/substitution-requests').then(res => res.data),
   getAcademicCalendar: () => api.get('/teachers/academic-calendar').then(res => res.data),

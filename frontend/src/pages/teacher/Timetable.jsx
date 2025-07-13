@@ -11,8 +11,9 @@ import {
   Schedule, AccessTime, LocationOn, Class, Event, Add, Edit, Delete,
   ViewWeek, ViewDay, Apps, CalendarToday, School, Book
 } from '@mui/icons-material';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { teacherAPI } from '../../services/api';
+import { toast } from 'react-toastify';
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -21,11 +22,58 @@ export default function Timetable() {
   const [selectedDay, setSelectedDay] = useState('Monday');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
+  const [addClassDialog, setAddClassDialog] = useState(false);
+  const [newClassForm, setNewClassForm] = useState({
+    day: 'Monday',
+    time: '',
+    subject: '',
+    class: '',
+    section: '',
+    room: ''
+  });
+
+  const queryClient = useQueryClient();
 
   const { data: timetableData, isLoading, error } = useQuery({
     queryKey: ['timetable'],
     queryFn: () => teacherAPI.getTimetable()
   });
+
+  // Add class mutation
+  const addClassMutation = useMutation({
+    mutationFn: (newClass) => teacherAPI.addTimetableEntry(newClass),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['timetable']);
+      toast.success('Class added successfully');
+      setAddClassDialog(false);
+      setNewClassForm({
+        day: 'Monday',
+        time: '',
+        subject: '',
+        class: '',
+        section: '',
+        room: ''
+      });
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to add class');
+    }
+  });
+
+  const handleAddClass = () => {
+    if (!newClassForm.day || !newClassForm.time) {
+      toast.error('Please fill in day and time');
+      return;
+    }
+    addClassMutation.mutate(newClassForm);
+  };
+
+  const handleInputChange = (field, value) => {
+    setNewClassForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
 
   if (isLoading) {
     return (
@@ -33,7 +81,7 @@ export default function Timetable() {
         <Skeleton variant="rectangular" height={60} sx={{ mb: 2 }} />
         <Grid container spacing={2}>
           {[1, 2, 3, 4, 5].map((item) => (
-            <Grid item xs={12} md={6} lg={4} key={item}>
+            <Grid item xs={12} md={6} key={item}>
               <Skeleton variant="rectangular" height={200} />
             </Grid>
           ))}
@@ -46,10 +94,10 @@ export default function Timetable() {
     return <Alert severity="error">Failed to load timetable data</Alert>;
   }
 
-  const timetable = timetableData?.data || [];
+  const timetable = Array.isArray(timetableData?.data) ? timetableData.data : [];
 
   const getClassesForDay = (day) => {
-    return timetable.filter(item => item.day === day);
+    return Array.isArray(timetable) ? timetable.filter(item => item.day === day) : [];
   };
 
   const getTimeSlots = () => {
@@ -87,7 +135,11 @@ export default function Timetable() {
                   <Apps />
                 </ToggleButton>
               </ToggleButtonGroup>
-              <Button variant="contained" startIcon={<Add />}>
+              <Button 
+                variant="contained" 
+                startIcon={<Add />}
+                onClick={() => setAddClassDialog(true)}
+              >
                 Add Class
               </Button>
             </Box>
@@ -138,7 +190,7 @@ export default function Timetable() {
                                 {classData.subject}
                               </Typography>
                               <Typography variant="body2" fontWeight="bold">
-                                {classData.class}
+                                {classData.class}-{classData.section}
                               </Typography>
                               <Typography variant="caption" display="block">
                                 {classData.room}
@@ -190,7 +242,11 @@ export default function Timetable() {
                   ))}
                 </Select>
               </FormControl>
-              <Button variant="contained" startIcon={<Add />}>
+              <Button 
+                variant="contained" 
+                startIcon={<Add />}
+                onClick={() => setAddClassDialog(true)}
+              >
                 Add Class
               </Button>
             </Box>
@@ -210,7 +266,7 @@ export default function Timetable() {
                     primary={
                       <Box display="flex" alignItems="center" gap={1}>
                         <Typography variant="h6">{classData.subject}</Typography>
-                        <Chip label={classData.class} size="small" color="primary" />
+                        <Chip label={`${classData.class}-${classData.section}`} size="small" color="primary" />
                       </Box>
                     }
                     secondary={
@@ -260,7 +316,11 @@ export default function Timetable() {
         <CardHeader 
           title="All Classes" 
           action={
-            <Button variant="contained" startIcon={<Add />}>
+            <Button 
+              variant="contained" 
+              startIcon={<Add />}
+              onClick={() => setAddClassDialog(true)}
+            >
               Add Class
             </Button>
           }
@@ -298,7 +358,7 @@ export default function Timetable() {
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2">{classData.class}</Typography>
+                      <Typography variant="body2">{classData.class}-{classData.section}</Typography>
                     </TableCell>
                     <TableCell>
                       <Box display="flex" alignItems="center" gap={0.5}>
@@ -352,7 +412,7 @@ export default function Timetable() {
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
                   <Typography variant="h4" fontWeight="bold">
-                    {timetable.length}
+                    {Array.isArray(timetable) ? timetable.length : 0}
                   </Typography>
                   <Typography variant="body2">Total Classes</Typography>
                 </Box>
@@ -371,7 +431,7 @@ export default function Timetable() {
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
                   <Typography variant="h4" fontWeight="bold">
-                    {new Set(timetable.map(t => t.day)).size}
+                    {Array.isArray(timetable) ? new Set(timetable.map(t => t.day)).size : 0}
                   </Typography>
                   <Typography variant="body2">Active Days</Typography>
                 </Box>
@@ -390,7 +450,7 @@ export default function Timetable() {
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
                   <Typography variant="h4" fontWeight="bold">
-                    {new Set(timetable.map(t => t.subject)).size}
+                    {Array.isArray(timetable) ? new Set(timetable.map(t => t.subject)).size : 0}
                   </Typography>
                   <Typography variant="body2">Subjects</Typography>
                 </Box>
@@ -409,7 +469,7 @@ export default function Timetable() {
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
                   <Typography variant="h4" fontWeight="bold">
-                    {new Set(timetable.map(t => t.class)).size}
+                    {Array.isArray(timetable) ? new Set(timetable.map(t => `${t.class}-${t.section}`)).size : 0}
                   </Typography>
                   <Typography variant="body2">Different Classes</Typography>
                 </Box>
@@ -440,7 +500,7 @@ export default function Timetable() {
                     {selectedSlot.subject}
                   </Typography>
                   <Typography variant="body1">
-                    {selectedSlot.class}
+                    {selectedSlot.class}-{selectedSlot.section}
                   </Typography>
                 </Grid>
                 <Grid item xs={6}>
@@ -469,6 +529,97 @@ export default function Timetable() {
           <Button onClick={() => setDialogOpen(false)}>Close</Button>
           <Button variant="contained" startIcon={<Edit />}>
             Edit Class
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Add Class Dialog */}
+      <Dialog 
+        open={addClassDialog} 
+        onClose={() => setAddClassDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Add New Class</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>Day</InputLabel>
+                <Select
+                  value={newClassForm.day}
+                  onChange={(e) => handleInputChange('day', e.target.value)}
+                  label="Day"
+                >
+                  {daysOfWeek.slice(0, 5).map(day => (
+                    <MenuItem key={day} value={day}>{day}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>Time Slot</InputLabel>
+                <Select
+                  value={newClassForm.time}
+                  onChange={(e) => handleInputChange('time', e.target.value)}
+                  label="Time Slot"
+                >
+                  {getTimeSlots().map(slot => (
+                    <MenuItem key={slot} value={slot}>{slot}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Subject"
+                value={newClassForm.subject}
+                onChange={(e) => handleInputChange('subject', e.target.value)}
+                placeholder="e.g., Mathematics"
+                helperText="Enter the subject for this class"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Class (Optional - uses your assigned class)"
+                value={newClassForm.class}
+                onChange={(e) => handleInputChange('class', e.target.value)}
+                placeholder="e.g., 10 (leave empty for default)"
+                helperText="Leave empty to use your assigned class"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Section (Optional - uses your assigned section)"
+                value={newClassForm.section}
+                onChange={(e) => handleInputChange('section', e.target.value)}
+                placeholder="e.g., A (leave empty for default)"
+                helperText="Leave empty to use your assigned section"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Room"
+                value={newClassForm.room}
+                onChange={(e) => handleInputChange('room', e.target.value)}
+                placeholder="e.g., Room 101"
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAddClassDialog(false)}>Cancel</Button>
+          <Button 
+            variant="contained" 
+            onClick={handleAddClass}
+            disabled={addClassMutation.isPending}
+          >
+            {addClassMutation.isPending ? 'Adding...' : 'Add Class'}
           </Button>
         </DialogActions>
       </Dialog>

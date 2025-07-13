@@ -11,19 +11,149 @@ exports.getTimetable = async (req, res) => {
       return res.status(404).json({ message: 'Student not found' });
     }
     
-    const timetable = await Timetable.findOne({
-      class: student.class,
-      section: student.section
-    });
+    console.log(`🔍 Looking for timetable for student: ${student.name}`);
+    console.log(`   Student class: "${student.class}", section: "${student.section}"`);
     
-    if (!timetable) {
-      return res.json([]);
+    // Try to find timetable with flexible matching for class/section formats
+    let timetable = await Timetable.findOne({
+      class: student.class,
+      section: student.section,
+      isActive: true
+    }).populate('createdBy', 'name');
+    
+    if (timetable) {
+      console.log(`   ✅ EXACT MATCH: Found timetable for class "${timetable.class}", section "${timetable.section}"`);
+    } else {
+      console.log(`   ❌ NO EXACT MATCH`);
+      
+      // If no exact match, try case-insensitive matching
+      timetable = await Timetable.findOne({
+        class: { $regex: new RegExp(`^${student.class}$`, 'i') },
+        section: { $regex: new RegExp(`^${student.section}$`, 'i') },
+        isActive: true
+      }).populate('createdBy', 'name');
+      
+      if (timetable) {
+        console.log(`   ✅ CASE-INSENSITIVE MATCH: Found timetable for class "${timetable.class}", section "${timetable.section}"`);
+      } else {
+        console.log(`   ❌ NO CASE-INSENSITIVE MATCH`);
+        
+        // If still no match, try to normalize and match common formats
+        const normalizedStudentClass = student.class.toString().replace(/\s+/g, '').toUpperCase();
+        const normalizedStudentSection = student.section.toString().replace(/\s+/g, '').toUpperCase();
+        
+        console.log(`   🔧 Normalized student class: "${normalizedStudentClass}", section: "${normalizedStudentSection}"`);
+        
+        // Find all active timetables
+        const allTimetables = await Timetable.find({ isActive: true }).populate('createdBy', 'name');
+        
+        console.log(`   📅 Found ${allTimetables.length} active timetables to check`);
+        
+        // Try to find a match with normalized values
+        for (const t of allTimetables) {
+          const normalizedTimetableClass = t.class.toString().replace(/\s+/g, '').toUpperCase();
+          const normalizedTimetableSection = t.section.toString().replace(/\s+/g, '').toUpperCase();
+          
+          console.log(`   🔍 Checking timetable: class "${t.class}" -> "${normalizedTimetableClass}", section "${t.section}" -> "${normalizedTimetableSection}"`);
+          
+          if (normalizedTimetableClass === normalizedStudentClass && 
+              normalizedTimetableSection === normalizedStudentSection) {
+            timetable = t;
+            console.log(`   ✅ NORMALIZED MATCH: Found timetable for class "${timetable.class}", section "${timetable.section}"`);
+            break;
+          }
+        }
+        
+        if (!timetable) {
+          console.log(`   ❌ NO NORMALIZED MATCH`);
+          
+          // Try flexible matching for combined class+section formats
+          for (const t of allTimetables) {
+            const timetableClassStr = String(t.class);
+            const timetableSectionStr = String(t.section);
+            const studentClassStr = String(student.class);
+            const studentSectionStr = String(student.section);
+            
+            // Check if student class includes section (e.g., student has "12C" but timetable has "12" + "C")
+            if (studentClassStr.includes(studentSectionStr) && 
+                timetableClassStr === studentClassStr.replace(studentSectionStr, '') &&
+                timetableSectionStr === studentSectionStr) {
+              timetable = t;
+              console.log(`   ✅ FLEXIBLE MATCH 1: Student "${studentClassStr}" matches timetable "${timetableClassStr}" + "${timetableSectionStr}"`);
+              break;
+            }
+            
+            // Check if timetable class includes section (e.g., timetable has "12C" but student has "12" + "C")
+            if (timetableClassStr.includes(timetableSectionStr) &&
+                studentClassStr === timetableClassStr.replace(timetableSectionStr, '') &&
+                studentSectionStr === timetableSectionStr) {
+              timetable = t;
+              console.log(`   ✅ FLEXIBLE MATCH 2: Timetable "${timetableClassStr}" matches student "${studentClassStr}" + "${studentSectionStr}"`);
+              break;
+            }
+          }
+          
+          if (!timetable) {
+            console.log(`   ❌ NO FLEXIBLE MATCH`);
+          }
+        }
+      }
     }
     
-    res.json(timetable);
+    if (!timetable) {
+      return res.json({
+        success: true,
+        data: []
+      });
+    }
+    
+    // Transform timetable data to match frontend expectations
+    const transformedTimetable = [];
+    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    
+    days.forEach(day => {
+      if (timetable[day] && timetable[day].periods) {
+        timetable[day].periods.forEach(period => {
+          transformedTimetable.push({
+            id: `${timetable._id}-${day}-${period._id}`,
+            day: day.charAt(0).toUpperCase() + day.slice(1),
+            time: `${period.startTime} - ${period.endTime}`,
+            subject: period.subject,
+            teacher: period.teacher,
+            teacherName: period.teacher ? 'Teacher' : 'TBD', // Will be populated if teacher reference exists
+            room: period.room || 'TBD',
+            class: timetable.class,
+            section: timetable.section
+          });
+        });
+      }
+    });
+    
+    // If teacher references exist, populate teacher names
+    const teacherIds = [...new Set(transformedTimetable.map(t => t.teacher).filter(Boolean))];
+    if (teacherIds.length > 0) {
+      const Staff = require('../../models/Staff/staffModel');
+      const teachers = await Staff.find({ _id: { $in: teacherIds } }).select('name');
+      const teacherMap = new Map(teachers.map(t => [t._id.toString(), t.name]));
+      
+      transformedTimetable.forEach(entry => {
+        if (entry.teacher) {
+          entry.teacherName = teacherMap.get(entry.teacher.toString()) || 'Teacher';
+        }
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: transformedTimetable
+    });
   } catch (error) {
     console.error('Error fetching timetable:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error',
+      error: error.message 
+    });
   }
 };
 

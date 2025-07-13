@@ -113,13 +113,6 @@ function DashboardOverview() {
     enabled: !!staffId && staffId !== 'undefined'
   });
 
-  // Fetch teacher announcements
-  const { data: announcementsData, isLoading: announcementsLoading } = useQuery({
-    queryKey: ['teacherAnnouncements'],
-    queryFn: () => teacherAPI.getAnnouncements(),
-    enabled: !!staffId && staffId !== 'undefined'
-  });
-
   // Fetch Students Approvals
   const { data: leaveRequestsData, isLoading: leaveRequestsLoading } = useQuery({
     queryKey: ['teacherLeaveRequests', staffId],
@@ -140,7 +133,7 @@ function DashboardOverview() {
     );
   }
 
-  const isLoading = profileLoading || classesLoading || studentsLoading || parentsLoading || assignmentsLoading || timetableLoading || announcementsLoading || leaveRequestsLoading;
+  const isLoading = profileLoading || classesLoading || studentsLoading || parentsLoading || assignmentsLoading || timetableLoading || leaveRequestsLoading;
 
   if (isLoading) {
     return (
@@ -164,7 +157,7 @@ function DashboardOverview() {
     totalClasses: classesData?.length || 0,
     totalStudents: studentsData?.length || 0,
     totalParents: parentsData?.length || 0,
-    upcomingClasses: (timetableData || []).filter(cls => new Date(cls.startTime) > new Date()).length || 0,
+    upcomingClasses: (timetableData?.data || []).filter(cls => new Date(cls.startTime) > new Date()).length || 0,
     pendingAssignments: (assignmentsData || []).filter(assignment => assignment.status === 'active').length || 0,
     pendingLeaveRequests: (leaveRequestsData || []).filter(request => request.status === 'pending').length || 0,
     averageAttendance: 85, // This would need to be calculated from attendance data

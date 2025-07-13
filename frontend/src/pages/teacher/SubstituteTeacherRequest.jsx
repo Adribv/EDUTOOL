@@ -35,7 +35,7 @@ const SubstituteTeacherRequest = () => {
     setError('');
     setSuccess('');
     try {
-      await api.post('/teacher/substitute-requests', form);
+      await api.post('/teachers/substitute-requests', form);
       setSuccess('Substitute teacher request submitted for VP approval.');
       setSnackbar({ open: true, message: 'Request submitted for VP approval.', severity: 'success' });
       setForm(initialForm);

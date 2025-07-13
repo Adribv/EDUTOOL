@@ -12,9 +12,10 @@ const SubstituteRequests = () => {
       setLoading(true);
       setError('');
       try {
-        const res = await api.get('/teacher/substitute-requests');
+        const res = await api.get('/teachers/substitute-requests');
         setRequests(res.data || []);
-      } catch (err) {
+      } catch (error) {
+        console.error('Error fetching substitute requests:', error);
         setError('Failed to load substitute requests');
       } finally {
         setLoading(false);

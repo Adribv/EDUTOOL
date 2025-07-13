@@ -51,7 +51,14 @@ connectDB.connect();
 
 app.use('/api', authModule);
 app.use('/api/admin-staff', require('./routes/Staff/Admin/adminStaffRoutes'));
-app.use('/api/teacher', require('./routes/Staff/teacherRoutes'));
+app.use('/api/teachers', require('./routes/Staff/teacherRoutes'));
+app.use('/api/students', require('./routes/Student/studentRoutes'));
+app.use('/api/parents', require('./routes/Parent/parentRoutes'));
+app.use('/api/staffs', require('./routes/Staff/staffRoutes'));
+app.use('/api/hod', require('./routes/Staff/hodRoutes'));
+app.use('/api/principal', require('./routes/Staff/Principal/principalRoutes'));
+app.use('/api/vp', require('./routes/Staff/VP/vicePrincipalRoutes'));
+app.use('/api/accountant', require('./routes/Staff/accountantRoutes'));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

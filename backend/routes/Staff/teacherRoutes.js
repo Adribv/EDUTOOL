@@ -59,6 +59,9 @@ router.get('/chapter-plans/:class/:section/:subject', classSubjectController.get
 
 // 3. Timetable and Scheduling
 router.get('/timetable', timetableController.getTimetable);
+router.post('/timetable', timetableController.addTimetableEntry);
+router.put('/timetable/:entryId', timetableController.updateTimetableEntry);
+router.delete('/timetable/:entryId', timetableController.deleteTimetableEntry);
 router.post('/substitution-requests', timetableController.requestSubstitution);
 router.get('/substitution-requests', timetableController.getSubstitutionRequests);
 router.get('/academic-calendar', timetableController.getAcademicCalendar);
