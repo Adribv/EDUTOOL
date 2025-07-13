@@ -23,7 +23,9 @@ import {
   Tabs,
   Tab,
   InputAdornment,
+  Divider,
 } from '@mui/material';
+import { DataGrid } from '@mui/x-data-grid';
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -66,7 +68,18 @@ const InventoryManagement = () => {
   const [suppliers, setSuppliers] = useState([]);
   const [requests, setRequests] = useState([]);
   const [requestDialog, setRequestDialog] = useState(false);
-  const [reqForm, setReqForm] = useState({ itemName:'', supplier:'', quantity:'', unit:'', expectedDate:'', quotation:'', message:'' });
+  const [reqForm, setReqForm] = useState({
+    requestRef:'',
+    name:'',
+    department:'',
+    date:new Date().toISOString().split('T')[0],
+    items: Array.from({length:20}).map(()=>({ itemCode:'', description:'', specification:'', unit:'', qty:'', remarks:'' })),
+    notes:'',
+    requesterName:'',
+    approvedBy:'',
+    approvedDate:'',
+    idNo:'',
+  });
   const [supplierDialog, setSupplierDialog] = useState(false);
   const [supplierForm, setSupplierForm] = useState({ name:'', category:'', location:'', phone:'', email:'' });
 
@@ -142,12 +155,29 @@ const InventoryManagement = () => {
     setReqForm((prev)=>({ ...prev, [name]: value }));
   };
 
+  const handleItemChange = (index, field, value) => {
+    const newItems = [...reqForm.items];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setReqForm({...reqForm, items:newItems});
+  };
+
   const submitSupplyRequest = async () => {
     try {
       const saved = await adminAPI.createSupplyRequest(reqForm);
       setRequests(prev=>[saved, ...prev]);
       setRequestDialog(false);
-      setReqForm({ itemName:'', supplier:'', quantity:'', unit:'', expectedDate:'', quotation:'', message:'' });
+      setReqForm({
+        requestRef:'',
+        name:'',
+        department:'',
+        date:new Date().toISOString().split('T')[0],
+        items: Array.from({length:20}).map(()=>({ itemCode:'', description:'', specification:'', unit:'', qty:'', remarks:'' })),
+        notes:'',
+        requesterName:'',
+        approvedBy:'',
+        approvedDate:'',
+        idNo:'',
+      });
     } catch (err) {
       console.error(err);
     }
@@ -342,43 +372,89 @@ const InventoryManagement = () => {
 
       {tab===1 && (
         <Box>
-          <Button variant="contained" sx={{ mb:2 }} startIcon={<AddIcon />} onClick={()=>setRequestDialog(true)}>
-            New Supply Request
-          </Button>
+          {/* Stationery Request Form Generator */}
+          <Typography variant="h5" sx={{ mb:2, fontWeight:'bold' }}>Stationery Request Generator</Typography>
 
-          <TableContainer component={Paper}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Item</TableCell>
-                  <TableCell>Supplier</TableCell>
-                  <TableCell>Qty</TableCell>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Action</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {requests.map((r)=>(
-                  <TableRow key={r._id}>
-                    <TableCell>{r.itemName}</TableCell>
-                    <TableCell>{r.supplier?.name}</TableCell>
-                    <TableCell>{r.quantity} {r.unit}</TableCell>
-                    <TableCell>{new Date(r.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell>{r.status}</TableCell>
-                    <TableCell>
-                      {r.status!=='Received' && (
-                        <Button size="small" onClick={()=>updateRequestStatus(r._id,'Received')}>Received</Button>
-                      )}
-                      {r.status!=='Delayed' && (
-                        <Button size="small" color="secondary" onClick={()=>updateRequestStatus(r._id,'Delayed')}>Delayed</Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <Box sx={{ border:'1px solid #000', p:2, mb:3 }}>
+            {/* Top Header Row */}
+            <Grid container>
+              <Grid item xs={4} sx={{ border:'1px solid #000', display:'flex', justifyContent:'center', alignItems:'center', height:60 }}>
+                <Typography variant="body2">SCHOOL LOGO</Typography>
+              </Grid>
+              <Grid item xs={4} sx={{ border:'1px solid #000', height:60 }}></Grid>
+              <Grid item xs={4} sx={{ border:'1px solid #000', textAlign:'center', p:1 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight:'bold' }}>(SCHOOL NAME)</Typography>
+                <Typography variant="caption">(BRANCH NAME AND ADDRESS)</Typography>
+              </Grid>
+            </Grid>
+
+            {/* Title */}
+            <Box sx={{ border:'1px solid #000', textAlign:'center', p:1 }}>
+              <Typography variant="h6" sx={{ fontWeight:'bold' }}>STATIONERY REQUEST FORM</Typography>
+            </Box>
+
+            {/* Request Info */}
+            <Box sx={{ border:'1px solid #000', p:1 }}>
+              <Grid container spacing={2} alignItems="center">
+                <Grid item xs={3}><TextField label="Request Ref" name="requestRef" value={reqForm.requestRef} onChange={handleReqChange} variant="standard" fullWidth /></Grid>
+                <Grid item xs={4}><TextField label="Name" name="name" value={reqForm.name} onChange={handleReqChange} variant="standard" fullWidth /></Grid>
+                <Grid item xs={3}><TextField label="Dept" name="department" value={reqForm.department} onChange={handleReqChange} variant="standard" fullWidth /></Grid>
+                <Grid item xs={2}><TextField type="date" label="Date" name="date" value={reqForm.date} onChange={handleReqChange} variant="standard" fullWidth InputLabelProps={{ shrink: true }} /></Grid>
+              </Grid>
+            </Box>
+
+            {/* Items Grid */}
+            <Box sx={{ height: 500, width: '100%', border:'1px solid #000', mb:2 }}>
+              <DataGrid
+                columns={[
+                  { field:'sl', headerName:'Sl. No.', width:80, editable:false },
+                  { field:'itemCode', headerName:'Item Code', flex:1, editable:true },
+                  { field:'description', headerName:'Item Description', flex:1.5, editable:true },
+                  { field:'specification', headerName:'Specification', flex:1, editable:true },
+                  { field:'unit', headerName:'Unit', width:80, editable:true },
+                  { field:'qty', headerName:'Qty', width:80, editable:true },
+                  { field:'remarks', headerName:'Remarks', flex:1, editable:true },
+                ]}
+                rows={reqForm.items.map((r,i)=>({ id:i, sl:i+1, ...r }))}
+                hideFooter
+                onCellEditCommit={(params)=>{
+                  const { id, field, value } = params;
+                  handleItemChange(id, field, value);
+                }}
+                sx={{ '& .MuiDataGrid-cell, & .MuiDataGrid-columnHeaders': { border:'1px solid #000' } }}
+              />
+            </Box>
+
+            {/* Notes */}
+            <Box sx={{ border:'1px solid #000', p:1, minHeight:60, mb:1 }}>
+              <TextField label="NOTES" name="notes" value={reqForm.notes} onChange={handleReqChange} variant="standard" multiline fullWidth rows={2} />
+            </Box>
+
+            <Typography variant="caption" display="block" gutterBottom>1. This requisition is used for school staff.</Typography>
+
+            {/* Signature Section */}
+            <Grid container sx={{ border:'1px solid #000', mb:2 }}>
+              <Grid item xs={4} sx={{ borderRight:'1px solid #000', p:1 }}>
+                <Typography variant="body2">Requester Name:</Typography>
+                <TextField name="requesterName" value={reqForm.requesterName} onChange={handleReqChange} variant="standard" fullWidth />
+                <Typography variant="body2">ID No:</Typography>
+                <TextField name="idNo" value={reqForm.idNo} onChange={handleReqChange} variant="standard" fullWidth />
+              </Grid>
+              <Grid item xs={4} sx={{ borderRight:'1px solid #000', p:1, display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'center' }}>
+                <Typography variant="body2" sx={{ mb:1 }}>Signature</Typography>
+              </Grid>
+              <Grid item xs={4} sx={{ p:1 }}>
+                <Typography variant="body2">APPROVED BY:</Typography>
+                <TextField name="approvedBy" value={reqForm.approvedBy} onChange={handleReqChange} variant="standard" fullWidth />
+                <Typography variant="body2">DATE</Typography>
+                <TextField type="date" name="approvedDate" value={reqForm.approvedDate} onChange={handleReqChange} variant="standard" fullWidth InputLabelProps={{shrink:true}} />
+              </Grid>
+            </Grid>
+
+            <Box textAlign="right">
+              <Button variant="contained" onClick={submitSupplyRequest}>Save Request</Button>
+            </Box>
+          </Box>
         </Box>
       )}
 
@@ -414,24 +490,92 @@ const InventoryManagement = () => {
         </Box>
       )}
 
-      <Dialog open={requestDialog} onClose={()=>setRequestDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>New Supply Request</DialogTitle>
+      <Dialog open={requestDialog} onClose={()=>setRequestDialog(false)} fullScreen>
+        <DialogTitle sx={{ textAlign:'center', fontWeight:'bold' }}>STATIONERY REQUEST FORM</DialogTitle>
         <DialogContent>
-          <TextField fullWidth label="Item Name" name="itemName" value={reqForm.itemName} onChange={handleReqChange} sx={{ mt:1 }} />
-          <TextField select fullWidth label="Supplier" name="supplier" value={reqForm.supplier} onChange={handleReqChange} sx={{ mt:2 }}>
-            {suppliers.map(s=>(<MenuItem key={s._id} value={s._id}>{s.name}</MenuItem>))}
-          </TextField>
-          <Grid container spacing={2} sx={{ mt:1 }}>
-            <Grid item xs={6}><TextField fullWidth label="Quantity" name="quantity" type="number" value={reqForm.quantity} onChange={handleReqChange} /></Grid>
-            <Grid item xs={6}><TextField fullWidth label="Unit" name="unit" value={reqForm.unit} onChange={handleReqChange} /></Grid>
-          </Grid>
-          <TextField fullWidth type="date" name="expectedDate" label="Expected Date" InputLabelProps={{shrink:true}} value={reqForm.expectedDate} onChange={handleReqChange} sx={{ mt:2 }} />
-          <TextField fullWidth label="Quotation" name="quotation" value={reqForm.quotation} onChange={handleReqChange} sx={{ mt:2 }} InputProps={{ startAdornment:<InputAdornment position="start"><DescriptionIcon/></InputAdornment> }} />
-          <TextField fullWidth multiline rows={3} label="Message" name="message" value={reqForm.message} onChange={handleReqChange} sx={{ mt:2 }} />
+          <Box sx={{ border:'1px solid #000', p:2 }}>
+            {/* Top Header Row */}
+            <Grid container>
+              <Grid item xs={4} sx={{ border:'1px solid #000', display:'flex', justifyContent:'center', alignItems:'center', height:60 }}>
+                <Typography variant="body2">SCHOOL LOGO</Typography>
+              </Grid>
+              <Grid item xs={4} sx={{ border:'1px solid #000', height:60 }}></Grid>
+              <Grid item xs={4} sx={{ border:'1px solid #000', textAlign:'center', p:1 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight:'bold' }}>(SCHOOL NAME)</Typography>
+                <Typography variant="caption">(BRANCH NAME AND ADDRESS)</Typography>
+              </Grid>
+            </Grid>
+
+            {/* Title */}
+            <Box sx={{ border:'1px solid #000', textAlign:'center', p:1 }}>
+              <Typography variant="h6" sx={{ fontWeight:'bold' }}>STATIONERY REQUEST FORM</Typography>
+            </Box>
+
+            {/* Request Info Row */}
+            <Box sx={{ border:'1px solid #000', p:1 }}>
+              <Grid container spacing={2} alignItems="center">
+                <Grid item xs={3}><TextField label="Request Ref" name="requestRef" value={reqForm.requestRef} onChange={handleReqChange} variant="standard" fullWidth /></Grid>
+                <Grid item xs={4}><TextField label="Name" name="name" value={reqForm.name} onChange={handleReqChange} variant="standard" fullWidth /></Grid>
+                <Grid item xs={3}><TextField label="Dept" name="department" value={reqForm.department} onChange={handleReqChange} variant="standard" fullWidth /></Grid>
+                <Grid item xs={2}><TextField type="date" label="Date" name="date" value={reqForm.date} onChange={handleReqChange} variant="standard" fullWidth InputLabelProps={{ shrink: true }} /></Grid>
+              </Grid>
+            </Box>
+
+            {/* Items Table */}
+            <Box sx={{ height: 500, width: '100%', border:'1px solid #000', mb:2 }}>
+              <DataGrid
+                columns={[
+                  { field:'sl', headerName:'Sl. No.', width:80, editable:false },
+                  { field:'itemCode', headerName:'Item Code', flex:1, editable:true },
+                  { field:'description', headerName:'Item Description', flex:1.5, editable:true },
+                  { field:'specification', headerName:'Specification', flex:1, editable:true },
+                  { field:'unit', headerName:'Unit', width:80, editable:true },
+                  { field:'qty', headerName:'Qty', width:80, editable:true },
+                  { field:'remarks', headerName:'Remarks', flex:1, editable:true },
+                ]}
+                rows={reqForm.items.map((r,i)=>({ id:i, sl:i+1, ...r }))}
+                hideFooter
+                onCellEditCommit={(params)=>{
+                  const { id, field, value } = params;
+                  handleItemChange(id, field, value);
+                }}
+                sx={{
+                  '& .MuiDataGrid-cell, & .MuiDataGrid-columnHeaders': { border:'1px solid #000' },
+                }}
+              />
+            </Box>
+
+            {/* Notes */}
+            <Box sx={{ border:'1px solid #000', p:1, minHeight:60, mb:1 }}>
+              <TextField label="NOTES" name="notes" value={reqForm.notes} onChange={handleReqChange} variant="standard" multiline fullWidth rows={2} />
+            </Box>
+
+            {/* Footnote */}
+            <Typography variant="caption" display="block" gutterBottom>1. This requisition is used for school staff.</Typography>
+
+            {/* Signature Row */}
+            <Grid container sx={{ border:'1px solid #000' }}>
+              <Grid item xs={4} sx={{ borderRight:'1px solid #000', p:1 }}>
+                <Typography variant="body2">Requester Name:</Typography>
+                <TextField name="requesterName" value={reqForm.requesterName} onChange={handleReqChange} variant="standard" fullWidth />
+                <Typography variant="body2">ID No:</Typography>
+                <TextField name="idNo" value={reqForm.idNo} onChange={handleReqChange} variant="standard" fullWidth />
+              </Grid>
+              <Grid item xs={4} sx={{ borderRight:'1px solid #000', p:1, display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'center' }}>
+                <Typography variant="body2" sx={{ mb:1 }}>Signature</Typography>
+              </Grid>
+              <Grid item xs={4} sx={{ p:1 }}>
+                <Typography variant="body2">APPROVED BY:</Typography>
+                <TextField name="approvedBy" value={reqForm.approvedBy} onChange={handleReqChange} variant="standard" fullWidth />
+                <Typography variant="body2">DATE</Typography>
+                <TextField type="date" name="approvedDate" value={reqForm.approvedDate} onChange={handleReqChange} variant="standard" fullWidth InputLabelProps={{shrink:true}} />
+              </Grid>
+            </Grid>
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={()=>setRequestDialog(false)}>Cancel</Button>
-          <Button variant="contained" onClick={submitSupplyRequest}>Submit</Button>
+          <Button variant="contained" onClick={submitSupplyRequest}>Submit Request</Button>
         </DialogActions>
       </Dialog>
 

@@ -6,6 +6,7 @@ const supplierRequestController = require('../../../controllers/Staff/Admin/supp
 const { permit } = require('../../../middlewares/roleMiddleware');
 const { verifyToken } = require('../../../middlewares/authMiddleware');
 const uploadProfileImage = require('../../../middlewares/uploadProfileImageMiddleware');
+const uploadStudentFiles = require('../../../middlewares/uploadStudentFilesMiddleware');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -56,9 +57,9 @@ router.post('/classes/public', adminStaffController.createClass);
 router.get('/staff/teachers/public', adminStaffController.getAllTeachers);
 router.get('/students/public', adminStaffController.getAllStudents);
 router.get('/students/export', adminStaffController.exportStudents);
-router.post('/students/public', adminStaffController.registerStudent);
+router.post('/students/public', uploadStudentFiles, adminStaffController.registerStudent);
 router.post('/students/bulk', adminStaffController.bulkImportStudents);
-router.put('/students/public/:id', adminStaffController.updateStudent);
+router.put('/students/public/:id', uploadStudentFiles, adminStaffController.updateStudent);
 router.delete('/students/public/:id', adminStaffController.deleteStudent);
 router.get('/fee-structure/public', adminStaffController.getFeeStructures);
 router.post('/fee-structure/public', adminStaffController.createSimpleFeeStructure);

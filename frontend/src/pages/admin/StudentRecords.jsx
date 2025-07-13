@@ -28,6 +28,7 @@ import {
   TableRow,
   TableCell,
   Paper,
+  Divider,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -61,6 +62,25 @@ const validationSchema = yup.object({
   parentPhone: yup.string().required('Parent Phone is required'),
   city: yup.string().required('City is required'),
   address: yup.string().required('Address is required'),
+  admissionNumber: yup.string().required('Admission Number is required'),
+  admissionSource: yup.string(),
+  admissionTransferTo: yup.string(),
+  courseDuration: yup.string(),
+  category: yup.string(),
+  religion: yup.string(),
+  mobile: yup.string().required('Mobile is required'),
+  educationQualification: yup.string(),
+  bloodGroup: yup.string(),
+  admissionDate: yup.string(),
+  admissionSession: yup.string(),
+  studentDomicile: yup.string(),
+  grandTotalFee: yup.string(),
+  applicableDiscount: yup.string(),
+  fatherName: yup.string(),
+  fatherMobile: yup.string(),
+  fatherOccupation: yup.string(),
+  motherName: yup.string(),
+  motherMobile: yup.string(),
 });
 
 function StudentRecords() {
@@ -114,10 +134,18 @@ function StudentRecords() {
   // Add/Edit student mutation
   const mutation = useMutation({
     mutationFn: async (values) => {
+      // Create FormData so we can upload files along with text fields
+      const formData = new FormData();
+      Object.entries(values).forEach(([key, val]) => {
+        if (val !== undefined && val !== null && val !== '') {
+          formData.append(key, val);
+        }
+      });
+      const config = { headers: { 'Content-Type': 'multipart/form-data' } };
       if (selectedStudent) {
-        await axios.put(`http://localhost:5000/api/admin-staff/students/public/${selectedStudent._id}`, values);
+        await axios.put(`http://localhost:5000/api/admin-staff/students/public/${selectedStudent._id}`, formData, config);
       } else {
-                  await axios.post('http://localhost:5000/api/admin-staff/students/public', values);
+        await axios.post('http://localhost:5000/api/admin-staff/students/public', formData, config);
       }
     },
     onSuccess: (data) => {
@@ -164,6 +192,28 @@ function StudentRecords() {
       parentPhone: '',
       city: '',
       address: '',
+      admissionNumber: '',
+      admissionSource: '',
+      admissionTransferTo: '',
+      courseDuration: '',
+      category: '',
+      religion: '',
+      mobile: '',
+      educationQualification: '',
+      bloodGroup: '',
+      studentPhoto: null,
+      idProof: null,
+      addressProof: null,
+      admissionDate: '',
+      admissionSession: '',
+      studentDomicile: '',
+      grandTotalFee: '',
+      applicableDiscount: '',
+      fatherName: '',
+      fatherMobile: '',
+      fatherOccupation: '',
+      motherName: '',
+      motherMobile: '',
     },
     validationSchema: validationSchema,
     onSubmit: (values) => {
@@ -469,7 +519,7 @@ function StudentRecords() {
         </Box>
 
       {/* Add/Edit Dialog */}
-      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+      <Dialog open={open} onClose={handleClose} fullScreen>
         <DialogTitle>{selectedStudent ? 'Edit Student' : 'Add New Student'}</DialogTitle>
         <form onSubmit={formik.handleSubmit}>
           <DialogContent>
@@ -646,6 +696,287 @@ function StudentRecords() {
                   onChange={formik.handleChange}
                   error={formik.touched.address && Boolean(formik.errors.address)}
                   helperText={formik.touched.address && formik.errors.address}
+                />
+              </Grid>
+
+              {/* Admission Details */}
+              <Grid item xs={12}>
+                <Typography variant="h6" gutterBottom>Admission Details</Typography>
+                <Divider sx={{ mb: 2 }} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  id="admissionNumber"
+                  name="admissionNumber"
+                  label="Admission Number"
+                  value={formik.values.admissionNumber}
+                  onChange={formik.handleChange}
+                  error={formik.touched.admissionNumber && Boolean(formik.errors.admissionNumber)}
+                  helperText={formik.touched.admissionNumber && formik.errors.admissionNumber}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  id="admissionSource"
+                  name="admissionSource"
+                  label="Admission Source"
+                  value={formik.values.admissionSource}
+                  onChange={formik.handleChange}
+                  error={formik.touched.admissionSource && Boolean(formik.errors.admissionSource)}
+                  helperText={formik.touched.admissionSource && formik.errors.admissionSource}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  id="admissionTransferTo"
+                  name="admissionTransferTo"
+                  label="Admission Transfer To"
+                  value={formik.values.admissionTransferTo}
+                  onChange={formik.handleChange}
+                  error={formik.touched.admissionTransferTo && Boolean(formik.errors.admissionTransferTo)}
+                  helperText={formik.touched.admissionTransferTo && formik.errors.admissionTransferTo}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  id="courseDuration"
+                  name="courseDuration"
+                  label="Course/Class Duration"
+                  value={formik.values.courseDuration}
+                  onChange={formik.handleChange}
+                  error={formik.touched.courseDuration && Boolean(formik.errors.courseDuration)}
+                  helperText={formik.touched.courseDuration && formik.errors.courseDuration}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  id="category"
+                  name="category"
+                  label="Category"
+                  value={formik.values.category}
+                  onChange={formik.handleChange}
+                  error={formik.touched.category && Boolean(formik.errors.category)}
+                  helperText={formik.touched.category && formik.errors.category}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  id="religion"
+                  name="religion"
+                  label="Religion"
+                  value={formik.values.religion}
+                  onChange={formik.handleChange}
+                  error={formik.touched.religion && Boolean(formik.errors.religion)}
+                  helperText={formik.touched.religion && formik.errors.religion}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  id="mobile"
+                  name="mobile"
+                  label="Mobile"
+                  value={formik.values.mobile}
+                  onChange={formik.handleChange}
+                  error={formik.touched.mobile && Boolean(formik.errors.mobile)}
+                  helperText={formik.touched.mobile && formik.errors.mobile}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  id="educationQualification"
+                  name="educationQualification"
+                  label="Education Qualification"
+                  value={formik.values.educationQualification}
+                  onChange={formik.handleChange}
+                  error={formik.touched.educationQualification && Boolean(formik.errors.educationQualification)}
+                  helperText={formik.touched.educationQualification && formik.errors.educationQualification}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  id="bloodGroup"
+                  name="bloodGroup"
+                  label="Blood Group"
+                  value={formik.values.bloodGroup}
+                  onChange={formik.handleChange}
+                  error={formik.touched.bloodGroup && Boolean(formik.errors.bloodGroup)}
+                  helperText={formik.touched.bloodGroup && formik.errors.bloodGroup}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  id="admissionDate"
+                  name="admissionDate"
+                  label="Admission Date"
+                  type="date"
+                  InputLabelProps={{ shrink: true }}
+                  value={formik.values.admissionDate}
+                  onChange={formik.handleChange}
+                  error={formik.touched.admissionDate && Boolean(formik.errors.admissionDate)}
+                  helperText={formik.touched.admissionDate && formik.errors.admissionDate}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  id="admissionSession"
+                  name="admissionSession"
+                  label="Admission Session"
+                  value={formik.values.admissionSession}
+                  onChange={formik.handleChange}
+                  error={formik.touched.admissionSession && Boolean(formik.errors.admissionSession)}
+                  helperText={formik.touched.admissionSession && formik.errors.admissionSession}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  id="studentDomicile"
+                  name="studentDomicile"
+                  label="Student Domicile"
+                  value={formik.values.studentDomicile}
+                  onChange={formik.handleChange}
+                  error={formik.touched.studentDomicile && Boolean(formik.errors.studentDomicile)}
+                  helperText={formik.touched.studentDomicile && formik.errors.studentDomicile}
+                />
+              </Grid>
+
+              {/* Document Uploads */}
+              <Grid item xs={12}>
+                <Typography variant="h6" gutterBottom>Documents</Typography>
+                <Divider sx={{ mb: 2 }} />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <Button variant="outlined" component="label" fullWidth>
+                  Student Photo
+                  <input type="file" accept="image/*" hidden onChange={(e) => formik.setFieldValue('studentPhoto', e.currentTarget.files[0])} />
+                </Button>
+                {formik.values.studentPhoto && (
+                  <Typography variant="caption">{formik.values.studentPhoto.name}</Typography>
+                )}
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <Button variant="outlined" component="label" fullWidth>
+                  ID Proof
+                  <input type="file" hidden onChange={(e) => formik.setFieldValue('idProof', e.currentTarget.files[0])} />
+                </Button>
+                {formik.values.idProof && (
+                  <Typography variant="caption">{formik.values.idProof.name}</Typography>
+                )}
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <Button variant="outlined" component="label" fullWidth>
+                  Address Proof
+                  <input type="file" hidden onChange={(e) => formik.setFieldValue('addressProof', e.currentTarget.files[0])} />
+                </Button>
+                {formik.values.addressProof && (
+                  <Typography variant="caption">{formik.values.addressProof.name}</Typography>
+                )}
+              </Grid>
+
+              {/* Student Fee Details */}
+              <Grid item xs={12}>
+                <Typography variant="h6" gutterBottom>Student Fee Details</Typography>
+                <Divider sx={{ mb: 2 }} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  id="grandTotalFee"
+                  name="grandTotalFee"
+                  label="Grand Total Fee"
+                  value={formik.values.grandTotalFee}
+                  onChange={formik.handleChange}
+                  error={formik.touched.grandTotalFee && Boolean(formik.errors.grandTotalFee)}
+                  helperText={formik.touched.grandTotalFee && formik.errors.grandTotalFee}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  id="applicableDiscount"
+                  name="applicableDiscount"
+                  label="Applicable Discount"
+                  value={formik.values.applicableDiscount}
+                  onChange={formik.handleChange}
+                  error={formik.touched.applicableDiscount && Boolean(formik.errors.applicableDiscount)}
+                  helperText={formik.touched.applicableDiscount && formik.errors.applicableDiscount}
+                />
+              </Grid>
+
+              {/* Parent Details */}
+              <Grid item xs={12}>
+                <Typography variant="h6" gutterBottom>Parent Details</Typography>
+                <Divider sx={{ mb: 2 }} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  id="fatherName"
+                  name="fatherName"
+                  label="Father's Name"
+                  value={formik.values.fatherName}
+                  onChange={formik.handleChange}
+                  error={formik.touched.fatherName && Boolean(formik.errors.fatherName)}
+                  helperText={formik.touched.fatherName && formik.errors.fatherName}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  id="fatherMobile"
+                  name="fatherMobile"
+                  label="Father's Mobile"
+                  value={formik.values.fatherMobile}
+                  onChange={formik.handleChange}
+                  error={formik.touched.fatherMobile && Boolean(formik.errors.fatherMobile)}
+                  helperText={formik.touched.fatherMobile && formik.errors.fatherMobile}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  id="fatherOccupation"
+                  name="fatherOccupation"
+                  label="Father's Occupation"
+                  value={formik.values.fatherOccupation}
+                  onChange={formik.handleChange}
+                  error={formik.touched.fatherOccupation && Boolean(formik.errors.fatherOccupation)}
+                  helperText={formik.touched.fatherOccupation && formik.errors.fatherOccupation}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  id="motherName"
+                  name="motherName"
+                  label="Mother's Name"
+                  value={formik.values.motherName}
+                  onChange={formik.handleChange}
+                  error={formik.touched.motherName && Boolean(formik.errors.motherName)}
+                  helperText={formik.touched.motherName && formik.errors.motherName}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  id="motherMobile"
+                  name="motherMobile"
+                  label="Mother's Mobile"
+                  value={formik.values.motherMobile}
+                  onChange={formik.handleChange}
+                  error={formik.touched.motherMobile && Boolean(formik.errors.motherMobile)}
+                  helperText={formik.touched.motherMobile && formik.errors.motherMobile}
                 />
               </Grid>
             </Grid>

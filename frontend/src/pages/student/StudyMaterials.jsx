@@ -20,7 +20,8 @@ import {
   Tooltip,
   Alert,
   CircularProgress,
-  Divider
+  Divider,
+  CardMedia
 } from '@mui/material';
 import {
   Book as BookIcon,
@@ -109,6 +110,33 @@ function StudyMaterials() {
     }
   };
 
+  // Extract YouTube video ID and return thumbnail URL
+  const getYoutubeThumbnail = (url) => {
+    if (!url) return null;
+    // Regex to capture the 11-character video ID from various YouTube URL formats
+    const regex = /(?:youtube\.com\/(?:[^\/]+\/.*\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([A-Za-z0-9_-]{11})/;
+    const match = url.match(regex);
+    if (match && match[1]) {
+      return `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`;
+    }
+    return null;
+  };
+
+  const getVideoUrl = (plan) => plan.videoUrl || plan.videoLink || '';
+
+  // Check if URL is a YouTube link
+  const isYoutubeUrl = (url) => {
+    if (!url) return false;
+    return /(?:youtube\.com|youtu\.be)/.test(url);
+  };
+
+  const getYoutubeEmbedUrl = (url) => {
+    if (!isYoutubeUrl(url)) return null;
+    const regex = /(?:youtube\.com\/(?:[^\/]+\/.*\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([A-Za-z0-9_-]{11})/;
+    const match = url.match(regex);
+    return match && match[1] ? `https://www.youtube.com/embed/${match[1]}` : null;
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'Published':
@@ -186,6 +214,16 @@ function StudyMaterials() {
           {lessonPlans.map((lessonPlan) => (
             <Grid item xs={12} md={6} lg={4} key={lessonPlan._id}>
               <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                {/* Show YouTube thumbnail if available */}
+                {getYoutubeThumbnail(getVideoUrl(lessonPlan)) && (
+                  <CardMedia
+                    component="img"
+                    height="180"
+                    image={getYoutubeThumbnail(getVideoUrl(lessonPlan))}
+                    alt={lessonPlan.title}
+                  />
+                )}
+
                 <CardContent sx={{ flexGrow: 1 }}>
                   <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
                     <Typography variant="h6" component="h2" gutterBottom>
@@ -258,11 +296,11 @@ function StudyMaterials() {
                     </Button>
                   )}
                   
-                  {lessonPlan.videoUrl && (
+                  {getVideoUrl(lessonPlan) && (
                     <Button
                       size="small"
                       startIcon={<PlayIcon />}
-                      onClick={() => window.open(lessonPlan.videoUrl, '_blank')}
+                      onClick={() => window.open(getVideoUrl(lessonPlan), '_blank')}
                     >
                       Video
                     </Button>
@@ -328,7 +366,7 @@ function StudyMaterials() {
                 </Grid>
               </Grid>
 
-              {(selectedLessonPlan.pdfUrl || selectedLessonPlan.videoUrl) && (
+              {(selectedLessonPlan.pdfUrl || getVideoUrl(selectedLessonPlan)) && (
                 <>
                   <Divider sx={{ my: 2 }} />
                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
@@ -344,14 +382,41 @@ function StudyMaterials() {
                         Download {getFileTypeLabel(selectedLessonPlan.pdfUrl)}
                       </Button>
                     )}
-                    {selectedLessonPlan.videoUrl && (
-                      <Button
-                        variant="outlined"
-                        startIcon={<PlayIcon />}
-                        onClick={() => window.open(selectedLessonPlan.videoUrl, '_blank')}
-                      >
-                        Watch Video
-                      </Button>
+                    {/* Render YouTube video inline if it is a YouTube URL, otherwise keep external link */}
+                    {getVideoUrl(selectedLessonPlan) && isYoutubeUrl(getVideoUrl(selectedLessonPlan)) ? (
+                      <Box width="100%" sx={{ mt: 2 }}>
+                        <Box
+                          sx={{
+                            position: 'relative',
+                            paddingTop: '56.25%' /* 16:9 aspect ratio */,
+                          }}
+                        >
+                          <iframe
+                            src={getYoutubeEmbedUrl(getVideoUrl(selectedLessonPlan))}
+                            title="YouTube video player"
+                            style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              width: '100%',
+                              height: '100%',
+                              border: 0,
+                            }}
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowFullScreen
+                          />
+                        </Box>
+                      </Box>
+                    ) : (
+                      getVideoUrl(selectedLessonPlan) && (
+                        <Button
+                          variant="outlined"
+                          startIcon={<PlayIcon />}
+                          onClick={() => window.open(getVideoUrl(selectedLessonPlan), '_blank')}
+                        >
+                          Watch Video
+                        </Button>
+                      )
                     )}
                   </Box>
                 </>

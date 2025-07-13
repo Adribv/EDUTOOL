@@ -42,9 +42,13 @@ import {
   AttachMoney as MoneyIcon,
   Visibility as ViewIcon
 } from '@mui/icons-material';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminAPI } from '../../services/api';
 import { toast } from 'react-toastify';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import { useRef } from 'react';
 
 const categories = ['Stationery', 'Classroom Materials', 'Sports Equipment', 'Lab Supplies', 'Maintenance', 'Furniture', 'Other'];
 const priorities = ['Low', 'Medium', 'High', 'Urgent'];
@@ -63,7 +67,7 @@ function SupplierRequestManagement() {
     description: '',
     category: 'Stationery',
     priority: 'Medium',
-    items: [{ name: '', quantity: 1, unit: '', estimatedPrice: 0, specifications: '' }],
+    items: Array.from({ length: 20 }).map(() => ({ itemCode: '', description: '', specification: '', unit: '', qty: '', remarks: '' })),
     expectedDeliveryDate: '',
     supplier: {
       name: '',
@@ -77,8 +81,16 @@ function SupplierRequestManagement() {
       spent: 0,
       remaining: 0
     },
-    tags: []
+    tags: [],
+    requesterName: '',
+    department: '',
+    requestDate: new Date().toISOString().split('T')[0],
+    notes: '',
+    approvedBy: '',
+    approvedDate: '',
   });
+
+  const printRef = useRef();
 
   const queryClient = useQueryClient();
 
@@ -151,11 +163,17 @@ function SupplierRequestManagement() {
         description: request.description,
         category: request.category,
         priority: request.priority,
-        items: request.items || [{ name: '', quantity: 1, unit: '', estimatedPrice: 0, specifications: '' }],
+        items: (request.items && request.items.length>=20 ? request.items : [...(request.items||[]), ...Array.from({ length: 20 - (request.items ? request.items.length : 0) }).map(() => ({ itemCode: '', description: '', specification: '', unit: '', qty: '', remarks: '' }))]),
         expectedDeliveryDate: request.expectedDeliveryDate ? new Date(request.expectedDeliveryDate).toISOString().split('T')[0] : '',
         supplier: request.supplier || { name: '', contactPerson: '', email: '', phone: '', address: '' },
         budget: request.budget || { allocated: 0, spent: 0, remaining: 0 },
-        tags: request.tags || []
+        tags: request.tags || [],
+        requesterName: request.requesterName || '',
+        department: request.department || '',
+        requestDate: request.requestDate ? new Date(request.requestDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        notes: request.notes || '',
+        approvedBy: request.approvedBy || '',
+        approvedDate: request.approvedDate ? new Date(request.approvedDate).toISOString().split('T')[0] : '',
       });
     } else {
       setSelectedRequest(null);
@@ -164,11 +182,17 @@ function SupplierRequestManagement() {
         description: '',
         category: 'Stationery',
         priority: 'Medium',
-        items: [{ name: '', quantity: 1, unit: '', estimatedPrice: 0, specifications: '' }],
+        items: Array.from({ length: 20 }).map(() => ({ itemCode: '', description: '', specification: '', unit: '', qty: '', remarks: '' })),
         expectedDeliveryDate: '',
         supplier: { name: '', contactPerson: '', email: '', phone: '', address: '' },
         budget: { allocated: 0, spent: 0, remaining: 0 },
-        tags: []
+        tags: [],
+        requesterName: '',
+        department: '',
+        requestDate: new Date().toISOString().split('T')[0],
+        notes: '',
+        approvedBy: '',
+        approvedDate: '',
       });
     }
     setOpen(true);
@@ -182,11 +206,17 @@ function SupplierRequestManagement() {
       description: '',
       category: 'Stationery',
       priority: 'Medium',
-      items: [{ name: '', quantity: 1, unit: '', estimatedPrice: 0, specifications: '' }],
+      items: Array.from({ length: 20 }).map(() => ({ itemCode: '', description: '', specification: '', unit: '', qty: '', remarks: '' })),
       expectedDeliveryDate: '',
       supplier: { name: '', contactPerson: '', email: '', phone: '', address: '' },
       budget: { allocated: 0, spent: 0, remaining: 0 },
-      tags: []
+      tags: [],
+      requesterName: '',
+      department: '',
+      requestDate: new Date().toISOString().split('T')[0],
+      notes: '',
+      approvedBy: '',
+      approvedDate: '',
     });
   };
 
@@ -199,7 +229,7 @@ function SupplierRequestManagement() {
     }
 
     // Validate items
-    const validItems = formData.items.filter(item => item.name && item.quantity && item.unit);
+    const validItems = formData.items.filter(item => item.description && item.qty && item.unit);
     if (validItems.length === 0) {
       toast.error('Please add at least one item');
       return;
@@ -207,7 +237,13 @@ function SupplierRequestManagement() {
 
     const submitData = {
       ...formData,
-      items: validItems
+      items: validItems,
+      requesterName: formData.requesterName,
+      department: formData.department,
+      requestDate: formData.requestDate,
+      notes: formData.notes,
+      approvedBy: formData.approvedBy,
+      approvedDate: formData.approvedDate,
     };
 
     if (selectedRequest) {
@@ -221,6 +257,68 @@ function SupplierRequestManagement() {
     if (window.confirm('Are you sure you want to delete this supplier request?')) {
       deleteMutation.mutate(id);
     }
+  };
+
+  const handleItemChange = (index, field, value) => {
+    const newItems = [...formData.items];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setFormData({ ...formData, items: newItems });
+  };
+  const generatePdf = async (request) => {
+    // Render the printable template inside hidden div
+    if (!request) return;
+    // Create off-screen container
+    const container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.top = '-10000px';
+    container.style.left = '-10000px';
+    container.style.width = '800px';
+    container.style.padding = '20px';
+    container.style.background = '#fff';
+
+    // Build simple template mirroring the form (customize as needed)
+    container.innerHTML = `
+      <h2 style="text-align:center;margin-bottom:16px;">Supply Request Form</h2>
+      <hr />
+      <h3>Request Details</h3>
+      <p><strong>Title:</strong> ${request.title}</p>
+      <p><strong>Description:</strong> ${request.description}</p>
+      <p><strong>Category:</strong> ${request.category}</p>
+      <p><strong>Priority:</strong> ${request.priority}</p>
+      <p><strong>Expected Delivery Date:</strong> ${request.expectedDeliveryDate ? new Date(request.expectedDeliveryDate).toLocaleDateString() : ''}</p>
+      <h3>Items</h3>
+      <table style="width:100%;border-collapse:collapse;" border="1" cellspacing="0" cellpadding="4">
+        <thead>
+          <tr>
+            <th>Name</th><th>Qty</th><th>Unit</th><th>Est. Price</th><th>Specs</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${request.items.map(i=>`<tr><td>${i.name}</td><td>${i.quantity}</td><td>${i.unit}</td><td>${i.estimatedPrice}</td><td>${i.specifications || ''}</td></tr>`).join('')}
+        </tbody>
+      </table>
+      <h3>Supplier</h3>
+      <p><strong>Name:</strong> ${request.supplier?.name || ''}</p>
+      <p><strong>Contact Person:</strong> ${request.supplier?.contactPerson || ''}</p>
+      <p><strong>Email:</strong> ${request.supplier?.email || ''}</p>
+      <p><strong>Phone:</strong> ${request.supplier?.phone || ''}</p>
+      <p><strong>Address:</strong> ${request.supplier?.address || ''}</p>
+      <h3>Budget</h3>
+      <p><strong>Allocated:</strong> ${request.budget?.allocated || 0}</p>
+      <p><strong>Spent:</strong> ${request.budget?.spent || 0}</p>
+      <p><strong>Remaining:</strong> ${request.budget?.remaining || 0}</p>
+    `;
+
+    document.body.appendChild(container);
+    const canvas = await html2canvas(container, { scale: 2 });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'pt', 'a4');
+    const imgProps = pdf.getImageProperties(imgData);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    pdf.save(`${request.title || 'supply_request'}.pdf`);
+    document.body.removeChild(container);
   };
 
   const getPriorityColor = (priority) => {
@@ -480,6 +578,11 @@ function SupplierRequestManagement() {
                                 <DeleteIcon />
                               </IconButton>
                             </Tooltip>
+                            <Tooltip title="Download PDF">
+                              <IconButton onClick={() => generatePdf(request)} size="small">
+                                <PictureAsPdfIcon />
+                              </IconButton>
+                            </Tooltip>
                           </>
                         )}
                       </Stack>
@@ -505,7 +608,7 @@ function SupplierRequestManagement() {
       </Paper>
 
       {/* Create/Edit Dialog */}
-      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+      <Dialog open={open} onClose={handleClose} fullScreen>
         <DialogTitle>
           {selectedRequest ? 'Edit Supplier Request' : 'New Supplier Request'}
         </DialogTitle>

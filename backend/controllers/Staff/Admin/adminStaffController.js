@@ -59,7 +59,25 @@ exports.registerStudent = async (req, res) => {
       contactNumber,
       email,
       parentInfo,
-      city
+      city,
+      admissionNumber,
+      admissionSource,
+      admissionTransferTo,
+      courseDuration,
+      category,
+      religion,
+      educationQualification,
+      bloodGroup,
+      admissionSession,
+      studentDomicile,
+      grandTotalFee,
+      applicableDiscount,
+      fatherName,
+      fatherMobile,
+      fatherOccupation,
+      motherName,
+      motherMobile,
+      mobile
     } = req.body;
 
     const finalClass = studentClass || grade;
@@ -85,6 +103,8 @@ exports.registerStudent = async (req, res) => {
       finalAddress.city = city;
     }
 
+    const finalContact = contactNumber || mobile;
+
     const newStudent = new Student({
       name,
       rollNumber,
@@ -94,10 +114,31 @@ exports.registerStudent = async (req, res) => {
       dateOfBirth,
       gender: finalGender,
       address: finalAddress,
-      contactNumber,
+      contactNumber: finalContact,
       email,
       parentInfo,
-      status: 'Active'
+      status: 'Active',
+      admissionNumber,
+      admissionSource,
+      admissionTransferTo,
+      courseDuration,
+      category,
+      religion,
+      educationQualification,
+      bloodGroup,
+      admissionSession,
+      studentDomicile,
+      grandTotalFee,
+      applicableDiscount,
+      fatherName,
+      fatherMobile,
+      fatherOccupation,
+      motherName,
+      motherMobile,
+      // File paths
+      studentPhoto: req.files?.studentPhoto?.[0]?.path,
+      idProof: req.files?.idProof?.[0]?.path,
+      addressProof: req.files?.addressProof?.[0]?.path
     });
 
     await newStudent.save();
@@ -305,11 +346,22 @@ exports.exportStudents = async (req, res) => {
 exports.updateStudent = async (req, res) => {
   try {
     const studentId = req.params.id;
-    const updateData = req.body;
-    
-    // Remove password from update data if it exists
-    if (updateData.password) {
-      delete updateData.password;
+    const updateData = { ...req.body };
+    // Map mobile to contactNumber if provided
+    if (updateData.mobile && !updateData.contactNumber) {
+      updateData.contactNumber = updateData.mobile;
+      delete updateData.mobile;
+    }
+
+    // Attach file paths if uploaded
+    if (req.files?.studentPhoto?.[0]) {
+      updateData.studentPhoto = req.files.studentPhoto[0].path;
+    }
+    if (req.files?.idProof?.[0]) {
+      updateData.idProof = req.files.idProof[0].path;
+    }
+    if (req.files?.addressProof?.[0]) {
+      updateData.addressProof = req.files.addressProof[0].path;
     }
 
     const updatedStudent = await Student.findByIdAndUpdate(
