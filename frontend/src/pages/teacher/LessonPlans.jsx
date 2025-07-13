@@ -283,14 +283,14 @@ const LessonPlans = () => {
                 <TableCell>
                   {plan.pdfUrl && (
                     <Tooltip title="View PDF">
-                      <IconButton component="a" href={`/${plan.pdfUrl}`} target="_blank" rel="noopener noreferrer">
+                      <IconButton component="a" href={`http://localhost:5000/${plan.pdfUrl}`} target="_blank" rel="noopener noreferrer">
                         <Visibility />
                       </IconButton>
                     </Tooltip>
                   )}
                   {plan.videoUrl && (
                     <Tooltip title="Download Video">
-                      <IconButton component="a" href={`/${plan.videoUrl}`} download>
+                      <IconButton component="a" href={`http://localhost:5000/${plan.videoUrl}`} download>
                         <Download />
                       </IconButton>
                     </Tooltip>

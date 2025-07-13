@@ -265,7 +265,7 @@ const LessonPlanApprovals = () => {
                         <IconButton
                           size="small"
                           component="a"
-                          href={`/${plan.pdfUrl}`}
+                          href={`http://localhost:5000/${plan.pdfUrl}`}
                           target="_blank"
                         >
                           <DownloadIcon />

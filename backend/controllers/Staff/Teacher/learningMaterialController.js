@@ -8,10 +8,15 @@ const fs = require('fs');
 // Submit lesson plan for HOD approval
 exports.submitLessonPlan = async (req, res) => {
   try {
+    console.log('🚀 Lesson plan submission started');
+    console.log('📋 Request body:', req.body);
+    console.log('📁 Uploaded file:', req.file);
+    
     const { title, description, class: cls, section, subject, videoLink } = req.body;
 
     // Validate required fields
     if (!title || !description) {
+      console.log('❌ Missing required fields');
       return res.status(400).json({ 
         message: 'Missing required fields: title, description' 
       });
@@ -22,71 +27,37 @@ exports.submitLessonPlan = async (req, res) => {
     let videoUrl = '';
     let notesUrl = '';
 
-    // Handle multipart fields (file and notes)
-    const uploadedFile = req.files && req.files['file'] ? req.files['file'][0] : null;
-    const notesFile = req.files && req.files['notes'] ? req.files['notes'][0] : null;
-
-    // Process notes PDF if provided
-    if (notesFile) {
-      if (notesFile.mimetype === 'application/pdf') {
-        notesUrl = notesFile.path;
-        // Copy notes PDF into frontend assets/Lesson_Plans folder for static access
+    // --- File upload logic ---
+    if (req.file) {
+      console.log('✅ File uploaded successfully:', req.file.originalname);
+      console.log('📁 File saved to:', req.file.path);
+      
+      const ext = path.extname(req.file.path).toLowerCase();
+      // Convert Windows backslashes to forward slashes for web URLs
+      fileUrl = req.file.path.replace(/\\/g, '/'); // Always set fileUrl for any file
+      
+      if (req.file.mimetype && req.file.mimetype.startsWith('video')) {
+        videoUrl = req.file.path.replace(/\\/g, '/');
+      } else if (ext === '.pdf') {
+        pdfUrl = req.file.path.replace(/\\/g, '/'); // Set pdfUrl for PDF files
+      } else if (['.doc', '.docx'].includes(ext)) {
+        // Try to convert DOC/DOCX to PDF, but don't fail if conversion fails
         try {
-          // Project root: go 4 levels up from this controller directory
-          const projectRoot = path.join(__dirname, '../../../../');
-          const assetsDir = path.join(projectRoot, 'frontend', 'src', 'assets', 'Lesson_Plans');
-
-          // Ensure the destination directory exists
-          if (!fs.existsSync(assetsDir)) {
-            fs.mkdirSync(assetsDir, { recursive: true });
+          const pdfPath = await convertDocxToPdf(req.file.path);
+          if (pdfPath) {
+            pdfUrl = pdfPath.replace(/\\/g, '/');
+            console.log('✅ PDF conversion successful:', pdfUrl);
           }
-
-          // Use absolute source path to avoid cwd issues
-          const sourcePath = path.resolve(notesUrl);
-          const destPath = path.join(assetsDir, path.basename(sourcePath));
-
-          // Overwrite if file already exists
-          fs.copyFileSync(sourcePath, destPath);
-        } catch (copyErr) {
-          console.error('Error copying notes PDF to assets folder:', copyErr);
-        }
-      } else {
-        console.warn('Notes uploaded is not a PDF, ignoring');
-      }
-    }
-
-    // Process main lesson plan attachment/video
-    if (uploadedFile) {
-      if (uploadedFile.mimetype && uploadedFile.mimetype.startsWith('video')) {
-        videoUrl = uploadedFile.path;
-      } else {
-        fileUrl = uploadedFile.path;
-        const ext = path.extname(fileUrl).toLowerCase();
-        
-        // Handle different file types for PDF generation
-        if (ext === '.docx') {
-          try {
-            pdfUrl = await convertDocxToPdf(fileUrl);
-            console.log('✅ DOCX converted to PDF:', pdfUrl);
-          } catch (err) {
-            console.error('❌ Error converting DOCX to PDF:', err);
-            // Keep original file as fallback
-            pdfUrl = fileUrl;
-          }
-        } else if (ext === '.pdf') {
-          pdfUrl = fileUrl;
-          console.log('✅ PDF file uploaded:', pdfUrl);
-        } else if (ext === '.doc') {
-          // For .doc files, keep original as PDF URL (students can download original)
-          pdfUrl = fileUrl;
-          console.log('✅ DOC file uploaded (using as PDF):', pdfUrl);
-        } else {
-          // For other file types (images, etc.), use original file
-          pdfUrl = fileUrl;
-          console.log('✅ Other file type uploaded:', pdfUrl);
+        } catch (conversionError) {
+          console.log('⚠️ PDF conversion failed (LibreOffice not installed), but file upload succeeded');
+          console.log('📄 Original file is still accessible:', fileUrl);
+          // Don't throw error - the original file is still saved and usable
         }
       }
+    } else {
+      console.log('⚠️ No file uploaded');
     }
+    // --- End file upload logic ---
     
     // Check if teacher is assigned to this class and subject
     const staff = await Staff.findById(req.user.id)
