@@ -41,7 +41,8 @@ const LessonPlans = () => {
     sections: [],
     subjects: [],
     subjectGroups: [],
-    assignments: []
+    assignments: [],
+    assignedClasses: []
   });
   const [newPlan, setNewPlan] = useState({
     title: '',
@@ -52,6 +53,8 @@ const LessonPlans = () => {
     videoLink: '',
     file: null,
   });
+  
+
 
   const fetchPlans = async () => {
     try {
@@ -77,7 +80,8 @@ const LessonPlans = () => {
           sections: [],
           subjects: [],
           subjectGroups: [],
-          assignments: []
+          assignments: [],
+          assignedClasses: []
         });
       } catch (err) {
         console.error('Failed to load lesson plan options', err);
@@ -85,6 +89,26 @@ const LessonPlans = () => {
       }
     })();
   }, []);
+  
+  // Auto-set class, section, and subject when options are loaded
+  useEffect(() => {
+    if (lessonPlanOptions.assignedClasses && lessonPlanOptions.assignedClasses.length > 0) {
+      const assignedClass = lessonPlanOptions.assignedClasses[0];
+      setNewPlan(prev => ({
+        ...prev,
+        class: assignedClass.class,
+        section: assignedClass.section
+      }));
+    }
+    
+    // Auto-set subject if only one is available
+    if (lessonPlanOptions.subjects && lessonPlanOptions.subjects.length === 1) {
+      setNewPlan(prev => ({
+        ...prev,
+        subject: lessonPlanOptions.subjects[0]
+      }));
+    }
+  }, [lessonPlanOptions.assignedClasses, lessonPlanOptions.subjects]);
 
   const handleDialogClose = () => {
     setOpenDialog(false);
@@ -116,44 +140,30 @@ const LessonPlans = () => {
       return;
     }
 
-    // Different validation for department-only mode vs assigned subjects mode
-    if (isDepartmentOnly) {
-      // In department-only mode, we don't need class/section, just use the department as subject
-      if (!lessonPlanOptions.subjects[0]) {
-        toast.error('No department/subject available');
-        return;
-      }
-    } else {
-      // In assigned subjects mode, validate class, section, and subject
-      if (!newPlan.class || !newPlan.section || !newPlan.subject) {
-        toast.error('Please select class, section, and subject');
-        return;
-      }
-
-      // Validate that the selected combination is actually assigned to the teacher
-      const isValidAssignment = lessonPlanOptions.assignments.some(
-        assignment => 
-          assignment.class === newPlan.class && 
-          assignment.section === newPlan.section && 
-          assignment.subject === newPlan.subject
-      );
-
-      if (!isValidAssignment) {
-        toast.error(`You are not assigned to ${newPlan.subject} for Class ${newPlan.class}-${newPlan.section}. Please select from your assigned subjects.`);
-        return;
-      }
+    // Validate required fields
+    if (!newPlan.title || !newPlan.description) {
+      toast.error('Please fill in title and description');
+      return;
+    }
+    
+    // Validate class and section (should be auto-set from assigned classes)
+    if (!newPlan.class || !newPlan.section) {
+      toast.error('Class and section are required. Please contact your HOD if you are not assigned to any classes.');
+      return;
+    }
+    
+    // Validate subject (should be auto-set from assigned subjects or department)
+    if (!newPlan.subject) {
+      toast.error('Please select a subject');
+      return;
     }
 
     try {
       const formData = new FormData();
       
-      // Prepare the data based on mode
+      // Prepare the data using the form values (class/section are auto-set from assigned classes)
       const submitData = {
-        ...newPlan,
-        // In department-only mode, use the department as subject and empty class/section
-        subject: isDepartmentOnly ? lessonPlanOptions.subjects[0] : newPlan.subject,
-        class: isDepartmentOnly ? '' : newPlan.class,
-        section: isDepartmentOnly ? '' : newPlan.section,
+        ...newPlan
       };
       
       Object.entries(submitData).forEach(([key, value]) => {
@@ -174,8 +184,7 @@ const LessonPlans = () => {
     }
   };
 
-  // Helper: is department-only mode
-  const isDepartmentOnly = lessonPlanOptions.assignments.length === 1 && lessonPlanOptions.assignments[0].class === '' && lessonPlanOptions.assignments[0].section === '';
+
 
   if (loading) {
     return (
@@ -193,7 +202,7 @@ const LessonPlans = () => {
           variant="contained" 
           startIcon={<Upload />} 
           onClick={() => setOpenDialog(true)}
-          disabled={lessonPlanOptions.assignments.length === 0}
+          disabled={(lessonPlanOptions.assignments?.length || 0) === 0 && (lessonPlanOptions.assignedClasses?.length || 0) === 0 && (lessonPlanOptions.subjects?.length || 0) === 0}
         >
           New Lesson Plan
         </Button>
@@ -203,10 +212,10 @@ const LessonPlans = () => {
           <b>Approval Workflow:</b> Lesson plans must be approved by <b>HOD</b> and then <b>Principal</b> before being published to students.
         </Typography>
       </Box>
-      {lessonPlanOptions.assignments.length === 0 && (
+      {(lessonPlanOptions.assignments?.length || 0) === 0 && (lessonPlanOptions.assignedClasses?.length || 0) === 0 && (lessonPlanOptions.subjects?.length || 0) === 0 && (
         <Box mb={2} p={2} bgcolor="warning.light" borderRadius={1}>
           <Typography variant="body2" color="warning.dark">
-            You are not assigned to any subjects. Please contact your HOD to get subjects assigned before creating lesson plans.
+            You are not assigned to any subjects or classes. Please contact your HOD to get assignments before creating lesson plans.
           </Typography>
         </Box>
       )}
@@ -319,20 +328,25 @@ const LessonPlans = () => {
                 onChange={(e) => handleFieldChange('description', e.target.value)}
               />
             </Grid>
-            {/* Department-only mode: show subject as disabled, hide class/section */}
-            {isDepartmentOnly ? (
+            {/* Show assigned class and section info */}
+            {(lessonPlanOptions.assignedClasses?.length || 0) > 0 && (
               <Grid item xs={12}>
-                <TextField
-                  label="Subject (Department)"
-                  fullWidth
-                  value={lessonPlanOptions.subjects[0] || ''}
-                  disabled
-                />
+                <Box p={2} bgcolor="info.light" borderRadius={1}>
+                  <Typography variant="body2" color="info.dark">
+                    📚 <strong>Assigned Class:</strong> {lessonPlanOptions.assignedClasses?.[0]?.class}-{lessonPlanOptions.assignedClasses?.[0]?.section}
+                    {(lessonPlanOptions.assignedClasses?.length || 0) > 1 && (
+                      <span> (and {(lessonPlanOptions.assignedClasses?.length || 0) - 1} other classes)</span>
+                    )}
+                  </Typography>
+                </Box>
               </Grid>
-            ) : (
+            )}
+            
+            {/* Only show class/section selection if teacher has multiple assigned classes or no assigned classes */}
+            {((lessonPlanOptions.assignedClasses?.length || 0) === 0) && (
               <>
                 <Grid item xs={4}>
-                  {lessonPlanOptions.classes.length > 0 ? (
+                  {(lessonPlanOptions.classes?.length || 0) > 0 ? (
                     <FormControl fullWidth>
                       <InputLabel>Class</InputLabel>
                       <Select
@@ -340,7 +354,7 @@ const LessonPlans = () => {
                         value={newPlan.class}
                         onChange={(e) => handleFieldChange('class', e.target.value)}
                       >
-                        {lessonPlanOptions.classes.map((cls) => (
+                        {(lessonPlanOptions.classes || []).map((cls) => (
                           <MenuItem key={cls} value={cls}>{cls}</MenuItem>
                         ))}
                       </Select>
@@ -355,7 +369,7 @@ const LessonPlans = () => {
                   )}
                 </Grid>
                 <Grid item xs={4}>
-                  {lessonPlanOptions.sections.length > 0 ? (
+                  {(lessonPlanOptions.sections?.length || 0) > 0 ? (
                     <FormControl fullWidth>
                       <InputLabel>Section</InputLabel>
                       <Select
@@ -363,7 +377,7 @@ const LessonPlans = () => {
                         value={newPlan.section}
                         onChange={(e) => handleFieldChange('section', e.target.value)}
                       >
-                        {Array.from(new Set(lessonPlanOptions.assignments
+                        {Array.from(new Set((lessonPlanOptions.assignments || [])
                           .filter((s) => s.class === newPlan.class)
                           .map((s) => s.section))).map((sec) => (
                             <MenuItem key={sec} value={sec}>{sec}</MenuItem>
@@ -379,33 +393,35 @@ const LessonPlans = () => {
                     />
                   )}
                 </Grid>
-                <Grid item xs={4}>
-                  {lessonPlanOptions.subjects.length > 0 ? (
-                    <FormControl fullWidth>
-                      <InputLabel>Subject</InputLabel>
-                      <Select
-                        label="Subject"
-                        value={newPlan.subject}
-                        onChange={(e) => handleFieldChange('subject', e.target.value)}
-                      >
-                        {lessonPlanOptions.assignments
-                          .filter((s) => s.class === newPlan.class && s.section === newPlan.section)
-                          .map((s) => (
-                            <MenuItem key={s.subject} value={s.subject}>{s.subject}</MenuItem>
-                          ))}
-                      </Select>
-                    </FormControl>
-                  ) : (
-                    <TextField
-                      label="Subject"
-                      fullWidth
-                      value={newPlan.subject}
-                      onChange={(e) => handleFieldChange('subject', e.target.value)}
-                    />
-                  )}
-                </Grid>
               </>
             )}
+            
+            {/* Subject selection - show as disabled if auto-assigned */}
+            <Grid item xs={(lessonPlanOptions.assignedClasses?.length || 0) > 0 ? 12 : 4}>
+              {(lessonPlanOptions.subjects?.length || 0) > 0 ? (
+                <FormControl fullWidth>
+                  <InputLabel>Subject</InputLabel>
+                  <Select
+                    label="Subject"
+                    value={newPlan.subject}
+                    onChange={(e) => handleFieldChange('subject', e.target.value)}
+                    disabled={(lessonPlanOptions.subjects?.length || 0) === 1}
+                  >
+                    {(lessonPlanOptions.subjects || []).map((subject) => (
+                      <MenuItem key={subject} value={subject}>{subject}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              ) : (
+                <TextField
+                  label="Subject"
+                  fullWidth
+                  value={newPlan.subject}
+                  onChange={(e) => handleFieldChange('subject', e.target.value)}
+                  disabled={(lessonPlanOptions.subjects?.length || 0) === 1}
+                />
+              )}
+            </Grid>
             <Grid item xs={12}>
               <TextField
                 label="Video Link (optional)"
@@ -416,9 +432,12 @@ const LessonPlans = () => {
             </Grid>
             <Grid item xs={12}>
               <Button variant="outlined" component="label" fullWidth>
-                {newPlan.file ? newPlan.file.name : 'Upload DOCX / PDF / Video'}
+                {newPlan.file ? newPlan.file.name : 'Upload File (PDF, DOCX, DOC, Images, Videos)'}
                 <input type="file" hidden onChange={handleFileChange} />
               </Button>
+              <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
+                Supported formats: PDF, DOCX, DOC, JPG, PNG, MP4, AVI (Max 10MB)
+              </Typography>
             </Grid>
           </Grid>
         </DialogContent>

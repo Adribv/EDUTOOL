@@ -11,10 +11,25 @@ exports.getLearningResources = async (req, res) => {
       return res.status(404).json({ message: 'Student not found' });
     }
     
+    console.log(`🔍 Student: ${student.name} (${student.email})`);
+    console.log(`📚 Student class: ${student.class}, section: ${student.section}`);
+    
     // Build query for published lesson plans matching student's class and section
+    // Handle different class formats (e.g., "12" vs "Class 12")
+    const studentClass = student.class;
+    const studentSection = student.section;
+    
+    // Create flexible class matching
+    const classMatches = [
+      studentClass,
+      studentClass.replace('Class ', ''),
+      `Class ${studentClass}`,
+      studentClass.toString()
+    ];
+    
     const query = {
-      class: student.class,
-      section: student.section,
+      class: { $in: classMatches },
+      section: studentSection,
       status: 'Published',
       isPublished: true
     };
@@ -23,11 +38,18 @@ exports.getLearningResources = async (req, res) => {
       query.subject = subject;
     }
     
+    console.log(`🔍 Query for lesson plans:`, query);
+    
     const lessonPlans = await LessonPlan.find(query)
       .populate('submittedBy', 'name email')
       .populate('hodApprovedBy', 'name email')
       .populate('principalApprovedBy', 'name email')
       .sort({ createdAt: -1 });
+    
+    console.log(`📋 Found ${lessonPlans.length} lesson plans for student`);
+    lessonPlans.forEach((plan, index) => {
+      console.log(`   ${index + 1}. ${plan.title} (${plan.class}-${plan.section}, ${plan.subject})`);
+    });
     
     res.json(lessonPlans);
   } catch (error) {
@@ -57,7 +79,17 @@ exports.getResourceDetails = async (req, res) => {
     
     // Check if lesson plan is for student's class and section
     const student = await Student.findById(req.user.id);
-    if (lessonPlan.class !== student.class || lessonPlan.section !== student.section) {
+    
+    // Handle different class formats (e.g., "12" vs "Class 12")
+    const studentClass = student.class;
+    const classMatches = [
+      studentClass,
+      studentClass.replace('Class ', ''),
+      `Class ${studentClass}`,
+      studentClass.toString()
+    ];
+    
+    if (!classMatches.includes(lessonPlan.class) || lessonPlan.section !== student.section) {
       return res.status(403).json({ message: 'This lesson plan is not for your class' });
     }
     
@@ -82,8 +114,17 @@ exports.getAvailableSubjects = async (req, res) => {
     }
     
     // Get unique subjects from published lesson plans for student's class and section
+    // Handle different class formats (e.g., "12" vs "Class 12")
+    const studentClass = student.class;
+    const classMatches = [
+      studentClass,
+      studentClass.replace('Class ', ''),
+      `Class ${studentClass}`,
+      studentClass.toString()
+    ];
+    
     const subjects = await LessonPlan.distinct('subject', {
-      class: student.class,
+      class: { $in: classMatches },
       section: student.section,
       status: 'Published',
       isPublished: true

@@ -88,6 +88,27 @@ function StudyMaterials() {
     }
   };
 
+  const getFileExtension = (url) => {
+    if (!url) return '.pdf';
+    const ext = url.split('.').pop().toLowerCase();
+    return ext ? `.${ext}` : '.pdf';
+  };
+
+  const getFileTypeLabel = (url) => {
+    if (!url) return 'PDF';
+    const ext = url.split('.').pop().toLowerCase();
+    switch (ext) {
+      case 'pdf': return 'PDF';
+      case 'doc': return 'DOC';
+      case 'docx': return 'DOCX';
+      case 'jpg':
+      case 'jpeg': return 'Image';
+      case 'png': return 'Image';
+      case 'gif': return 'Image';
+      default: return 'File';
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'Published':
@@ -231,9 +252,9 @@ function StudyMaterials() {
                     <Button
                       size="small"
                       startIcon={<DownloadIcon />}
-                      onClick={() => handleDownload(lessonPlan.pdfUrl, `${lessonPlan.title}.pdf`)}
+                      onClick={() => handleDownload(lessonPlan.pdfUrl, `${lessonPlan.title}${getFileExtension(lessonPlan.pdfUrl)}`)}
                     >
-                      PDF
+                      {getFileTypeLabel(lessonPlan.pdfUrl)}
                     </Button>
                   )}
                   
@@ -263,7 +284,7 @@ function StudyMaterials() {
         {selectedLessonPlan && (
           <>
             <DialogTitle>
-              <Typography variant="h6">{selectedLessonPlan.title}</Typography>
+              {selectedLessonPlan.title}
             </DialogTitle>
             <DialogContent>
               <Box mb={2}>
@@ -318,9 +339,9 @@ function StudyMaterials() {
                       <Button
                         variant="outlined"
                         startIcon={<DownloadIcon />}
-                        onClick={() => handleDownload(selectedLessonPlan.pdfUrl, `${selectedLessonPlan.title}.pdf`)}
+                        onClick={() => handleDownload(selectedLessonPlan.pdfUrl, `${selectedLessonPlan.title}${getFileExtension(selectedLessonPlan.pdfUrl)}`)}
                       >
-                        Download PDF
+                        Download {getFileTypeLabel(selectedLessonPlan.pdfUrl)}
                       </Button>
                     )}
                     {selectedLessonPlan.videoUrl && (
