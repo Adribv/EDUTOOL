@@ -67,4 +67,9 @@ router.get('/profile', profileController.getProfile);
 router.put('/profile', profileController.updateProfile);
 router.post('/change-password', profileController.changePassword);
 
+// Service Request Approvals
+router.get('/service-requests', departmentController.getPendingServiceRequests);
+router.post('/service-requests/:id/approve', departmentController.approveServiceRequest);
+router.post('/service-requests/:id/reject', departmentController.rejectServiceRequest);
+
 module.exports = router; 

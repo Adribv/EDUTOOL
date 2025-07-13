@@ -21,6 +21,7 @@ const parentInteractionController = require('../../controllers/Staff/Teacher/par
 const feedbackController = require('../../controllers/Staff/Teacher/feedbackController');
 const teacherLeaveRequestController = require('../../controllers/Staff/Teacher/teacherLeaveRequestController');
 const mcqAssignmentController = require('../../controllers/Staff/Teacher/mcqAssignmentController');
+const ApprovalRequest = require('../../models/Staff/HOD/approvalRequest.model');
 
 // Apply auth middleware to all routes
 router.use(verifyToken, permit('Teacher'));
@@ -36,6 +37,19 @@ router.get('/test', (req, res) => {
 router.get('/profile', teacherProfileController.getProfile);
 router.put('/profile', teacherProfileController.updateProfile);
 router.post('/profile/professional-development', upload.single('document'), teacherProfileController.addProfessionalDevelopment);
+router.post('/substitute-requests', teacherProfileController.submitSubstituteRequest);
+router.get('/substitute-requests', async (req, res) => {
+  try {
+    const requests = await ApprovalRequest.find({
+      requestType: 'SubstituteTeacherRequest',
+      requesterId: req.user.id
+    }).sort({ createdAt: -1 });
+    res.json(requests);
+  } catch (error) {
+    console.error('Error fetching substitute requests:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // 2. Class and Subject Management
 router.get('/classes', classSubjectController.getAssignedClasses);

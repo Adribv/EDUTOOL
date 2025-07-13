@@ -11,6 +11,10 @@ const lessonPlanSchema = new mongoose.Schema({
   class: String,
   section: String,
   subject: String,
+  templateData: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null
+  },
   isPublished: {
     type: Boolean,
     default: false

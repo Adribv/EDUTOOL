@@ -12,7 +12,7 @@ exports.submitLessonPlan = async (req, res) => {
     console.log('📋 Request body:', req.body);
     console.log('📁 Uploaded file:', req.file);
     
-    const { title, description, class: cls, section, subject, videoLink } = req.body;
+    const { title, description, class: cls, section, subject, videoLink, templateData } = req.body;
 
     // Validate required fields
     if (!title || !description) {
@@ -22,13 +22,58 @@ exports.submitLessonPlan = async (req, res) => {
       });
     }
 
+    // Class and section will be auto-determined from teacher's assignments
+    // No need to validate them as required fields
+
     let fileUrl = '';
     let pdfUrl = '';
     let videoUrl = '';
     let notesUrl = '';
 
     // --- File upload logic ---
-    if (req.file) {
+    if (req.files) {
+      console.log('📁 Files uploaded:', Object.keys(req.files));
+      
+      // Handle main lesson plan file
+      if (req.files.file && req.files.file[0]) {
+        const mainFile = req.files.file[0];
+        console.log('✅ Main file uploaded successfully:', mainFile.originalname);
+        console.log('📁 File saved to:', mainFile.path);
+        
+        const ext = path.extname(mainFile.path).toLowerCase();
+        // Convert Windows backslashes to forward slashes for web URLs
+        fileUrl = mainFile.path.replace(/\\/g, '/'); // Always set fileUrl for any file
+        
+        if (mainFile.mimetype && mainFile.mimetype.startsWith('video')) {
+          videoUrl = mainFile.path.replace(/\\/g, '/');
+        } else if (ext === '.pdf') {
+          pdfUrl = mainFile.path.replace(/\\/g, '/'); // Set pdfUrl for PDF files
+        } else if (['.doc', '.docx'].includes(ext)) {
+          // Try to convert DOC/DOCX to PDF, but don't fail if conversion fails
+          try {
+            const pdfPath = await convertDocxToPdf(mainFile.path);
+            if (pdfPath) {
+              pdfUrl = pdfPath.replace(/\\/g, '/');
+              console.log('✅ PDF conversion successful:', pdfUrl);
+            }
+          } catch (conversionError) {
+            console.log('⚠️ PDF conversion failed (LibreOffice not installed), but file upload succeeded');
+            console.log('📄 Original file is still accessible:', fileUrl);
+            // Don't throw error - the original file is still saved and usable
+          }
+        }
+      }
+      
+      // Handle notes file (PDF)
+      if (req.files.notes && req.files.notes[0]) {
+        const notesFile = req.files.notes[0];
+        console.log('✅ Notes file uploaded successfully:', notesFile.originalname);
+        console.log('📁 Notes file saved to:', notesFile.path);
+        
+        notesUrl = notesFile.path.replace(/\\/g, '/');
+      }
+    } else if (req.file) {
+      // Fallback for single file upload
       console.log('✅ File uploaded successfully:', req.file.originalname);
       console.log('📁 File saved to:', req.file.path);
       
@@ -134,7 +179,7 @@ exports.submitLessonPlan = async (req, res) => {
       });
     }
     
-    const lessonPlan = new LessonPlan({
+    const lessonPlanData = {
       title,
       description,
       fileUrl,
@@ -148,7 +193,19 @@ exports.submitLessonPlan = async (req, res) => {
       submittedBy: req.user.id,
       status: 'Pending',
       currentApprover: 'HOD'
-    });
+    };
+
+    // Add template data if provided
+    if (templateData) {
+      try {
+        const parsedTemplateData = JSON.parse(templateData);
+        lessonPlanData.templateData = parsedTemplateData;
+      } catch (error) {
+        console.log('⚠️ Failed to parse template data:', error);
+      }
+    }
+
+    const lessonPlan = new LessonPlan(lessonPlanData);
     
     await lessonPlan.save();
     res.status(201).json({

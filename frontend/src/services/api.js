@@ -401,8 +401,19 @@ export const adminAPI = {
   // Enquiry Management
   getEnquiries: (params) => api.get('/admin-staff/enquiries', { params }),
   createEnquiry: (data) => api.post('/admin-staff/enquiries', data),
-  updateEnquiry: (id, data) => api.put(`/admin-staff/enquiries/${id}`, data),
+  updateEnquiry: (id, data) => {
+    // Determine which endpoint to use based on the data
+    if (data.status) {
+      return api.put(`/admin-staff/enquiries/${id}/status`, data);
+    } else if (data.reply) {
+      return api.put(`/admin-staff/enquiries/${id}/reply`, data);
+    } else {
+      // Fallback to status endpoint for general updates
+      return api.put(`/admin-staff/enquiries/${id}/status`, data);
+    }
+  },
   getEnquiryStats: () => api.get('/admin-staff/enquiries/stats'),
+  bulkImportEnquiries: (enquiries, config) => api.post('/admin-staff/enquiries/bulk', { enquiries }, config),
 
   // Supplier Request Management
   getSupplierRequests: (params) => api.get('/admin-staff/supplier-requests', { params }),
@@ -739,6 +750,7 @@ export const adminAPI = {
   getVisitors: () => api.get('/admin-staff/visitors').then(res => res.data),
   addVisitor: (data) => api.post('/admin-staff/visitors', data),
   updateVisitorExit: (id, data={}) => api.put(`/admin-staff/visitors/${id}/exit`, data),
+  bulkImportVisitors: (visitors, config) => api.post('/admin-staff/visitors/bulk', { visitors }, config),
 };
 
 // Teacher API functions

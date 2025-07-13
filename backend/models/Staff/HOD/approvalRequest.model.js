@@ -38,7 +38,7 @@ const approvalRequestSchema = new Schema({
   requestType: {
     type: String,
     required: true,
-    enum: ['Leave', 'Resource', 'Event', 'Budget', 'Fee', 'Announcement', 'Communication', 'Other']
+    enum: ['Leave', 'Resource', 'Event', 'Budget', 'Fee', 'StudentFeeRecord', 'StaffSalaryRecord', 'ServiceRequest', 'Announcement', 'Communication', 'Other', 'SubstituteTeacherRequest']
   },
   title: {
     type: String,

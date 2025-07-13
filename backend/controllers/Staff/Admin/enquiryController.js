@@ -100,7 +100,7 @@ exports.createEnquiry = async (req, res) => {
       priority: priority || 'Medium',
       source: source || 'Website',
       tags: tags || [],
-      createdBy: req.user.id
+      createdBy: req.user?.id
     });
 
     await enquiry.save();
@@ -118,11 +118,23 @@ exports.createEnquiry = async (req, res) => {
 // Update enquiry
 exports.updateEnquiry = async (req, res) => {
   try {
+    console.log('Update enquiry request params:', req.params);
+    console.log('Update enquiry request body:', req.body);
+    
     const enquiryId = req.params.id;
+    
+    if (!enquiryId) {
+      return res.status(400).json({ message: 'Enquiry ID is required' });
+    }
+    
+    console.log('Enquiry ID:', enquiryId);
+    
     const updateData = req.body;
 
     // Add updatedBy field
-    updateData.updatedBy = req.user.id;
+    if (req.user?.id) {
+      updateData.updatedBy = req.user.id;
+    }
 
     // If status is being updated to 'Resolved', set resolvedDate
     if (updateData.status === 'Resolved' && !updateData.resolvedDate) {
@@ -193,5 +205,62 @@ exports.getEnquiryStats = async (req, res) => {
   } catch (error) {
     console.error('Error fetching enquiry statistics:', error);
     res.status(500).json({ message: 'Server error' });
+  }
+}; 
+
+// Bulk import enquiries
+exports.bulkImportEnquiries = async (req, res) => {
+  try {
+    const { enquiries } = req.body;
+    if (!Array.isArray(enquiries) || enquiries.length === 0) {
+      return res.status(400).json({ message: 'Enquiries array is required and cannot be empty' });
+    }
+    const results = {
+      successful: [],
+      failed: [],
+      total: enquiries.length
+    };
+    for (const enquiryData of enquiries) {
+      try {
+        const {
+          name,
+          email,
+          phone,
+          subject,
+          message,
+          enquiryType = 'General',
+          priority = 'Medium',
+          source = 'Website',
+          tags = [],
+          assignedTo
+        } = enquiryData;
+        if (!name || !email || !phone || !subject || !message) {
+          results.failed.push({ ...enquiryData, error: 'Missing required fields' });
+          continue;
+        }
+        const newEnquiry = new Enquiry({
+          name,
+          email,
+          phone,
+          subject,
+          message,
+          enquiryType,
+          priority,
+          source,
+          tags,
+          assignedTo
+        });
+        await newEnquiry.save();
+        results.successful.push({ ...enquiryData, _id: newEnquiry._id });
+      } catch (error) {
+        results.failed.push({ ...enquiryData, error: error.message || 'Unknown error' });
+      }
+    }
+    res.status(200).json({
+      message: `Bulk import completed. ${results.successful.length} successful, ${results.failed.length} failed`,
+      results
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error during bulk import' });
   }
 }; 

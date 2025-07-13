@@ -482,8 +482,8 @@ const Dashboard = () => {
           <Tab label="Teacher Attendance" icon={<Schedule />} />
           <Tab label="Teacher Evaluation" icon={<Assessment />} />
           <Tab label="Class Allocation" icon={<Class />} />
-          <Tab label="Lesson Plan Approvals" icon={<Assignment />} />
-          <Tab label="Department Reports" icon={<Analytics />} />
+          <Tab label="Department Reports" icon={<Assignment />} />
+          <Tab label="Lesson Plan Approvals" icon={<Analytics />} />
         </Tabs>
 
         {/* Overview Tab */}

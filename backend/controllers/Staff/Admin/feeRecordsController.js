@@ -1,0 +1,554 @@
+const StudentFeeRecord = require('../../../models/Finance/studentFeeRecordModel');
+const StaffSalaryRecord = require('../../../models/Finance/staffSalaryRecordModel');
+const Student = require('../../../models/Student/studentModel');
+const Staff = require('../../../models/Staff/staffModel');
+const ApprovalRequest = require('../../../models/Staff/HOD/approvalRequest.model');
+
+// Student Fee Records Management
+
+// Get all student fee records
+exports.getStudentFeeRecords = async (req, res) => {
+  try {
+    const { 
+      page = 1, 
+      limit = 10, 
+      class: studentClass, 
+      section, 
+      paymentStatus, 
+      status,
+      academicYear,
+      term 
+    } = req.query;
+
+    const query = {};
+    
+    if (studentClass) query.class = studentClass;
+    if (section) query.section = section;
+    if (paymentStatus) query.paymentStatus = paymentStatus;
+    if (status) query.status = status;
+    if (academicYear) query.academicYear = academicYear;
+    if (term) query.term = term;
+
+    const skip = (page - 1) * limit;
+    
+    const records = await StudentFeeRecord.find(query)
+      .populate('studentId', 'name rollNumber class section')
+      .populate('createdBy', 'name')
+      .populate('approvedBy', 'name')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await StudentFeeRecord.countDocuments(query);
+
+    res.json({
+      data: records,
+      pagination: {
+        current: parseInt(page),
+        total: Math.ceil(total / limit),
+        totalRecords: total
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching student fee records:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Create individual student fee record
+exports.createStudentFeeRecord = async (req, res) => {
+  try {
+    console.log('📝 Creating student fee record with data:', req.body);
+    console.log('👤 User info:', req.user);
+    
+    const {
+      studentId,
+      academicYear,
+      term,
+      feeType,
+      amount,
+      dueDate,
+      remarks,
+      parentContact
+    } = req.body;
+
+    // Check if user is authenticated
+    if (!req.user || !req.user.id) {
+      console.error('❌ User not authenticated');
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+
+    // Validate required fields
+    if (!studentId || !academicYear || !term || !feeType || !amount) {
+      console.error('❌ Missing required fields');
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    // Validate student exists
+    const student = await Student.findById(studentId);
+    if (!student) {
+      console.error('❌ Student not found:', studentId);
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    console.log('✅ Student found:', student.name);
+
+    // Create approval request instead of direct creation
+    const approvalRequest = new ApprovalRequest({
+      requesterId: req.user.id,
+      requesterName: req.user.name || 'Admin',
+      requestType: 'StudentFeeRecord',
+      title: `Student Fee Record - ${student.name} (${student.class}-${student.section})`,
+      description: `Fee record for ${student.name} - ${feeType} fee of ₹${amount} for ${term} ${academicYear}`,
+      requestData: {
+        studentId,
+        studentName: student.name,
+        rollNumber: student.rollNumber,
+        class: student.class,
+        section: student.section,
+        academicYear,
+        term,
+        feeType,
+        amount: parseFloat(amount),
+        dueDate: new Date(dueDate),
+        remarks,
+        parentContact
+      },
+      status: 'Pending',
+      currentApprover: 'Principal'
+    });
+
+    console.log('📋 Approval request created:', approvalRequest);
+
+    await approvalRequest.save();
+    console.log('✅ Approval request saved successfully');
+
+    res.status(201).json({
+      message: 'Student fee record approval request submitted successfully',
+      approvalRequest
+    });
+  } catch (error) {
+    console.error('❌ Error creating student fee record:', error);
+    res.status(500).json({ 
+      message: 'Server error',
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+};
+
+// Bulk import student fee records from Google Sheets
+exports.bulkImportStudentFeeRecords = async (req, res) => {
+  try {
+    const { records } = req.body;
+    
+    if (!Array.isArray(records) || records.length === 0) {
+      return res.status(400).json({ message: 'Records array is required and cannot be empty' });
+    }
+
+    const results = {
+      successful: [],
+      failed: [],
+      total: records.length
+    };
+
+    for (const recordData of records) {
+      try {
+        const {
+          studentName,
+          rollNumber,
+          class: studentClass,
+          section,
+          academicYear,
+          term,
+          feeType,
+          amount,
+          dueDate,
+          remarks,
+          parentContact
+        } = recordData;
+
+        // Validate required fields
+        if (!studentName || !rollNumber || !studentClass || !section || !academicYear || !term || !feeType || !amount) {
+          results.failed.push({
+            ...recordData,
+            error: 'Missing required fields'
+          });
+          continue;
+        }
+
+        // Find student by roll number
+        const student = await Student.findOne({ rollNumber });
+        if (!student) {
+          results.failed.push({
+            ...recordData,
+            error: 'Student not found with this roll number'
+          });
+          continue;
+        }
+
+        // Create approval request for each record
+        const approvalRequest = new ApprovalRequest({
+          requesterId: req.user.id,
+          requesterName: req.user.name || 'Admin',
+          requestType: 'StudentFeeRecord',
+          title: `Student Fee Record - ${studentName} (${studentClass}-${section})`,
+          description: `Fee record for ${studentName} - ${feeType} fee of ₹${amount} for ${term} ${academicYear}`,
+          requestData: {
+            studentId: student._id,
+            studentName,
+            rollNumber,
+            class: studentClass,
+            section,
+            academicYear,
+            term,
+            feeType,
+            amount: parseFloat(amount),
+            dueDate: dueDate ? new Date(dueDate) : new Date(),
+            remarks,
+            parentContact
+          },
+          status: 'Pending',
+          currentApprover: 'Principal'
+        });
+
+        await approvalRequest.save();
+        results.successful.push({
+          ...recordData,
+          approvalId: approvalRequest._id
+        });
+
+      } catch (error) {
+        console.error('Error importing student fee record:', recordData, error);
+        results.failed.push({
+          ...recordData,
+          error: error.message || 'Unknown error'
+        });
+      }
+    }
+
+    res.status(200).json({
+      message: `Bulk import completed. ${results.successful.length} successful, ${results.failed.length} failed`,
+      results
+    });
+
+  } catch (error) {
+    console.error('Error in bulk import:', error);
+    res.status(500).json({ message: 'Server error during bulk import' });
+  }
+};
+
+// Staff Salary Records Management
+
+// Get all staff salary records
+exports.getStaffSalaryRecords = async (req, res) => {
+  try {
+    const { 
+      page = 1, 
+      limit = 10, 
+      department, 
+      paymentStatus, 
+      status,
+      month,
+      year 
+    } = req.query;
+
+    const query = {};
+    
+    if (department) query.department = department;
+    if (paymentStatus) query.paymentStatus = paymentStatus;
+    if (status) query.status = status;
+    if (month) query.month = month;
+    if (year) query.year = parseInt(year);
+
+    const skip = (page - 1) * limit;
+    
+    const records = await StaffSalaryRecord.find(query)
+      .populate('staffId', 'name employeeId designation')
+      .populate('createdBy', 'name')
+      .populate('approvedBy', 'name')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await StaffSalaryRecord.countDocuments(query);
+
+    res.json({
+      data: records,
+      pagination: {
+        current: parseInt(page),
+        total: Math.ceil(total / limit),
+        totalRecords: total
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching staff salary records:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Create individual staff salary record
+exports.createStaffSalaryRecord = async (req, res) => {
+  try {
+    console.log('📝 Creating staff salary record with data:', req.body);
+    console.log('👤 User info:', req.user);
+    
+    const {
+      staffId,
+      month,
+      year,
+      basicSalary,
+      allowances,
+      deductions,
+      remarks,
+      attendance,
+      performance
+    } = req.body;
+
+    // Check if user is authenticated
+    if (!req.user || !req.user.id) {
+      console.error('❌ User not authenticated');
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+
+    // Validate required fields
+    if (!staffId || !month || !year || !basicSalary) {
+      console.error('❌ Missing required fields');
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    // Validate staff exists
+    const staff = await Staff.findById(staffId);
+    if (!staff) {
+      console.error('❌ Staff not found:', staffId);
+      return res.status(404).json({ message: 'Staff not found' });
+    }
+
+    console.log('✅ Staff found:', staff.name);
+
+    // Calculate gross and net salary
+    const totalAllowances = Object.values(allowances || {}).reduce((sum, val) => sum + (val || 0), 0);
+    const totalDeductions = Object.values(deductions || {}).reduce((sum, val) => sum + (val || 0), 0);
+    const grossSalary = basicSalary + totalAllowances;
+    const netSalary = grossSalary - totalDeductions;
+
+    console.log('💰 Salary calculation:', { basicSalary, totalAllowances, totalDeductions, grossSalary, netSalary });
+
+    // Create approval request instead of direct creation
+    const approvalRequest = new ApprovalRequest({
+      requesterId: req.user.id,
+      requesterName: req.user.name || 'Admin',
+      requestType: 'StaffSalaryRecord',
+      title: `Staff Salary Record - ${staff.name} (${staff.employeeId})`,
+      description: `Salary record for ${staff.name} - ${month} ${year}, Net Salary: ₹${netSalary}`,
+      requestData: {
+        staffId,
+        staffName: staff.name,
+        employeeId: staff.employeeId,
+        designation: staff.designation || staff.role,
+        department: staff.department?.name || '',
+        month,
+        year: parseInt(year),
+        basicSalary: parseFloat(basicSalary),
+        allowances,
+        deductions,
+        grossSalary,
+        netSalary,
+        remarks,
+        attendance,
+        performance
+      },
+      status: 'Pending',
+      currentApprover: 'Principal'
+    });
+
+    console.log('📋 Approval request created:', approvalRequest);
+
+    await approvalRequest.save();
+    console.log('✅ Approval request saved successfully');
+
+    res.status(201).json({
+      message: 'Staff salary record approval request submitted successfully',
+      approvalRequest
+    });
+  } catch (error) {
+    console.error('❌ Error creating staff salary record:', error);
+    res.status(500).json({ 
+      message: 'Server error',
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+};
+
+// Bulk import staff salary records from Google Sheets
+exports.bulkImportStaffSalaryRecords = async (req, res) => {
+  try {
+    const { records } = req.body;
+    
+    if (!Array.isArray(records) || records.length === 0) {
+      return res.status(400).json({ message: 'Records array is required and cannot be empty' });
+    }
+
+    const results = {
+      successful: [],
+      failed: [],
+      total: records.length
+    };
+
+    for (const recordData of records) {
+      try {
+        const {
+          staffName,
+          employeeId,
+          designation,
+          department,
+          month,
+          year,
+          basicSalary,
+          allowances,
+          deductions,
+          remarks,
+          attendance,
+          performance
+        } = recordData;
+
+        // Validate required fields
+        if (!staffName || !employeeId || !designation || !month || !year || !basicSalary) {
+          results.failed.push({
+            ...recordData,
+            error: 'Missing required fields'
+          });
+          continue;
+        }
+
+        // Find staff by employee ID
+        const staff = await Staff.findOne({ employeeId });
+        if (!staff) {
+          results.failed.push({
+            ...recordData,
+            error: 'Staff not found with this employee ID'
+          });
+          continue;
+        }
+
+        // Calculate gross and net salary
+        const totalAllowances = Object.values(allowances || {}).reduce((sum, val) => sum + (val || 0), 0);
+        const totalDeductions = Object.values(deductions || {}).reduce((sum, val) => sum + (val || 0), 0);
+        const grossSalary = basicSalary + totalAllowances;
+        const netSalary = grossSalary - totalDeductions;
+
+        // Create approval request for each record
+        const approvalRequest = new ApprovalRequest({
+          requesterId: req.user.id,
+          requesterName: req.user.name || 'Admin',
+          requestType: 'StaffSalaryRecord',
+          title: `Staff Salary Record - ${staffName} (${employeeId})`,
+          description: `Salary record for ${staffName} - ${month} ${year}, Net Salary: ₹${netSalary}`,
+          requestData: {
+            staffId: staff._id,
+            staffName,
+            employeeId,
+            designation,
+            department,
+            month,
+            year: parseInt(year),
+            basicSalary: parseFloat(basicSalary),
+            allowances,
+            deductions,
+            grossSalary,
+            netSalary,
+            remarks,
+            attendance,
+            performance
+          },
+          status: 'Pending',
+          currentApprover: 'Principal'
+        });
+
+        await approvalRequest.save();
+        results.successful.push({
+          ...recordData,
+          approvalId: approvalRequest._id
+        });
+
+      } catch (error) {
+        console.error('Error importing staff salary record:', recordData, error);
+        results.failed.push({
+          ...recordData,
+          error: error.message || 'Unknown error'
+        });
+      }
+    }
+
+    res.status(200).json({
+      message: `Bulk import completed. ${results.successful.length} successful, ${results.failed.length} failed`,
+      results
+    });
+
+  } catch (error) {
+    console.error('Error in bulk import:', error);
+    res.status(500).json({ message: 'Server error during bulk import' });
+  }
+};
+
+// Get fee records statistics
+exports.getFeeRecordsStats = async (req, res) => {
+  try {
+    const currentYear = new Date().getFullYear();
+    
+    // Student fee records stats
+    const studentFeeStats = await StudentFeeRecord.aggregate([
+      {
+        $match: {
+          academicYear: currentYear.toString()
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalRecords: { $sum: 1 },
+          totalAmount: { $sum: '$amount' },
+          totalPaid: { $sum: '$amountPaid' },
+          pendingAmount: { $sum: { $subtract: ['$amount', '$amountPaid'] } }
+        }
+      }
+    ]);
+
+    // Staff salary records stats
+    const staffSalaryStats = await StaffSalaryRecord.aggregate([
+      {
+        $match: {
+          year: currentYear
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalRecords: { $sum: 1 },
+          totalGrossSalary: { $sum: '$grossSalary' },
+          totalNetSalary: { $sum: '$netSalary' },
+          totalPaid: { $sum: { $cond: [{ $eq: ['$paymentStatus', 'Paid'] }, '$netSalary', 0] } }
+        }
+      }
+    ]);
+
+    res.json({
+      studentFeeRecords: studentFeeStats[0] || {
+        totalRecords: 0,
+        totalAmount: 0,
+        totalPaid: 0,
+        pendingAmount: 0
+      },
+      staffSalaryRecords: staffSalaryStats[0] || {
+        totalRecords: 0,
+        totalGrossSalary: 0,
+        totalNetSalary: 0,
+        totalPaid: 0
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching fee records stats:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+}; 

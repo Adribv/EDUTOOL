@@ -81,7 +81,7 @@ exports.getLessonPlansForReview = async (req, res) => {
 exports.reviewLessonPlan = async (req, res) => {
   try {
     const { planId } = req.params;
-    const { status, feedback } = req.body;
+    const { status, feedback, templateData } = req.body;
     
     const lessonPlan = await LessonPlan.findById(planId);
     
@@ -101,33 +101,62 @@ exports.reviewLessonPlan = async (req, res) => {
       // Allow review for flexibility - HOD can review any lesson plan
     }
     
-    // Check if lesson plan is in correct status for HOD review
-    if (lessonPlan.status !== 'Pending' || lessonPlan.currentApprover !== 'HOD') {
-      return res.status(400).json({ message: 'Lesson plan is not ready for HOD review' });
+    // If templateData is provided, update the lesson plan with the new template data
+    if (templateData) {
+      console.log('📝 Updating lesson plan template data');
+      lessonPlan.templateData = templateData;
+      
+      // Also update the main fields if they're in the template data
+      if (templateData.title) {
+        lessonPlan.title = templateData.title;
+      }
+      if (templateData.topic) {
+        lessonPlan.description = templateData.topic;
+      }
+      if (templateData.class) {
+        lessonPlan.class = templateData.class;
+      }
+      if (templateData.subject) {
+        lessonPlan.subject = templateData.subject;
+      }
     }
     
-    if (status === 'Rejected') {
-      // HOD rejected the lesson plan
-      lessonPlan.status = 'Rejected';
-      lessonPlan.currentApprover = 'Completed';
-      lessonPlan.rejectedBy = req.user.id;
-      lessonPlan.rejectedAt = new Date();
-      lessonPlan.rejectionReason = feedback || 'Rejected by HOD';
-    } else if (status === 'HOD_Approved') {
-      // HOD approved, forward to Principal
-      lessonPlan.status = 'HOD_Approved';
-      lessonPlan.currentApprover = 'Principal';
-      lessonPlan.hodApprovedBy = req.user.id;
-      lessonPlan.hodApprovedAt = new Date();
-      lessonPlan.hodFeedback = feedback || 'Approved by HOD';
-    } else {
-      return res.status(400).json({ message: 'Invalid status for HOD review' });
+    // If status is provided, process the approval/rejection workflow
+    if (status) {
+      // Check if lesson plan is in correct status for HOD review
+      if (lessonPlan.status !== 'Pending' || lessonPlan.currentApprover !== 'HOD') {
+        return res.status(400).json({ message: 'Lesson plan is not ready for HOD review' });
+      }
+      
+      if (status === 'Rejected') {
+        // HOD rejected the lesson plan
+        lessonPlan.status = 'Rejected';
+        lessonPlan.currentApprover = 'Completed';
+        lessonPlan.rejectedBy = req.user.id;
+        lessonPlan.rejectedAt = new Date();
+        lessonPlan.rejectionReason = feedback || 'Rejected by HOD';
+      } else if (status === 'HOD_Approved') {
+        // HOD approved, forward to Principal
+        lessonPlan.status = 'HOD_Approved';
+        lessonPlan.currentApprover = 'Principal';
+        lessonPlan.hodApprovedBy = req.user.id;
+        lessonPlan.hodApprovedAt = new Date();
+        lessonPlan.hodFeedback = feedback || 'Approved by HOD';
+      } else {
+        return res.status(400).json({ message: 'Invalid status for HOD review' });
+      }
     }
     
     await lessonPlan.save();
     
+    const message = templateData && !status 
+      ? 'Template updated successfully' 
+      : status === 'Rejected' 
+        ? 'Lesson plan rejected' 
+        : 'Lesson plan forwarded to Principal for approval';
+    
     res.json({ 
-      message: status === 'Rejected' ? 'Lesson plan rejected' : 'Lesson plan forwarded to Principal for approval',
+      message,
       lessonPlan 
     });
   } catch (error) {

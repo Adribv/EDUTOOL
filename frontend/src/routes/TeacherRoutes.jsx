@@ -17,6 +17,8 @@ import LeaveRequests from '../pages/teacher/LeaveRequests';
 import MCQBuilder from '../pages/teacher/MCQBuilder';
 import MCQManagement from '../pages/teacher/MCQManagement';
 import LessonPlans from '../pages/teacher/LessonPlans';
+import SubstituteTeacherRequest from '../pages/teacher/SubstituteTeacherRequest';
+import SubstituteRequests from '../pages/teacher/SubstituteRequests';
 
 const TeacherRoutes = () => {
   return (
@@ -40,6 +42,8 @@ const TeacherRoutes = () => {
       <Route path="mcq-builder" element={<MCQBuilder />} />
       <Route path="mcq-management" element={<MCQManagement />} />
       <Route path="lesson-plans" element={<LessonPlans />} />
+      <Route path="substitute-request" element={<SubstituteTeacherRequest />} />
+      <Route path="substitute-requests" element={<SubstituteRequests />} />
     </Routes>
   );
 };

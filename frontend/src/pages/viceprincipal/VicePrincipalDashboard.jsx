@@ -64,6 +64,11 @@ const vpAPI = {
   approveHODSubmission: (submissionId) => api.post(`/vp/hod-submissions/${submissionId}/approve`).then(res => res.data),
   rejectHODSubmission: (submissionId) => api.post(`/vp/hod-submissions/${submissionId}/reject`).then(res => res.data),
   
+  // Service Request Management
+  getServiceRequests: () => api.get('/vp/service-requests').then(res => res.data),
+  approveServiceRequest: (requestId, comments) => api.post(`/vp/service-requests/${requestId}/approve`, { comments }).then(res => res.data),
+  rejectServiceRequest: (requestId, comments) => api.post(`/vp/service-requests/${requestId}/reject`, { comments }).then(res => res.data),
+  
   // Profile Management
   getProfile: () => api.get('/vp/profile').then(res => res.data),
   updateProfile: (data) => api.put('/vp/profile', data).then(res => res.data),
@@ -170,6 +175,7 @@ export default function VicePrincipalDashboard() {
   const { data: curriculumPlans, isLoading: loadingCurriculum } = useQuery({ queryKey: ['vpCurriculum'], queryFn: vpAPI.getCurriculumPlans });
   const { data: approvedCurriculumPlans, isLoading: loadingApprovedCurriculum } = useQuery({ queryKey: ['vpApprovedCurriculum'], queryFn: vpAPI.getApprovedCurriculumPlans });
   const { data: hodSubmissions, isLoading: loadingHODSubmissions } = useQuery({ queryKey: ['vpHODSubmissions'], queryFn: vpAPI.getHODSubmissions });
+  const { data: serviceRequests, isLoading: loadingServiceRequests } = useQuery({ queryKey: ['vpServiceRequests'], queryFn: vpAPI.getServiceRequests });
 
   // Mutations
   const updateDepartmentMutation = useMutation({
@@ -317,6 +323,24 @@ export default function VicePrincipalDashboard() {
     onError: () => toast.error('Failed to approve submission'),
   });
 
+  const approveServiceRequestMutation = useMutation({
+    mutationFn: ({ requestId, comments }) => vpAPI.approveServiceRequest(requestId, comments),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['vpServiceRequests']);
+      toast.success('Service request approved');
+    },
+    onError: () => toast.error('Failed to approve service request'),
+  });
+
+  const rejectServiceRequestMutation = useMutation({
+    mutationFn: ({ requestId, comments }) => vpAPI.rejectServiceRequest(requestId, comments),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['vpServiceRequests']);
+      toast.success('Service request rejected');
+    },
+    onError: () => toast.error('Failed to reject service request'),
+  });
+
   const updateProfileMutation = useMutation({
     mutationFn: vpAPI.updateProfile,
     onSuccess: () => {
@@ -341,7 +365,7 @@ export default function VicePrincipalDashboard() {
     return <Box p={3}><Typography color="error">Access denied: Vice Principal only</Typography></Box>;
   }
 
-  if (loadingOverview || loadingStaff || loadingStats || loadingDept || loadingAllDepts || loadingHODs || loadingExams || loadingTimetables || loadingCurriculum || loadingApprovedCurriculum || loadingHODSubmissions) {
+  if (loadingOverview || loadingStaff || loadingStats || loadingDept || loadingAllDepts || loadingHODs || loadingExams || loadingTimetables || loadingCurriculum || loadingApprovedCurriculum || loadingHODSubmissions || loadingServiceRequests) {
     return <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh"><CircularProgress /></Box>;
   }
 
@@ -409,6 +433,8 @@ export default function VicePrincipalDashboard() {
         <Tab label="Curriculum" icon={<BookIcon />} />
         <Tab label="Approved Curriculum" icon={<CheckCircleIcon />} />
         <Tab label="HOD Approvals" icon={<ApprovalIcon />} />
+        <Tab label="Service Requests" icon={<ApprovalIcon />} />
+        <Tab label="Substitute Approvals" icon={<ApprovalIcon />} />
       </Tabs>
 
       {/* Overview Tab */}
@@ -465,6 +491,20 @@ export default function VicePrincipalDashboard() {
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
                   {timetables?.length || 0} Scheduled
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Service Requests</Typography>
+                <Typography variant="h4" color="warning" gutterBottom>
+                  {serviceRequests?.length || 0} Pending
+                </Typography>
+                <Typography variant="body2" color="textSecondary">
+                  Awaiting VP approval
                 </Typography>
               </CardContent>
             </Card>
@@ -1375,6 +1415,168 @@ export default function VicePrincipalDashboard() {
                               <CheckCircleIcon />
                             </IconButton>
                             <IconButton size="small" color="error">
+                              <WarningIcon />
+                            </IconButton>
+                          </>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Service Request Approvals Tab */}
+      {tab === 8 && (
+        <Card>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>Service Requests Pending Approval</Typography>
+            {loadingServiceRequests ? (
+              <Box display="flex" justifyContent="center" p={3}>
+                <CircularProgress />
+              </Box>
+            ) : (
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Date</TableCell>
+                      <TableCell>Staff Name</TableCell>
+                      <TableCell>Duty Type</TableCell>
+                      <TableCell>Time Slot</TableCell>
+                      <TableCell>Location</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell>Current Approver</TableCell>
+                      <TableCell>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {serviceRequests?.filter(request => request.requestType !== 'SubstituteTeacherRequest').length > 0 ? (
+                      serviceRequests.filter(request => request.requestType !== 'SubstituteTeacherRequest').map((request) => (
+                        <TableRow key={request._id}>
+                          <TableCell>{request.requestData?.date}</TableCell>
+                          <TableCell>{request.requestData?.staffName}</TableCell>
+                          <TableCell>{request.requestData?.dutyType}</TableCell>
+                          <TableCell>{request.requestData?.timeSlot}</TableCell>
+                          <TableCell>{request.requestData?.location}</TableCell>
+                          <TableCell>
+                            <Chip 
+                              label={request.status} 
+                              color={request.status === 'Pending' ? 'warning' : request.status === 'Approved' ? 'success' : 'error'} 
+                              size="small" 
+                            />
+                          </TableCell>
+                          <TableCell>{request.currentApprover}</TableCell>
+                          <TableCell>
+                            {request.status === 'Pending' && request.currentApprover === 'VP' && (
+                              <>
+                                <IconButton 
+                                  size="small" 
+                                  color="success"
+                                  onClick={() => approveServiceRequestMutation.mutate({ 
+                                    requestId: request._id, 
+                                    comments: 'Approved by VP' 
+                                  })}
+                                >
+                                  <CheckCircleIcon />
+                                </IconButton>
+                                <IconButton 
+                                  size="small" 
+                                  color="error"
+                                  onClick={() => rejectServiceRequestMutation.mutate({ 
+                                    requestId: request._id, 
+                                    comments: 'Rejected by VP' 
+                                  })}
+                                >
+                                  <WarningIcon />
+                                </IconButton>
+                              </>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={8} align="center">
+                          <Typography variant="body2" color="textSecondary">
+                            No service requests pending approval
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Substitute Approvals Tab */}
+      {tab === 9 && (
+        <Card>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>Substitute Teacher Requests Pending Approval</Typography>
+            <TableContainer component={Paper} sx={{ mt: 2 }}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Request Date</TableCell>
+                    <TableCell>Absent Teacher</TableCell>
+                    <TableCell>Department</TableCell>
+                    <TableCell>Reason</TableCell>
+                    <TableCell>Absence Dates</TableCell>
+                    <TableCell>Periods</TableCell>
+                    <TableCell>Classes</TableCell>
+                    <TableCell>Suggested Substitute</TableCell>
+                    <TableCell>Remarks</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {(serviceRequests?.filter(req => req.requestType === 'SubstituteTeacherRequest' && req.currentApprover === 'VP' && req.status === 'Pending') || []).map((req) => (
+                    <TableRow key={req._id}>
+                      <TableCell>{req.requestData?.requestDate}</TableCell>
+                      <TableCell>{req.requestData?.absentTeacherName}</TableCell>
+                      <TableCell>{req.requestData?.department}</TableCell>
+                      <TableCell>{req.requestData?.reasonForAbsence}</TableCell>
+                      <TableCell>{req.requestData?.absenceFrom} - {req.requestData?.absenceTo}</TableCell>
+                      <TableCell>{req.requestData?.periods}</TableCell>
+                      <TableCell>{req.requestData?.classes}</TableCell>
+                      <TableCell>{req.requestData?.suggestedSubstitute}</TableCell>
+                      <TableCell>{req.requestData?.remarks}</TableCell>
+                      <TableCell>
+                        <Chip 
+                          label={req.status} 
+                          color={req.status === 'Pending' ? 'warning' : req.status === 'Approved' ? 'success' : 'error'} 
+                          size="small" 
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {req.status === 'Pending' && req.currentApprover === 'VP' && (
+                          <>
+                            <IconButton 
+                              size="small" 
+                              color="success"
+                              onClick={() => approveServiceRequestMutation.mutate({ 
+                                requestId: req._id, 
+                                comments: 'Approved by VP' 
+                              })}
+                            >
+                              <CheckCircleIcon />
+                            </IconButton>
+                            <IconButton 
+                              size="small" 
+                              color="error"
+                              onClick={() => rejectServiceRequestMutation.mutate({ 
+                                requestId: req._id, 
+                                comments: 'Rejected by VP' 
+                              })}
+                            >
                               <WarningIcon />
                             </IconButton>
                           </>

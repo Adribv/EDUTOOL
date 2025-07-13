@@ -2960,6 +2960,12 @@ exports.recordVisitor = async (req, res) => {
       wardPickup
     } = req.body;
 
+    let attachDocument = '';
+    if (req.file) {
+      // Save relative path for frontend access
+      attachDocument = req.file.path.replace(/\\/g, '/');
+    }
+
     const newVisitor = new Visitor({
       name,
       contactNumber,
@@ -2971,7 +2977,8 @@ exports.recordVisitor = async (req, res) => {
       entryTime: entryTime || new Date(),
       expectedExitTime,
       wardPickup,
-      status: 'Inside'
+      status: 'Inside',
+      attachDocument
     });
 
     await newVisitor.save();
@@ -3359,5 +3366,135 @@ exports.updateSupplyRequestStatus = async (req, res) => {
   } catch (error) {
     console.error('Error updating supply request status:', error);
     res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Service Request (Staff Duty Allocation/Roster Form)
+exports.createServiceRequest = async (req, res) => {
+  try {
+    const {
+      date,
+      day,
+      staffName,
+      dutyType,
+      activitiesDetails,
+      timeSlot,
+      location,
+      autoReminder,
+      backupAssigned,
+      remarks
+    } = req.body;
+
+    // Validate required fields
+    if (!date || !staffName || !dutyType || !timeSlot || !location) {
+      return res.status(400).json({ message: 'Missing required fields: date, staffName, dutyType, timeSlot, location' });
+    }
+
+    const requesterId = req.user?.id || null;
+    const requesterName = req.user?.name || 'Admin Staff';
+
+    const approvalRequest = new ApprovalRequest({
+      requesterId,
+      requesterName,
+      requestType: 'ServiceRequest',
+      title: `Staff Duty Allocation for ${staffName} on ${date}`,
+      description: `Duty: ${dutyType}, Time: ${timeSlot}, Location: ${location}`,
+      requestData: {
+        date,
+        day,
+        staffName,
+        dutyType,
+        activitiesDetails,
+        timeSlot,
+        location,
+        autoReminder,
+        backupAssigned,
+        remarks
+      },
+      status: 'Pending',
+      currentApprover: 'VP'
+    });
+
+    await approvalRequest.save();
+    res.status(201).json({ message: 'Service request created and sent for VP approval', approvalRequest });
+  } catch (error) {
+    console.error('Error creating service request:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Bulk import visitors
+exports.bulkImportVisitors = async (req, res) => {
+  try {
+    const { visitors } = req.body;
+    if (!Array.isArray(visitors) || visitors.length === 0) {
+      return res.status(400).json({ message: 'Visitors array is required and cannot be empty' });
+    }
+    const results = {
+      successful: [],
+      failed: [],
+      total: visitors.length
+    };
+    for (const visitorData of visitors) {
+      try {
+        const {
+          name,
+          contactNumber,
+          purpose,
+          whomToMeet,
+          parentName,
+          idProofType = 'Other',
+          idProofNumber = 'N/A',
+          wardPickup = false,
+          totalPerson = 1,
+          date,
+          inTime,
+          outTime,
+          attachDocument
+        } = visitorData;
+        // Validate required fields
+        if (!name || !contactNumber || !purpose || !whomToMeet) {
+          results.failed.push({ ...visitorData, error: 'Missing required fields' });
+          continue;
+        }
+        // Prepare entryTime and exitTime
+        let entryTime = date ? new Date(date) : new Date();
+        if (inTime) {
+          const [h, m] = inTime.split(':');
+          entryTime.setHours(Number(h), Number(m), 0, 0);
+        }
+        let exitTime = undefined;
+        if (outTime) {
+          exitTime = date ? new Date(date) : new Date();
+          const [h, m] = outTime.split(':');
+          exitTime.setHours(Number(h), Number(m), 0, 0);
+        }
+        const newVisitor = new Visitor({
+          name,
+          contactNumber,
+          purpose,
+          whomToMeet,
+          parentName,
+          idProofType,
+          idProofNumber,
+          wardPickup,
+          entryTime,
+          exitTime,
+          // expectedExitTime: not handled in import
+          // remarks: not handled in import
+          status: exitTime ? 'Left' : 'Inside',
+        });
+        await newVisitor.save();
+        results.successful.push({ ...visitorData, _id: newVisitor._id });
+      } catch (error) {
+        results.failed.push({ ...visitorData, error: error.message || 'Unknown error' });
+      }
+    }
+    res.status(200).json({
+      message: `Bulk import completed. ${results.successful.length} successful, ${results.failed.length} failed`,
+      results
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error during bulk import' });
   }
 };

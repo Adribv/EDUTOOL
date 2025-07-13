@@ -41,9 +41,13 @@ const LearningResources = () => {
   const fetchResources = async () => {
     try {
       const response = await studentService.getLearningResources();
-      setResources(response.data);
-    } catch {
+      // Ensure we have a valid array of resources
+      const resourcesData = response?.data || [];
+      setResources(Array.isArray(resourcesData) ? resourcesData : []);
+    } catch (error) {
+      console.error('Error fetching learning resources:', error);
       toast.error('Failed to load learning resources');
+      setResources([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
@@ -51,20 +55,21 @@ const LearningResources = () => {
 
   const handleDownload = async (resource) => {
     try {
-      const response = await studentService.downloadResource(resource.id);
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', resource.fileName);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch {
+      // For now, just open the resource URL in a new tab
+      if (resource.downloadUrl || resource.fileUrl) {
+        window.open(resource.downloadUrl || resource.fileUrl, '_blank');
+      } else {
+        toast.error('Download URL not available');
+      }
+    } catch (error) {
+      console.error('Error downloading resource:', error);
       toast.error('Failed to download resource');
     }
   };
 
   const getResourceIcon = (type) => {
+    if (!type) return <Description />;
+    
     switch (type.toLowerCase()) {
       case 'book':
         return <Book />;
@@ -77,10 +82,10 @@ const LearningResources = () => {
     }
   };
 
-  const filteredResources = resources.filter((resource) =>
-    resource.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    resource.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    resource.type.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredResources = (resources || []).filter((resource) =>
+    resource?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    resource?.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    resource?.type?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (loading) {
@@ -114,59 +119,67 @@ const LearningResources = () => {
         />
       </Box>
 
-      <Grid container spacing={3}>
-        {filteredResources.map((resource) => (
-          <Grid item xs={12} md={6} lg={4} key={resource.id}>
-            <Card>
-              <CardContent>
-                <Box display="flex" alignItems="center" mb={2}>
-                  {getResourceIcon(resource.type)}
-                  <Typography variant="h6" sx={{ ml: 1 }}>
-                    {resource.title}
-                  </Typography>
-                </Box>
-                <Typography color="textSecondary" gutterBottom>
-                  Subject: {resource.subject}
-                </Typography>
-                <Typography color="textSecondary" gutterBottom>
-                  Type: {resource.type}
-                </Typography>
-                <Typography variant="body2" paragraph>
-                  {resource.description}
-                </Typography>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Chip
-                    label={resource.format}
-                    size="small"
-                    color="primary"
-                    variant="outlined"
-                  />
-                  <Box>
-                    <Button
-                      size="small"
-                      onClick={() => {
-                        setSelectedResource(resource);
-                        setPreviewDialog(true);
-                      }}
-                      sx={{ mr: 1 }}
-                    >
-                      Preview
-                    </Button>
-                    <Button
-                      size="small"
-                      variant="contained"
-                      startIcon={<Download />}
-                      onClick={() => handleDownload(resource)}
-                    >
-                      Download
-                    </Button>
+      {filteredResources.length === 0 ? (
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="40vh">
+          <Typography variant="h6" color="textSecondary">
+            {searchQuery ? 'No resources found matching your search.' : 'No learning resources available.'}
+          </Typography>
+        </Box>
+      ) : (
+        <Grid container spacing={3}>
+          {filteredResources.map((resource) => (
+            <Grid item xs={12} md={6} lg={4} key={resource?.id || Math.random()}>
+              <Card>
+                <CardContent>
+                  <Box display="flex" alignItems="center" mb={2}>
+                    {getResourceIcon(resource?.type)}
+                    <Typography variant="h6" sx={{ ml: 1 }}>
+                      {resource?.title || 'Untitled Resource'}
+                    </Typography>
                   </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+                  <Typography color="textSecondary" gutterBottom>
+                    Subject: {resource?.subject || 'N/A'}
+                  </Typography>
+                  <Typography color="textSecondary" gutterBottom>
+                    Type: {resource?.type || 'Unknown'}
+                  </Typography>
+                  <Typography variant="body2" paragraph>
+                    {resource?.description || 'No description available'}
+                  </Typography>
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Chip
+                      label={resource?.format || 'Unknown'}
+                      size="small"
+                      color="primary"
+                      variant="outlined"
+                    />
+                    <Box>
+                      <Button
+                        size="small"
+                        onClick={() => {
+                          setSelectedResource(resource);
+                          setPreviewDialog(true);
+                        }}
+                        sx={{ mr: 1 }}
+                      >
+                        Preview
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="contained"
+                        startIcon={<Download />}
+                        onClick={() => handleDownload(resource)}
+                      >
+                        Download
+                      </Button>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      )}
 
       <Dialog
         open={previewDialog}

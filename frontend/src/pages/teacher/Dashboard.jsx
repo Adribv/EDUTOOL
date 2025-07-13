@@ -21,7 +21,7 @@ import {
   Favorite, FavoriteBorder, ThumbUp, ThumbDown, VisibilityOff, Archive, Unarchive,
   Block, Report, Flag, Bookmark, BookmarkBorder, PlayArrow, Pause, Stop, SkipNext,
   VolumeUp, VolumeOff, Fullscreen, FullscreenExit, ZoomIn, ZoomOut, RotateLeft, RotateRight,
-  SupervisorAccount, People, Cancel
+  SupervisorAccount, People, Cancel, Approval
 } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { teacherAPI, staffAPI } from '../../services/api';
@@ -38,6 +38,8 @@ import Communication from './Communication';
 import LeaveRequests from './LeaveRequests';
 import TeacherLeaveRequests from './TeacherLeaveRequests';
 import LessonPlans from './LessonPlans';
+import SubstituteRequests from './SubstituteRequests';
+import SubstituteTeacherRequest from './SubstituteTeacherRequest';
 
 // Feature tabs configuration
 const featureTabs = [
@@ -51,6 +53,8 @@ const featureTabs = [
   { label: 'Grades', icon: <Grade />, key: 'grades' },
   { label: 'Students', icon: <Group />, key: 'students' },
   { label: "Student's Approvals", icon: <Event />, key: 'leaveRequests' },
+  { label: "Substitute Requests", icon: <Approval />, key: 'substituteRequests' },
+  { label: "New Substitute Request", icon: <Add />, key: 'newSubstituteRequest' },
   { label: "Leave Request", icon: <Assignment />, key: 'teacherLeaveRequests' },
   { label: 'Resources', icon: <Book />, key: 'resources' },
   { label: 'Lesson Plans', icon: <Work />, key: 'lessonPlans' },
@@ -64,6 +68,7 @@ const featureTabs = [
 // Dashboard Overview Component
 function DashboardOverview() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const staffId = user?._id || user?.id; // Try both _id and id properties
   
   // Show error if no valid staffId
@@ -267,6 +272,34 @@ function DashboardOverview() {
                 </Box>
                 <Warning sx={{ fontSize: 40, opacity: 0.8 }} />
               </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{
+            background: 'linear-gradient(135deg, #f7971e 0%, #ffd200 100%)',
+            color: 'white',
+            '&:hover': { transform: 'translateY(-4px)', transition: 'transform 0.3s ease' }
+          }}>
+            <CardContent>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Box>
+                  <Typography variant="h6" fontWeight="bold">
+                    Substitute Teacher
+                  </Typography>
+                  <Typography variant="body2">Request a Substitute</Typography>
+                </Box>
+                <Approval sx={{ fontSize: 40, opacity: 0.8 }} />
+              </Box>
+              <Button
+                variant="contained"
+                color="secondary"
+                sx={{ mt: 2, bgcolor: '#ff9800', color: 'white' }}
+                onClick={() => navigate('/teacher/substitute-request')}
+                fullWidth
+              >
+                Request a Substitute Teacher
+              </Button>
             </CardContent>
           </Card>
         </Grid>
@@ -1352,20 +1385,24 @@ export default function TeacherDashboard() {
       case 9:
         return <LeaveRequests />;
       case 10:
-        return <TeacherLeaveRequests />;
+        return <SubstituteRequests />;
       case 11:
-        return <LearningResources />;
+        return <SubstituteTeacherRequest />;
       case 12:
-        return <LessonPlans />;
+        return <TeacherLeaveRequests />;
       case 13:
-        return <Communication />;
+        return <LearningResources />;
       case 14:
-        return <div>Projects Component</div>;
+        return <LessonPlans />;
       case 15:
-        return <div>Parent Interaction Component</div>;
+        return <Communication />;
       case 16:
-        return <div>Feedback Component</div>;
+        return <div>Projects Component</div>;
       case 17:
+        return <div>Parent Interaction Component</div>;
+      case 18:
+        return <div>Feedback Component</div>;
+      case 19:
         return <div>Notifications Component</div>;
       default:
         return <DashboardOverview />;

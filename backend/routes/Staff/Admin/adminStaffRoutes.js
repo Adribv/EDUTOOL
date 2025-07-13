@@ -1,12 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const adminStaffController = require('../../../controllers/Staff/Admin/adminStaffController');
+const feeRecordsController = require('../../../controllers/Staff/Admin/feeRecordsController');
 const enquiryController = require('../../../controllers/Staff/Admin/enquiryController');
 const supplierRequestController = require('../../../controllers/Staff/Admin/supplierRequestController');
 const { permit } = require('../../../middlewares/roleMiddleware');
 const { verifyToken } = require('../../../middlewares/authMiddleware');
 const uploadProfileImage = require('../../../middlewares/uploadProfileImageMiddleware');
 const uploadStudentFiles = require('../../../middlewares/uploadStudentFilesMiddleware');
+const upload = require('../../../middlewares/uploadMiddleware');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -55,6 +57,7 @@ router.post('/login', async (req, res) => {
 router.get('/classes/public', adminStaffController.getClasses);
 router.post('/classes/public', adminStaffController.createClass);
 router.get('/staff/teachers/public', adminStaffController.getAllTeachers);
+router.get('/staff/public', adminStaffController.getAllStaff);
 router.get('/students/public', adminStaffController.getAllStudents);
 router.get('/students/export', adminStaffController.exportStudents);
 router.post('/students/public', uploadStudentFiles, adminStaffController.registerStudent);
@@ -67,6 +70,19 @@ router.put('/fee-structure/public/:id', adminStaffController.updateSimpleFeeStru
 router.delete('/fee-structure/public/:id', adminStaffController.deleteFeeStructure);
 router.get('/inventory/export', adminStaffController.exportInventory);
 router.post('/inventory/bulk', adminStaffController.bulkImportInventory);
+router.get('/fee-records/stats/public', feeRecordsController.getFeeRecordsStats);
+
+// Test endpoint for fee records (no auth required)
+router.post('/fee-records/test', (req, res) => {
+  console.log('🧪 Test endpoint called with data:', req.body);
+  console.log('👤 User info:', req.user);
+  res.json({ 
+    message: 'Test endpoint working',
+    body: req.body,
+    user: req.user,
+    headers: req.headers
+  });
+});
 
 // Public fee approval endpoint (no auth required)
 router.post('/fee-structure/approval', adminStaffController.configureFeeStructure);
@@ -80,6 +96,8 @@ router.delete('/approvals/:id', adminStaffController.deleteApprovalRequest);
 
 // Public routes additions (before auth middleware)
 router.post('/enquiries', enquiryController.createEnquiry);
+router.post('/enquiries/bulk', enquiryController.bulkImportEnquiries);
+router.post('/service-requests', adminStaffController.createServiceRequest);
 
 // Apply authentication middleware to all routes below this line
 router.use(verifyToken);
@@ -150,13 +168,15 @@ router.post('/transport/assign-student', adminStaffController.assignStudentToTra
 router.post('/transport/maintenance', adminStaffController.scheduleVehicleMaintenance);
 
 // Visitor Management
-router.post('/visitors', adminStaffController.recordVisitor);
+router.post('/visitors', upload.single('attachDocument'), adminStaffController.recordVisitor);
 router.put('/visitors/:id/exit', adminStaffController.updateVisitorExit);
 router.get('/visitors', adminStaffController.getVisitorLog);
+router.post('/visitors/bulk', adminStaffController.bulkImportVisitors);
 
 // Enquiry Management
 router.route('/enquiries')
   .get(enquiryController.getAllEnquiries);
+router.get('/enquiries/stats', enquiryController.getEnquiryStats);
 router.put('/enquiries/:id/reply', enquiryController.updateEnquiry);
 router.put('/enquiries/:id/status', enquiryController.updateEnquiry);
 
@@ -224,5 +244,16 @@ router.route('/supply-requests')
   .post(adminStaffController.createSupplyRequest);
 
 router.put('/supply-requests/:id/status', adminStaffController.updateSupplyRequestStatus);
+
+// Fee Records Management Routes
+router.get('/fee-records/student', feeRecordsController.getStudentFeeRecords);
+router.post('/fee-records/student', feeRecordsController.createStudentFeeRecord);
+router.post('/fee-records/student/bulk-import', feeRecordsController.bulkImportStudentFeeRecords);
+
+router.get('/fee-records/staff', feeRecordsController.getStaffSalaryRecords);
+router.post('/fee-records/staff', feeRecordsController.createStaffSalaryRecord);
+router.post('/fee-records/staff/bulk-import', feeRecordsController.bulkImportStaffSalaryRecords);
+
+router.get('/fee-records/stats', feeRecordsController.getFeeRecordsStats);
 
 module.exports = router;

@@ -32,10 +32,13 @@ import {
   Visibility as ViewIcon,
   Download as DownloadIcon,
   Refresh as RefreshIcon,
-  Assignment as LessonPlanIcon
+  Assignment as LessonPlanIcon,
+  Edit as EditIcon
 } from '@mui/icons-material';
 import { hodAPI } from '../../services/api';
 import { toast } from 'react-toastify';
+import LessonPlanViewer from '../../components/LessonPlanViewer';
+import LessonPlanTemplate from '../../components/LessonPlanTemplate';
 
 const LessonPlanApprovals = () => {
   const [lessonPlans, setLessonPlans] = useState([]);
@@ -43,9 +46,11 @@ const LessonPlanApprovals = () => {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [approvalDialog, setApprovalDialog] = useState(false);
   const [rejectionDialog, setRejectionDialog] = useState(false);
-  const [detailsDialog, setDetailsDialog] = useState(false);
+  const [viewerDialog, setViewerDialog] = useState(false);
+  const [templateEditDialog, setTemplateEditDialog] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [templateData, setTemplateData] = useState(null);
 
   useEffect(() => {
     fetchLessonPlans();
@@ -105,6 +110,61 @@ const LessonPlanApprovals = () => {
     } catch (error) {
       console.error('Error rejecting lesson plan:', error);
       toast.error(error.response?.data?.message || 'Failed to reject lesson plan');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleEditTemplate = (plan) => {
+    setSelectedPlan(plan);
+    setTemplateData(plan.templateData || {
+      title: plan.title,
+      class: plan.class,
+      subject: plan.subject,
+      topic: plan.description,
+      duration: '40 Minutes',
+      date: new Date(plan.createdAt).toISOString().split('T')[0],
+      teacherName: plan.submittedBy?.name || 'Unknown',
+      numberOfStudents: '30',
+      objectives: [''],
+      materials: [''],
+      prerequisiteKnowledge: [''],
+      introduction: '',
+      presentation: [{
+        step: '',
+        teacherActivity: '',
+        studentActivity: '',
+        teachingAids: ''
+      }],
+      assessment: {
+        questions: [''],
+        worksheet: ''
+      },
+      summary: '',
+      homework: '',
+      followUp: ''
+    });
+    setTemplateEditDialog(true);
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!selectedPlan || !templateData) return;
+    
+    try {
+      setProcessing(true);
+      // Update the lesson plan with modified template data only (no status change)
+      await hodAPI.reviewLessonPlan(selectedPlan._id, {
+        templateData: templateData
+      });
+      
+      toast.success('Template updated successfully');
+      setTemplateEditDialog(false);
+      setTemplateData(null);
+      setSelectedPlan(null);
+      fetchLessonPlans();
+    } catch (error) {
+      console.error('Error updating template:', error);
+      toast.error(error.response?.data?.message || 'Failed to update template');
     } finally {
       setProcessing(false);
     }
@@ -220,7 +280,7 @@ const LessonPlanApprovals = () => {
                         size="small"
                         onClick={() => {
                           setSelectedPlan(plan);
-                          setDetailsDialog(true);
+                          setViewerDialog(true);
                         }}
                       >
                         <ViewIcon />
@@ -250,6 +310,15 @@ const LessonPlanApprovals = () => {
                             }}
                           >
                             <RejectIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Edit Template">
+                          <IconButton
+                            size="small"
+                            color="info"
+                            onClick={() => handleEditTemplate(plan)}
+                          >
+                            <EditIcon />
                           </IconButton>
                         </Tooltip>
                       </>
@@ -342,80 +411,45 @@ const LessonPlanApprovals = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Details Dialog */}
-      <Dialog open={detailsDialog} onClose={() => setDetailsDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Lesson Plan Details</DialogTitle>
-        <DialogContent>
-          {selectedPlan && (
-            <Box>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <Typography variant="h6" gutterBottom>
-                    {selectedPlan.title}
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary" paragraph>
-                    {selectedPlan.description}
-                  </Typography>
-                </Grid>
-                
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2" color="textSecondary">
-                    Teacher
-                  </Typography>
-                  <Typography variant="body2">
-                    {selectedPlan.submittedBy?.name}
-                  </Typography>
-                </Grid>
-                
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2" color="textSecondary">
-                    Subject
-                  </Typography>
-                  <Typography variant="body2">
-                    {selectedPlan.subject}
-                  </Typography>
-                </Grid>
-                
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2" color="textSecondary">
-                    Class
-                  </Typography>
-                  <Typography variant="body2">
-                    {selectedPlan.class || 'Not specified'}
-                  </Typography>
-                </Grid>
-                
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2" color="textSecondary">
-                    Submitted
-                  </Typography>
-                  <Typography variant="body2">
-                    {new Date(selectedPlan.createdAt).toLocaleString()}
-                  </Typography>
-                </Grid>
-                
-                {selectedPlan.videoLink && (
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle2" color="textSecondary">
-                      Video Link
-                    </Typography>
-                    <Typography variant="body2">
-                      <a href={selectedPlan.videoLink} target="_blank" rel="noopener noreferrer">
-                        {selectedPlan.videoLink}
-                      </a>
-                    </Typography>
-                  </Grid>
-                )}
-              </Grid>
-            </Box>
+      {/* Template Edit Dialog */}
+      <Dialog open={templateEditDialog} onClose={() => setTemplateEditDialog(false)} maxWidth="lg" fullWidth>
+        <DialogTitle>Edit Lesson Plan Template</DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body2" color="textSecondary" gutterBottom>
+            You can edit the lesson plan template before approval. Changes will be saved with the lesson plan.
+          </Typography>
+          {templateData && (
+            <LessonPlanTemplate
+              lessonPlan={templateData}
+              onSave={setTemplateData}
+              isEditing={true}
+              userRole="HOD"
+              readOnly={false}
+            />
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDetailsDialog(false)}>
-            Close
+          <Button onClick={() => setTemplateEditDialog(false)} disabled={processing}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSaveTemplate}
+            disabled={processing}
+            startIcon={processing ? <CircularProgress size={16} /> : <EditIcon />}
+          >
+            {processing ? 'Saving...' : 'Save Template'}
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Lesson Plan Viewer */}
+      <LessonPlanViewer
+        lessonPlan={selectedPlan}
+        open={viewerDialog}
+        onClose={() => setViewerDialog(false)}
+      />
     </Box>
   );
 };

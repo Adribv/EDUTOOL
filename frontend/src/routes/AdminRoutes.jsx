@@ -27,12 +27,14 @@ import Settings from '../pages/admin/Settings';
 import Subjects from '../pages/admin/Subjects';
 import Parents from '../pages/admin/Parents';
 import Fees from '../pages/admin/Fees';
+import FeeRecords from '../pages/admin/FeeRecords';
 import Attendance from '../pages/admin/Attendance';
 import Classes from '../pages/admin/Classes';
 import Exams from '../pages/admin/Exams';
 import A_Dashboard from '../pages/admin/A_Dashboard';
 import Visitors from '../pages/admin/Visitors';
 import A_Enquiries from '../pages/admin/A_Enquiries';
+import A_ServiceRequests from '../pages/admin/A_ServiceRequests';
 
 const AdminRoutes = () => {
   return (
@@ -66,12 +68,14 @@ const AdminRoutes = () => {
         <Route path="subject-management" element={<Subjects />} />
         <Route path="parents" element={<Parents />} />
         <Route path="fee-management" element={<Fees />} />
+        <Route path="fee-records" element={<FeeRecords />} />
         <Route path="attendance" element={<Attendance />} />
         <Route path="class-management" element={<Classes />} />
         <Route path="exam-management" element={<Exams />} />
         <Route path="a-dashboard" element={<A_Dashboard />} />
         <Route path="Visitors" element={<Visitors />} />
         <Route path="Enquiries" element={<A_Enquiries />} />
+        <Route path="service-requests" element={<A_ServiceRequests />} />
       </Route>
     </Routes>
   );

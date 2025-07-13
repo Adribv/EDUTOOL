@@ -42,6 +42,10 @@ const visitorSchema = new mongoose.Schema({
     type: String,
     enum: ['Inside', 'Left', 'Overstayed'],
     default: 'Inside'
+  },
+  attachDocument: {
+    type: String,
+    default: ''
   }
 }, { timestamps: true });
 

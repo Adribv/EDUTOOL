@@ -1,5 +1,6 @@
 const Department = require('../../../models/Staff/HOD/department.model');
 const Staff = require('../../../models/Staff/staffModel');
+const ApprovalRequest = require('../../../models/Staff/HOD/approvalRequest.model');
 
 // Helper function to ensure Vice Principal has a department
 const ensureVicePrincipalDepartment = async (vicePrincipalId) => {
@@ -318,6 +319,79 @@ exports.getAllHODs = async (req, res) => {
     res.json(hodsWithDepartments);
   } catch (error) {
     console.error('Error fetching HODs:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+}; 
+
+// Get all pending service requests for VP
+exports.getPendingServiceRequests = async (req, res) => {
+  try {
+    const requests = await ApprovalRequest.find({
+      requestType: { $in: ['ServiceRequest', 'SubstituteTeacherRequest'] },
+      currentApprover: 'VP',
+      status: 'Pending'
+    }).sort({ createdAt: -1 });
+    res.json(requests);
+  } catch (error) {
+    console.error('Error fetching pending service requests:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Approve a service request (forward to Principal)
+exports.approveServiceRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { comments } = req.body;
+    const request = await ApprovalRequest.findById(id);
+    if (!request) {
+      return res.status(404).json({ message: 'Service request not found' });
+    }
+    if (request.currentApprover !== 'VP' || request.status !== 'Pending') {
+      return res.status(400).json({ message: 'Request is not pending VP approval' });
+    }
+    request.status = 'Pending';
+    request.currentApprover = 'Principal';
+    request.approvalHistory.push({
+      approver: req.user.id,
+      role: 'VP',
+      status: 'Approved',
+      comments: comments || 'Approved by VP',
+      timestamp: new Date()
+    });
+    await request.save();
+    res.json({ message: 'Service request approved and forwarded to Principal', request });
+  } catch (error) {
+    console.error('Error approving service request:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Reject a service request
+exports.rejectServiceRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { comments } = req.body;
+    const request = await ApprovalRequest.findById(id);
+    if (!request) {
+      return res.status(404).json({ message: 'Service request not found' });
+    }
+    if (request.currentApprover !== 'VP' || request.status !== 'Pending') {
+      return res.status(400).json({ message: 'Request is not pending VP approval' });
+    }
+    request.status = 'Rejected';
+    request.currentApprover = 'Completed';
+    request.approvalHistory.push({
+      approver: req.user.id,
+      role: 'VP',
+      status: 'Rejected',
+      comments: comments || 'Rejected by VP',
+      timestamp: new Date()
+    });
+    await request.save();
+    res.json({ message: 'Service request rejected', request });
+  } catch (error) {
+    console.error('Error rejecting service request:', error);
     res.status(500).json({ message: 'Server error' });
   }
 }; 

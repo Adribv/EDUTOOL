@@ -54,36 +54,6 @@ import { roleConfig } from '../../pages/admin/roleConfig';
 
 const drawerWidth = 280;
 
-// HOD-specific role configuration for sidebar
-const hodRoleConfig = {
-  'HOD': {
-    sidebar: [
-      'Teachers',
-      'Students',
-      'Courses',
-      'Evaluations',
-      'Reports',
-      'Settings',
-    ],
-  },
-  'Class Coordinator': {
-    sidebar: [
-      'Attendance',
-      'Classes',
-      'Students',
-      'Reports',
-    ],
-  },
-  'Examination Controller': {
-    sidebar: [
-      'Exams',
-      'Results',
-      'Reports',
-      'Schedules',
-    ],
-  },
-};
-
 const Layout = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -193,6 +163,7 @@ const Layout = () => {
         { text: 'Staff Management', icon: <People />, path: '/admin/staff' },
         { text: 'Student Records', icon: <School />, path: '/admin/students' },
         { text: 'Fee Configuration', icon: <Payment />, path: '/admin/fees' },
+        { text: 'Fee Records', icon: <Payment />, path: '/admin/fee-records' },
         { text: 'Inventory', icon: <Inventory />, path: '/admin/inventory' },
         { text: 'Events', icon: <CalendarToday />, path: '/admin/events' },
         { text: 'Communications', icon: <Notifications />, path: '/admin/communications' },
@@ -204,6 +175,7 @@ const Layout = () => {
         { text: 'Reports', icon: <Assessment />, path: '/admin/reports' },
         { text: 'Enquiries', icon: <Message />, path: '/admin/Enquiries' },
         { text: 'Visitors', icon: <GroupIcon />, path: '/admin/Visitors' },
+        { text: 'Service Requests', icon: <Approval />, path: '/admin/service-requests' },
       ],
       ITAdmin: [
         { text: 'IT Admin Dashboard', icon: <Dashboard />, path: '/itadmin/dashboard' },
@@ -216,6 +188,8 @@ const Layout = () => {
         { text: 'Classes', icon: <School />, path: '/teacher/classes' },
         { text: 'Assignments', icon: <Assignment />, path: '/teacher/assignments' },
         { text: 'Calendar', icon: <CalendarToday />, path: '/teacher/calendar' },
+        { text: 'Substitute Teacher Request', icon: <Approval />, path: '/teacher/substitute-request' },
+        { text: 'My Substitute Requests', icon: <Approval />, path: '/teacher/substitute-requests' },
       ],
       Student: [
         { text: 'Courses', icon: <School />, path: '/student/courses' },

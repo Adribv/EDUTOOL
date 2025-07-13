@@ -431,6 +431,40 @@ exports.approveRequest = async (req, res) => {
       });
       createdItem = await newFee.save();
       console.log(`💰 Fee structure created: ${newFee.term} for ${newFee.class}`);
+    } else if (approval.requestType === 'StudentFeeRecord') {
+      // Create student fee record
+      const StudentFeeRecord = require('../../../models/Finance/studentFeeRecordModel');
+      const feeRecordData = approval.requestData || {};
+      
+      console.log('📋 Student Fee Record approval data:', feeRecordData);
+      
+      const newFeeRecord = new StudentFeeRecord({
+        ...feeRecordData,
+        createdBy: req.user.id,
+        status: 'Approved',
+        approvedBy: req.user.id,
+        approvedAt: new Date()
+      });
+      
+      createdItem = await newFeeRecord.save();
+      console.log(`💰 Student fee record created for ${feeRecordData.studentName}`);
+    } else if (approval.requestType === 'StaffSalaryRecord') {
+      // Create staff salary record
+      const StaffSalaryRecord = require('../../../models/Finance/staffSalaryRecordModel');
+      const salaryRecordData = approval.requestData || {};
+      
+      console.log('📋 Staff Salary Record approval data:', salaryRecordData);
+      
+      const newSalaryRecord = new StaffSalaryRecord({
+        ...salaryRecordData,
+        createdBy: req.user.id,
+        status: 'Approved',
+        approvedBy: req.user.id,
+        approvedAt: new Date()
+      });
+      
+      createdItem = await newSalaryRecord.save();
+      console.log(`💰 Staff salary record created for ${salaryRecordData.staffName}`);
     } else if (approval.requestType === 'Leave') {
       // Handle teacher leave request approval
       const leaveData = approval.requestData || {};
@@ -456,6 +490,10 @@ exports.approveRequest = async (req, res) => {
           console.log(`⚠️ Linked leave request not found: ${leaveData.leaveRequestId}`);
         }
       }
+    } else if (approval.requestType === 'ServiceRequest') {
+      // Just mark as approved and completed, no extra model creation
+      console.log('📋 Service Request approved:', approval.requestData);
+      // No additional action needed
     }
 
     await approval.save();
@@ -1769,7 +1807,7 @@ exports.getLessonPlansForApproval = async (req, res) => {
 exports.approveLessonPlan = async (req, res) => {
   try {
     const { planId } = req.params;
-    const { status, feedback } = req.body;
+    const { status, feedback, templateData } = req.body;
     
     const lessonPlan = await LessonPlan.findById(planId);
     
@@ -1777,34 +1815,63 @@ exports.approveLessonPlan = async (req, res) => {
       return res.status(404).json({ message: 'Lesson plan not found' });
     }
     
-    // Check if lesson plan is ready for Principal review
-    if (lessonPlan.status !== 'HOD_Approved' || lessonPlan.currentApprover !== 'Principal') {
-      return res.status(400).json({ message: 'Lesson plan is not ready for Principal review' });
+    // If templateData is provided, update the lesson plan with the new template data
+    if (templateData) {
+      console.log('📝 Updating lesson plan template data');
+      lessonPlan.templateData = templateData;
+      
+      // Also update the main fields if they're in the template data
+      if (templateData.title) {
+        lessonPlan.title = templateData.title;
+      }
+      if (templateData.topic) {
+        lessonPlan.description = templateData.topic;
+      }
+      if (templateData.class) {
+        lessonPlan.class = templateData.class;
+      }
+      if (templateData.subject) {
+        lessonPlan.subject = templateData.subject;
+      }
     }
     
-    if (status === 'Rejected') {
-      // Principal rejected the lesson plan
-      lessonPlan.status = 'Rejected';
-      lessonPlan.currentApprover = 'Completed';
-      lessonPlan.rejectedBy = req.user.id;
-      lessonPlan.rejectedAt = new Date();
-      lessonPlan.rejectionReason = feedback || 'Rejected by Principal';
-    } else if (status === 'Principal_Approved') {
-      // Principal approved, publish the lesson plan
-      lessonPlan.status = 'Published';
-      lessonPlan.currentApprover = 'Completed';
-      lessonPlan.isPublished = true;
-      lessonPlan.principalApprovedBy = req.user.id;
-      lessonPlan.principalApprovedAt = new Date();
-      lessonPlan.principalFeedback = feedback || 'Approved by Principal';
-    } else {
-      return res.status(400).json({ message: 'Invalid status for Principal review' });
+    // If status is provided, process the approval/rejection workflow
+    if (status) {
+      // Check if lesson plan is ready for Principal review
+      if (lessonPlan.status !== 'HOD_Approved' || lessonPlan.currentApprover !== 'Principal') {
+        return res.status(400).json({ message: 'Lesson plan is not ready for Principal review' });
+      }
+      
+      if (status === 'Rejected') {
+        // Principal rejected the lesson plan
+        lessonPlan.status = 'Rejected';
+        lessonPlan.currentApprover = 'Completed';
+        lessonPlan.rejectedBy = req.user.id;
+        lessonPlan.rejectedAt = new Date();
+        lessonPlan.rejectionReason = feedback || 'Rejected by Principal';
+      } else if (status === 'Principal_Approved') {
+        // Principal approved, publish the lesson plan
+        lessonPlan.status = 'Published';
+        lessonPlan.currentApprover = 'Completed';
+        lessonPlan.isPublished = true;
+        lessonPlan.principalApprovedBy = req.user.id;
+        lessonPlan.principalApprovedAt = new Date();
+        lessonPlan.principalFeedback = feedback || 'Approved by Principal';
+      } else {
+        return res.status(400).json({ message: 'Invalid status for Principal review' });
+      }
     }
     
     await lessonPlan.save();
     
+    const message = templateData && !status 
+      ? 'Template updated successfully' 
+      : status === 'Rejected' 
+        ? 'Lesson plan rejected' 
+        : 'Lesson plan approved and published';
+    
     res.json({ 
-      message: status === 'Rejected' ? 'Lesson plan rejected' : 'Lesson plan approved and published',
+      message,
       lessonPlan 
     });
   } catch (error) {

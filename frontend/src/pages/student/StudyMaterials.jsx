@@ -317,20 +317,11 @@ function StudyMaterials() {
                       {getFileTypeLabel(lessonPlan.pdfUrl || lessonPlan.fileUrl)}
                     </Button>
                   )}
-                  
-<<<<<<< HEAD
-                  {getVideoUrl(lessonPlan) && (
-                    <Button
-                      size="small"
-                      startIcon={<PlayIcon />}
-                      onClick={() => window.open(getVideoUrl(lessonPlan), '_blank')}
-=======
                   {(lessonPlan.videoUrl || lessonPlan.videoLink) && (
                     <Button
                       size="small"
                       startIcon={<PlayIcon />}
                       onClick={() => window.open(lessonPlan.videoUrl || lessonPlan.videoLink, '_blank')}
->>>>>>> 5165945fba7cbb385a12e5b3f7b350469848d9b3
                     >
                       Video
                     </Button>
@@ -396,11 +387,7 @@ function StudyMaterials() {
                 </Grid>
               </Grid>
 
-<<<<<<< HEAD
-              {(selectedLessonPlan.pdfUrl || getVideoUrl(selectedLessonPlan)) && (
-=======
               {((selectedLessonPlan.pdfUrl || selectedLessonPlan.fileUrl) || (selectedLessonPlan.videoUrl || selectedLessonPlan.videoLink)) && (
->>>>>>> 5165945fba7cbb385a12e5b3f7b350469848d9b3
                 <>
                   <Divider sx={{ my: 2 }} />
                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
@@ -416,43 +403,6 @@ function StudyMaterials() {
                         Download {getFileTypeLabel(selectedLessonPlan.pdfUrl || selectedLessonPlan.fileUrl)}
                       </Button>
                     )}
-<<<<<<< HEAD
-                    {/* Render YouTube video inline if it is a YouTube URL, otherwise keep external link */}
-                    {getVideoUrl(selectedLessonPlan) && isYoutubeUrl(getVideoUrl(selectedLessonPlan)) ? (
-                      <Box width="100%" sx={{ mt: 2 }}>
-                        <Box
-                          sx={{
-                            position: 'relative',
-                            paddingTop: '56.25%' /* 16:9 aspect ratio */,
-                          }}
-                        >
-                          <iframe
-                            src={getYoutubeEmbedUrl(getVideoUrl(selectedLessonPlan))}
-                            title="YouTube video player"
-                            style={{
-                              position: 'absolute',
-                              top: 0,
-                              left: 0,
-                              width: '100%',
-                              height: '100%',
-                              border: 0,
-                            }}
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                            allowFullScreen
-                          />
-                        </Box>
-                      </Box>
-                    ) : (
-                      getVideoUrl(selectedLessonPlan) && (
-                        <Button
-                          variant="outlined"
-                          startIcon={<PlayIcon />}
-                          onClick={() => window.open(getVideoUrl(selectedLessonPlan), '_blank')}
-                        >
-                          Watch Video
-                        </Button>
-                      )
-=======
                     {(selectedLessonPlan.videoUrl || selectedLessonPlan.videoLink) && (
                       <Button
                         variant="outlined"
@@ -461,7 +411,6 @@ function StudyMaterials() {
                       >
                         Watch Video
                       </Button>
->>>>>>> 5165945fba7cbb385a12e5b3f7b350469848d9b3
                     )}
                   </Box>
                 </>

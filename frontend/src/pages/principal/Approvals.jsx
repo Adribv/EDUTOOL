@@ -94,19 +94,6 @@ const Approvals = () => {
     }
   };
 
-  const getRequestTypeIcon = (type) => {
-    switch (type) {
-      case 'Event':
-        return <EventIcon />;
-      case 'Announcement':
-        return <AnnouncementIcon />;
-      case 'Fee':
-        return <FeeIcon />;
-      default:
-        return <NotificationIcon />;
-    }
-  };
-
   const handleApprove = async () => {
     if (!selectedApproval) return;
 
@@ -228,84 +215,46 @@ const Approvals = () => {
                 <TableBody>
                   {filteredApprovals().map((approval) => (
                     <TableRow key={approval._id}>
+                      <TableCell>{approval.requestType}</TableCell>
                       <TableCell>
-                        <Box display="flex" alignItems="center">
-                          {getRequestTypeIcon(approval.requestType)}
-                          <Typography variant="body2" sx={{ ml: 1 }}>
-                            {approval.requestType}
-                          </Typography>
-                        </Box>
+                        {approval.requestType === 'ServiceRequest' ? (
+                          <>
+                            {approval.requestData?.dutyType} - {approval.requestData?.staffName}
+                          </>
+                        ) : (
+                          approval.title
+                        )}
+                      </TableCell>
+                      <TableCell>{approval.requesterId?.name || 'Unknown'}</TableCell>
+                      <TableCell>{approval.requesterId?.department?.name || '-'}</TableCell>
+                      <TableCell>
+                        {approval.requestType === 'ServiceRequest'
+                          ? approval.requestData?.date
+                          : new Date(approval.createdAt).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2" fontWeight="medium">
-                          {approval.title}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {approval.description}
-                        </Typography>
+                        <Chip label={approval.status} color={getStatusColor(approval.status)} size="small" />
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2">
-                          {approval.requestedBy?.name || 'Unknown'}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {approval.requestedBy?.role || 'Unknown Role'}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2">
-                          {approval.department?.name || 'N/A'}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2">
-                          {new Date(approval.createdAt).toLocaleDateString()}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {new Date(approval.createdAt).toLocaleTimeString()}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={approval.status}
-                          color={getStatusColor(approval.status)}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Box display="flex" gap={1}>
-                          <Tooltip title="View Details">
-                            <IconButton
-                              size="small"
-                              onClick={() => openDetailsDialog(approval)}
-                            >
-                              <ViewIcon />
-                            </IconButton>
-                          </Tooltip>
-                          
-                          {approval.status === 'Pending' && (
-                            <>
-                              <Tooltip title="Approve">
-                                <IconButton
-                                  size="small"
-                                  color="success"
-                                  onClick={() => openApprovalDialog(approval)}
-                                >
-                                  <ApproveIcon />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="Reject">
-                                <IconButton
-                                  size="small"
-                                  color="error"
-                                  onClick={() => openRejectionDialog(approval)}
-                                >
-                                  <RejectIcon />
-                                </IconButton>
-                              </Tooltip>
-                            </>
-                          )}
-                        </Box>
+                        {approval.status === 'Pending' && approval.currentApprover === 'Principal' && (
+                          <>
+                            <Tooltip title="Approve">
+                              <IconButton color="success" onClick={() => openApprovalDialog(approval)}>
+                                <ApproveIcon />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Reject">
+                              <IconButton color="error" onClick={() => openRejectionDialog(approval)}>
+                                <RejectIcon />
+                              </IconButton>
+                            </Tooltip>
+                          </>
+                        )}
+                        <Tooltip title="View Details">
+                          <IconButton onClick={() => openDetailsDialog(approval)}>
+                            <ViewIcon />
+                          </IconButton>
+                        </Tooltip>
                       </TableCell>
                     </TableRow>
                   ))}

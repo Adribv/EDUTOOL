@@ -50,6 +50,8 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 connectDB.connect();
 
 app.use('/api', authModule);
+app.use('/api/admin-staff', require('./routes/Staff/Admin/adminStaffRoutes'));
+app.use('/api/teacher', require('./routes/Staff/teacherRoutes'));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
