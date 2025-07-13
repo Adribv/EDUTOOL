@@ -36,6 +36,8 @@ import * as Yup from 'yup';
 import api, { adminAPI } from '../../services/api';
 import DescriptionIcon from '@mui/icons-material/Description';
 import ContactsIcon from '@mui/icons-material/Contacts';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 // Category list used in item form
 const categories = [
@@ -195,6 +197,14 @@ const A_Inventory = () => {
       const saved = await adminAPI.createSupplyRequest(reqForm);
       setRequests((prev) => [saved, ...prev]);
       setRequestDialog(false);
+
+      // Prompt download
+      const proceed = window.confirm('Request saved successfully. Would you like to download the PDF?');
+      if (proceed) {
+        await generatePdf(saved);
+      }
+
+      // reset form
       setReqForm({
         requestRef: '',
         name: '',
@@ -216,7 +226,50 @@ const A_Inventory = () => {
       });
     } catch (err) {
       console.error(err);
+      alert('Failed to save request');
     }
+  };
+
+  // Generate PDF similar to reference image using off-screen render
+  const generatePdf = async (request) => {
+    if (!request) return;
+    const container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.left = '-10000px';
+    container.style.top = '-10000px';
+    container.style.width = '800px';
+    container.style.padding = '20px';
+    container.style.background = '#fff';
+
+    container.innerHTML = `
+      <h2 style="text-align:center;margin-bottom:16px;">STATIONERY REQUEST FORM</h2>
+      <p><strong>Request Ref:</strong> ${request.requestRef || ''}</p>
+      <p><strong>Name:</strong> ${request.name || ''}</p>
+      <p><strong>Dept:</strong> ${request.department || ''}</p>
+      <p><strong>Date:</strong> ${request.date ? new Date(request.date).toLocaleDateString() : ''}</p>
+      <table style="width:100%;border-collapse:collapse;margin-top:12px;" border="1" cellspacing="0" cellpadding="4">
+        <thead><tr><th>Sl</th><th>Description</th><th>Spec</th><th>Unit</th><th>Qty</th><th>Remarks</th></tr></thead>
+        <tbody>
+          ${request.items
+            .map(
+              (i, idx) =>
+                `<tr><td>${idx + 1}</td><td>${i.description || ''}</td><td>${i.specification || ''}</td><td>${i.unit || ''}</td><td>${i.qty || ''}</td><td>${i.remarks || ''}</td></tr>`
+            )
+            .join('')}
+        </tbody>
+      </table>
+      <p style="margin-top:12px;"><strong>Notes:</strong> ${request.notes || ''}</p>
+    `;
+
+    document.body.appendChild(container);
+    const canvas = await html2canvas(container, { scale: 2 });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'pt', 'a4');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    pdf.save(`${request.requestRef || 'stationery_request'}.pdf`);
+    document.body.removeChild(container);
   };
 
   const updateRequestStatus = async (id, status) => {
