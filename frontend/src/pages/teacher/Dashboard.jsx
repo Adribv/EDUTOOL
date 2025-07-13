@@ -23,7 +23,7 @@ import {
   VolumeUp, VolumeOff, Fullscreen, FullscreenExit, ZoomIn, ZoomOut, RotateLeft, RotateRight,
   SupervisorAccount, People, Cancel, Approval
 } from '@mui/icons-material';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { teacherAPI, staffAPI } from '../../services/api';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
@@ -70,19 +70,6 @@ function DashboardOverview() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const staffId = user?._id || user?.id; // Try both _id and id properties
-  
-  // Show error if no valid staffId
-  if (!staffId || staffId === 'undefined') {
-    return (
-      <Card>
-        <CardContent>
-          <Alert severity="error">
-            Unable to load dashboard. User ID not found. Please try logging in again.
-          </Alert>
-        </CardContent>
-      </Card>
-    );
-  }
   
   // Fetch teacher profile data
   const { data: profileData, isLoading: profileLoading } = useQuery({
@@ -139,6 +126,19 @@ function DashboardOverview() {
     queryFn: () => teacherAPI.getLeaveRequests(staffId),
     enabled: !!staffId && staffId !== 'undefined'
   });
+
+    // Show error if no valid staffId
+  if (!staffId || staffId === 'undefined') {
+    return (
+      <Card>
+        <CardContent>
+          <Alert severity="error">
+            Unable to load dashboard. User ID not found. Please try logging in again.
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const isLoading = profileLoading || classesLoading || studentsLoading || parentsLoading || assignmentsLoading || timetableLoading || announcementsLoading || leaveRequestsLoading;
 
@@ -532,12 +532,12 @@ function ProfileManagement() {
     }
   }, [profile]);
 
-  const handleSave = async () => {
+  const _handleSave = async () => {
     try {
       await teacherAPI.updateProfile(staffId, editedProfile);
       toast.success('Profile updated successfully');
       setEditMode(false);
-    } catch (error) {
+    } catch {
       toast.error('Failed to update profile');
     }
   };
@@ -700,6 +700,20 @@ function ClassesManagement() {
   const [selectedClass, setSelectedClass] = useState(null);
   const [showClassDetails, setShowClassDetails] = useState(false);
 
+  // Fetch coordinated classes
+  const { data: classesDataForManagement, isLoading: classesLoadingForManagement } = useQuery({
+    queryKey: ['teacherClasses', staffId],
+    queryFn: () => teacherAPI.getClasses(staffId),
+    enabled: !!staffId && staffId !== 'undefined'
+  });
+
+  // Fetch coordinated students
+  const { data: studentsDataForManagement, isLoading: studentsLoadingForManagement } = useQuery({
+    queryKey: ['teacherStudents', staffId],
+    queryFn: () => teacherAPI.getStudents(staffId),
+    enabled: !!staffId && staffId !== 'undefined'
+  });
+
   // Show error if no valid staffId
   if (!staffId || staffId === 'undefined') {
     return (
@@ -713,20 +727,6 @@ function ClassesManagement() {
     );
   }
 
-  // Fetch coordinated classes
-  const { data: classesData, isLoading: classesLoading, refetch: refetchClasses } = useQuery({
-    queryKey: ['teacherClasses', staffId],
-    queryFn: () => teacherAPI.getClasses(staffId),
-    enabled: !!staffId && staffId !== 'undefined'
-  });
-
-  // Fetch coordinated students
-  const { data: studentsData, isLoading: studentsLoading } = useQuery({
-    queryKey: ['teacherStudents', staffId],
-    queryFn: () => teacherAPI.getStudents(staffId),
-    enabled: !!staffId && staffId !== 'undefined'
-  });
-
   const handleClassClick = (cls) => {
     setSelectedClass(cls);
     setShowClassDetails(true);
@@ -737,7 +737,7 @@ function ClassesManagement() {
     setSelectedClass(null);
   };
 
-  if (classesLoading) {
+  if (classesLoadingForManagement) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
         <CircularProgress />
@@ -751,9 +751,9 @@ function ClassesManagement() {
         Coordinated Classes Management
       </Typography>
       
-      {classesData && classesData.length > 0 ? (
+      {classesDataForManagement && classesDataForManagement.length > 0 ? (
         <Grid container spacing={3}>
-          {classesData.map((cls, index) => (
+          {classesDataForManagement.map((cls, index) => (
             <Grid item xs={12} sm={6} md={4} key={cls._id || index}>
               <Card 
                 sx={{ 
@@ -867,11 +867,11 @@ function ClassesManagement() {
                   <Card variant="outlined">
                     <CardHeader title="Students in this Class" />
                     <CardContent>
-                      {studentsLoading ? (
+                      {studentsLoadingForManagement ? (
                         <CircularProgress size={20} />
-                      ) : studentsData && studentsData.length > 0 ? (
+                      ) : studentsDataForManagement && studentsDataForManagement.length > 0 ? (
                         <List dense>
-                          {(studentsData || [])
+                          {(studentsDataForManagement || [])
                             .filter(student => 
                               student.class === selectedClass.name || 
                               (student.class === selectedClass.grade && student.section === selectedClass.section)
@@ -926,6 +926,20 @@ function StudentsManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterClass, setFilterClass] = useState('all');
 
+  // Fetch coordinated students
+  const { data: studentsDataForStudents, isLoading: studentsLoadingForStudents } = useQuery({
+    queryKey: ['teacherStudents', staffId],
+    queryFn: () => teacherAPI.getStudents(staffId),
+    enabled: !!staffId && staffId !== 'undefined'
+  });
+
+  // Fetch coordinated classes for filtering
+  const { data: classesDataForStudents, isLoading: _classesLoadingForStudents } = useQuery({
+    queryKey: ['teacherClasses', staffId],
+    queryFn: () => teacherAPI.getClasses(staffId),
+    enabled: !!staffId && staffId !== 'undefined'
+  });
+
   // Show error if no valid staffId
   if (!staffId || staffId === 'undefined') {
     return (
@@ -939,20 +953,6 @@ function StudentsManagement() {
     );
   }
 
-  // Fetch coordinated students
-  const { data: studentsData, isLoading: studentsLoading } = useQuery({
-    queryKey: ['teacherStudents', staffId],
-    queryFn: () => teacherAPI.getStudents(staffId),
-    enabled: !!staffId && staffId !== 'undefined'
-  });
-
-  // Fetch coordinated classes for filtering
-  const { data: classesData, isLoading: classesLoading } = useQuery({
-    queryKey: ['teacherClasses', staffId],
-    queryFn: () => teacherAPI.getClasses(staffId),
-    enabled: !!staffId && staffId !== 'undefined'
-  });
-
   const handleStudentClick = (student) => {
     setSelectedStudent(student);
     setShowStudentDetails(true);
@@ -964,14 +964,14 @@ function StudentsManagement() {
   };
 
   // Filter students based on search term and class
-  const filteredStudents = (studentsData || []).filter(student => {
+  const filteredStudents = (studentsDataForStudents || []).filter(student => {
     const matchesSearch = student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          student.rollNumber?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesClass = filterClass === 'all' || student.class === filterClass;
     return matchesSearch && matchesClass;
   });
 
-  if (studentsLoading) {
+  if (studentsLoadingForStudents) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
         <CircularProgress />
@@ -1014,7 +1014,7 @@ function StudentsManagement() {
                   onChange={(e) => setFilterClass(e.target.value)}
                 >
                   <MenuItem value="all">All Classes</MenuItem>
-                  {classesData?.map((cls) => (
+                  {classesDataForStudents?.map((cls) => (
                     <MenuItem key={cls._id} value={cls.name || `${cls.grade} ${cls.section}`}>
                       {cls.name || `${cls.grade} ${cls.section}`}
                     </MenuItem>
@@ -1249,7 +1249,7 @@ function CoordinatorPortal() {
       setLoading(true);
       const response = await staffAPI.getDashboard();
       setDashboardData(response.data);
-    } catch (error) {
+    } catch {
       setDashboardData(null);
     } finally {
       setLoading(false);
@@ -1343,7 +1343,7 @@ export default function TeacherDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
   const [anchorEl, setAnchorEl] = useState(null);
-  const staffId = user?._id || user?.id; // Try both _id and id properties
+  const _staffId = user?._id || user?.id; // Try both _id and id properties
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -1463,7 +1463,7 @@ export default function TeacherDashboard() {
             onChange={handleTabChange}
             sx={{ borderRight: 1, borderColor: 'divider', minHeight: 'calc(100vh - 64px)' }}
           >
-            {featureTabs.map((tab, index) => (
+            {featureTabs.map((tab) => (
               <Tab
                 key={tab.key}
                 label={
