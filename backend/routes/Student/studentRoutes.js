@@ -59,12 +59,14 @@ router.get('/payment-receipts/:paymentId', feeController.getPaymentReceipt);
 router.post('/payments', feeController.makePayment);
 
 // Learning Resources routes
-router.get('/learning-resources', learningResourcesController.getLearningResources);
+router.get('/learning-resources/subjects', learningResourcesController.getAvailableSubjects);
 router.get('/learning-resources/:resourceId', learningResourcesController.getResourceDetails);
+router.get('/learning-resources', learningResourcesController.getLearningResources);
 
 // Lesson Plan access
-router.get('/lesson-plans', learningResourcesController.getLearningResources);
+router.get('/lesson-plans/subjects', learningResourcesController.getAvailableSubjects);
 router.get('/lesson-plans/:resourceId', learningResourcesController.getResourceDetails);
+router.get('/lesson-plans', learningResourcesController.getLearningResources);
 
 // Communication routes
 router.get('/announcements', communicationController.getAnnouncements);

@@ -78,7 +78,7 @@ const InventoryManagement = () => {
 
   const fetchItems = async () => {
     try {
-      const response = await api.get('/api/inventory');
+      const response = await api.get('/inventory');
       setItems(response.data);
     } catch (error) {
       console.error('Error fetching inventory:', error);
@@ -97,9 +97,9 @@ const InventoryManagement = () => {
     onSubmit: async (values) => {
       try {
         if (editingItem) {
-          await api.put(`/api/inventory/${editingItem._id}`, values);
+          await api.put(`/inventory/${editingItem._id}`, values);
         } else {
-          await api.post('/api/inventory', values);
+          await api.post('/inventory', values);
         }
         fetchItems();
         handleCloseDialog();
@@ -129,7 +129,7 @@ const InventoryManagement = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this item?')) {
       try {
-        await api.delete(`/api/inventory/${id}`);
+        await api.delete(`/inventory/${id}`);
         fetchItems();
       } catch (error) {
         console.error('Error deleting item:', error);

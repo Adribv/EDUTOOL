@@ -36,6 +36,8 @@ const studentService = {
   // Learning Resources
   getLearningResources: studentAPI.getResources,
   getResourceDetails: studentAPI.getResourceDetails,
+  getLearningResourceSubjects: studentAPI.getResourceSubjects,
+  getLessonPlans: studentAPI.getLessonPlans,
   
   // Communication
   getAnnouncements: studentAPI.getAnnouncements,

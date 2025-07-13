@@ -2,91 +2,91 @@ import api from './api';
 
 const parentService = {
   // Profile
-  getProfile: () => api.get('/api/auth/profile'),
-  updateProfile: (data) => api.put('/api/parents/profile', data),
+  getProfile: () => api.get('/auth/profile'),
+  updateProfile: (data) => api.put('/parents/profile', data),
 
   // Dashboard
-  getDashboard: () => api.get('/api/parents/dashboard'),
+  getDashboard: () => api.get('/parents/dashboard'),
 
   // Students/Children
-  getChildren: () => api.get('/api/parents/children').then(res => res.data),
-  getChildDetails: (rollNumber) => api.get(`/api/parents/children/${rollNumber}`).then(res => res.data),
-  getChildAttendance: (rollNumber, params) => api.get(`/api/parents/children/${rollNumber}/attendance`, { params }).then(res => res.data),
-  getChildProgress: (rollNumber) => api.get(`/api/parents/children/${rollNumber}/performance`).then(res => res.data),
-  linkStudent: (rollNumber) => api.post('/api/parents/link-student', { rollNumber }),
+  getChildren: () => api.get('/parents/children').then(res => res.data),
+  getChildDetails: (rollNumber) => api.get(`/parents/children/${rollNumber}`).then(res => res.data),
+  getChildAttendance: (rollNumber, params) => api.get(`/parents/children/${rollNumber}/attendance`, { params }).then(res => res.data),
+  getChildProgress: (rollNumber) => api.get(`/parents/children/${rollNumber}/performance`).then(res => res.data),
+  linkStudent: (rollNumber) => api.post('/parents/link-student', { rollNumber }),
 
   // Assignments
-  getChildAssignments: (rollNumber) => api.get(`/api/parents/children/${rollNumber}/assignments`).then(res => res.data),
-  getAssignmentDetails: (assignmentId) => api.get(`/api/parents/assignments/${assignmentId}`),
+  getChildAssignments: (rollNumber) => api.get(`/parents/children/${rollNumber}/assignments`).then(res => res.data),
+  getAssignmentDetails: (assignmentId) => api.get(`/parents/assignments/${assignmentId}`),
 
   // Events
-  getUpcomingEvents: () => api.get('/api/parents/calendar'),
-  getEventDetails: (eventId) => api.get(`/api/parents/events/${eventId}`),
+  getUpcomingEvents: () => api.get('/parents/calendar'),
+  getEventDetails: (eventId) => api.get(`/parents/events/${eventId}`),
 
   // Notifications
-  getNotifications: () => api.get('/api/parents/announcements'),
-  markNotificationAsRead: (notificationId) => api.put(`/api/parents/notifications/${notificationId}/read`),
-  updateNotificationPreferences: (preferences) => api.put('/api/parents/notification-preferences', preferences),
+  getNotifications: () => api.get('/parents/announcements'),
+  markNotificationAsRead: (notificationId) => api.put(`/parents/notifications/${notificationId}/read`),
+  updateNotificationPreferences: (preferences) => api.put('/parents/notification-preferences', preferences),
 
   // Communication
-  sendMessage: (data) => api.post('/api/parents/messages', data),
-  getMessages: () => api.get('/api/parents/messages/received'),
-  getSentMessages: () => api.get('/api/parents/messages/sent'),
-  getMessageDetails: (messageId) => api.get(`/api/parents/messages/${messageId}`),
+  sendMessage: (data) => api.post('/parents/messages', data),
+  getMessages: () => api.get('/parents/messages/received'),
+  getSentMessages: () => api.get('/parents/messages/sent'),
+  getMessageDetails: (messageId) => api.get(`/parents/messages/${messageId}`),
 
   // Fee Management
-  getFeeStructure: (rollNumber, params) => api.get(`/api/parents/children/${rollNumber}/fee-structure`, { params }),
-  getPaymentHistory: (rollNumber, params) => api.get(`/api/parents/children/${rollNumber}/payment-status`, { params }),
-  getPaymentReceipt: (rollNumber, paymentId) => api.get(`/api/parents/children/${rollNumber}/payment-receipts/${paymentId}`),
-  makePayment: (data) => api.post('/api/parents/payments', data),
-  getFees: (rollNumber, params) => api.get(`/api/parents/children/${rollNumber}/fee-structure`, { params }),
-  getPaymentStatus: (rollNumber, params) => api.get(`/api/parents/children/${rollNumber}/payment-status`, { params }),
-  payFees: (data) => api.post('/api/parents/payments', data),
-  getPaymentMethods: () => api.get('/api/parents/payment-methods'),
+  getFeeStructure: (rollNumber, params) => api.get(`/parents/children/${rollNumber}/fee-structure`, { params }),
+  getPaymentHistory: (rollNumber, params) => api.get(`/parents/children/${rollNumber}/payment-status`, { params }),
+  getPaymentReceipt: (rollNumber, paymentId) => api.get(`/parents/children/${rollNumber}/payment-receipts/${paymentId}`),
+  makePayment: (data) => api.post('/parents/payments', data),
+  getFees: (rollNumber, params) => api.get(`/parents/children/${rollNumber}/fee-structure`, { params }),
+  getPaymentStatus: (rollNumber, params) => api.get(`/parents/children/${rollNumber}/payment-status`, { params }),
+  payFees: (data) => api.post('/parents/payments', data),
+  getPaymentMethods: () => api.get('/parents/payment-methods'),
 
   // Feedback
-  getFeedbacks: () => api.get('/api/parents/feedbacks'),
-  submitFeedback: (data) => api.post('/api/parents/feedbacks', data),
+  getFeedbacks: () => api.get('/parents/feedbacks'),
+  submitFeedback: (data) => api.post('/parents/feedbacks', data),
 
   // Leave Requests
-  getLeaveRequests: (rollNumber) => api.get(`/api/parents/children/${rollNumber}/leave-applications`),
-  submitLeaveRequest: (rollNumber, data) => api.post(`/api/parents/children/${rollNumber}/leave-application`, data),
-  getChildLeaveApplications: (rollNumber) => api.get(`/api/parents/children/${rollNumber}/leave-applications`),
-  submitLeaveApplication: (rollNumber, data) => api.post(`/api/parents/children/${rollNumber}/leave-application`, data),
+  getLeaveRequests: (rollNumber) => api.get(`/parents/children/${rollNumber}/leave-applications`),
+  submitLeaveRequest: (rollNumber, data) => api.post(`/parents/children/${rollNumber}/leave-application`, data),
+  getChildLeaveApplications: (rollNumber) => api.get(`/parents/children/${rollNumber}/leave-applications`),
+  submitLeaveApplication: (rollNumber, data) => api.post(`/parents/children/${rollNumber}/leave-application`, data),
 
   // Complaints
-  getComplaints: () => api.get('/api/parents/complaints'),
-  submitComplaint: (data) => api.post('/api/parents/complaints', data),
+  getComplaints: () => api.get('/parents/complaints'),
+  submitComplaint: (data) => api.post('/parents/complaints', data),
 
   // Transport
-  getChildTransport: (rollNumber) => api.get(`/api/parents/children/${rollNumber}/transport`),
-  contactTransport: (data) => api.post('/api/parents/transport/contact', data),
+  getChildTransport: (rollNumber) => api.get(`/parents/children/${rollNumber}/transport`),
+  contactTransport: (data) => api.post('/parents/transport/contact', data),
 
   // Health
-  getChildHealth: (rollNumber) => api.get(`/api/parents/children/${rollNumber}/health`),
-  getChildHealthIncidents: (rollNumber) => api.get(`/api/parents/children/${rollNumber}/health/incidents`),
-  getChildCounselorRecommendations: (rollNumber) => api.get(`/api/parents/children/${rollNumber}/health/counselor-recommendations`),
+  getChildHealth: (rollNumber) => api.get(`/parents/children/${rollNumber}/health`),
+  getChildHealthIncidents: (rollNumber) => api.get(`/parents/children/${rollNumber}/health/incidents`),
+  getChildCounselorRecommendations: (rollNumber) => api.get(`/parents/children/${rollNumber}/health/counselor-recommendations`),
 
   // Documents
-  getChildFeeReceipts: (rollNumber) => api.get(`/api/parents/children/${rollNumber}/fee-receipts`),
-  getSchoolDocuments: (params) => api.get('/api/parents/school-documents', { params }),
-  getChildCertificates: (rollNumber) => api.get(`/api/parents/children/${rollNumber}/certificates`),
+  getChildFeeReceipts: (rollNumber) => api.get(`/parents/children/${rollNumber}/fee-receipts`),
+  getSchoolDocuments: (params) => api.get('/parents/school-documents', { params }),
+  getChildCertificates: (rollNumber) => api.get(`/parents/children/${rollNumber}/certificates`),
 
   // Exams
-  getChildExams: (rollNumber) => api.get(`/api/parents/children/${rollNumber}/exams`),
-  getChildExamResults: (rollNumber) => api.get(`/api/parents/children/${rollNumber}/exam-results`),
-  getChildReportCards: (rollNumber) => api.get(`/api/parents/children/${rollNumber}/report-cards`),
-  getChildExamSchedule: (rollNumber) => api.get(`/api/parents/children/${rollNumber}/exam-schedule`),
+  getChildExams: (rollNumber) => api.get(`/parents/children/${rollNumber}/exams`),
+  getChildExamResults: (rollNumber) => api.get(`/parents/children/${rollNumber}/exam-results`),
+  getChildReportCards: (rollNumber) => api.get(`/parents/children/${rollNumber}/report-cards`),
+  getChildExamSchedule: (rollNumber) => api.get(`/parents/children/${rollNumber}/exam-schedule`),
 
   // Subjects and Timetable
-  getChildSubjects: (rollNumber) => api.get(`/api/parents/children/${rollNumber}/subjects`),
-  getChildTimetable: (rollNumber) => api.get(`/api/parents/children/${rollNumber}/timetable`),
+  getChildSubjects: (rollNumber) => api.get(`/parents/children/${rollNumber}/subjects`),
+  getChildTimetable: (rollNumber) => api.get(`/parents/children/${rollNumber}/timetable`),
 
   // Meetings
-  scheduleMeeting: (data) => api.post('/api/parents/meetings', data),
+  scheduleMeeting: (data) => api.post('/parents/meetings', data),
 
   // Profile Updates
-  requestProfileUpdate: (rollNumber, data) => api.post(`/api/parents/children/${rollNumber}/update-request`, data),
+  requestProfileUpdate: (rollNumber, data) => api.post(`/parents/children/${rollNumber}/update-request`, data),
   
 
 };

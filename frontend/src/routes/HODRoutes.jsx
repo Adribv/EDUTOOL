@@ -6,6 +6,7 @@ import DepartmentManagement from '../pages/hod/DepartmentManagement';
 import StaffManagement from '../pages/hod/StaffManagement';
 import CourseManagement from '../pages/hod/CourseManagement';
 import Reports from '../pages/hod/Reports';
+import LessonPlanApprovals from '../pages/hod/LessonPlanApprovals';
 
 const HODRoutes = () => {
   return (
@@ -18,6 +19,7 @@ const HODRoutes = () => {
         <Route path="staff" element={<StaffManagement />} />
         <Route path="courses" element={<CourseManagement />} />
         <Route path="reports" element={<Reports />} />
+        <Route path="lesson-plans" element={<LessonPlanApprovals />} />
       </Route>
     </Routes>
   );

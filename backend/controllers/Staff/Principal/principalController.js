@@ -1718,3 +1718,114 @@ exports.getAttendanceOverview = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 }; 
+
+// Lesson Plan Approval Functions
+const LessonPlan = require('../../../models/Staff/Teacher/lessonplan.model');
+
+// Get lesson plans pending Principal approval
+exports.getLessonPlansForApproval = async (req, res) => {
+  console.log('🔍 Principal getLessonPlansForApproval called');
+  console.log('👤 Principal User ID:', req.user.id);
+  
+  try {
+    // First check all lesson plans to see what's in the database
+    const allLessonPlans = await LessonPlan.find({});
+    console.log(`📋 Total lesson plans in database: ${allLessonPlans.length}`);
+    
+    allLessonPlans.forEach((lp, index) => {
+      console.log(`📄 Lesson Plan ${index + 1}:`, {
+        id: lp._id,
+        title: lp.title,
+        status: lp.status,
+        currentApprover: lp.currentApprover,
+        submittedBy: lp.submittedBy
+      });
+    });
+    
+    const lessonPlans = await LessonPlan.find({
+      status: 'HOD_Approved',
+      currentApprover: 'Principal'
+    })
+    .populate('submittedBy', 'name email department')
+    .populate('hodApprovedBy', 'name email')
+    .sort({ hodApprovedAt: -1 });
+    
+    console.log(`📋 Found ${lessonPlans.length} lesson plans for Principal approval`);
+    console.log('📋 Lesson plans:', lessonPlans.map(lp => ({ 
+      id: lp._id, 
+      title: lp.title, 
+      submittedBy: lp.submittedBy?.name,
+      department: lp.submittedBy?.department?.name || 'No department'
+    })));
+    
+    res.json(lessonPlans);
+  } catch (error) {
+    console.error('Error fetching lesson plans for approval:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Approve or reject lesson plan
+exports.approveLessonPlan = async (req, res) => {
+  try {
+    const { planId } = req.params;
+    const { status, feedback } = req.body;
+    
+    const lessonPlan = await LessonPlan.findById(planId);
+    
+    if (!lessonPlan) {
+      return res.status(404).json({ message: 'Lesson plan not found' });
+    }
+    
+    // Check if lesson plan is ready for Principal review
+    if (lessonPlan.status !== 'HOD_Approved' || lessonPlan.currentApprover !== 'Principal') {
+      return res.status(400).json({ message: 'Lesson plan is not ready for Principal review' });
+    }
+    
+    if (status === 'Rejected') {
+      // Principal rejected the lesson plan
+      lessonPlan.status = 'Rejected';
+      lessonPlan.currentApprover = 'Completed';
+      lessonPlan.rejectedBy = req.user.id;
+      lessonPlan.rejectedAt = new Date();
+      lessonPlan.rejectionReason = feedback || 'Rejected by Principal';
+    } else if (status === 'Principal_Approved') {
+      // Principal approved, publish the lesson plan
+      lessonPlan.status = 'Published';
+      lessonPlan.currentApprover = 'Completed';
+      lessonPlan.isPublished = true;
+      lessonPlan.principalApprovedBy = req.user.id;
+      lessonPlan.principalApprovedAt = new Date();
+      lessonPlan.principalFeedback = feedback || 'Approved by Principal';
+    } else {
+      return res.status(400).json({ message: 'Invalid status for Principal review' });
+    }
+    
+    await lessonPlan.save();
+    
+    res.json({ 
+      message: status === 'Rejected' ? 'Lesson plan rejected' : 'Lesson plan approved and published',
+      lessonPlan 
+    });
+  } catch (error) {
+    console.error('Error approving lesson plan:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Get all lesson plans (for Principal overview)
+exports.getAllLessonPlans = async (req, res) => {
+  try {
+    const lessonPlans = await LessonPlan.find()
+      .populate('submittedBy', 'name email')
+      .populate('hodApprovedBy', 'name email')
+      .populate('principalApprovedBy', 'name email')
+      .populate('rejectedBy', 'name email')
+      .sort({ createdAt: -1 });
+    
+    res.json(lessonPlans);
+  } catch (error) {
+    console.error('Error fetching all lesson plans:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+}; 

@@ -23,9 +23,12 @@ const isVicePrincipal = (req, res, next) => {
 };
 
 const isPrincipal = (req, res, next) => {
+  console.log(`🔐 isPrincipal middleware - User role: ${req.user ? req.user.role : 'No user'}`);
   if (req.user && req.user.role === "Principal") {
+    console.log('✅ Principal access granted');
     return next();
   }
+  console.log('❌ Principal access denied');
   return res.status(403).json({ message: 'Access denied: Principal only' });
 };
 

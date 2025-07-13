@@ -17,17 +17,17 @@ export const AuthProvider = ({ children }) => {
         const storedRole = localStorage.getItem('userRole');
         // Determine primary endpoint based on stored role
         const endpointOrder = storedRole === 'Student' ? [
-          '/api/students/profile',
-          '/api/parents/profile',
-          '/api/staffs/profile',
+          '/students/profile',
+          '/parents/profile',
+          '/staffs/profile',
         ] : storedRole === 'Parent' ? [
-          '/api/parents/profile',
-          '/api/students/profile',
-          '/api/staffs/profile',
+          '/parents/profile',
+          '/students/profile',
+          '/staffs/profile',
         ] : [
-          '/api/staffs/profile',
-          '/api/students/profile',
-          '/api/parents/profile',
+          '/staffs/profile',
+          '/students/profile',
+          '/parents/profile',
         ];
 
         let fetched = false;
@@ -85,7 +85,7 @@ export const AuthProvider = ({ children }) => {
       if (userType === 'staff' && !userData) {
         // Fetch the full user profile using the correct endpoint
         try {
-          const profileResponse = await api.get('/api/staffs/profile');
+          const profileResponse = await api.get('/staffs/profile');
           userProfile = profileResponse.data;
         } catch (profileError) {
           console.error('Failed to fetch user profile after login:', profileError);

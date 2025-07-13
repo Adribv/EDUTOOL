@@ -7,6 +7,12 @@ const expenseController = require('../../../controllers/Finance/expenseControlle
 // All routes require authentication and Principal role
 router.use(verifyToken, isPrincipal);
 
+// Test route
+router.get('/test', (req, res) => {
+  console.log('🧪 Principal test route called');
+  res.json({ message: 'Principal routes are working' });
+});
+
 // Dashboard
 router.get('/dashboard', principalController.getDashboard);
 
@@ -80,6 +86,43 @@ router.get('/reports/staff', principalController.getStaffReports);
 router.get('/notifications', principalController.getNotifications);
 router.get('/messages', principalController.getMessages);
 router.post('/messages', principalController.sendMessage);
+
+// Lesson Plan Approval
+router.get('/lesson-plans', principalController.getAllLessonPlans);
+router.get('/lesson-plans/pending', principalController.getLessonPlansForApproval);
+router.get('/lesson-plans/test', (req, res) => res.json({ message: 'Lesson plans test route working' }));
+router.put('/lesson-plans/:planId/approve', principalController.approveLessonPlan);
+
+// Debug route to check all lesson plans
+router.get('/debug/lesson-plans', async (req, res) => {
+  try {
+    console.log('🔍 Principal Debug: Checking all lesson plans');
+    const allLessonPlans = await require('../../../models/Staff/Teacher/lessonplan.model').find({});
+    console.log('📋 All lesson plans:', allLessonPlans.length);
+    
+    const pendingLessonPlans = await require('../../../models/Staff/Teacher/lessonplan.model').find({ status: 'Pending' });
+    console.log('⏳ Pending lesson plans:', pendingLessonPlans.length);
+    
+    const hodApprovedLessonPlans = await require('../../../models/Staff/Teacher/lessonplan.model').find({ status: 'HOD_Approved' });
+    console.log('✅ HOD Approved lesson plans:', hodApprovedLessonPlans.length);
+    
+    res.json({
+      total: allLessonPlans.length,
+      pending: pendingLessonPlans.length,
+      hodApproved: hodApprovedLessonPlans.length,
+      lessonPlans: allLessonPlans.map(lp => ({
+        id: lp._id,
+        title: lp.title,
+        status: lp.status,
+        submittedBy: lp.submittedBy,
+        currentApprover: lp.currentApprover
+      }))
+    });
+  } catch (error) {
+    console.error('Debug error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // Expense Management
 router.put('/expenses/:expenseId/approve', expenseController.approveExpense);

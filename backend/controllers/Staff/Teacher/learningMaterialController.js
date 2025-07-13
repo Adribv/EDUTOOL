@@ -9,6 +9,13 @@ exports.submitLessonPlan = async (req, res) => {
   try {
     const { title, description, class: cls, section, subject, videoLink } = req.body;
 
+    // Validate required fields
+    if (!title || !description) {
+      return res.status(400).json({ 
+        message: 'Missing required fields: title, description' 
+      });
+    }
+
     let fileUrl = '';
     let pdfUrl = '';
     let videoUrl = '';
@@ -32,13 +39,37 @@ exports.submitLessonPlan = async (req, res) => {
     }
     
     // Check if teacher is assigned to this class and subject
-    const staff = await Staff.findById(req.user.id);
-    const isAssigned = staff.assignedSubjects.some(
-      sub => sub.class === cls && sub.section === section && sub.subject === subject
-    );
-    
+    const staff = await Staff.findById(req.user.id).populate('department');
+    if (!staff) {
+      return res.status(404).json({ message: 'Teacher profile not found' });
+    }
+
+    let finalSubject = subject;
+    let finalClass = cls;
+    let finalSection = section;
+    let isAssigned = false;
+
+    if (staff.assignedSubjects && staff.assignedSubjects.length > 0) {
+      // Check if teacher has specific class/section assignments
+      isAssigned = staff.assignedSubjects.some(
+        sub => sub.class === cls && sub.section === section && sub.subject === subject
+      );
+    } else if (staff.department && staff.department.name) {
+      // Use department name as subject if no assignedSubjects
+      finalSubject = staff.department.name;
+      // For department-only mode, use empty class/section or get from assignedClasses if available
+      if (!cls && !section && staff.assignedClasses && staff.assignedClasses.length > 0) {
+        // Use the first assigned class if available
+        finalClass = staff.assignedClasses[0].class || '';
+        finalSection = staff.assignedClasses[0].section || '';
+      }
+      isAssigned = true;
+    }
+
     if (!isAssigned) {
-      return res.status(403).json({ message: 'You are not assigned to this class/subject' });
+      return res.status(403).json({ 
+        message: `You are not assigned to ${subject || (staff.department && staff.department.name) || 'any subject'} for Class ${cls}-${section}. Please contact your HOD for subject assignment.` 
+      });
     }
     
     const lessonPlan = new LessonPlan({
@@ -48,16 +79,21 @@ exports.submitLessonPlan = async (req, res) => {
       pdfUrl,
       videoLink,
       videoUrl,
-      class: cls,
-      section,
-      subject,
+      class: finalClass,
+      section: finalSection,
+      subject: finalSubject,
       submittedBy: req.user.id,
-      status: 'Pending'
+      status: 'Pending',
+      currentApprover: 'HOD'
     });
     
     await lessonPlan.save();
-    res.status(201).json(lessonPlan);
+    res.status(201).json({
+      message: 'Lesson plan submitted successfully for HOD approval',
+      lessonPlan
+    });
   } catch (error) {
+    console.error('Error submitting lesson plan:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -65,11 +101,36 @@ exports.submitLessonPlan = async (req, res) => {
 // Get lesson plans submitted by teacher
 exports.getLessonPlans = async (req, res) => {
   try {
+    console.log('🔍 Teacher getLessonPlans called for user:', req.user.id);
+    console.log('🔍 User object:', req.user);
+    
+    // Check if user ID is valid
+    if (!req.user.id) {
+      console.error('❌ No user ID found in request');
+      return res.status(400).json({ message: 'User ID not found' });
+    }
+    
+    // Check if LessonPlan model is available
+    if (!LessonPlan) {
+      console.error('❌ LessonPlan model not found');
+      return res.status(500).json({ message: 'LessonPlan model not available' });
+    }
+    
+    console.log('🔍 Searching for lesson plans with submittedBy:', req.user.id);
+    
     const lessonPlans = await LessonPlan.find({ submittedBy: req.user.id })
-      .populate('approvedBy', 'name email');
+      .populate('hodApprovedBy', 'name email')
+      .populate('principalApprovedBy', 'name email')
+      .populate('rejectedBy', 'name email')
+      .sort({ createdAt: -1 });
+    
+    console.log(`📋 Found ${lessonPlans.length} lesson plans for teacher`);
+    console.log('📋 Lesson plans:', lessonPlans.map(lp => ({ id: lp._id, title: lp.title, status: lp.status })));
     
     res.json(lessonPlans);
   } catch (error) {
+    console.error('❌ Error fetching lesson plans:', error);
+    console.error('❌ Error stack:', error.stack);
     res.status(500).json({ message: error.message });
   }
 };
@@ -131,6 +192,79 @@ exports.getDepartmentalResources = async (req, res) => {
     
     res.json(resources);
   } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get available subjects, classes, and sections for lesson plan creation
+exports.getLessonPlanOptions = async (req, res) => {
+  try {
+    const staff = await Staff.findById(req.user.id).populate('department');
+    if (!staff) {
+      return res.status(404).json({ message: 'Teacher profile not found' });
+    }
+
+    // Get teacher's assigned subjects
+    const assignedSubjects = staff.assignedSubjects || [];
+    
+    if (assignedSubjects.length === 0 && staff.department && staff.department.name) {
+      // Use department as subject
+      return res.json({
+        message: 'Available options for lesson plan creation (department as subject)',
+        options: {
+          classes: [],
+          sections: [],
+          subjects: [staff.department.name],
+          subjectGroups: [{ class: '', section: '', subjects: [staff.department.name] }],
+          assignments: [{ class: '', section: '', subject: staff.department.name }]
+        }
+      });
+    }
+
+    if (assignedSubjects.length === 0) {
+      return res.status(403).json({ 
+        message: 'You are not assigned to any subjects. Please contact your HOD for subject assignment.',
+        options: {
+          classes: [],
+          sections: [],
+          subjects: []
+        }
+      });
+    }
+
+    // Extract unique classes, sections, and subjects from assignments
+    const classes = [...new Set(assignedSubjects.map(sub => sub.class))].sort();
+    const sections = [...new Set(assignedSubjects.map(sub => sub.section))].sort();
+    const subjects = [...new Set(assignedSubjects.map(sub => sub.subject))].sort();
+
+    // Group subjects by class and section for better organization
+    const subjectGroups = {};
+    assignedSubjects.forEach(assignment => {
+      const key = `${assignment.class}-${assignment.section}`;
+      if (!subjectGroups[key]) {
+        subjectGroups[key] = {
+          class: assignment.class,
+          section: assignment.section,
+          subjects: []
+        };
+      }
+      if (!subjectGroups[key].subjects.includes(assignment.subject)) {
+        subjectGroups[key].subjects.push(assignment.subject);
+      }
+    });
+
+    res.json({
+      message: 'Available options for lesson plan creation',
+      options: {
+        classes,
+        sections,
+        subjects,
+        subjectGroups: Object.values(subjectGroups),
+        assignments: assignedSubjects
+      }
+    });
+  } catch (error) {
+    console.error('Error getting lesson plan options:', error);
     res.status(500).json({ message: error.message });
   }
 };

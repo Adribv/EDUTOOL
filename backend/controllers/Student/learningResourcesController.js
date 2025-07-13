@@ -1,11 +1,7 @@
 const Student = require('../../models/Student/studentModel');
-// Change this:
-// const LearningResource = require('../../models/Academic/learningResourceModel');
+const LessonPlan = require('../../models/Staff/Teacher/lessonplan.model');
 
-// To this:
-const LearningResource = require('../../models/Staff/Teacher/lessonplan.model');
-
-// Get learning resources
+// Get learning resources (lesson plans)
 exports.getLearningResources = async (req, res) => {
   try {
     const { subject } = req.query;
@@ -15,9 +11,11 @@ exports.getLearningResources = async (req, res) => {
       return res.status(404).json({ message: 'Student not found' });
     }
     
-    // Build query
+    // Build query for published lesson plans matching student's class and section
     const query = {
       class: student.class,
+      section: student.section,
+      status: 'Published',
       isPublished: true
     };
     
@@ -25,10 +23,13 @@ exports.getLearningResources = async (req, res) => {
       query.subject = subject;
     }
     
-    const resources = await LearningResource.find(query)
+    const lessonPlans = await LessonPlan.find(query)
+      .populate('submittedBy', 'name email')
+      .populate('hodApprovedBy', 'name email')
+      .populate('principalApprovedBy', 'name email')
       .sort({ createdAt: -1 });
     
-    res.json(resources);
+    res.json(lessonPlans);
   } catch (error) {
     console.error('Error fetching learning resources:', error);
     res.status(500).json({ message: 'Server error' });
@@ -40,29 +41,57 @@ exports.getResourceDetails = async (req, res) => {
   try {
     const { resourceId } = req.params;
     
-    const resource = await LearningResource.findById(resourceId);
-    if (!resource) {
-      return res.status(404).json({ message: 'Resource not found' });
+    const lessonPlan = await LessonPlan.findById(resourceId)
+      .populate('submittedBy', 'name email')
+      .populate('hodApprovedBy', 'name email')
+      .populate('principalApprovedBy', 'name email');
+      
+    if (!lessonPlan) {
+      return res.status(404).json({ message: 'Lesson plan not found' });
     }
     
-    // Check if resource is published
-    if (!resource.isPublished) {
-      return res.status(403).json({ message: 'This resource is not available' });
+    // Check if lesson plan is published
+    if (lessonPlan.status !== 'Published' || !lessonPlan.isPublished) {
+      return res.status(403).json({ message: 'This lesson plan is not available' });
     }
     
-    // Check if resource is for student's class
+    // Check if lesson plan is for student's class and section
     const student = await Student.findById(req.user.id);
-    if (resource.class !== student.class) {
-      return res.status(403).json({ message: 'This resource is not for your class' });
+    if (lessonPlan.class !== student.class || lessonPlan.section !== student.section) {
+      return res.status(403).json({ message: 'This lesson plan is not for your class' });
     }
     
     // Increment view count
-    resource.viewCount = (resource.viewCount || 0) + 1;
-    await resource.save();
+    lessonPlan.viewCount = (lessonPlan.viewCount || 0) + 1;
+    await lessonPlan.save();
     
-    res.json(resource);
+    res.json(lessonPlan);
   } catch (error) {
     console.error('Error fetching resource details:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Get available subjects for student's class
+exports.getAvailableSubjects = async (req, res) => {
+  try {
+    const student = await Student.findById(req.user.id);
+    
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+    
+    // Get unique subjects from published lesson plans for student's class and section
+    const subjects = await LessonPlan.distinct('subject', {
+      class: student.class,
+      section: student.section,
+      status: 'Published',
+      isPublished: true
+    });
+    
+    res.json({ subjects: subjects.sort() });
+  } catch (error) {
+    console.error('Error fetching available subjects:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

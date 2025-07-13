@@ -92,35 +92,35 @@ import { api } from '../../services/api';
 // API service for HOD using the configured api instance
 const hodAPI = {
   // Department Overview
-  getDepartmentOverview: () => api.get('/api/hod/department/overview').then(res => res.data),
-  getDepartmentStaff: () => api.get('/api/hod/department/staff').then(res => res.data),
-  getDepartmentStatistics: () => api.get('/api/hod/department/statistics').then(res => res.data),
+  getDepartmentOverview: () => api.get('/hod/department/overview').then(res => res.data),
+  getDepartmentStaff: () => api.get('/hod/department/staff').then(res => res.data),
+  getDepartmentStatistics: () => api.get('/hod/department/statistics').then(res => res.data),
   
   // Staff Management (all staff in department)
-  getAllStaff: () => api.get('/api/hod/teacher-management/teachers').then(res => res.data),
-  getStaffDetails: (staffId) => api.get(`/api/hod/teacher-management/teachers/${staffId}`).then(res => res.data),
-  addStaff: (staffData) => api.post('/api/hod/teacher-management/teachers', staffData).then(res => res.data),
-  updateStaff: (staffId, staffData) => api.put(`/api/hod/teacher-management/teachers/${staffId}`, staffData).then(res => res.data),
-  deleteStaff: (staffId) => api.delete(`/api/hod/teacher-management/teachers/${staffId}`).then(res => res.data),
+  getAllStaff: () => api.get('/hod/teacher-management/teachers').then(res => res.data),
+  getStaffDetails: (staffId) => api.get(`/hod/teacher-management/teachers/${staffId}`).then(res => res.data),
+  addStaff: (staffData) => api.post('/hod/teacher-management/teachers', staffData).then(res => res.data),
+  updateStaff: (staffId, staffData) => api.put(`/hod/teacher-management/teachers/${staffId}`, staffData).then(res => res.data),
+  deleteStaff: (staffId) => api.delete(`/hod/teacher-management/teachers/${staffId}`).then(res => res.data),
   
   // Teacher Attendance
-  getTeacherAttendance: () => api.get('/api/hod/teacher-attendance').then(res => res.data),
-  markAttendance: (attendanceData) => api.post('/api/hod/teacher-attendance', attendanceData).then(res => res.data),
-  updateAttendance: (attendanceId, attendanceData) => api.put(`/api/hod/teacher-attendance/${attendanceId}`, attendanceData).then(res => res.data),
+  getTeacherAttendance: () => api.get('/hod/teacher-attendance').then(res => res.data),
+  markAttendance: (attendanceData) => api.post('/hod/teacher-attendance', attendanceData).then(res => res.data),
+  updateAttendance: (attendanceId, attendanceData) => api.put(`/hod/teacher-attendance/${attendanceId}`, attendanceData).then(res => res.data),
   
   // Teacher Evaluation
-  getAllEvaluations: () => api.get('/api/hod/teacher-evaluations').then(res => res.data),
-  createEvaluation: (evaluationData) => api.post('/api/hod/teacher-evaluations', evaluationData).then(res => res.data),
-  updateEvaluation: (evaluationId, evaluationData) => api.put(`/api/hod/teacher-evaluations/${evaluationId}`, evaluationData).then(res => res.data),
-  deleteEvaluation: (evaluationId) => api.delete(`/api/hod/teacher-evaluations/${evaluationId}`).then(res => res.data),
+  getAllEvaluations: () => api.get('/hod/teacher-evaluations').then(res => res.data),
+  createEvaluation: (evaluationData) => api.post('/hod/teacher-evaluations', evaluationData).then(res => res.data),
+  updateEvaluation: (evaluationId, evaluationData) => api.put(`/hod/teacher-evaluations/${evaluationId}`, evaluationData).then(res => res.data),
+  deleteEvaluation: (evaluationId) => api.delete(`/hod/teacher-evaluations/${evaluationId}`).then(res => res.data),
   
   // Class Allocation
-  getClassAllocationRecommendations: () => api.get('/api/hod/class-allocation/recommendations').then(res => res.data),
-  allocateClass: (allocationData) => api.post('/api/hod/class-allocation', allocationData).then(res => res.data),
+  getClassAllocationRecommendations: () => api.get('/hod/class-allocation/recommendations').then(res => res.data),
+  allocateClass: (allocationData) => api.post('/hod/class-allocation', allocationData).then(res => res.data),
   
   // Department Reports
-  generateDepartmentReport: () => api.get('/api/hod/reports/department').then(res => res.data),
-  getPerformanceMetrics: () => api.get('/api/hod/reports/performance-metrics').then(res => res.data),
+  generateDepartmentReport: () => api.get('/hod/reports/department').then(res => res.data),
+  getPerformanceMetrics: () => api.get('/hod/reports/performance-metrics').then(res => res.data),
 };
 
 // Tab Panel Component
@@ -482,6 +482,7 @@ const Dashboard = () => {
           <Tab label="Teacher Attendance" icon={<Schedule />} />
           <Tab label="Teacher Evaluation" icon={<Assessment />} />
           <Tab label="Class Allocation" icon={<Class />} />
+          <Tab label="Lesson Plan Approvals" icon={<Assignment />} />
           <Tab label="Department Reports" icon={<Analytics />} />
         </Tabs>
 
@@ -915,6 +916,31 @@ const Dashboard = () => {
               </Card>
             </Grid>
           </Grid>
+        </TabPanel>
+
+        {/* Lesson Plan Approvals Tab */}
+        <TabPanel value={tabValue} index={6}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h6">
+              Lesson Plan Approvals
+            </Typography>
+            <Button
+              variant="contained"
+              onClick={() => window.location.href = '/hod/lesson-plans'}
+            >
+              View All Lesson Plans
+            </Button>
+          </Box>
+          <Card>
+            <CardContent>
+              <Typography variant="body2" color="textSecondary" align="center">
+                Click the button above to access the lesson plan approval system.
+              </Typography>
+              <Typography variant="body2" color="textSecondary" align="center">
+                You can review, approve, or reject lesson plans submitted by teachers in your department.
+              </Typography>
+            </CardContent>
+          </Card>
         </TabPanel>
       </Paper>
 

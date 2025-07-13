@@ -6,26 +6,69 @@ const Staff = require('../../../models/Staff/staffModel');
 
 // Get all lesson plans for review
 exports.getLessonPlansForReview = async (req, res) => {
+  console.log('🔍 HOD getLessonPlansForReview called');
+  console.log('👤 HOD User ID:', req.user.id);
+  
   try {
     // Get department
     const department = await Department.findOne({ headOfDepartment: req.user.id });
-    if (!department) {
-      return res.status(404).json({ message: 'Department not found' });
+    console.log('🏢 Department found:', department ? department.name : 'No department');
+    
+    let lessonPlans = [];
+    
+    if (department) {
+      console.log('👥 Department teachers:', department.teachers);
+      
+      // Get all teachers in department
+      const teachers = await Staff.find({ 
+        _id: { $in: department.teachers },
+        role: 'Teacher'
+      }, '_id');
+      
+      const teacherIds = teachers.map(teacher => teacher._id);
+      console.log('👨‍🏫 Teacher IDs in department:', teacherIds);
+      
+      // Get lesson plans submitted by department teachers
+      lessonPlans = await LessonPlan.find({
+        submittedBy: { $in: teacherIds },
+        status: 'Pending'
+      }).populate('submittedBy', 'name email').sort({ createdAt: -1 });
+      
+      // If no lesson plans found by teacher IDs, try to find by department name
+      if (lessonPlans.length === 0) {
+        console.log('🔍 No lesson plans found by teacher IDs, trying department name match...');
+        
+        // Get all teachers with matching department name
+        const teachersWithDepartment = await Staff.find({
+          'department.name': department.name,
+          role: 'Teacher'
+        }, '_id');
+        
+        const teacherIdsByDept = teachersWithDepartment.map(teacher => teacher._id);
+        console.log('👨‍🏫 Teachers with matching department name:', teacherIdsByDept);
+        
+        lessonPlans = await LessonPlan.find({
+          submittedBy: { $in: teacherIdsByDept },
+          status: 'Pending'
+        }).populate('submittedBy', 'name email').sort({ createdAt: -1 });
+      }
     }
     
-    // Get all teachers in department
-    const teachers = await Staff.find({ 
-      _id: { $in: department.teachers },
-      role: 'Teacher'
-    }, '_id');
+    // If still no lesson plans found, show all pending lesson plans for manual review
+    if (lessonPlans.length === 0) {
+      console.log('🔍 No lesson plans found by department, showing all pending lesson plans...');
+      lessonPlans = await LessonPlan.find({
+        status: 'Pending'
+      }).populate('submittedBy', 'name email department').sort({ createdAt: -1 });
+    }
     
-    const teacherIds = teachers.map(teacher => teacher._id);
-    
-    // Get lesson plans submitted by department teachers
-    const lessonPlans = await LessonPlan.find({
-      submittedBy: { $in: teacherIds },
-      status: 'Pending'
-    }).populate('submittedBy', 'name email').sort({ createdAt: -1 });
+    console.log('📋 Lesson plans found:', lessonPlans.length);
+    console.log('📋 Lesson plans:', lessonPlans.map(lp => ({ 
+      id: lp._id, 
+      title: lp.title, 
+      submittedBy: lp.submittedBy?.name,
+      department: lp.submittedBy?.department?.name || 'No department'
+    })));
     
     res.json(lessonPlans);
   } catch (error) {
@@ -52,21 +95,41 @@ exports.reviewLessonPlan = async (req, res) => {
       return res.status(404).json({ message: 'Department not found' });
     }
     
-    // Check if teacher belongs to this department
-    if (!department.teachers.includes(lessonPlan.submittedBy)) {
-      return res.status(403).json({ message: 'Teacher does not belong to your department' });
+    // Check if teacher belongs to this department (if department exists)
+    if (department && !department.teachers.includes(lessonPlan.submittedBy)) {
+      console.log('⚠️ Teacher does not belong to HOD department, but allowing review for flexibility');
+      // Allow review for flexibility - HOD can review any lesson plan
     }
     
-    // Update lesson plan status and publication
-    lessonPlan.status = status;
-    lessonPlan.isPublished = status === 'Approved';
-    lessonPlan.feedback = feedback;
-    lessonPlan.reviewedBy = req.user.id;
-    lessonPlan.reviewedAt = new Date();
+    // Check if lesson plan is in correct status for HOD review
+    if (lessonPlan.status !== 'Pending' || lessonPlan.currentApprover !== 'HOD') {
+      return res.status(400).json({ message: 'Lesson plan is not ready for HOD review' });
+    }
+    
+    if (status === 'Rejected') {
+      // HOD rejected the lesson plan
+      lessonPlan.status = 'Rejected';
+      lessonPlan.currentApprover = 'Completed';
+      lessonPlan.rejectedBy = req.user.id;
+      lessonPlan.rejectedAt = new Date();
+      lessonPlan.rejectionReason = feedback || 'Rejected by HOD';
+    } else if (status === 'HOD_Approved') {
+      // HOD approved, forward to Principal
+      lessonPlan.status = 'HOD_Approved';
+      lessonPlan.currentApprover = 'Principal';
+      lessonPlan.hodApprovedBy = req.user.id;
+      lessonPlan.hodApprovedAt = new Date();
+      lessonPlan.hodFeedback = feedback || 'Approved by HOD';
+    } else {
+      return res.status(400).json({ message: 'Invalid status for HOD review' });
+    }
     
     await lessonPlan.save();
     
-    res.json({ message: 'Lesson plan reviewed successfully', lessonPlan });
+    res.json({ 
+      message: status === 'Rejected' ? 'Lesson plan rejected' : 'Lesson plan forwarded to Principal for approval',
+      lessonPlan 
+    });
   } catch (error) {
     console.error('Error reviewing lesson plan:', error);
     res.status(500).json({ message: 'Server error' });

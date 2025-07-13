@@ -274,7 +274,7 @@ const Layout = () => {
         alignItems: 'center', 
         justifyContent: 'space-between',
         px: 2,
-        minHeight: 64
+        minHeight: 120
       }}>
         <Logo collapsed={drawerCollapsed} />
         {!isMobile && (

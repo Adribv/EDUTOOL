@@ -80,6 +80,72 @@ router.put('/teacher-supervision/leave-requests/:requestId', teacherSupervisionC
 // // Academic Planning routes
 router.get('/academic-planning/lesson-plans', academicPlanningController.getLessonPlansForReview);
 router.put('/academic-planning/lesson-plans/:planId', academicPlanningController.reviewLessonPlan);
+
+// Debug route to check lesson plans
+router.get('/debug/lesson-plans', async (req, res) => {
+  try {
+    console.log('🔍 Debug: Checking all lesson plans');
+    const allLessonPlans = await require('../../../models/Staff/Teacher/lessonplan.model').find({});
+    console.log('📋 All lesson plans:', allLessonPlans.length);
+    
+    const pendingLessonPlans = await require('../../../models/Staff/Teacher/lessonplan.model').find({ status: 'Pending' });
+    console.log('⏳ Pending lesson plans:', pendingLessonPlans.length);
+    
+    res.json({
+      total: allLessonPlans.length,
+      pending: pendingLessonPlans.length,
+      lessonPlans: allLessonPlans.map(lp => ({
+        id: lp._id,
+        title: lp.title,
+        status: lp.status,
+        submittedBy: lp.submittedBy,
+        currentApprover: lp.currentApprover
+      }))
+    });
+  } catch (error) {
+    console.error('Debug error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Debug route to check teacher department assignment
+router.get('/debug/teacher/:teacherId', async (req, res) => {
+  try {
+    const { teacherId } = req.params;
+    console.log('🔍 Debug: Checking teacher department assignment for:', teacherId);
+    
+    const teacher = await require('../../../models/Staff/staffModel').findById(teacherId);
+    console.log('👨‍🏫 Teacher found:', teacher ? teacher.name : 'Not found');
+    
+    if (teacher) {
+      console.log('🏢 Teacher department:', teacher.department);
+      console.log('👥 Teacher assigned subjects:', teacher.assignedSubjects);
+      console.log('👥 Teacher assigned classes:', teacher.assignedClasses);
+    }
+    
+    const departments = await require('../../../models/Staff/HOD/department.model').find({});
+    console.log('🏢 All departments:', departments.map(d => ({ id: d._id, name: d.name, headOfDepartment: d.headOfDepartment, teachers: d.teachers })));
+    
+    res.json({
+      teacher: teacher ? {
+        id: teacher._id,
+        name: teacher.name,
+        department: teacher.department,
+        assignedSubjects: teacher.assignedSubjects,
+        assignedClasses: teacher.assignedClasses
+      } : null,
+      departments: departments.map(d => ({
+        id: d._id,
+        name: d.name,
+        headOfDepartment: d.headOfDepartment,
+        teachers: d.teachers
+      }))
+    });
+  } catch (error) {
+    console.error('Debug error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 router.get('/academic-planning/syllabus-progress', academicPlanningController.getSyllabusProgress);
 router.post('/academic-planning/learning-outcomes', academicPlanningController.createLearningOutcome);
 router.get('/academic-planning/learning-outcomes', academicPlanningController.getLearningOutcomes);

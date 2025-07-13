@@ -26,48 +26,48 @@ import React from 'react';
 // API service for Vice Principal using axios instance (token auto-attached)
 const vpAPI = {
   // Department Management
-  getOverview: () => api.get('/api/vp/department/overview').then(res => res.data),
-  getStaff: () => api.get('/api/vp/department/staff').then(res => res.data),
-  getStatistics: () => api.get('/api/vp/department/statistics').then(res => res.data),
-  getDepartment: () => api.get('/api/vp/department').then(res => res.data),
-  updateDepartment: (data) => api.put(`/api/vp/department/${data.id}`, data).then(res => res.data),
-  createDepartment: (data) => api.post('/api/vp/department', data).then(res => res.data),
+  getOverview: () => api.get('/vp/department/overview').then(res => res.data),
+  getStaff: () => api.get('/vp/department/staff').then(res => res.data),
+  getStatistics: () => api.get('/vp/department/statistics').then(res => res.data),
+  getDepartment: () => api.get('/vp/department').then(res => res.data),
+  updateDepartment: (data) => api.put(`/vp/department/${data.id}`, data).then(res => res.data),
+  createDepartment: (data) => api.post('/vp/department', data).then(res => res.data),
   
   // HOD Management
-  getAllDepartments: () => api.get('/api/vp/departments').then(res => res.data),
-  assignHOD: (data) => api.post('/api/vp/department/hod', data).then(res => res.data),
-  getHODs: () => api.get('/api/vp/hods').then(res => res.data),
+  getAllDepartments: () => api.get('/vp/departments').then(res => res.data),
+  assignHOD: (data) => api.post('/vp/department/hod', data).then(res => res.data),
+  getHODs: () => api.get('/vp/hods').then(res => res.data),
   
   // Exam Management
-  getExams: () => api.get('/api/vp/exams').then(res => res.data),
-  createExam: (data) => api.post('/api/vp/exams', data).then(res => res.data),
-  updateExam: (data) => api.put(`/api/vp/exams/${data.id}`, data).then(res => res.data),
-  deleteExam: (examId) => api.delete(`/api/vp/exams/${examId}`).then(res => res.data),
+  getExams: () => api.get('/vp/exams').then(res => res.data),
+  createExam: (data) => api.post('/vp/exams', data).then(res => res.data),
+  updateExam: (data) => api.put(`/vp/exams/${data.id}`, data).then(res => res.data),
+  deleteExam: (examId) => api.delete(`/vp/exams/${examId}`).then(res => res.data),
   
   // Exam Timetable Management
-  getTimetables: () => api.get('/api/vp/timetables').then(res => res.data),
-  createTimetable: (data) => api.post('/api/vp/timetables', data).then(res => res.data),
-  updateTimetable: (data) => api.put(`/api/vp/timetables/${data.id}`, data).then(res => res.data),
-  deleteTimetable: (timetableId) => api.delete(`/api/vp/timetables/${timetableId}`).then(res => res.data),
-  getTimetablesByDateRange: (startDate, endDate) => api.get(`/api/vp/timetables/date-range?startDate=${startDate}&endDate=${endDate}`).then(res => res.data),
+  getTimetables: () => api.get('/vp/timetables').then(res => res.data),
+  createTimetable: (data) => api.post('/vp/timetables', data).then(res => res.data),
+  updateTimetable: (data) => api.put(`/vp/timetables/${data.id}`, data).then(res => res.data),
+  deleteTimetable: (timetableId) => api.delete(`/vp/timetables/${timetableId}`).then(res => res.data),
+  getTimetablesByDateRange: (startDate, endDate) => api.get(`/vp/timetables/date-range?startDate=${startDate}&endDate=${endDate}`).then(res => res.data),
   
   // Curriculum Management
-  getCurriculumPlans: () => api.get('/api/vp/curriculum').then(res => res.data),
-  getApprovedCurriculumPlans: () => api.get('/api/vp/curriculum/approved').then(res => res.data),
-  createCurriculum: (data) => api.post('/api/vp/curriculum', data).then(res => res.data),
-  updateCurriculum: (data) => api.put(`/api/vp/curriculum/${data.id}`, data).then(res => res.data),
-  deleteCurriculum: (planId) => api.delete(`/api/vp/curriculum/${planId}`).then(res => res.data),
-  approveCurriculum: (planId) => api.post(`/api/vp/curriculum/${planId}/approve`).then(res => res.data),
+  getCurriculumPlans: () => api.get('/vp/curriculum').then(res => res.data),
+  getApprovedCurriculumPlans: () => api.get('/vp/curriculum/approved').then(res => res.data),
+  createCurriculum: (data) => api.post('/vp/curriculum', data).then(res => res.data),
+  updateCurriculum: (data) => api.put(`/vp/curriculum/${data.id}`, data).then(res => res.data),
+  deleteCurriculum: (planId) => api.delete(`/vp/curriculum/${planId}`).then(res => res.data),
+  approveCurriculum: (planId) => api.post(`/vp/curriculum/${planId}/approve`).then(res => res.data),
   
   // HOD Approval Management
-  getHODSubmissions: () => api.get('/api/vp/hod-submissions').then(res => res.data),
-  approveHODSubmission: (submissionId) => api.post(`/api/vp/hod-submissions/${submissionId}/approve`).then(res => res.data),
-  rejectHODSubmission: (submissionId) => api.post(`/api/vp/hod-submissions/${submissionId}/reject`).then(res => res.data),
+  getHODSubmissions: () => api.get('/vp/hod-submissions').then(res => res.data),
+  approveHODSubmission: (submissionId) => api.post(`/vp/hod-submissions/${submissionId}/approve`).then(res => res.data),
+  rejectHODSubmission: (submissionId) => api.post(`/vp/hod-submissions/${submissionId}/reject`).then(res => res.data),
   
   // Profile Management
-  getProfile: () => api.get('/api/vp/profile').then(res => res.data),
-  updateProfile: (data) => api.put('/api/vp/profile', data).then(res => res.data),
-  changePassword: (data) => api.post('/api/vp/change-password', data).then(res => res.data),
+  getProfile: () => api.get('/vp/profile').then(res => res.data),
+  updateProfile: (data) => api.put('/vp/profile', data).then(res => res.data),
+  changePassword: (data) => api.post('/vp/change-password', data).then(res => res.data),
 };
 
 export default function VicePrincipalDashboard() {

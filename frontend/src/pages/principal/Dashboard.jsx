@@ -270,6 +270,39 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Box>
+                  <Typography color="textSecondary" gutterBottom>
+                    Lesson Plans
+                  </Typography>
+                  <Typography variant="h4">
+                    {dashboardData?.stats?.pendingLessonPlans || 0}
+                  </Typography>
+                  <Typography variant="body2" color="info.main">
+                    Pending approval
+                  </Typography>
+                </Box>
+                <Avatar sx={{ bgcolor: 'info.main', width: 56, height: 56 }}>
+                  <AssignmentIcon />
+                </Avatar>
+              </Box>
+            </CardContent>
+            <Box sx={{ p: 2, pt: 0 }}>
+              <Button
+                variant="outlined"
+                size="small"
+                fullWidth
+                onClick={() => window.location.href = '/principal/lesson-plans'}
+              >
+                Review Plans
+              </Button>
+            </Box>
+          </Card>
+        </Grid>
       </Grid>
 
       {/* Quick Stats Row */}

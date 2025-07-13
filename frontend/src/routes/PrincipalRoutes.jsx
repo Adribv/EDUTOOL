@@ -8,6 +8,7 @@ import StudentManagement from '../pages/principal/StudentManagement';
 import AcademicManagement from '../pages/principal/AcademicManagement';
 import Reports from '../pages/principal/Reports';
 import Approvals from '../pages/principal/Approvals';
+import LessonPlanApprovals from '../pages/principal/LessonPlanApprovals';
 
 const PrincipalRoutes = () => {
   return (
@@ -22,6 +23,7 @@ const PrincipalRoutes = () => {
         <Route path="academic" element={<AcademicManagement />} />
         <Route path="reports" element={<Reports />} />
         <Route path="approvals" element={<Approvals />} />
+        <Route path="lesson-plans" element={<LessonPlanApprovals />} />
       </Route>
     </Routes>
   );

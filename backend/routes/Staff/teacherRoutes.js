@@ -25,6 +25,13 @@ const mcqAssignmentController = require('../../controllers/Staff/Teacher/mcqAssi
 // Apply auth middleware to all routes
 router.use(verifyToken, permit('Teacher'));
 
+// Test route to check if teacher routes are working
+router.get('/test', (req, res) => {
+  console.log('🧪 Teacher test route called');
+  console.log('👤 User:', req.user);
+  res.json({ message: 'Teacher routes are working', user: req.user });
+});
+
 // 1. Personal Profile Management
 router.get('/profile', teacherProfileController.getProfile);
 router.put('/profile', teacherProfileController.updateProfile);
@@ -79,6 +86,7 @@ router.post('/exams/:examId/results', examController.enterExamResults);
 router.get('/exams/:examId/performance-report', examController.generatePerformanceReport);
 
 // 7. Learning Material Repository
+router.get('/lesson-plan-options', learningMaterialController.getLessonPlanOptions);
 router.post('/lesson-plans', uploadLessonPlan.single('file'), learningMaterialController.submitLessonPlan);
 router.get('/lesson-plans', learningMaterialController.getLessonPlans);
 router.post('/resources', upload.single('file'), learningMaterialController.uploadResource);
