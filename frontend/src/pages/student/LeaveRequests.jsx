@@ -134,8 +134,8 @@ const LeaveRequests = () => {
         </Box>
 
         <Grid container spacing={3}>
-          {leaveRequests.map((request) => (
-            <Grid item xs={12} md={6} lg={4} key={request.id}>
+          {leaveRequests.map((request, index) => (
+            <Grid item xs={12} md={6} lg={4} key={request._id || request.id || index}>
               <Card>
                 <CardContent>
                   <Box display="flex" alignItems="center" mb={2}>
