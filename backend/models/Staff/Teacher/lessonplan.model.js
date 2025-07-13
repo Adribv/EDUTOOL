@@ -5,6 +5,7 @@ const lessonPlanSchema = new mongoose.Schema({
   description: String,
   fileUrl: String,
   pdfUrl: String,
+  notesUrl: String,
   videoLink: String,
   videoUrl: String,
   class: String,

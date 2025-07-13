@@ -3,6 +3,7 @@ const Resource = require('../../../models/Staff/Teacher/resource.model');
 const Staff = require('../../../models/Staff/staffModel');
 const path = require('path');
 const convertDocxToPdf = require('../../../utils/convertDocxToPdf');
+const fs = require('fs');
 
 // Submit lesson plan for HOD approval
 exports.submitLessonPlan = async (req, res) => {
@@ -19,12 +20,47 @@ exports.submitLessonPlan = async (req, res) => {
     let fileUrl = '';
     let pdfUrl = '';
     let videoUrl = '';
+    let notesUrl = '';
 
-    if (req.file) {
-      if (req.file.mimetype && req.file.mimetype.startsWith('video')) {
-        videoUrl = req.file.path;
+    // Handle multipart fields (file and notes)
+    const uploadedFile = req.files && req.files['file'] ? req.files['file'][0] : null;
+    const notesFile = req.files && req.files['notes'] ? req.files['notes'][0] : null;
+
+    // Process notes PDF if provided
+    if (notesFile) {
+      if (notesFile.mimetype === 'application/pdf') {
+        notesUrl = notesFile.path;
+        // Copy notes PDF into frontend assets/Lesson_Plans folder for static access
+        try {
+          // Project root: go 4 levels up from this controller directory
+          const projectRoot = path.join(__dirname, '../../../../');
+          const assetsDir = path.join(projectRoot, 'frontend', 'src', 'assets', 'Lesson_Plans');
+
+          // Ensure the destination directory exists
+          if (!fs.existsSync(assetsDir)) {
+            fs.mkdirSync(assetsDir, { recursive: true });
+          }
+
+          // Use absolute source path to avoid cwd issues
+          const sourcePath = path.resolve(notesUrl);
+          const destPath = path.join(assetsDir, path.basename(sourcePath));
+
+          // Overwrite if file already exists
+          fs.copyFileSync(sourcePath, destPath);
+        } catch (copyErr) {
+          console.error('Error copying notes PDF to assets folder:', copyErr);
+        }
       } else {
-        fileUrl = req.file.path;
+        console.warn('Notes uploaded is not a PDF, ignoring');
+      }
+    }
+
+    // Process main lesson plan attachment/video
+    if (uploadedFile) {
+      if (uploadedFile.mimetype && uploadedFile.mimetype.startsWith('video')) {
+        videoUrl = uploadedFile.path;
+      } else {
+        fileUrl = uploadedFile.path;
         const ext = path.extname(fileUrl).toLowerCase();
         if (ext === '.docx') {
           try {
@@ -77,6 +113,7 @@ exports.submitLessonPlan = async (req, res) => {
       description,
       fileUrl,
       pdfUrl,
+      notesUrl,
       videoLink,
       videoUrl,
       class: finalClass,

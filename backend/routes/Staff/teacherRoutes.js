@@ -87,7 +87,15 @@ router.get('/exams/:examId/performance-report', examController.generatePerforman
 
 // 7. Learning Material Repository
 router.get('/lesson-plan-options', learningMaterialController.getLessonPlanOptions);
-router.post('/lesson-plans', uploadLessonPlan.single('file'), learningMaterialController.submitLessonPlan);
+// Allow uploading both the main lesson plan attachment (file) and optional notes PDF
+router.post(
+  '/lesson-plans',
+  uploadLessonPlan.fields([
+    { name: 'file', maxCount: 1 },
+    { name: 'notes', maxCount: 1 },
+  ]),
+  learningMaterialController.submitLessonPlan
+);
 router.get('/lesson-plans', learningMaterialController.getLessonPlans);
 router.post('/resources', upload.single('file'), learningMaterialController.uploadResource);
 router.get('/resources', learningMaterialController.getResources);

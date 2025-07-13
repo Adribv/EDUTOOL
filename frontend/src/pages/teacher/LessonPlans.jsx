@@ -50,7 +50,8 @@ const LessonPlans = () => {
     section: '',
     subject: '',
     videoLink: '',
-    file: null,
+    file: null,        // Main lesson plan attachment
+    notes: null,       // Optional notes PDF
   });
 
   const fetchPlans = async () => {
@@ -96,6 +97,7 @@ const LessonPlans = () => {
       subject: '',
       videoLink: '',
       file: null,
+      notes: null,
     });
   };
 
@@ -107,6 +109,13 @@ const LessonPlans = () => {
     const file = e.target.files[0];
     if (file) {
       handleFieldChange('file', file);
+    }
+  };
+
+  const handleNotesChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      handleFieldChange('notes', file);
     }
   };
 
@@ -157,8 +166,8 @@ const LessonPlans = () => {
       };
       
       Object.entries(submitData).forEach(([key, value]) => {
-        if (key === 'file') {
-          if (value) formData.append('file', value);
+        if (key === 'file' || key === 'notes') {
+          if (value) formData.append(key, value);
         } else {
           formData.append(key, value);
         }
@@ -418,6 +427,12 @@ const LessonPlans = () => {
               <Button variant="outlined" component="label" fullWidth>
                 {newPlan.file ? newPlan.file.name : 'Upload DOCX / PDF / Video'}
                 <input type="file" hidden onChange={handleFileChange} />
+              </Button>
+            </Grid>
+            <Grid item xs={12}>
+              <Button variant="outlined" component="label" fullWidth color="secondary">
+                {newPlan.notes ? newPlan.notes.name : 'Upload Notes (PDF)'}
+                <input type="file" accept="application/pdf" hidden onChange={handleNotesChange} />
               </Button>
             </Grid>
           </Grid>
