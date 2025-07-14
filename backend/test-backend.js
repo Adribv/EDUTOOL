@@ -87,7 +87,7 @@ async function testBackend() {
     console.log('\n4. Testing API endpoints...');
     
     const axios = require('axios');
-    const baseURL = 'http://localhost:5000';
+    const baseURL = 'https://api.edulives.com';
 
     // Test parent login
     try {
@@ -125,7 +125,7 @@ async function testBackend() {
     console.log('\n📋 Test Credentials:');
     console.log('   Email: parent@test.com');
     console.log('   Password: password123');
-    console.log('\n🔗 You can now test the parent portal at: http://localhost:5000/parent');
+    console.log('\n🔗 You can now test the parent portal at: https://edulives.com/parent');
 
   } catch (error) {
     console.error('❌ Test failed:', error);

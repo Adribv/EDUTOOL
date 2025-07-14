@@ -116,7 +116,7 @@ async function createTestData() {
     console.log('\n📱 You can now:');
     console.log('   1. Start the backend: npm start');
     console.log('   2. Start the frontend: npm run dev');
-    console.log('   3. Login at: http://localhost:5000/parent/login');
+    console.log('   3. Login at: https://edulives.com/parent/login');
     console.log('   4. Use credentials: parent@test.com / password123');
     console.log('   5. Link students using roll numbers: TEST001, TEST002');
     

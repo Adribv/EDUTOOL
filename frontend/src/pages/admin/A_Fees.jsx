@@ -41,10 +41,11 @@ import {
 import axios from 'axios';
 
 const A_Fees = () => {
+  const [feeStructures, setFeeStructures] = useState([]);
+  const [approvals, setApprovals] = useState([]);
+  const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [fees, setFees] = useState([]);
-  const [classes, setClasses] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingFee, setEditingFee] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
@@ -58,54 +59,28 @@ const A_Fees = () => {
   });
 
   useEffect(() => {
-    fetchFees();
-    fetchClasses();
+    const fetchData = async () => {
+      try {
+        const [feeRes, approvalRes, classRes] = await Promise.all([
+          axios.get('https://api.edulives.com/api/admin-staff/fee-structure/public'),
+          axios.get('https://api.edulives.com/api/admin-staff/approvals?requestType=Fee')
+        ]);
+        
+        setFeeStructures(feeRes.data);
+        setApprovals(approvalRes.data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
   }, []);
-
-  const fetchFees = async () => {
-    try {
-      const [feesResponse, approvalsResponse] = await Promise.all([
-              axios.get('http://localhost:5000/api/admin-staff/fee-structure/public'),
-      axios.get('http://localhost:5000/api/admin-staff/approvals?requestType=Fee')
-      ]);
-      
-      const feesData = feesResponse.data;
-      const approvalsData = approvalsResponse.data;
-      
-      // Add approval status to existing fees
-      const feesWithStatus = feesData.map(fee => ({
-        ...fee,
-        status: 'Approved' // Fees in the fee-structure collection are already approved
-      }));
-      
-      // Add pending/rejected fees from approval requests
-      const pendingFees = approvalsData
-        .filter(approval => approval.status !== 'Approved')
-        .map(approval => ({
-          _id: approval._id,
-          grade: approval.requestData?.grade || '',
-          feeType: approval.requestData?.feeType || '',
-          amount: approval.requestData?.amount || '',
-          dueDate: approval.requestData?.dueDate || '',
-          description: approval.description,
-          academicYear: approval.requestData?.academicYear || '',
-          status: approval.status,
-          approvalId: approval._id
-        }));
-      
-      setFees([...feesWithStatus, ...pendingFees]);
-    } catch (error) {
-      console.error('Error fetching fees:', error);
-      setSnackbar({ open: true, message: 'Failed to load fees', severity: 'error' });
-      setError('Failed to load fees');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const fetchClasses = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/admin-staff/classes/public');
+      const response = await axios.get('https://api.edulives.com/api/admin-staff/classes/public');
       console.log('Classes data received:', response.data);
       setClasses(response.data);
     } catch (error) {
@@ -151,11 +126,11 @@ const A_Fees = () => {
   const handleSubmit = async () => {
     try {
       if (editingFee) {
-        await axios.put(`http://localhost:5000/api/admin-staff/fee-structure/public/${editingFee._id || editingFee.id}`, formData);
+        await axios.put(`https://api.edulives.com/api/admin-staff/fee-structure/public/${editingFee._id || editingFee.id}`, formData);
         setSnackbar({ open: true, message: 'Fee updated successfully', severity: 'success' });
       } else {
         // Create approval request instead of directly creating fee
-                  await axios.post('http://localhost:5000/api/admin-staff/fee-structure/approval', formData);
+                  await axios.post('https://api.edulives.com/api/admin-staff/fee-structure/approval', formData);
         setSnackbar({ 
           open: true, 
           message: 'Fee approval request submitted successfully. Waiting for principal approval.', 
@@ -177,7 +152,7 @@ const A_Fees = () => {
   const handleDelete = async (feeId) => {
     if (window.confirm('Are you sure you want to delete this fee?')) {
       try {
-        await axios.delete(`http://localhost:5000/api/admin-staff/fee-structure/public/${feeId}`);
+        await axios.delete(`https://api.edulives.com/api/admin-staff/fee-structure/public/${feeId}`);
         setSnackbar({ open: true, message: 'Fee deleted successfully', severity: 'success' });
         fetchFees();
       } catch (error) {

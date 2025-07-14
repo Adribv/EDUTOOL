@@ -79,11 +79,11 @@ const LessonPlanViewer = ({ lessonPlan, open, onClose }) => {
   const handleDownload = (url, filename) => {
     if (url) {
       const link = document.createElement('a');
-      link.href = `http://localhost:5000/${url}`;
+      link.href = `https://api.edulives.com/${url}`;
       link.download = filename || 'lesson-plan';
       document.body.appendChild(link);
       link.click();
-      link.remove();
+      document.body.removeChild(link);
     }
   };
 
@@ -91,10 +91,10 @@ const LessonPlanViewer = ({ lessonPlan, open, onClose }) => {
     if (url) {
       // For PDFs, we can use direct URL
       if (url.toLowerCase().endsWith('.pdf')) {
-        setPreviewUrl(`http://localhost:5000/${url}`);
+        setPreviewUrl(`https://api.edulives.com/${url}`);
       } else {
         // For other files, try to open in new tab
-        window.open(`http://localhost:5000/${url}`, '_blank');
+        window.open(`https://api.edulives.com/${url}`, '_blank');
       }
     }
   };
@@ -137,7 +137,7 @@ const LessonPlanViewer = ({ lessonPlan, open, onClose }) => {
                       size="small"
                       variant="outlined"
                       startIcon={<OpenInNewIcon />}
-                      onClick={() => window.open(`http://localhost:5000/${lessonPlan.fileUrl}`, '_blank')}
+                      onClick={() => window.open(`https://api.edulives.com/${lessonPlan.fileUrl}`, '_blank')}
                     >
                       Open
                     </Button>
@@ -179,7 +179,7 @@ const LessonPlanViewer = ({ lessonPlan, open, onClose }) => {
                       size="small"
                       variant="outlined"
                       startIcon={<OpenInNewIcon />}
-                      onClick={() => window.open(`http://localhost:5000/${lessonPlan.pdfUrl}`, '_blank')}
+                      onClick={() => window.open(`https://api.edulives.com/${lessonPlan.pdfUrl}`, '_blank')}
                     >
                       Open
                     </Button>
@@ -221,7 +221,7 @@ const LessonPlanViewer = ({ lessonPlan, open, onClose }) => {
                       size="small"
                       variant="outlined"
                       startIcon={<OpenInNewIcon />}
-                      onClick={() => window.open(`http://localhost:5000/${lessonPlan.notesUrl}`, '_blank')}
+                      onClick={() => window.open(`https://api.edulives.com/${lessonPlan.notesUrl}`, '_blank')}
                     >
                       Open
                     </Button>
@@ -567,7 +567,7 @@ const LessonPlanViewer = ({ lessonPlan, open, onClose }) => {
                     link.download = 'lesson-plan-preview';
                     document.body.appendChild(link);
                     link.click();
-                    link.remove();
+                    document.body.removeChild(link);
                   }}
                   sx={{ mb: 1 }}
                 >
@@ -596,7 +596,7 @@ const LessonPlanViewer = ({ lessonPlan, open, onClose }) => {
                   link.download = 'lesson-plan-preview';
                   document.body.appendChild(link);
                   link.click();
-                  link.remove();
+                  document.body.removeChild(link);
                 }}
               />
             </Box>

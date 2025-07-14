@@ -83,7 +83,7 @@ function StudyMaterials() {
   const handleDownload = (url, filename) => {
     if (url) {
       // Use the correct backend URL
-      const backendUrl = url.startsWith('http') ? url : `http://localhost:5000/${url}`;
+      const backendUrl = url.startsWith('http') ? url : `https://api.edulives.com/${url}`;
       const link = document.createElement('a');
       link.href = backendUrl;
       link.download = filename;

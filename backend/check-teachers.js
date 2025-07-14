@@ -54,7 +54,7 @@ const checkTeachers = async () => {
     if (teachers.length === 0) {
       console.log('No teachers found in the database.');
       console.log('\n💡 To create a teacher:');
-      console.log('   1. Go to http://localhost:3000/admin/staff');
+      console.log('   1. Go to https://edulives.com/admin/staff');
       console.log('   2. Click "Add Staff"');
       console.log('   3. Fill in the details and set role to "Teacher"');
       console.log('   4. Set Department to a subject name (e.g., "Mathematics")');
@@ -86,7 +86,7 @@ const checkTeachers = async () => {
     });
     
     console.log('\n💡 To assign subjects to teachers:');
-    console.log('   1. Go to http://localhost:3000/admin/staff');
+    console.log('   1. Go to https://edulives.com/admin/staff');
     console.log('   2. Edit a teacher');
     console.log('   3. Set Department to a subject name (e.g., "Mathematics")');
     console.log('   4. Save changes');

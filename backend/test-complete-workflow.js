@@ -126,7 +126,7 @@ async function testCompleteWorkflow() {
 
     console.log('\n✅ Complete workflow test finished!');
     console.log('\n📝 Next steps:');
-    console.log('   1. Visit http://localhost:3000/student/study-materials');
+    console.log('   1. Visit https://edulives.com/student/study-materials');
     console.log('   2. Students should see the lesson plan in their study materials');
     console.log('   3. Students can filter by subject and view lesson plan details');
 

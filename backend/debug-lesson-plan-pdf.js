@@ -76,9 +76,8 @@ async function debugLessonPlanPDF() {
     }
 
     console.log('\n🔗 URL Construction:');
-    console.log('   Base URL: http://localhost:5000');
-    console.log('   Static files served from: /uploads');
-    console.log('   Example: http://localhost:5000/uploads/lessonPlan/filename.pdf');
+    console.log('   Base URL: https://api.edulives.com');
+    console.log('   Example: https://api.edulives.com/uploads/lessonPlan/filename.pdf');
 
   } catch (error) {
     console.error('❌ Error:', error);

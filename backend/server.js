@@ -10,7 +10,7 @@ const fs = require('fs');
 dotenv.config();
 const app = express();
 
-const allowedOrigins = ['http://localhost:3000', 'http://localhost:5000', 'https://edulives.com'];
+const allowedOrigins = ['https://edulives.com', 'https://www.edulives.com', 'https://api.edulives.com'];
 
 app.use(cors({
   origin: function (origin, callback) {

@@ -49,7 +49,7 @@ async function debugPDFPreview() {
         }
         
         // Test URL construction
-        const testUrl = `http://localhost:5000/${plan.pdfUrl}`;
+        const testUrl = `https://api.edulives.com/${plan.pdfUrl}`;
         console.log(`   Test URL: ${testUrl}`);
       }
       
