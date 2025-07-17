@@ -161,7 +161,7 @@ function HODProfile() {
             <CardContent sx={{ textAlign: 'center' }}>
               <Box sx={{ position: 'relative', display: 'inline-block' }}>
                 <Avatar
-                  src={profile?.profileImage ? `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/${profile.profileImage}` : undefined}
+                  src={profile?.profileImage ? `${import.meta.env.VITE_API_URL || 'https://api.edulives.com/api'}/${profile.profileImage}` : undefined}
                   sx={{ width: 120, height: 120, mb: 2 }}
                 />
                 <input
