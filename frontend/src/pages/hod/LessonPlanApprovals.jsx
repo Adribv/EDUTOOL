@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Box,
   Typography,
@@ -24,7 +25,8 @@ import {
   IconButton,
   Tooltip,
   Badge,
-  Divider
+  Divider,
+  MenuItem
 } from '@mui/material';
 import {
   CheckCircle as ApproveIcon,
@@ -51,6 +53,8 @@ const LessonPlanApprovals = () => {
   const [feedback, setFeedback] = useState('');
   const [processing, setProcessing] = useState(false);
   const [templateData, setTemplateData] = useState(null);
+  const [filterStatus, setFilterStatus] = useState('all');
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     fetchLessonPlans();
@@ -80,6 +84,7 @@ const LessonPlanApprovals = () => {
       });
       
       toast.success('Lesson plan approved and forwarded to Principal');
+      queryClient.invalidateQueries(['hodLessonPlanHistory']);
       setApprovalDialog(false);
       setFeedback('');
       setSelectedPlan(null);
@@ -103,6 +108,7 @@ const LessonPlanApprovals = () => {
       });
       
       toast.success('Lesson plan rejected');
+      queryClient.invalidateQueries(['hodLessonPlanHistory']);
       setRejectionDialog(false);
       setFeedback('');
       setSelectedPlan(null);
@@ -158,6 +164,7 @@ const LessonPlanApprovals = () => {
       });
       
       toast.success('Template updated successfully');
+      queryClient.invalidateQueries(['hodLessonPlanHistory']);
       setTemplateEditDialog(false);
       setTemplateData(null);
       setSelectedPlan(null);
@@ -209,13 +216,23 @@ const LessonPlanApprovals = () => {
             <LessonPlanIcon />
           </Badge>
         </Typography>
-        <Button
-          variant="outlined"
-          startIcon={<RefreshIcon />}
-          onClick={fetchLessonPlans}
-        >
-          Refresh
-        </Button>
+        <Box display="flex" gap={1}>
+          <TextField
+            select
+            size="small"
+            label="Filter"
+            value={filterStatus}
+            onChange={(e)=>setFilterStatus(e.target.value)}
+          >
+            <MenuItem value="all">All</MenuItem>
+            <MenuItem value="Pending">Pending</MenuItem>
+            <MenuItem value="HOD_Approved">HOD Approved</MenuItem>
+            <MenuItem value="Principal_Approved">Principal Approved</MenuItem>
+            <MenuItem value="Published">Published</MenuItem>
+            <MenuItem value="Rejected">Rejected</MenuItem>
+          </TextField>
+          <Button variant="outlined" startIcon={<RefreshIcon />} onClick={fetchLessonPlans}>Refresh</Button>
+        </Box>
       </Box>
 
       {lessonPlans.length === 0 ? (
@@ -244,7 +261,7 @@ const LessonPlanApprovals = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {lessonPlans.map((plan) => (
+              {lessonPlans.filter((p)=>filterStatus==='all' || p.status===filterStatus).map((plan) => (
                 <TableRow key={plan._id}>
                   <TableCell>
                     <Typography variant="body2" fontWeight="medium">
@@ -328,7 +345,7 @@ const LessonPlanApprovals = () => {
                         <IconButton
                           size="small"
                           component="a"
-                          href={`https://api.edulives.com/${plan.pdfUrl}`}
+                          href={`http://localhost:5000/${plan.pdfUrl}`}
                           target="_blank"
                         >
                           <DownloadIcon />

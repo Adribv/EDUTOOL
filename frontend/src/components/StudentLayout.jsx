@@ -35,6 +35,7 @@ import {
   Notifications,
   Logout,
   Book,
+  RateReview,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -95,6 +96,16 @@ const StudentLayout = ({ children }) => {
       text: 'Fee Management',
       icon: <Payment />,
       path: '/student/fees',
+    },
+    {
+      text: 'Disciplinary Misconduct',
+      icon: <Assignment />,
+      path: '/student/disciplinary-misconduct',
+    },
+    {
+      text: 'Teacher Remarks',
+      icon: <RateReview />,
+      path: '/student/teacher-remarks',
     },
     {
       text: 'Documents',

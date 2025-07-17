@@ -31,6 +31,7 @@ import {
   Group as GroupIcon,
   Notifications as NotificationsIcon,
   TrendingUp as TrendingUpIcon,
+  Warning,
 } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { adminAPI } from '../../services/api';
@@ -73,33 +74,23 @@ function AdminDashboard() {
     toast.success('Dashboard refreshed');
   };
 
-  const handleDownloadReport = async (type) => {
-    try {
-      const response = await adminAPI.generateFinancialReport();
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `${type}-report.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      toast.success('Report downloaded successfully');
-    } catch (error) {
-      toast.error('Failed to download report');
-    }
+  const handleDownloadReport = (type) => {
+    // Implement report download logic
+    toast.info(`Downloading ${type} report...`);
   };
 
   if (loading) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '60vh',
-        }}
-      >
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
         <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box p={3}>
+        <Alert severity="error">{error}</Alert>
       </Box>
     );
   }
@@ -201,28 +192,15 @@ function AdminDashboard() {
       </Box>
 
       {/* Statistics Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                 <People color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Total Staff</Typography>
-              </Box>
-              <Typography variant="h4" color="primary">
-                {stats?.totalStaff || 0}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <School color="secondary" sx={{ mr: 1 }} />
                 <Typography variant="h6">Total Students</Typography>
               </Box>
-              <Typography variant="h4" color="secondary">
+              <Typography variant="h4" color="primary.main">
                 {stats?.totalStudents || 0}
               </Typography>
             </CardContent>
@@ -232,11 +210,24 @@ function AdminDashboard() {
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <Payment color="success" sx={{ mr: 1 }} />
-                <Typography variant="h6">Fee Collection</Typography>
+                <School color="success" sx={{ mr: 1 }} />
+                <Typography variant="h6">Total Staff</Typography>
               </Box>
               <Typography variant="h4" color="success.main">
-                ${stats?.totalFeeCollection || 0}
+                {stats?.totalStaff || 0}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <Event color="info" sx={{ mr: 1 }} />
+                <Typography variant="h6">Events</Typography>
+              </Box>
+              <Typography variant="h4" color="info.main">
+                {stats?.upcomingEvents?.length || 0}
               </Typography>
             </CardContent>
           </Card>
@@ -299,10 +290,30 @@ function AdminDashboard() {
                   <Button
                     fullWidth
                     variant="outlined"
-                    startIcon={<Event />}
-                    href="/admin/settings"
+                    startIcon={<Warning />}
+                    href="/admin/disciplinary-forms"
                   >
-                    System Settings
+                    Disciplinary Forms
+                  </Button>
+                </Grid>
+                <Grid xs={6}>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    startIcon={<Assessment />}
+                    href="/admin/syllabus-completion"
+                  >
+                    Syllabus Completion
+                  </Button>
+                </Grid>
+                <Grid xs={6}>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    startIcon={<Event />}
+                    href="/admin/events"
+                  >
+                    Event Management
                   </Button>
                 </Grid>
               </Grid>

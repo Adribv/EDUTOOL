@@ -16,6 +16,13 @@ import {
   ListItemText,
   ListItemIcon,
   Divider,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import {
   Event as EventIcon,
@@ -27,8 +34,14 @@ import {
   LocationOn,
   Person,
   AccessTime,
+  Assignment as ConsentIcon,
+  Description,
+  Close,
+  CheckCircle,
+  HourglassEmpty,
 } from '@mui/icons-material';
-import parentService from '../../services/parentService';
+import { parentAPI, consentAPI } from '../../services/api';
+import { toast } from 'react-toastify';
 
 const Events = () => {
   const [loading, setLoading] = useState(true);
@@ -36,6 +49,9 @@ const Events = () => {
   const [events, setEvents] = useState([]);
   const [selectedTab, setSelectedTab] = useState(0);
   const [eventSummary, setEventSummary] = useState({});
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [eventDialog, setEventDialog] = useState(false);
+  const [consentForms, setConsentForms] = useState({});
 
   useEffect(() => {
     fetchEvents();
@@ -45,21 +61,27 @@ const Events = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await parentService.getUpcomingEvents();
+      const response = await parentAPI.getSchoolCalendar();
       console.log('📅 Raw events data:', response);
       
       const eventsData = Array.isArray(response) ? response : (response.data || []);
       console.log('📊 Processed events:', eventsData);
       
-      setEvents(eventsData);
+      // Filter out transport events and only show regular events
+      const filteredEvents = eventsData.filter(event => event.eventType !== 'Transport');
+      
+      setEvents(filteredEvents);
       
       // Calculate event summary
-      const summary = eventsData.reduce((acc, event) => {
+      const summary = filteredEvents.reduce((acc, event) => {
         const type = event.eventType || 'Other';
         acc[type] = (acc[type] || 0) + 1;
         return acc;
       }, {});
       setEventSummary(summary);
+      
+      // Fetch consent forms for events that have them
+      await fetchConsentForms(filteredEvents);
       
       console.log('📈 Event summary:', summary);
     } catch (err) {
@@ -68,6 +90,44 @@ const Events = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchConsentForms = async (eventsList) => {
+    try {
+      const consentFormsData = {};
+      
+      // Fetch consent forms for each event
+      for (const event of eventsList) {
+        try {
+          const consentForm = await consentAPI.getForm(event._id);
+          if (consentForm) {
+            consentFormsData[event._id] = consentForm;
+          }
+        } catch (error) {
+          // Consent form doesn't exist for this event, which is fine
+          console.log(`No consent form for event ${event._id}`);
+        }
+      }
+      
+      setConsentForms(consentFormsData);
+    } catch (error) {
+      console.error('Error fetching consent forms:', error);
+    }
+  };
+
+  const handleEventClick = (event) => {
+    setSelectedEvent(event);
+    setEventDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setEventDialog(false);
+    setSelectedEvent(null);
+  };
+
+  const handleFillConsentForm = (eventId) => {
+    // Navigate to consent form page
+    window.location.href = `/parent/consent-form/${eventId}`;
   };
 
   const formatDate = (dateString) => {
@@ -116,6 +176,35 @@ const Events = () => {
       'Other': 'default'
     };
     return colors[eventType] || 'default';
+  };
+
+  const getEventTypeIcon = (eventType) => {
+    switch (eventType) {
+      case 'Academic':
+        return <SchoolIcon />;
+      case 'Exam':
+        return <AssignmentIcon />;
+      case 'Sports':
+        return <SportsIcon />;
+      case 'Cultural':
+        return <CelebrationIcon />;
+      default:
+        return <EventIcon />;
+    }
+  };
+
+  const getConsentFormStatus = (eventId) => {
+    const consentForm = consentForms[eventId];
+    if (!consentForm) return null;
+    
+    return {
+      status: consentForm.status,
+      color: consentForm.status === 'completed' ? 'success' : 
+             consentForm.status === 'awaitingParent' ? 'warning' : 'default',
+      icon: consentForm.status === 'completed' ? <CheckCircle /> : <HourglassEmpty />,
+      label: consentForm.status === 'completed' ? 'Completed' : 
+             consentForm.status === 'awaitingParent' ? 'Awaiting Response' : 'Draft'
+    };
   };
 
   const filterEventsByType = (eventType) => {
@@ -199,91 +288,238 @@ const Events = () => {
         </Alert>
       ) : (
         <Grid container spacing={3}>
-          {filteredEvents.map((event) => (
-            <Grid item xs={12} md={6} lg={4} key={event._id}>
-              <Card 
-                sx={{ 
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  border: event.isHoliday ? '2px solid #ff9800' : '1px solid #e0e0e0'
-                }}
-              >
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-                    <Typography variant="h6" component="h3" sx={{ fontWeight: 'bold', flex: 1 }}>
-                      {event.title}
-                    </Typography>
-                    <Chip
-                      label={event.eventType || 'Other'}
-                      color={getEventTypeColor(event.eventType)}
-                      size="small"
-                      sx={{ ml: 1 }}
-                    />
-                  </Box>
-
-                  {event.description && (
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      {event.description}
-                    </Typography>
-                  )}
-
-                  <Box sx={{ mb: 2 }}>
-                    <Box display="flex" alignItems="center" mb={1}>
-                      <CalendarToday sx={{ fontSize: 16, mr: 1, color: 'primary.main' }} />
-                      <Typography variant="body2">
-                        {formatDate(event.startDate)}
+          {filteredEvents.map((event) => {
+            const consentFormStatus = getConsentFormStatus(event._id);
+            
+            return (
+              <Grid item xs={12} md={6} lg={4} key={event._id}>
+                <Card 
+                  sx={{ 
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    border: event.isHoliday ? '2px solid #ff9800' : '1px solid #e0e0e0',
+                    cursor: 'pointer',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: 4,
+                    }
+                  }}
+                  onClick={() => handleEventClick(event)}
+                >
+                  <CardContent sx={{ flexGrow: 1 }}>
+                    <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
+                      <Typography variant="h6" component="h3" sx={{ fontWeight: 'bold', flex: 1 }}>
+                        {event.title}
                       </Typography>
-                    </Box>
-                    
-                    <Box display="flex" alignItems="center" mb={1}>
-                      <AccessTime sx={{ fontSize: 16, mr: 1, color: 'primary.main' }} />
-                      <Typography variant="body2">
-                        {formatTime(event.startDate)} - {formatTime(event.endDate)}
-                      </Typography>
+                      <Chip
+                        label={event.eventType || 'Other'}
+                        color={getEventTypeColor(event.eventType)}
+                        size="small"
+                        sx={{ ml: 1 }}
+                      />
                     </Box>
 
-                    {event.venue && (
+                    {event.description && (
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        {event.description}
+                      </Typography>
+                    )}
+
+                    <Box sx={{ mb: 2 }}>
                       <Box display="flex" alignItems="center" mb={1}>
-                        <LocationOn sx={{ fontSize: 16, mr: 1, color: 'primary.main' }} />
+                        <CalendarToday sx={{ fontSize: 16, mr: 1, color: 'primary.main' }} />
                         <Typography variant="body2">
-                          {event.venue}
+                          {formatDate(event.startDate)}
+                        </Typography>
+                      </Box>
+                      
+                      <Box display="flex" alignItems="center" mb={1}>
+                        <AccessTime sx={{ fontSize: 16, mr: 1, color: 'primary.main' }} />
+                        <Typography variant="body2">
+                          {formatTime(event.startDate)} - {formatTime(event.endDate)}
+                        </Typography>
+                      </Box>
+
+                      {event.venue && (
+                        <Box display="flex" alignItems="center" mb={1}>
+                          <LocationOn sx={{ fontSize: 16, mr: 1, color: 'primary.main' }} />
+                          <Typography variant="body2">
+                            {event.venue}
+                          </Typography>
+                        </Box>
+                      )}
+
+                      {event.organizer && (
+                        <Box display="flex" alignItems="center" mb={1}>
+                          <Person sx={{ fontSize: 16, mr: 1, color: 'primary.main' }} />
+                          <Typography variant="body2">
+                            {event.organizer}
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
+
+                    {event.isHoliday && (
+                      <Alert severity="warning" sx={{ mt: 1 }}>
+                        This is a school holiday
+                      </Alert>
+                    )}
+
+                    {/* Consent form status */}
+                    {consentFormStatus && (
+                      <Box sx={{ mt: 2, p: 1, bgcolor: 'primary.light', borderRadius: 1 }}>
+                        <Typography variant="body2" color="white" sx={{ display: 'flex', alignItems: 'center' }}>
+                          <ConsentIcon sx={{ mr: 1, fontSize: 16 }} />
+                          Consent Form: {consentFormStatus.label}
                         </Typography>
                       </Box>
                     )}
-
-                    {event.organizer && (
-                      <Box display="flex" alignItems="center" mb={1}>
-                        <Person sx={{ fontSize: 16, mr: 1, color: 'primary.main' }} />
-                        <Typography variant="body2">
-                          {event.organizer}
-                        </Typography>
-                      </Box>
-                    )}
-                  </Box>
-
-                  {event.isHoliday && (
-                    <Alert severity="warning" sx={{ mt: 1 }}>
-                      This is a school holiday
-                    </Alert>
-                  )}
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
+                  </CardContent>
+                </Card>
+              </Grid>
+            );
+          })}
         </Grid>
       )}
 
-      {/* Debug Info */}
-      {import.meta.env.DEV && (
-        <Box sx={{ mt: 4, p: 2, backgroundColor: '#f0f0f0', borderRadius: 1 }}>
-          <Typography variant="h6">Debug Info:</Typography>
-          <Typography variant="body2">Total events: {events.length}</Typography>
-          <Typography variant="body2">Filtered events: {filteredEvents.length}</Typography>
-          <Typography variant="body2">Selected tab: {tabLabels[selectedTab]}</Typography>
-          <Typography variant="body2">Event types: {[...new Set(events.map(e => e.eventType))].join(', ')}</Typography>
-        </Box>
-      )}
+      {/* Event Details Dialog */}
+      <Dialog 
+        open={eventDialog} 
+        onClose={handleCloseDialog}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h6">
+              {selectedEvent?.title}
+            </Typography>
+            <IconButton onClick={handleCloseDialog}>
+              <Close />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {selectedEvent && (
+            <Box>
+              <Box display="flex" alignItems="center" mb={2}>
+                {getEventTypeIcon(selectedEvent.eventType)}
+                <Chip
+                  label={selectedEvent.eventType || 'Other'}
+                  color={getEventTypeColor(selectedEvent.eventType)}
+                  sx={{ ml: 2 }}
+                />
+              </Box>
+
+              <Typography variant="body1" paragraph>
+                {selectedEvent.description}
+              </Typography>
+
+              <Grid container spacing={2} sx={{ mb: 2 }}>
+                <Grid item xs={12} md={6}>
+                  <Box display="flex" alignItems="center" mb={1}>
+                    <CalendarToday sx={{ mr: 1 }} />
+                    <Typography variant="body2">
+                      <strong>Date:</strong> {formatDate(selectedEvent.startDate)}
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Box display="flex" alignItems="center" mb={1}>
+                    <AccessTime sx={{ mr: 1 }} />
+                    <Typography variant="body2">
+                      <strong>Time:</strong> {formatTime(selectedEvent.startDate)} - {formatTime(selectedEvent.endDate)}
+                    </Typography>
+                  </Box>
+                </Grid>
+                {selectedEvent.venue && (
+                  <Grid item xs={12} md={6}>
+                    <Box display="flex" alignItems="center" mb={1}>
+                      <LocationOn sx={{ mr: 1 }} />
+                      <Typography variant="body2">
+                        <strong>Location:</strong> {selectedEvent.venue}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                )}
+                {selectedEvent.organizer && (
+                  <Grid item xs={12} md={6}>
+                    <Box display="flex" alignItems="center" mb={1}>
+                      <Person sx={{ mr: 1 }} />
+                      <Typography variant="body2">
+                        <strong>Organizer:</strong> {selectedEvent.organizer}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                )}
+              </Grid>
+
+              {/* Consent form details */}
+              {consentForms[selectedEvent._id] && (
+                <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Consent Form Details
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2">
+                        <strong>Status:</strong> {getConsentFormStatus(selectedEvent._id)?.label}
+                      </Typography>
+                    </Grid>
+                    {consentForms[selectedEvent._id].purpose && (
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="body2">
+                          <strong>Purpose:</strong> {consentForms[selectedEvent._id].purpose}
+                        </Typography>
+                      </Grid>
+                    )}
+                    {consentForms[selectedEvent._id].dateFrom && (
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="body2">
+                          <strong>From:</strong> {formatDate(consentForms[selectedEvent._id].dateFrom)}
+                        </Typography>
+                      </Grid>
+                    )}
+                    {consentForms[selectedEvent._id].dateTo && (
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="body2">
+                          <strong>To:</strong> {formatDate(consentForms[selectedEvent._id].dateTo)}
+                        </Typography>
+                      </Grid>
+                    )}
+                    {consentForms[selectedEvent._id].venue && (
+                      <Grid item xs={12}>
+                        <Typography variant="body2">
+                          <strong>Venue:</strong> {consentForms[selectedEvent._id].venue}
+                        </Typography>
+                      </Grid>
+                    )}
+                  </Grid>
+                </Box>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          {consentForms[selectedEvent?._id] && (
+            <Button
+              variant="contained"
+              startIcon={<ConsentIcon />}
+              onClick={() => {
+                handleFillConsentForm(selectedEvent._id);
+                handleCloseDialog();
+              }}
+            >
+              {getConsentFormStatus(selectedEvent?._id)?.status === 'completed' ? 'View Form' : 'Fill Consent Form'}
+            </Button>
+          )}
+          <Button onClick={handleCloseDialog}>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

@@ -94,7 +94,7 @@
 
 1. **Frontend**: https://edulives.com
 2. **Parent Login**: https://edulives.com/parent/login
-3. **Backend API**: https://api.edulives.com
+3. **Backend API**: http://localhost:5000
 
 ## 📱 Using the Parent Portal
 

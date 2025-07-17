@@ -294,6 +294,13 @@ const Dashboard = () => {
       count: Array.isArray(learningResources) ? learningResources.length : 0,
     },
     {
+      title: 'Teacher Remarks',
+      description: 'View teacher remarks and syllabus completion',
+      icon: <Assessment color="primary" sx={{ fontSize: 40 }} />,
+      color: '#ff9800',
+      path: '/student/teacher-remarks',
+    },
+    {
       title: 'Communication',
       description: 'Connect with teachers and classmates',
       icon: <Forum color="primary" sx={{ fontSize: 40 }} />,

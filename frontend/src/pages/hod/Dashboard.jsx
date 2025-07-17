@@ -247,6 +247,45 @@ const Dashboard = () => {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Lesson Plan History (latest submissions across statuses)
+  const { data: lessonPlanHistory, isLoading: lessonPlansLoading } = useQuery({
+    queryKey: ['hodLessonPlanHistory'],
+    queryFn: async () => {
+      const response = await api.get('/hod/academic-planning/lesson-plans');
+      return response.data || response;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Helpers for lesson plan status chip
+  const getPlanStatusColor = (status) => {
+    switch (status) {
+      case 'Pending': return 'warning';
+      case 'HOD_Approved': return 'info';
+      case 'Principal_Approved': return 'success';
+      case 'Published': return 'success';
+      case 'Rejected': return 'error';
+      default: return 'default';
+    }
+  };
+
+  const getPlanStatusLabel = (status) => {
+    switch (status) {
+      case 'Pending': return 'Pending HOD Approval';
+      case 'HOD_Approved': return 'Pending Principal Approval';
+      case 'Principal_Approved': return 'Approved by Principal';
+      case 'Published': return 'Published';
+      case 'Rejected': return 'Rejected';
+      default: return status;
+    }
+  };
+
+  // Show only lesson plans whose subject matches HOD's department (if department provided)
+  const allPlans = (lessonPlanHistory || []).filter(plan => {
+    if (!userDepartment || userDepartment.toLowerCase() === 'general') return true;
+    return (plan.subject || '').toLowerCase() === userDepartment.toLowerCase();
+  });
+
   // Helper function to flatten attendance data
   const getFlattenedAttendance = () => {
     if (!teacherAttendance) return [];
@@ -921,26 +960,52 @@ const Dashboard = () => {
         {/* Lesson Plan Approvals Tab */}
         <TabPanel value={tabValue} index={6}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h6">
-              Lesson Plan Approvals
-            </Typography>
-            <Button
-              variant="contained"
-              onClick={() => window.location.href = '/hod/lesson-plans'}
-            >
+            <Typography variant="h6">Lesson Plan Approvals</Typography>
+            <Button variant="contained" onClick={() => window.location.href = '/hod/lesson-plans'}>
               View All Lesson Plans
             </Button>
           </Box>
-          <Card>
-            <CardContent>
-              <Typography variant="body2" color="textSecondary" align="center">
-                Click the button above to access the lesson plan approval system.
-              </Typography>
-              <Typography variant="body2" color="textSecondary" align="center">
-                You can review, approve, or reject lesson plans submitted by teachers in your department.
-              </Typography>
-            </CardContent>
-          </Card>
+
+          {lessonPlansLoading ? (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="20vh">
+              <CircularProgress />
+            </Box>
+          ) : (allPlans && allPlans.length > 0) ? (
+            <TableContainer component={Paper} sx={{ mb: 2 }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Title</TableCell>
+                    <TableCell>Subject</TableCell>
+                    <TableCell>Class</TableCell>
+                    <TableCell>Submitted</TableCell>
+                    <TableCell>Status</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {allPlans.slice(0, 5).map((plan) => (
+                    <TableRow key={plan._id} hover>
+                      <TableCell>{plan.title}</TableCell>
+                      <TableCell>{plan.subject}</TableCell>
+                      <TableCell>{plan.class || '-'}</TableCell>
+                      <TableCell>{new Date(plan.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <Chip label={getPlanStatusLabel(plan.status)} color={getPlanStatusColor(plan.status)} size="small" />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <Card>
+              <CardContent>
+                <Typography variant="body2" color="textSecondary" align="center">
+                  No lesson plan submissions found.
+                </Typography>
+              </CardContent>
+            </Card>
+          )}
         </TabPanel>
       </Paper>
 

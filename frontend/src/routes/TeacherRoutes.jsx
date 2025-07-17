@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
+import Layout from '../components/layout/Layout';
 import Dashboard from '../pages/teacher/Dashboard';
 import Profile from '../pages/teacher/Profile';
 import ClassManagement from '../pages/teacher/ClassManagement';
@@ -11,14 +12,16 @@ import LearningResources from '../pages/teacher/LearningResources';
 import Communication from '../pages/teacher/Communication';
 import Assignments from '../pages/teacher/Assignments';
 import Attendance from '../pages/teacher/Attendance';
+import LeaveRequests from '../pages/teacher/LeaveRequests';
 import Calendar from '../pages/teacher/Calendar';
 import Classes from '../pages/teacher/Classes';
-import LeaveRequests from '../pages/teacher/LeaveRequests';
 import MCQBuilder from '../pages/teacher/MCQBuilder';
 import MCQManagement from '../pages/teacher/MCQManagement';
 import LessonPlans from '../pages/teacher/LessonPlans';
 import SubstituteTeacherRequest from '../pages/teacher/SubstituteTeacherRequest';
 import SubstituteRequests from '../pages/teacher/SubstituteRequests';
+import DisciplinaryFormCreate from '../pages/teacher/DisciplinaryFormCreate';
+import TeacherRemarks from '../pages/teacher/TeacherRemarks';
 
 const TeacherRoutes = () => {
   return (
@@ -44,6 +47,11 @@ const TeacherRoutes = () => {
       <Route path="lesson-plans" element={<LessonPlans />} />
       <Route path="substitute-request" element={<SubstituteTeacherRequest />} />
       <Route path="substitute-requests" element={<SubstituteRequests />} />
+      {/* Teacher Remarks Routes */}
+      <Route path="teacher-remarks" element={<TeacherRemarks />} />
+      {/* Disciplinary Forms Routes */}
+      <Route path="disciplinary-forms/create" element={<DisciplinaryFormCreate />} />
+      <Route path="disciplinary-forms/:formId" element={<DisciplinaryFormCreate />} />
     </Routes>
   );
 };

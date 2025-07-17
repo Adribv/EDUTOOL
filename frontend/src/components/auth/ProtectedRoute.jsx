@@ -14,7 +14,7 @@ const ProtectedRoute = ({ allowedRoles }) => {
       const userRole = localStorage.getItem('userRole');
 
       // Check for student access
-      if (allowedRoles.includes('student')) {
+      if (allowedRoles.includes('Student')) {
         const studentToken = localStorage.getItem('studentToken');
         if (studentToken || (generalToken && userRole === 'Student')) {
           setIsAuthorized(true);
@@ -24,7 +24,7 @@ const ProtectedRoute = ({ allowedRoles }) => {
       }
 
       // Check for parent access
-      if (allowedRoles.includes('parent')) {
+      if (allowedRoles.includes('Parent')) {
         const parentToken = localStorage.getItem('parentToken');
         if (parentToken || (generalToken && userRole === 'Parent')) {
           setIsAuthorized(true);
@@ -63,7 +63,7 @@ const ProtectedRoute = ({ allowedRoles }) => {
 
   useEffect(() => {
     if (!isLoading && !isAuthorized) {
-      if (allowedRoles.includes('student')) {
+      if (allowedRoles.includes('Student')) {
         toast.error('Please login as a student to access this page');
       } else {
         toast.error('Please login to access this page');
@@ -76,9 +76,9 @@ const ProtectedRoute = ({ allowedRoles }) => {
   }
 
   if (!isAuthorized) {
-    if (allowedRoles.includes('student')) {
+    if (allowedRoles.includes('Student')) {
       return <Navigate to="/student-login" replace />;
-    } else if (allowedRoles.includes('parent')) {
+    } else if (allowedRoles.includes('Parent')) {
       return <Navigate to="/parent-login" replace />;
     } else {
       return <Navigate to="/management-login" replace />;

@@ -4,6 +4,7 @@ import Dashboard from '../pages/admin/Dashboard';
 import A_Inventory from '../pages/admin/A_Inventory';
 import A_Communication from '../pages/admin/A_Communication';
 import A_Events from '../pages/admin/A_Events';
+import EventConsentForm from '../pages/admin/EventConsentForm';
 import A_Classes from '../pages/admin/A_Classes';
 import A_Subjects from '../pages/admin/A_Subjects';
 import A_Schedules from '../pages/admin/A_Schedules';
@@ -35,6 +36,14 @@ import A_Dashboard from '../pages/admin/A_Dashboard';
 import Visitors from '../pages/admin/Visitors';
 import A_Enquiries from '../pages/admin/A_Enquiries';
 import A_ServiceRequests from '../pages/admin/A_ServiceRequests';
+import DisciplinaryFormsManagement from '../pages/admin/DisciplinaryFormsManagement';
+import DisciplinaryFormTemplate from '../pages/admin/DisciplinaryFormTemplate';
+import DisciplinaryFormTemplateEditor from '../pages/admin/DisciplinaryFormTemplateEditor';
+import DisciplinaryFormCreate from '../pages/teacher/DisciplinaryFormCreate';
+import TransportFormsManagement from '../pages/admin/TransportFormsManagement';
+import TransportFormCreate from '../pages/admin/TransportFormCreate';
+import TransportFormView from '../pages/admin/TransportFormView';
+import TeacherRemarks from '../pages/admin/TeacherRemarks';
 
 const AdminRoutes = () => {
   return (
@@ -52,6 +61,7 @@ const AdminRoutes = () => {
         <Route path="inventory" element={<A_Inventory />} />
         <Route path="communications" element={<A_Communication />} />
         <Route path="events" element={<A_Events />} />
+        <Route path="events/:eventId/consent" element={<EventConsentForm />} />
         <Route path="classes" element={<A_Classes />} />
         <Route path="subjects" element={<A_Subjects />} />
         <Route path="schedules" element={<A_Schedules />} />
@@ -76,6 +86,22 @@ const AdminRoutes = () => {
         <Route path="Visitors" element={<Visitors />} />
         <Route path="Enquiries" element={<A_Enquiries />} />
         <Route path="service-requests" element={<A_ServiceRequests />} />
+        {/* Teacher Remarks Routes */}
+        <Route path="teacher-remarks" element={<TeacherRemarks />} />
+        {/* Transport Forms Routes */}
+        <Route path="transport-forms" element={<TransportFormsManagement />} />
+        <Route path="transport-forms/create" element={<TransportFormCreate />} />
+        <Route path="transport-forms/:formId" element={<TransportFormView />} />
+        <Route path="transport-forms/:formId/edit" element={<TransportFormCreate />} />
+
+        {/* Disciplinary Forms Routes */}
+        <Route path="disciplinary-forms" element={<DisciplinaryFormsManagement />} />
+        <Route path="disciplinary-template" element={<DisciplinaryFormTemplate />} />
+        <Route path="disciplinary-forms/create" element={<DisciplinaryFormCreate />} />
+        <Route path="disciplinary-forms/:formId" element={<DisciplinaryFormCreate />} />
+        <Route path="disciplinary-forms/template/new" element={<DisciplinaryFormTemplateEditor />} />
+        <Route path="disciplinary-forms/template/:templateId/edit" element={<DisciplinaryFormTemplateEditor />} />
+        <Route path="disciplinary-forms/template/:templateId" element={<DisciplinaryFormTemplateEditor />} />
       </Route>
     </Routes>
   );

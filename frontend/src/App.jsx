@@ -97,53 +97,53 @@ function App() {
                   <Route path="/management-login" element={<ManagementLogin />} />
                   <Route path="/accountant-login" element={<AccountantLogin />} />
                   {/* Protected Routes */}
-                  <Route element={<ProtectedRoute allowedRoles={['student']} />}>
+                  <Route element={<ProtectedRoute allowedRoles={['Student']} />}>
                     <Route path="/student/*" element={<StudentRoutes />} />
                   </Route>
-                  <Route element={<ProtectedRoute allowedRoles={['parent']} />}>
+                  <Route element={<ProtectedRoute allowedRoles={['Parent']} />}>
                     <Route path="/parent/*" element={<ParentRoutes />} />
                   </Route>
                   {/* Management Routes */}
-                  <Route element={<ProtectedRoute allowedRoles={['teacher']} />}>
+                  <Route element={<ProtectedRoute allowedRoles={['Teacher']} />}>
                     <Route path="/teacher/*" element={<TeacherRoutes />} />
                   </Route>
-                  <Route element={<ProtectedRoute allowedRoles={['adminstaff']} />}>
+                  <Route element={<ProtectedRoute allowedRoles={['AdminStaff']} />}>
                     <Route path="/admin/*" element={<AdminRoutes />} />
                   </Route>
-                  <Route element={<ProtectedRoute allowedRoles={['hod']} />}>
+                  <Route element={<ProtectedRoute allowedRoles={['HOD']} />}>
                     <Route path="/hod/*" element={<HODRoutes />} />
                   </Route>
-                  <Route element={<ProtectedRoute allowedRoles={['principal']} />}>
+                  <Route element={<ProtectedRoute allowedRoles={['Principal']} />}>
                     <Route path="/principal/*" element={<PrincipalRoutes />} />
                   </Route>
-                  <Route element={<ProtectedRoute allowedRoles={['counsellor']} />}>
+                  <Route element={<ProtectedRoute allowedRoles={['Counsellor']} />}>
                     <Route path="/counselor/*" element={<CounselorRoutes />} />
                   </Route>
-                  <Route element={<ProtectedRoute allowedRoles={['viceprincipal']} />}>
+                  <Route element={<ProtectedRoute allowedRoles={['VicePrincipal']} />}>
                     <Route path="/viceprincipal/dashboard" element={<VicePrincipalDashboard />} />
                   </Route>
-                  <Route element={<ProtectedRoute allowedRoles={['accountant']} />}>
+                  <Route element={<ProtectedRoute allowedRoles={['Accountant']} />}>
                     <Route path="/accountant/dashboard" element={<AccountantDashboard />} />
                     <Route path="/accountant/profile" element={<AccountantProfile />} />
                   </Route>
+
                   {/* 404 Route */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
+              <ToastContainer
+                position="top-right"
+                autoClose={5000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+              />
             </AuthProvider>
           </Router>
-          <ToastContainer 
-            position="top-right"
-            autoClose={3000}
-            hideProgressBar={false}
-            newestOnTop
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-            theme="light"
-          />
         </ThemeProvider>
       </QueryClientProvider>
     </ErrorBoundary>

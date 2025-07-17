@@ -149,9 +149,9 @@ const FeeRecords = () => {
       };
       
       const [studentsRes, staffRes, statsRes] = await Promise.all([
-        axios.get('https://api.edulives.com/api/admin-staff/students/public'),
-        axios.get('https://api.edulives.com/api/admin-staff/staff/public'),
-        axios.get('https://api.edulives.com/api/admin-staff/fee-records/stats/public')
+        axios.get('http://localhost:5000/api/admin-staff/students/public'),
+        axios.get('http://localhost:5000/api/admin-staff/staff/public'),
+        axios.get('http://localhost:5000/api/admin-staff/fee-records/stats/public')
       ]);
       
       setStudents(studentsRes.data);
@@ -160,11 +160,11 @@ const FeeRecords = () => {
       
       // Fetch records based on current tab
       if (tabValue === 0) {
-        const studentRecordsRes = await axios.get(`https://api.edulives.com/api/admin-staff/fee-records/student?page=${page + 1}&limit=${rowsPerPage}`, config);
+        const studentRecordsRes = await axios.get(`http://localhost:5000/api/admin-staff/fee-records/student?page=${page + 1}&limit=${rowsPerPage}`, config);
         setStudentFeeRecords(studentRecordsRes.data.data);
         setTotalRecords(studentRecordsRes.data.pagination.totalRecords);
       } else {
-        const staffRecordsRes = await axios.get(`https://api.edulives.com/api/admin-staff/fee-records/staff?page=${page + 1}&limit=${rowsPerPage}`, config);
+        const staffRecordsRes = await axios.get(`http://localhost:5000/api/admin-staff/fee-records/staff?page=${page + 1}&limit=${rowsPerPage}`, config);
         setStaffSalaryRecords(staffRecordsRes.data.data);
         setTotalRecords(staffRecordsRes.data.pagination.totalRecords);
       }
@@ -190,7 +190,7 @@ const FeeRecords = () => {
           'Authorization': `Bearer ${token}`
         }
       };
-      await axios.post('https://api.edulives.com/api/admin-staff/fee-records/student', studentFeeForm, config);
+      await axios.post('http://localhost:5000/api/admin-staff/fee-records/student', studentFeeForm, config);
       toast.success('Student fee record approval request submitted successfully');
       setStudentFeeDialog(false);
       resetStudentFeeForm();
@@ -212,7 +212,7 @@ const FeeRecords = () => {
           'Authorization': `Bearer ${token}`
         }
       };
-      await axios.post('https://api.edulives.com/api/admin-staff/fee-records/staff', staffSalaryForm, config);
+      await axios.post('http://localhost:5000/api/admin-staff/fee-records/staff', staffSalaryForm, config);
       toast.success('Staff salary record approval request submitted successfully');
       setStaffSalaryDialog(false);
       resetStaffSalaryForm();
@@ -263,8 +263,8 @@ const FeeRecords = () => {
       };
       
       const endpoint = importType === 'student' 
-        ? 'https://api.edulives.com/api/admin-staff/fee-records/student/bulk-import'
-        : 'https://api.edulives.com/api/admin-staff/fee-records/staff/bulk-import';
+        ? 'http://localhost:5000/api/admin-staff/fee-records/student/bulk-import'
+        : 'http://localhost:5000/api/admin-staff/fee-records/staff/bulk-import';
       
       const response = await axios.post(endpoint, { records: sheetData }, config);
       
@@ -376,7 +376,7 @@ const FeeRecords = () => {
               try {
                 const token = localStorage.getItem('token');
                 console.log('🔑 Token:', token);
-                const response = await axios.post('https://api.edulives.com/api/admin-staff/fee-records/test', {
+                const response = await axios.post('http://localhost:5000/api/admin-staff/fee-records/test', {
                   test: 'data'
                 }, {
                   headers: {

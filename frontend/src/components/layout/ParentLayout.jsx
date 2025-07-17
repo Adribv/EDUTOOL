@@ -28,6 +28,9 @@ import {
   Logout,
   Settings,
   Notifications,
+  Warning as WarningIcon,
+  LocalShipping,
+  RateReview,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 
@@ -39,6 +42,9 @@ const navItems = [
   { text: 'Fees', icon: <Payment />, path: '/parent/fees' },
   { text: 'Events', icon: <Event />, path: '/parent/events' },
   { text: 'Messages', icon: <Message />, path: '/parent/messages' },
+  { text: 'Transport Forms', icon: <LocalShipping />, path: '/parent/transport-forms' },
+  { text: 'Ward Misconduct', icon: <WarningIcon />, path: '/parent/ward-misconduct' },
+  { text: 'Teacher Remarks', icon: <RateReview />, path: '/parent/teacher-remarks' },
 ];
 
 const ParentLayout = () => {

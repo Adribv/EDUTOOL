@@ -30,7 +30,9 @@ import {
   TrendingUp,
   Schedule,
   Payment,
+  Assignment as ConsentIcon,
 } from '@mui/icons-material';
+import { adminAPI } from '../../services/api';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -38,6 +40,20 @@ const Dashboard = () => {
   const { data: dashboardData, isLoading, error } = useQuery({
     queryKey: ['parent_dashboard'],
     queryFn: parentAPI.getDashboard,
+  });
+
+  // Fetch events that have consent forms
+  const { data: eventsWithConsentForms } = useQuery({
+    queryKey: ['eventsWithConsentForms'],
+    queryFn: async () => {
+      try {
+        const events = await adminAPI.getEvents();
+        return events.filter(event => event.status === 'Approved');
+      } catch (error) {
+        console.error('Error fetching events:', error);
+        return [];
+      }
+    },
   });
 
   if (isLoading) {
@@ -290,6 +306,78 @@ const Dashboard = () => {
                     sx={{ mt: 2 }}
                   >
                     View Calendar
+                  </Button>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Consent Forms */}
+            <Grid item xs={12} md={6}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Consent Forms
+                  </Typography>
+                  {eventsWithConsentForms && eventsWithConsentForms.length > 0 ? (
+                    <List>
+                      {eventsWithConsentForms.slice(0, 5).map((event) => (
+                        <ListItem key={event._id} divider>
+                          <ListItemAvatar>
+                            <Avatar sx={{ bgcolor: 'warning.main' }}>
+                              <ConsentIcon />
+                            </Avatar>
+                          </ListItemAvatar>
+                          <ListItemText
+                            primary={event.title}
+                            secondary={`Event Date: ${new Date(event.date).toLocaleDateString()}`}
+                            action={
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                onClick={() => navigate(`/parent/consent-form/${event._id}`)}
+                              >
+                                Fill Form
+                              </Button>
+                            }
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
+                      No consent forms available
+                    </Typography>
+                  )}
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    onClick={() => navigate('/parent/consent-forms')}
+                    sx={{ mt: 2 }}
+                  >
+                    View All Consent Forms
+                  </Button>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Teacher Remarks */}
+            <Grid item xs={12} md={6}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Teacher Remarks
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
+                    View teacher remarks and syllabus completion for your children
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    onClick={() => navigate('/parent/teacher-remarks')}
+                    sx={{ mt: 2 }}
+                    startIcon={<Assessment />}
+                  >
+                    View Teacher Remarks
                   </Button>
                 </CardContent>
               </Card>

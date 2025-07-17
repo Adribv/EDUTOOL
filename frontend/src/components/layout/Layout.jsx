@@ -47,6 +47,9 @@ import {
   Psychology,
   Security,
   Group as GroupIcon,
+  Warning,
+  LocalShipping,
+  RateReview,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import Logo from './Logo';
@@ -115,11 +118,13 @@ const Layout = () => {
             'SystemSettings': <Settings />,
             'Enquiries': <Message />,
             'Visitors': <GroupIcon />,
+            'Disciplinary_Forms': <Warning />,
+            'Teacher_Remarks': <RateReview />,
           };
           return {
             text: item.replace(/_/g, ' '),
             icon: iconMap[item] || <Assignment />,
-            path: `/admin/${item}`,
+            path: `/admin/${item.toLowerCase().replace(/_/g, '-')}`,
           };
         })
       ].flat();
@@ -176,6 +181,9 @@ const Layout = () => {
         { text: 'Enquiries', icon: <Message />, path: '/admin/Enquiries' },
         { text: 'Visitors', icon: <GroupIcon />, path: '/admin/Visitors' },
         { text: 'Service Requests', icon: <Approval />, path: '/admin/service-requests' },
+        { text: 'Transport Forms', icon: <LocalShipping />, path: '/admin/transport-forms' },
+        { text: 'Disciplinary Forms', icon: <Warning />, path: '/admin/disciplinary-forms' },
+        { text: 'Teacher Remarks', icon: <RateReview />, path: '/admin/teacher-remarks' },
       ],
       ITAdmin: [
         { text: 'IT Admin Dashboard', icon: <Dashboard />, path: '/itadmin/dashboard' },
@@ -190,6 +198,7 @@ const Layout = () => {
         { text: 'Calendar', icon: <CalendarToday />, path: '/teacher/calendar' },
         { text: 'Substitute Teacher Request', icon: <Approval />, path: '/teacher/substitute-request' },
         { text: 'My Substitute Requests', icon: <Approval />, path: '/teacher/substitute-requests' },
+        { text: 'Teacher Remarks', icon: <RateReview />, path: '/teacher/teacher-remarks' },
       ],
       Student: [
         { text: 'Courses', icon: <School />, path: '/student/courses' },
@@ -289,23 +298,26 @@ const Layout = () => {
               },
             }}
           >
-            <ListItemIcon sx={{ 
-              color: 'inherit', 
-              minWidth: drawerCollapsed ? 40 : 48,
-              transition: 'color 0.2s ease-in-out'
-            }}>
+            <ListItemIcon
+              sx={{
+                minWidth: drawerCollapsed ? 0 : 40,
+                mr: drawerCollapsed ? 0 : 1,
+                justifyContent: 'center',
+                color: 'rgba(255, 255, 255, 0.7)',
+              }}
+            >
               {item.icon}
             </ListItemIcon>
             {!drawerCollapsed && (
-              <ListItemText 
-                primary={item.text} 
-                sx={{ 
-                  '& .MuiTypography-root': { 
+              <ListItemText
+                primary={item.text}
+                sx={{
+                  '& .MuiListItemText-primary': {
                     fontSize: '0.875rem',
-                    fontWeight: isActiveRoute(item.path) ? 600 : 500,
-                    color: 'white'
-                  } 
-                }} 
+                    fontWeight: 500,
+                    color: 'white',
+                  },
+                }}
               />
             )}
           </ListItemButton>

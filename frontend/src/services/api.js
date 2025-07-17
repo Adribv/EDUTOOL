@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://api.edulives.com/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -215,6 +215,19 @@ export const parentAPI = {
   getAnnouncements: () => api.get('/parents/announcements'),
   getSchoolCalendar: (params) => api.get('/parents/calendar', { params }),
   linkStudent: (rollNumber) => api.post('/parents/link-student', { rollNumber }),
+
+  // Parent Transport Form APIs
+  getParentTransportForms: () => api.get('/parents/transport-forms').then(res => res.data),
+  createTransportForm: (formData) => api.post('/parents/transport-forms', formData).then(res => res.data),
+  getTransportFormById: (formId) => api.get(`/parents/transport-forms/${formId}`).then(res => res.data),
+  updateTransportForm: (formId, formData) => api.put(`/parents/transport-forms/${formId}`, formData).then(res => res.data),
+  deleteTransportForm: (formId) => api.delete(`/parents/transport-forms/${formId}`).then(res => res.data),
+  downloadTransportFormPDF: (formId) => api.get(`/parents/transport-forms/${formId}/download-pdf`, { 
+    responseType: 'blob' 
+  }).then(res => res.data),
+  downloadAdminTransportFormPDF: (formId) => api.get(`/parents/transport-forms/${formId}/download-admin-pdf`, { 
+    responseType: 'blob' 
+  }).then(res => res.data),
 };
 
 // Admin endpoints
@@ -544,6 +557,7 @@ export const adminAPI = {
     return api.put(`/admin-staff/calendar/${id}`, payload);
   },
   deleteEvent: (id) => api.delete(`/admin-staff/calendar/${id}`),
+  getEvent: (id) => api.get(`/admin-staff/calendar/${id}`),
 
   // Communication Management
   getCommunications: () => api.get('/admin-staff/communications').then(res=>{
@@ -1169,12 +1183,143 @@ export const principalAPI = {
   approveLessonPlan: (planId, data) => api.put(`/principal/lesson-plans/${planId}/approve`, data).then(res => res.data),
 };
 
+export const consentAPI = {
+  createTemplate: (eventId, data) => api.post(`/admin-staff/consent-forms/${eventId}`, data).then(res => res.data),
+  updateTemplate: (eventId, data) => api.put(`/admin-staff/consent-forms/${eventId}`, data).then(res => res.data),
+  getForm: (eventId) => api.get(`/consent-forms/${eventId}`).then(res => res.data),
+  parentFill: (eventId, data) => api.put(`/consent-forms/${eventId}/parent`, data).then(res => res.data),
+  fixIncompleteForm: (eventId, data) => api.patch(`/consent-forms/${eventId}/fix`, data).then(res => res.data),
+};
+
+export const disciplinaryAPI = {
+  // Template Management APIs
+  getAllTemplates: () => api.get('/disciplinary-templates').then(res => res.data),
+  getActiveTemplates: () => api.get('/disciplinary-templates/active').then(res => res.data),
+  getDefaultTemplate: () => api.get('/disciplinary-templates/default').then(res => res.data),
+  getTemplateById: (templateId) => api.get(`/disciplinary-templates/${templateId}`).then(res => res.data),
+  createTemplate: (data) => api.post('/disciplinary-templates', data).then(res => res.data),
+  updateTemplate: (templateId, data) => api.put(`/disciplinary-templates/${templateId}`, data).then(res => res.data),
+  deleteTemplate: (templateId) => api.delete(`/disciplinary-templates/${templateId}`).then(res => res.data),
+  toggleTemplateStatus: (templateId) => api.patch(`/disciplinary-templates/${templateId}/toggle-status`).then(res => res.data),
+  setAsDefaultTemplate: (templateId) => api.patch(`/disciplinary-templates/${templateId}/set-default`).then(res => res.data),
+  cloneTemplate: (templateId) => api.post(`/disciplinary-templates/${templateId}/clone`).then(res => res.data),
+  getTemplateStats: (templateId) => api.get(`/disciplinary-templates/${templateId}/stats`).then(res => res.data),
+  
+  // Legacy Template APIs (for backward compatibility)
+  getTemplate: () => api.get('/disciplinary-forms/template').then(res => res.data),
+  
+  // Admin APIs
+  getAllForms: (params) => api.get('/disciplinary-forms/admin/forms', { params }).then(res => res.data),
+  getStats: (params) => api.get('/disciplinary-forms/admin/stats', { params }).then(res => res.data),
+  deleteForm: (formId) => api.delete(`/disciplinary-forms/admin/forms/${formId}`).then(res => res.data),
+  
+  // Teacher APIs
+  createForm: (data) => api.post('/disciplinary-forms/teacher/forms', data).then(res => res.data),
+  getTeacherForms: (params) => api.get('/disciplinary-forms/teacher/forms', { params }).then(res => res.data),
+  updateForm: (formId, data) => api.put(`/disciplinary-forms/teacher/forms/${formId}`, data).then(res => res.data),
+  submitForm: (formId) => api.post(`/disciplinary-forms/teacher/forms/${formId}/submit`).then(res => res.data),
+  
+  // Student APIs
+  getStudentForms: () => api.get('/disciplinary-forms/student/forms').then(res => res.data),
+  studentAcknowledge: (formId, data) => api.post(`/disciplinary-forms/student/forms/${formId}/acknowledge`, data).then(res => res.data),
+  
+  // Parent APIs
+  getParentForms: () => api.get('/disciplinary-forms/parent/forms').then(res => res.data),
+  parentAcknowledge: (formId, data) => api.post(`/disciplinary-forms/parent/forms/${formId}/acknowledge`, data).then(res => res.data),
+  
+  // New Student Disciplinary Misconduct APIs
+  getStudentMisconductRecords: () => api.get('/disciplinary-forms/student/misconduct-records').then(res => res.data),
+  respondToMisconduct: (actionId, response) => api.post(`/disciplinary-forms/student/misconduct/${actionId}/respond`, { response }).then(res => res.data),
+  
+  // New Parent Ward Disciplinary Misconduct APIs
+  getWardMisconductRecords: () => api.get('/disciplinary-forms/parent/ward-misconduct-records').then(res => res.data),
+  respondToWardMisconduct: (studentId, actionId, response) => api.post(`/disciplinary-forms/parent/ward-misconduct/${studentId}/${actionId}/respond`, { response }).then(res => res.data),
+  
+  // Teacher Class Misconduct Records API
+  getClassMisconductRecords: (classname, section) => api.get(`/disciplinary-forms/teacher/class-misconduct-records?classname=${classname}&section=${section}`).then(res => res.data),
+  
+  // Common APIs
+  getFormById: (formId) => api.get(`/disciplinary-forms/forms/${formId}`).then(res => res.data),
+  
+  // PDF APIs
+  downloadFormPDF: (formId) => api.get(`/disciplinary-forms/forms/${formId}/download-pdf`, { 
+    responseType: 'blob' 
+  }).then(res => res.data),
+  generateFormPDF: (formId) => api.post(`/disciplinary-forms/forms/${formId}/generate-pdf`).then(res => res.data),
+};
+
+// Transport Form APIs
+export const transportAPI = {
+  // CRUD operations
+  getAllForms: (params = {}) => api.get('/transport-forms', { params }).then(res => res.data),
+  getFormById: (formId) => api.get(`/transport-forms/${formId}`).then(res => res.data),
+  createForm: (formData) => api.post('/transport-forms', formData).then(res => res.data),
+  updateForm: (formId, formData) => api.put(`/transport-forms/${formId}`, formData).then(res => res.data),
+  deleteForm: (formId) => api.delete(`/transport-forms/${formId}`).then(res => res.data),
+  
+  // Status management
+  updateFormStatus: (formId, statusData) => api.patch(`/transport-forms/${formId}/status`, statusData).then(res => res.data),
+  
+  // Statistics
+  getFormStats: (period = 'month') => api.get(`/transport-forms/stats?period=${period}`).then(res => res.data),
+  
+  // PDF operations
+  downloadFormPDF: (formId) => api.get(`/transport-forms/${formId}/download-pdf`, { 
+    responseType: 'blob' 
+  }).then(res => res.data),
+  generateFormPDF: (formId) => api.post(`/transport-forms/${formId}/generate-pdf`).then(res => res.data),
+};
+
+export const syllabusAPI = {
+  // Admin APIs
+  createEntry: (data) => api.post('/syllabus-completion/admin', data).then(res => res.data),
+  getAllEntries: (params) => api.get('/syllabus-completion/admin', { params }).then(res => res.data),
+  updateEntry: (id, data) => api.put(`/syllabus-completion/admin/${id}`, data).then(res => res.data),
+  deleteEntry: (id) => api.delete(`/syllabus-completion/admin/${id}`).then(res => res.data),
+  bulkCreate: (entries) => api.post('/syllabus-completion/admin/bulk', { entries }).then(res => res.data),
+  getStats: (params) => api.get('/syllabus-completion/admin/stats', { params }).then(res => res.data),
+  generateForm: (formType, filters) => api.post('/syllabus-completion/admin/generate-form', { formType, filters }).then(res => res.data),
+  
+  // Teacher APIs
+  getTeacherEntries: (teacherId, params) => api.get(`/syllabus-completion/teacher/${teacherId}`, { params }).then(res => res.data),
+  updateProgress: (id, data) => api.put(`/syllabus-completion/teacher/${id}/progress`, data).then(res => res.data),
+  updateTeacherRemarks: (id, data) => api.put(`/syllabus-completion/teacher/${id}/remarks`, data).then(res => res.data),
+  
+  // Student APIs
+  getStudentEntries: (params) => api.get('/syllabus-completion/student', { params }).then(res => res.data),
+  
+  // Parent APIs
+  getParentEntries: (childId, params) => api.get(`/syllabus-completion/parent/${childId}`, { params }).then(res => res.data),
+};
+
 export const accountantAPI = {
   getSummary: () => api.get('/accountant/summary').then(res=>res.data),
   getExpenses: (params={}) => api.get('/accountant/expenses', { params }).then(res=>res.data),
   createExpense: (data) => api.post('/accountant/expenses', data),
   getIncomes: (params={}) => api.get('/accountant/incomes', { params }).then(res=>res.data),
   generateSampleData: () => api.post('/accountant/sample-data'),
+};
+
+export const teacherRemarksAPI = {
+  // Admin APIs
+  createForm: (data) => api.post('/teacher-remarks/admin', data).then(res => res.data),
+  getAllForms: (params) => api.get('/teacher-remarks/admin', { params }).then(res => res.data),
+  updateForm: (id, data) => api.put(`/teacher-remarks/admin/${id}`, data).then(res => res.data),
+  deleteForm: (id) => api.delete(`/teacher-remarks/admin/${id}`).then(res => res.data),
+  bulkCreate: (forms) => api.post('/teacher-remarks/admin/bulk', { forms }).then(res => res.data),
+  getStats: (params) => api.get('/teacher-remarks/admin/stats', { params }).then(res => res.data),
+  generateReport: (reportType, filters) => api.post('/teacher-remarks/admin/generate-report', { reportType, filters }).then(res => res.data),
+  
+  // Teacher APIs
+  getTeacherForms: (teacherId, params) => api.get(`/teacher-remarks/teacher/${teacherId}`, { params }).then(res => res.data),
+  updateProgress: (id, data) => api.put(`/teacher-remarks/teacher/${id}/progress`, data).then(res => res.data),
+  updateDetailedRemarks: (id, data) => api.put(`/teacher-remarks/teacher/${id}/remarks`, data).then(res => res.data),
+  
+  // Student APIs
+  getStudentForms: (params) => api.get('/teacher-remarks/student', { params }).then(res => res.data),
+  
+  // Parent APIs
+  getParentForms: (childId, params) => api.get(`/teacher-remarks/parent/${childId}`, { params }).then(res => res.data),
 };
 
 export default api;

@@ -76,6 +76,17 @@ router.get('/children/:rollNumber/certificates', parentController.getChildCertif
 // Student Linking
 router.post('/link-student', parentController.linkStudent);
 
+// Transport form routes for parents
+router.get('/transport-forms', parentController.getParentTransportForms);
+router.post('/transport-forms', parentController.createTransportForm);
+router.get('/transport-forms/:formId', parentController.getTransportFormById);
+router.put('/transport-forms/:formId', parentController.updateTransportForm);
+router.delete('/transport-forms/:formId', parentController.deleteTransportForm);
+router.get('/transport-forms/:formId/download-pdf', parentController.downloadTransportFormPDF);
+
+// Download admin-created transport form PDF (for events/calendar)
+router.get('/transport-forms/:formId/download-admin-pdf', parentController.downloadAdminTransportFormPDF);
+
 // Debug endpoint
 router.get('/debug', parentController.debugParentData);
 

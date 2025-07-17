@@ -528,7 +528,12 @@ const Assignments = () => {
                       <Typography variant="body2" color="text.secondary">
                         {assignment.subject} • {assignment.class} - {assignment.section}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
+                      { (assignment.createdAt || assignment.createdDate) && (
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                          Created: {new Date(assignment.createdAt || assignment.createdDate).toLocaleDateString()}
+                        </Typography>
+                      ) }
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                         Due: {new Date(assignment.dueDate).toLocaleDateString()}
                         {assignment.daysUntilDue > 0 && (
                           <span> ({assignment.daysUntilDue} days left)</span>

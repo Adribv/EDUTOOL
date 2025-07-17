@@ -1871,6 +1871,24 @@ exports.getCalendarEvents = async (req, res) => {
   }
 };
 
+exports.getCalendarEventById = async (req, res) => {
+  try {
+    const eventId = req.params.id;
+    
+    const event = await Calendar.findById(eventId)
+      .populate('createdBy', 'name employeeId');
+    
+    if (!event) {
+      return res.status(404).json({ message: 'Calendar event not found' });
+    }
+    
+    res.json(event);
+  } catch (error) {
+    console.error('Error getting calendar event by ID:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 exports.deleteCalendarEvent = async (req, res) => {
   try {
     const eventId = req.params.id;

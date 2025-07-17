@@ -37,10 +37,13 @@ import {
   Pending as PendingIcon,
   CheckCircle as ApprovedIcon,
   Cancel as RejectedIcon,
+  Assignment as ConsentIcon
 } from '@mui/icons-material';
 import { adminAPI } from '../../services/api';
+import { useNavigate } from 'react-router-dom';
 
 const A_Events = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [events, setEvents] = useState([]);
@@ -365,6 +368,14 @@ const A_Events = () => {
                           disabled={event.status === 'Rejected'}
                         >
                           <EditIcon />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          color="secondary"
+                          onClick={() => navigate(`/admin/events/${event._id}/consent`)}
+                          title="Consent Form"
+                        >
+                          <ConsentIcon />
                         </IconButton>
                         <IconButton
                           size="small"

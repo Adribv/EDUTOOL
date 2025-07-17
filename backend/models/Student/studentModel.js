@@ -75,7 +75,41 @@ const studentSchema = new mongoose.Schema({
     name: String,
     relationship: String,
     contactNumber: String
-  }
+  },
+  
+  // Disciplinary Actions
+  disciplinaryActions: [{
+    formId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'DisciplinaryForm'
+    },
+    date: {
+      type: Date,
+      default: Date.now
+    },
+    incident: String,
+    actionTaken: String,
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Staff'
+    },
+    createdByName: String,
+    status: {
+      type: String,
+      enum: ['pending', 'acknowledged', 'resolved'],
+      default: 'pending'
+    },
+    studentResponse: String,
+    parentResponse: String,
+    teacherNotified: {
+      type: Boolean,
+      default: false
+    },
+    parentNotified: {
+      type: Boolean,
+      default: false
+    }
+  }]
 }, { timestamps: true });
 
 // Hash password before saving

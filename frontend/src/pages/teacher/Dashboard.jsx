@@ -21,7 +21,7 @@ import {
   Favorite, FavoriteBorder, ThumbUp, ThumbDown, VisibilityOff, Archive, Unarchive,
   Block, Report, Flag, Bookmark, BookmarkBorder, PlayArrow, Pause, Stop, SkipNext,
   VolumeUp, VolumeOff, Fullscreen, FullscreenExit, ZoomIn, ZoomOut, RotateLeft, RotateRight,
-  SupervisorAccount, People, Cancel, Approval
+  SupervisorAccount, People, Cancel, Approval, RateReview
 } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { teacherAPI, staffAPI } from '../../services/api';
@@ -40,6 +40,7 @@ import TeacherLeaveRequests from './TeacherLeaveRequests';
 import LessonPlans from './LessonPlans';
 import SubstituteRequests from './SubstituteRequests';
 import SubstituteTeacherRequest from './SubstituteTeacherRequest';
+import TeacherRemarks from './TeacherRemarks';
 
 // Feature tabs configuration
 const featureTabs = [
@@ -55,10 +56,11 @@ const featureTabs = [
   { label: "Student's Approvals", icon: <Event />, key: 'leaveRequests' },
   { label: "Substitute Requests", icon: <Approval />, key: 'substituteRequests' },
   { label: "New Substitute Request", icon: <Add />, key: 'newSubstituteRequest' },
-  { label: "Leave Request", icon: <Assignment />, key: 'teacherLeaveRequests' },
+  { label: "Leave Request", icon: <Assignment />, key: 'teacherLeaveRequests' },
   { label: 'Resources', icon: <Book />, key: 'resources' },
   { label: 'Lesson Plans', icon: <Work />, key: 'lessonPlans' },
   { label: 'Communication', icon: <Message />, key: 'communication' },
+  { label: 'Remarks', icon: <RateReview />, key: 'remarks' },
   { label: 'Projects', icon: <Psychology />, key: 'projects' },
   { label: 'Parent Interaction', icon: <Group />, key: 'parentInteraction' },
   { label: 'Feedback', icon: <Feedback />, key: 'feedback' },
@@ -1390,12 +1392,14 @@ export default function TeacherDashboard() {
       case 15:
         return <Communication />;
       case 16:
-        return <div>Projects Component</div>;
+        return <TeacherRemarks />;
       case 17:
-        return <div>Parent Interaction Component</div>;
+        return <div>Projects Component</div>;
       case 18:
-        return <div>Feedback Component</div>;
+        return <div>Parent Interaction Component</div>;
       case 19:
+        return <div>Feedback Component</div>;
+      case 20:
         return <div>Notifications Component</div>;
       default:
         return <DashboardOverview />;

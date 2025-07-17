@@ -10,6 +10,8 @@ const initialForm = {
   staffName: '',
   dutyType: '',
   activitiesDetails: '',
+  fromDateTime: '',
+  toDateTime: '',
   timeSlot: '',
   location: '',
   autoReminder: '',
@@ -84,6 +86,12 @@ const A_ServiceRequests = () => {
                 <TextField label="Activities Details" name="activitiesDetails" value={form.activitiesDetails} onChange={handleChange} fullWidth multiline rows={2} />
               </Grid>
               <Grid item xs={12} sm={6}>
+                <TextField label="From Date & Time" name="fromDateTime" type="datetime-local" value={form.fromDateTime} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} required />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField label="To Date & Time" name="toDateTime" type="datetime-local" value={form.toDateTime} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} required />
+              </Grid>
+              <Grid item xs={12} sm={6}>
                 <TextField label="Time Slot / Period" name="timeSlot" value={form.timeSlot} onChange={handleChange} fullWidth required />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -117,7 +125,8 @@ const A_ServiceRequests = () => {
               <TableCell>Date</TableCell>
               <TableCell>Staff Name</TableCell>
               <TableCell>Duty Type</TableCell>
-              <TableCell>Time Slot</TableCell>
+              <TableCell>From</TableCell>
+              <TableCell>To</TableCell>
               <TableCell>Location</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Current Approver</TableCell>
@@ -129,7 +138,8 @@ const A_ServiceRequests = () => {
                 <TableCell>{req.requestData?.date}</TableCell>
                 <TableCell>{req.requestData?.staffName}</TableCell>
                 <TableCell>{req.requestData?.dutyType}</TableCell>
-                <TableCell>{req.requestData?.timeSlot}</TableCell>
+                <TableCell>{req.requestData?.fromDateTime ? new Date(req.requestData.fromDateTime).toLocaleString() : '-'}</TableCell>
+                <TableCell>{req.requestData?.toDateTime ? new Date(req.requestData.toDateTime).toLocaleString() : '-'}</TableCell>
                 <TableCell>{req.requestData?.location}</TableCell>
                 <TableCell>{req.status}</TableCell>
                 <TableCell>{req.currentApprover}</TableCell>

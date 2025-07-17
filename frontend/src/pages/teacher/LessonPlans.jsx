@@ -30,7 +30,7 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
-import { Upload, Visibility, Download, Description as TemplateIcon } from '@mui/icons-material';
+import { Upload, Visibility, Download as DownloadIcon, OpenInNew as OpenInNewIcon, Description as TemplateIcon } from '@mui/icons-material';
 import { teacherAPI } from '../../services/api';
 import { toast } from 'react-toastify';
 import LessonPlanViewer from '../../components/LessonPlanViewer';
@@ -380,14 +380,14 @@ const LessonPlans = () => {
                   </Tooltip>
                   {plan.pdfUrl && (
                     <Tooltip title="Download PDF">
-                      <IconButton component="a" href={`https://api.edulives.com/${plan.pdfUrl}`} target="_blank" rel="noopener noreferrer">
+                      <IconButton component="a" href={`http://localhost:5000/${plan.pdfUrl}`} target="_blank" rel="noopener noreferrer">
                         <OpenInNewIcon />
                       </IconButton>
                     </Tooltip>
                   )}
                   {plan.videoUrl && (
                     <Tooltip title="Download Video">
-                      <IconButton component="a" href={`https://api.edulives.com/${plan.videoUrl}`} download>
+                      <IconButton component="a" href={`http://localhost:5000/${plan.videoUrl}`} download>
                         <DownloadIcon />
                       </IconButton>
                     </Tooltip>

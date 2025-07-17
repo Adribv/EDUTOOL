@@ -26,6 +26,9 @@ import PaymentReceipts from '../pages/student/PaymentReceipts';
 import MCQTest from '../pages/student/MCQTest';
 import MCQResults from '../pages/student/MCQResults';
 import MCQAssignmentsList from '../pages/student/MCQAssignmentsList';
+import DisciplinaryFormAcknowledge from '../pages/student/DisciplinaryFormAcknowledge';
+import DisciplinaryMisconduct from '../pages/student/DisciplinaryMisconduct';
+import TeacherRemarksView from '../pages/student/TeacherRemarksView';
 
 const StudentRoutes = () => {
   return (
@@ -76,6 +79,13 @@ const StudentRoutes = () => {
         <Route path="/mcq-assignments-list" element={<MCQAssignmentsList />} />
         <Route path="/mcq-test/:assignmentId" element={<MCQTest />} />
         <Route path="/mcq-results/:assignmentId" element={<MCQResults />} />
+        
+        {/* Disciplinary Forms */}
+        <Route path="/disciplinary-forms/:formId/acknowledge" element={<DisciplinaryFormAcknowledge />} />
+        <Route path="/disciplinary-misconduct" element={<DisciplinaryMisconduct />} />
+        
+        {/* Teacher Remarks */}
+        <Route path="/teacher-remarks" element={<TeacherRemarksView />} />
       </Routes>
     </StudentLayout>
   );

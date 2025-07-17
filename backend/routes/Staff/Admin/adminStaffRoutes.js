@@ -210,6 +210,7 @@ router.get('/reports/fee-collection', adminStaffController.generateFeeCollection
 router.post('/calendar', adminStaffController.addCalendarEvent);
 router.put('/calendar/:id', adminStaffController.updateCalendarEvent);
 router.get('/calendar', adminStaffController.getCalendarEvents);
+router.get('/calendar/:id', adminStaffController.getCalendarEventById);
 router.delete('/calendar/:id', adminStaffController.deleteCalendarEvent);
 
 // Academic Structure Routes

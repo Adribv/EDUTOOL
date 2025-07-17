@@ -30,6 +30,8 @@ export const roleConfig = {
       'A_Classes',
       'A_Subjects',
       'A_Schedules',
+      'Disciplinary_Forms',
+      'Teacher_Remarks',
     ],
     dashboard: [
       'Admissions',
@@ -68,6 +70,7 @@ export const roleConfig = {
     sidebar: [
       'A_Users',
       'A_Reports',
+      'Disciplinary_Forms',
     ],
     dashboard: [
       'Counseling',

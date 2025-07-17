@@ -37,8 +37,15 @@ exports.getChildrenProfiles = async (req, res) => {
     console.log('✅ Parent found:', { 
       name: parent.name, 
       email: parent.email, 
-      childRollNumbers: parent.childRollNumbers 
+      childRollNumbers: parent.childRollNumbers,
+      childrenArray: parent.children
     });
+
+    // Check if parent has any child roll numbers
+    if (!parent.childRollNumbers || parent.childRollNumbers.length === 0) {
+      console.log('⚠️ Parent has no child roll numbers linked');
+      return res.json([]);
+    }
 
     // Get all children based on roll numbers
     const children = await Student.find({
@@ -53,6 +60,8 @@ exports.getChildrenProfiles = async (req, res) => {
       section: c.section 
     })));
 
+    // Log the exact response being sent
+    console.log('📤 Sending response:', JSON.stringify(children, null, 2));
     res.json(children);
   } catch (error) {
     console.error('❌ Error fetching children profiles:', error);
@@ -1099,6 +1108,22 @@ exports.getSchoolCalendar = async (req, res) => {
       Event.find(eventQuery).sort({ startDate: 1 })
     ]);
     
+    // Fetch admin-created transport forms for parents
+    const TransportForm = require('../../models/transportForm.model');
+    const parent = await Parent.findById(req.user.id);
+    
+    let transportForms = [];
+    if (parent && parent.childRollNumbers && parent.childRollNumbers.length > 0) {
+      // Get transport forms created by admin for this parent's children
+      transportForms = await TransportForm.find({
+        rollNumber: { $in: parent.childRollNumbers },
+        createdBy: { $exists: true, $ne: null }, // Only admin-created forms
+        status: { $in: ['approved', 'completed'] } // Only approved/completed forms
+      })
+      .populate('createdBy', 'name role')
+      .sort({ createdAt: -1 });
+    }
+    
     // Format calendar events to match frontend expectations
     const formattedCalendarEvents = calendarEvents.map(event => ({
       _id: event._id,
@@ -1131,12 +1156,40 @@ exports.getSchoolCalendar = async (req, res) => {
       source: 'event'
     }));
     
+    // Format transport forms to match frontend expectations
+    const formattedTransportForms = transportForms.map(form => ({
+      _id: form._id,
+      title: `Transport Form - ${form.studentFullName}`,
+      description: `Transport request for ${form.studentFullName} (${form.rollNumber}) from ${form.pickupLocation} to ${form.dropLocation}. Purpose: ${form.purposeOfTransportation}`,
+      startDate: form.dateRequiredFrom,
+      endDate: form.dateRequiredTo,
+      venue: `${form.pickupLocation} to ${form.dropLocation}`,
+      organizer: form.createdBy?.name || 'School Administration',
+      eventType: 'Transport',
+      audience: 'Parents',
+      status: form.status,
+      isHoliday: false,
+      source: 'transport',
+      // Transport-specific fields
+      transportFormId: form._id,
+      studentName: form.studentFullName,
+      rollNumber: form.rollNumber,
+      pickupLocation: form.pickupLocation,
+      dropLocation: form.dropLocation,
+      pickupTime: form.pickupTime,
+      dropTime: form.dropTime,
+      purpose: form.purposeOfTransportation,
+      hasPDF: !!form.pdfFile,
+      createdBy: form.createdBy
+    }));
+    
     // Combine and sort all events
-    const allEvents = [...formattedCalendarEvents, ...formattedEventEvents]
+    const allEvents = [...formattedCalendarEvents, ...formattedEventEvents, ...formattedTransportForms]
       .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
     
     console.log('📅 Calendar events found:', calendarEvents.length);
     console.log('🎉 Event events found:', eventEvents.length);
+    console.log('🚌 Transport forms found:', transportForms.length);
     console.log('📊 Total events returned:', allEvents.length);
     
     res.json(allEvents);
@@ -1611,6 +1664,272 @@ exports.debugParentData = async (req, res) => {
     const parent = await Parent.findById(req.user.id);
     res.json({ parent, message: 'Debug data' });
   } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Transport Form Management for Parents
+
+// Get all transport forms for parent's children
+exports.getParentTransportForms = async (req, res) => {
+  try {
+    const parent = await Parent.findById(req.user.id);
+    if (!parent) {
+      return res.status(404).json({ message: 'Parent not found' });
+    }
+
+    // Get transport forms for all children of this parent
+    const TransportForm = require('../../models/transportForm.model');
+    const forms = await TransportForm.find({
+      rollNumber: { $in: parent.childRollNumbers }
+    }).sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      data: forms
+    });
+  } catch (error) {
+    console.error('Error fetching parent transport forms:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Create a new transport form
+exports.createTransportForm = async (req, res) => {
+  try {
+    const parent = await Parent.findById(req.user.id);
+    if (!parent) {
+      return res.status(404).json({ message: 'Parent not found' });
+    }
+
+    // Check if the student belongs to this parent
+    if (!parent.childRollNumbers.includes(req.body.rollNumber)) {
+      return res.status(403).json({ message: 'Not authorized to create transport form for this student' });
+    }
+
+    const TransportForm = require('../../models/transportForm.model');
+    
+    // Add parent information to the form
+    const formData = {
+      ...req.body,
+      parentId: req.user.id,
+      parentName: parent.name,
+      parentEmail: parent.email,
+      parentContact: parent.contactNumber,
+      status: 'pending',
+      submittedAt: new Date()
+    };
+
+    const transportForm = new TransportForm(formData);
+    await transportForm.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Transport form created successfully',
+      data: transportForm
+    });
+  } catch (error) {
+    console.error('Error creating transport form:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Get a specific transport form by ID
+exports.getTransportFormById = async (req, res) => {
+  try {
+    const { formId } = req.params;
+    const parent = await Parent.findById(req.user.id);
+    
+    if (!parent) {
+      return res.status(404).json({ message: 'Parent not found' });
+    }
+
+    const TransportForm = require('../../models/transportForm.model');
+    const form = await TransportForm.findById(formId);
+
+    if (!form) {
+      return res.status(404).json({ message: 'Transport form not found' });
+    }
+
+    // Check if the form belongs to this parent's children
+    if (!parent.childRollNumbers.includes(form.rollNumber)) {
+      return res.status(403).json({ message: 'Not authorized to view this transport form' });
+    }
+
+    res.json({
+      success: true,
+      data: form
+    });
+  } catch (error) {
+    console.error('Error fetching transport form:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Update a transport form
+exports.updateTransportForm = async (req, res) => {
+  try {
+    const { formId } = req.params;
+    const parent = await Parent.findById(req.user.id);
+    
+    if (!parent) {
+      return res.status(404).json({ message: 'Parent not found' });
+    }
+
+    const TransportForm = require('../../models/transportForm.model');
+    const form = await TransportForm.findById(formId);
+
+    if (!form) {
+      return res.status(404).json({ message: 'Transport form not found' });
+    }
+
+    // Check if the form belongs to this parent's children
+    if (!parent.childRollNumbers.includes(form.rollNumber)) {
+      return res.status(403).json({ message: 'Not authorized to update this transport form' });
+    }
+
+    // Only allow updates if form is pending
+    if (form.status !== 'pending') {
+      return res.status(400).json({ message: 'Cannot update transport form that is not pending' });
+    }
+
+    // Update the form
+    const updatedForm = await TransportForm.findByIdAndUpdate(
+      formId,
+      { ...req.body, updatedAt: new Date() },
+      { new: true }
+    );
+
+    res.json({
+      success: true,
+      message: 'Transport form updated successfully',
+      data: updatedForm
+    });
+  } catch (error) {
+    console.error('Error updating transport form:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Delete a transport form
+exports.deleteTransportForm = async (req, res) => {
+  try {
+    const { formId } = req.params;
+    const parent = await Parent.findById(req.user.id);
+    
+    if (!parent) {
+      return res.status(404).json({ message: 'Parent not found' });
+    }
+
+    const TransportForm = require('../../models/transportForm.model');
+    const form = await TransportForm.findById(formId);
+
+    if (!form) {
+      return res.status(404).json({ message: 'Transport form not found' });
+    }
+
+    // Check if the form belongs to this parent's children
+    if (!parent.childRollNumbers.includes(form.rollNumber)) {
+      return res.status(403).json({ message: 'Not authorized to delete this transport form' });
+    }
+
+    // Only allow deletion if form is pending
+    if (form.status !== 'pending') {
+      return res.status(400).json({ message: 'Cannot delete transport form that is not pending' });
+    }
+
+    await TransportForm.findByIdAndDelete(formId);
+
+    res.json({
+      success: true,
+      message: 'Transport form deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting transport form:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Download transport form PDF
+exports.downloadTransportFormPDF = async (req, res) => {
+  try {
+    const { formId } = req.params;
+    const parent = await Parent.findById(req.user.id);
+    
+    if (!parent) {
+      return res.status(404).json({ message: 'Parent not found' });
+    }
+
+    const TransportForm = require('../../models/transportForm.model');
+    const form = await TransportForm.findById(formId);
+
+    if (!form) {
+      return res.status(404).json({ message: 'Transport form not found' });
+    }
+
+    // Check if the form belongs to this parent's children
+    if (!parent.childRollNumbers.includes(form.rollNumber)) {
+      return res.status(403).json({ message: 'Not authorized to download this transport form' });
+    }
+
+    // Check if PDF exists
+    if (!form.pdfFile) {
+      return res.status(404).json({ message: 'PDF not found for this transport form' });
+    }
+
+    // Set headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="Transport_Form_${form.studentFullName}_${new Date().toISOString().split('T')[0]}.pdf"`);
+    
+    // Send the PDF buffer
+    res.send(form.pdfFile);
+  } catch (error) {
+    console.error('Error downloading transport form PDF:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Download admin-created transport form PDF (for events/calendar)
+exports.downloadAdminTransportFormPDF = async (req, res) => {
+  try {
+    const { formId } = req.params;
+    const parent = await Parent.findById(req.user.id);
+    
+    if (!parent) {
+      return res.status(404).json({ message: 'Parent not found' });
+    }
+
+    const TransportForm = require('../../models/transportForm.model');
+    const form = await TransportForm.findById(formId)
+      .populate('createdBy', 'name role');
+
+    if (!form) {
+      return res.status(404).json({ message: 'Transport form not found' });
+    }
+
+    // Check if the form belongs to this parent's children
+    if (!parent.childRollNumbers.includes(form.rollNumber)) {
+      return res.status(403).json({ message: 'Not authorized to download this transport form' });
+    }
+
+    // Check if this is an admin-created form
+    if (!form.createdBy) {
+      return res.status(403).json({ message: 'This transport form was not created by admin' });
+    }
+
+    // Check if PDF exists
+    if (!form.pdfFile) {
+      return res.status(404).json({ message: 'PDF not found for this transport form' });
+    }
+
+    // Set headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="Admin_Transport_Form_${form.studentFullName}_${new Date().toISOString().split('T')[0]}.pdf"`);
+    
+    // Send the PDF buffer
+    res.send(form.pdfFile);
+  } catch (error) {
+    console.error('Error downloading admin transport form PDF:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

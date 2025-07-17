@@ -40,6 +40,11 @@ import {
   CalendarMonth,
   Notifications,
   Description,
+  LocalShipping,
+  Download,
+  Person,
+  LocationOn,
+  AccessTime,
 } from '@mui/icons-material';
 import { parentAPI } from '../../services/api';
 import { toast } from 'react-toastify';
@@ -70,6 +75,30 @@ const Calendar = () => {
     }
   };
 
+  const handleDownloadTransportForm = async (formId, studentName) => {
+    try {
+      toast.info('Downloading transport form PDF...');
+      
+      const pdfBlob = await parentAPI.downloadAdminTransportFormPDF(formId);
+      
+      // Create download link
+      const url = window.URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Admin_Transport_Form_${studentName}_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Transport form PDF downloaded successfully');
+      
+    } catch (error) {
+      console.error('Error downloading transport form PDF:', error);
+      toast.error('Failed to download transport form PDF');
+    }
+  };
+
   const handleTabChange = (event, newValue) => {
     setSelectedTab(newValue);
   };
@@ -94,6 +123,8 @@ const Calendar = () => {
         return <Sports color="success" />;
       case 'Cultural':
         return <Celebration color="secondary" />;
+      case 'Transport':
+        return <LocalShipping color="info" />;
       default:
         return <Event color="info" />;
     }
@@ -109,6 +140,8 @@ const Calendar = () => {
         return <Chip label="Sports" color="success" size="small" />;
       case 'Cultural':
         return <Chip label="Cultural" color="secondary" size="small" />;
+      case 'Transport':
+        return <Chip label="Transport" color="info" size="small" />;
       default:
         return <Chip label={type} color="default" size="small" />;
     }
@@ -119,11 +152,13 @@ const Calendar = () => {
       case 0: // All Events
         return true;
       case 1: // Academic
-        return event.type === 'Academic';
+        return event.eventType === 'Academic';
       case 2: // Assignments
-        return event.type === 'Assignment';
+        return event.eventType === 'Assignment';
       case 3: // Sports & Cultural
-        return event.type === 'Sports' || event.type === 'Cultural';
+        return event.eventType === 'Sports' || event.eventType === 'Cultural';
+      case 4: // Transport
+        return event.eventType === 'Transport';
       default:
         return true;
     }
@@ -150,49 +185,6 @@ const Calendar = () => {
         School Calendar
       </Typography>
 
-      {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={4}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <Event color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Total Events</Typography>
-              </Box>
-              <Typography variant="h4" color="primary">
-                {events.length}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <School color="warning" sx={{ mr: 1 }} />
-                <Typography variant="h6">Academic Events</Typography>
-              </Box>
-              <Typography variant="h4" color="warning">
-                {events.filter(event => event.type === 'Academic').length}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <Assignment color="info" sx={{ mr: 1 }} />
-                <Typography variant="h6">Upcoming Deadlines</Typography>
-              </Box>
-              <Typography variant="h4" color="info">
-                {events.filter(event => event.type === 'Assignment').length}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
       {/* Tabs */}
       <Paper sx={{ mb: 3 }}>
         <Tabs
@@ -205,6 +197,7 @@ const Calendar = () => {
           <Tab label="Academic" />
           <Tab label="Assignments" />
           <Tab label="Sports & Cultural" />
+          <Tab label="Transport" />
         </Tabs>
       </Paper>
 
@@ -226,16 +219,19 @@ const Calendar = () => {
               <TableRow key={index}>
                 <TableCell>
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    {getEventTypeIcon(event.type)}
+                    {getEventTypeIcon(event.eventType)}
                     <Typography sx={{ ml: 1 }}>{event.title}</Typography>
                   </Box>
                 </TableCell>
-                <TableCell>{getEventTypeChip(event.type)}</TableCell>
+                <TableCell>{getEventTypeChip(event.eventType)}</TableCell>
                 <TableCell>
-                  {new Date(event.date).toLocaleDateString()}
+                  {new Date(event.startDate).toLocaleDateString()}
                 </TableCell>
-                <TableCell>{event.time}</TableCell>
-                <TableCell>{event.location}</TableCell>
+                <TableCell>
+                  {new Date(event.startDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - 
+                  {new Date(event.endDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </TableCell>
+                <TableCell>{event.venue}</TableCell>
                 <TableCell>
                   <Button
                     variant="outlined"
@@ -259,80 +255,131 @@ const Calendar = () => {
         fullWidth
       >
         <DialogTitle>
-          Event Details
-          <IconButton
-            onClick={handleDetailsDialogClose}
-            sx={{ position: 'absolute', right: 8, top: 8 }}
-          >
-            <Close />
-          </IconButton>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h6">
+              {selectedEvent?.title}
+            </Typography>
+            <IconButton onClick={handleDetailsDialogClose}>
+              <Close />
+            </IconButton>
+          </Box>
         </DialogTitle>
         <DialogContent>
           {selectedEvent && (
-            <Box sx={{ mt: 2 }}>
-              <Grid container spacing={3}>
-                <Grid item xs={12}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    {getEventTypeIcon(selectedEvent.type)}
-                    <Typography variant="h6" sx={{ ml: 1 }}>
-                      {selectedEvent.title}
+            <Box>
+              <Box display="flex" alignItems="center" mb={2}>
+                {getEventTypeIcon(selectedEvent.eventType)}
+                {getEventTypeChip(selectedEvent.eventType)}
+              </Box>
+
+              <Typography variant="body1" paragraph>
+                {selectedEvent.description}
+              </Typography>
+
+              <Grid container spacing={2} sx={{ mb: 2 }}>
+                <Grid item xs={12} md={6}>
+                  <Box display="flex" alignItems="center" mb={1}>
+                    <CalendarMonth sx={{ mr: 1 }} />
+                    <Typography variant="body2">
+                      <strong>Date:</strong> {new Date(selectedEvent.startDate).toLocaleDateString()}
                     </Typography>
                   </Box>
-                  {getEventTypeChip(selectedEvent.type)}
                 </Grid>
-
-                <Grid item xs={12}>
-                  <List>
-                    <ListItem>
-                      <ListItemIcon>
-                        <CalendarMonth />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary="Date & Time"
-                        secondary={`${new Date(selectedEvent.date).toLocaleDateString()} at ${selectedEvent.time}`}
-                      />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon>
-                        <Description />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary="Description"
-                        secondary={selectedEvent.description}
-                      />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon>
-                        <Notifications />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary="Additional Information"
-                        secondary={selectedEvent.additionalInfo || 'No additional information available'}
-                      />
-                    </ListItem>
-                  </List>
-                </Grid>
-
-                {selectedEvent.requirements && (
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle1" gutterBottom>
-                      Requirements
+                <Grid item xs={12} md={6}>
+                  <Box display="flex" alignItems="center" mb={1}>
+                    <AccessTime sx={{ mr: 1 }} />
+                    <Typography variant="body2">
+                      <strong>Time:</strong> {new Date(selectedEvent.startDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - 
+                      {new Date(selectedEvent.endDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </Typography>
-                    <List>
-                      {selectedEvent.requirements.map((requirement, index) => (
-                        <ListItem key={index}>
-                          <ListItemText primary={requirement} />
-                        </ListItem>
-                      ))}
-                    </List>
+                  </Box>
+                </Grid>
+                {selectedEvent.venue && (
+                  <Grid item xs={12} md={6}>
+                    <Box display="flex" alignItems="center" mb={1}>
+                      <LocationOn sx={{ mr: 1 }} />
+                      <Typography variant="body2">
+                        <strong>Location:</strong> {selectedEvent.venue}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                )}
+                {selectedEvent.organizer && (
+                  <Grid item xs={12} md={6}>
+                    <Box display="flex" alignItems="center" mb={1}>
+                      <Person sx={{ mr: 1 }} />
+                      <Typography variant="body2">
+                        <strong>Organizer:</strong> {selectedEvent.organizer}
+                      </Typography>
+                    </Box>
                   </Grid>
                 )}
               </Grid>
+
+              {/* Transport form specific details */}
+              {selectedEvent.eventType === 'Transport' && (
+                <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Transport Details
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2">
+                        <strong>Student:</strong> {selectedEvent.studentName}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2">
+                        <strong>Roll Number:</strong> {selectedEvent.rollNumber}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2">
+                        <strong>Pickup:</strong> {selectedEvent.pickupLocation}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2">
+                        <strong>Drop:</strong> {selectedEvent.dropLocation}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2">
+                        <strong>Pickup Time:</strong> {selectedEvent.pickupTime}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2">
+                        <strong>Drop Time:</strong> {selectedEvent.dropTime}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Typography variant="body2">
+                        <strong>Purpose:</strong> {selectedEvent.purpose}
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </Box>
+              )}
             </Box>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleDetailsDialogClose}>Close</Button>
+          {selectedEvent?.eventType === 'Transport' && selectedEvent?.hasPDF && (
+            <Button
+              variant="contained"
+              startIcon={<Download />}
+              onClick={() => {
+                handleDownloadTransportForm(selectedEvent.transportFormId, selectedEvent.studentName);
+                handleDetailsDialogClose();
+              }}
+            >
+              Download PDF
+            </Button>
+          )}
+          <Button onClick={handleDetailsDialogClose}>
+            Close
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>
