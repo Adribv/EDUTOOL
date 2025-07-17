@@ -22,6 +22,11 @@ import {
   Snackbar,
   Slide,
   MobileStepper,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
 } from '@mui/material';
 import {
   School,
@@ -61,6 +66,7 @@ import {
   CheckCircle,
 } from '@mui/icons-material';
 import studentService from '../../services/studentService';
+import axios from 'axios';
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -86,10 +92,27 @@ const Dashboard = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
   const [taskNotifications, setTaskNotifications] = useState([]);
+  const [remarksSchema, setRemarksSchema] = useState([]);
+  const [schemaLoading, setSchemaLoading] = useState(false);
+  const [schemaError, setSchemaError] = useState('');
 
   useEffect(() => {
     fetchDashboardData();
+    fetchRemarksSchema();
   }, []);
+
+  const fetchRemarksSchema = async () => {
+    setSchemaLoading(true);
+    setSchemaError('');
+    try {
+      const res = await axios.get('/api/teacher-remarks/schema');
+      setRemarksSchema(res.data.schema || []);
+    } catch (err) {
+      setSchemaError('Failed to load teacher remarks schema');
+    } finally {
+      setSchemaLoading(false);
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -292,13 +315,6 @@ const Dashboard = () => {
       color: '#388e3c',
       path: '/student/study-materials',
       count: Array.isArray(learningResources) ? learningResources.length : 0,
-    },
-    {
-      title: 'Teacher Remarks',
-      description: 'View teacher remarks and syllabus completion',
-      icon: <Assessment color="primary" sx={{ fontSize: 40 }} />,
-      color: '#ff9800',
-      path: '/student/teacher-remarks',
     },
     {
       title: 'Communication',
@@ -1076,6 +1092,45 @@ const Dashboard = () => {
           </Alert>
         </Snackbar>
       )}
+
+      {/* Teacher Remarks Form Structure */}
+      <Box sx={{ my: 4 }}>
+        <Typography variant="h5" gutterBottom>
+          Teacher Remarks Form Structure
+        </Typography>
+        {schemaLoading ? (
+          <CircularProgress />
+        ) : schemaError ? (
+          <Alert severity="error">{schemaError}</Alert>
+        ) : (
+          <Paper sx={{ p: 2, overflow: 'auto' }}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Field Name</TableCell>
+                  <TableCell>Type</TableCell>
+                  <TableCell>Required</TableCell>
+                  <TableCell>Options</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {remarksSchema.map((field) => (
+                  <TableRow key={field.name}>
+                    <TableCell>{field.name}</TableCell>
+                    <TableCell>{field.type}</TableCell>
+                    <TableCell>{field.required ? 'Yes' : 'No'}</TableCell>
+                    <TableCell>
+                      {Array.isArray(field.enum)
+                        ? field.enum.join(', ')
+                        : '-'}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Paper>
+        )}
+      </Box>
     </Container>
   );
 };

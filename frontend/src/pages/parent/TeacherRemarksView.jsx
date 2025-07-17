@@ -174,19 +174,19 @@ const TeacherRemarksView = () => {
           <Typography variant="h6" gutterBottom>
             Select Child
           </Typography>
-          <FormControl fullWidth>
+              <FormControl fullWidth>
             <InputLabel>Child</InputLabel>
-            <Select
-              value={selectedChild}
-              onChange={(e) => setSelectedChild(e.target.value)}
-            >
-              {children.map(child => (
-                <MenuItem key={child.id} value={child.id}>
-                  {child.name} - Class {child.class} Section {child.section}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+                <Select
+                  value={selectedChild}
+                  onChange={(e) => setSelectedChild(e.target.value)}
+                >
+                  {children.map(child => (
+                    <MenuItem key={child.id} value={child.id}>
+                      {child.name} - Class {child.class} Section {child.section}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
         </CardContent>
       </Card>
 
@@ -375,11 +375,11 @@ const TeacherRemarksView = () => {
                       <TableCell>{formatDate(form.plannedCompletionDate)}</TableCell>
                       <TableCell>{formatDate(form.actualCompletionDate)}</TableCell>
                       <TableCell>
-                        <Chip
-                          label={form.status}
-                          color={getStatusColor(form.status)}
-                          size="small"
-                        />
+                          <Chip
+                            label={form.status}
+                            color={getStatusColor(form.status)}
+                            size="small"
+                          />
                       </TableCell>
                       <TableCell>{form.numberOfPeriodsAllotted}</TableCell>
                       <TableCell>{form.numberOfPeriodsTaken}</TableCell>

@@ -110,7 +110,7 @@ const transportFormSchema = new mongoose.Schema({
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Staff',
-    required: true
+    required: false // Make optional since parents can also create forms
   },
   createdByName: String,
   createdByRole: String,

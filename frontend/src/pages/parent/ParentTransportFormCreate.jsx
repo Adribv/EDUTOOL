@@ -68,6 +68,11 @@ const ParentTransportFormCreate = () => {
       otherDescription: ''
     },
 
+    // Parent/Guardian Information
+    parentGuardianName: '',
+    contactNumber: '',
+    pickupDropAddress: '',
+
     // Transport Details
     pickupLocation: '',
     dropLocation: '',
@@ -213,6 +218,9 @@ const ParentTransportFormCreate = () => {
       studentFullName: 'Student Full Name',
       gradeClassSection: 'Grade/Class & Section',
       schoolName: 'School Name',
+      parentGuardianName: 'Parent/Guardian Name',
+      contactNumber: 'Contact Number',
+      pickupDropAddress: 'Pickup/Drop Address',
       pickupLocation: 'Pickup Location',
       dropLocation: 'Drop Location',
       dateRequiredFrom: 'Date Required From',
@@ -404,6 +412,49 @@ const ParentTransportFormCreate = () => {
           Transport Details
         </Typography>
       </Grid>
+      
+      {/* Parent/Guardian Information */}
+      <Grid item xs={12}>
+        <Typography variant="subtitle1" gutterBottom sx={{ mt: 2, mb: 1 }}>
+          Parent/Guardian Information
+        </Typography>
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <TextField
+          fullWidth
+          label="Parent/Guardian Name *"
+          value={formData.parentGuardianName}
+          onChange={(e) => handleInputChange('parentGuardianName', e.target.value)}
+          required
+        />
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <TextField
+          fullWidth
+          label="Contact Number *"
+          value={formData.contactNumber}
+          onChange={(e) => handleInputChange('contactNumber', e.target.value)}
+          required
+        />
+      </Grid>
+      <Grid item xs={12}>
+        <TextField
+          fullWidth
+          label="Pickup/Drop Address *"
+          multiline
+          rows={2}
+          value={formData.pickupDropAddress}
+          onChange={(e) => handleInputChange('pickupDropAddress', e.target.value)}
+          required
+        />
+      </Grid>
+      
+      {/* Transport Location Details */}
+      <Grid item xs={12}>
+        <Typography variant="subtitle1" gutterBottom sx={{ mt: 2, mb: 1 }}>
+          Transport Location Details
+        </Typography>
+      </Grid>
       <Grid item xs={12} md={6}>
         <TextField
           fullWidth
@@ -573,6 +624,15 @@ const ParentTransportFormCreate = () => {
             Transport Details
           </Typography>
           <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <Typography variant="body2"><strong>Parent/Guardian:</strong> {formData.parentGuardianName}</Typography>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Typography variant="body2"><strong>Contact Number:</strong> {formData.contactNumber}</Typography>
+            </Grid>
+            <Grid item xs={12}>
+              <Typography variant="body2"><strong>Pickup/Drop Address:</strong> {formData.pickupDropAddress}</Typography>
+            </Grid>
             <Grid item xs={12} md={6}>
               <Typography variant="body2"><strong>Pickup Location:</strong> {formData.pickupLocation}</Typography>
             </Grid>

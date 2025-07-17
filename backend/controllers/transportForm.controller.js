@@ -42,6 +42,34 @@ exports.createForm = async (req, res) => {
   try {
     const formData = req.body;
     
+    // Validate required fields
+    const requiredFields = [
+      'schoolName',
+      'studentFullName', 
+      'gradeClassSection',
+      'rollNumber',
+      'parentGuardianName',
+      'contactNumber',
+      'pickupDropAddress',
+      'pickupLocation',
+      'dropLocation',
+      'dateRequiredFrom',
+      'dateRequiredTo',
+      'pickupTime',
+      'dropTime',
+      'tripType',
+      'purposeOfTransportation'
+    ];
+    
+    const missingFields = requiredFields.filter(field => !formData[field]);
+    
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Missing required fields: ${missingFields.join(', ')}`
+      });
+    }
+    
     // Get admin/staff info
     const staff = await Staff.findById(req.user.id);
     if (!staff) {
@@ -67,12 +95,17 @@ exports.createForm = async (req, res) => {
     }
     
     res.status(201).json({
+      success: true,
       message: 'Transport form created successfully',
-      form: transportForm
+      data: transportForm
     });
   } catch (error) {
     console.error('Error creating transport form:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error',
+      error: error.message 
+    });
   }
 };
 

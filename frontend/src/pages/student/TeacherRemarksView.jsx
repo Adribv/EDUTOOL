@@ -338,11 +338,11 @@ const TeacherRemarksView = () => {
                   <TableCell>{formatDate(form.plannedCompletionDate)}</TableCell>
                   <TableCell>{formatDate(form.actualCompletionDate)}</TableCell>
                   <TableCell>
-                    <Chip
-                      label={form.status}
-                      color={getStatusColor(form.status)}
-                      size="small"
-                    />
+                      <Chip
+                        label={form.status}
+                        color={getStatusColor(form.status)}
+                        size="small"
+                      />
                   </TableCell>
                   <TableCell>{form.numberOfPeriodsAllotted}</TableCell>
                   <TableCell>{form.numberOfPeriodsTaken}</TableCell>

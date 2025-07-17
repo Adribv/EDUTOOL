@@ -397,8 +397,19 @@ export const adminAPI = {
   updateInventoryItem: (id, data) => api.put(`/admin-staff/inventory/${id}`, data),
   deleteInventoryItem: (id) => api.delete(`/admin-staff/inventory/${id}`),
   exportInventory: () => api.get('/admin-staff/inventory/export', { responseType: 'blob' }),
-  bulkImportInventory: (data) => api.post('/admin-staff/inventory/bulk-import', data),
-  
+
+  // Transport Form Management
+  getTransportForms: (params) => api.get('/transport-forms/admin', { params }).then(res => res.data),
+  getTransportFormById: (formId) => api.get(`/transport-forms/admin/${formId}`).then(res => res.data),
+  createTransportForm: (formData) => api.post('/transport-forms', formData).then(res => res.data),
+  updateTransportForm: (formId, formData) => api.put(`/transport-forms/admin/${formId}`, formData).then(res => res.data),
+  deleteTransportForm: (formId) => api.delete(`/transport-forms/admin/${formId}`).then(res => res.data),
+  getTransportFormStats: (params) => api.get('/transport-forms/admin/stats', { params }).then(res => res.data),
+  downloadTransportFormPDF: (formId) => api.get(`/transport-forms/admin/${formId}/download`, { 
+    responseType: 'blob' 
+  }).then(res => res.data),
+  generateTransportFormPDF: (formId) => api.post(`/transport-forms/admin/${formId}/generate-pdf`).then(res => res.data),
+
   // Supplier Management
   getSuppliers: () => api.get('/admin-staff/suppliers').then(res=>res.data),
   addSupplier: (data) => api.post('/admin-staff/suppliers', data).then(res=>res.data),
@@ -1211,10 +1222,11 @@ export const disciplinaryAPI = {
   // Admin APIs
   getAllForms: (params) => api.get('/disciplinary-forms/admin/forms', { params }).then(res => res.data),
   getStats: (params) => api.get('/disciplinary-forms/admin/stats', { params }).then(res => res.data),
+  createForm: (data) => api.post('/disciplinary-forms/admin/forms', data).then(res => res.data),
   deleteForm: (formId) => api.delete(`/disciplinary-forms/admin/forms/${formId}`).then(res => res.data),
   
   // Teacher APIs
-  createForm: (data) => api.post('/disciplinary-forms/teacher/forms', data).then(res => res.data),
+  createTeacherForm: (data) => api.post('/disciplinary-forms/teacher/forms', data).then(res => res.data),
   getTeacherForms: (params) => api.get('/disciplinary-forms/teacher/forms', { params }).then(res => res.data),
   updateForm: (formId, data) => api.put(`/disciplinary-forms/teacher/forms/${formId}`, data).then(res => res.data),
   submitForm: (formId) => api.post(`/disciplinary-forms/teacher/forms/${formId}/submit`).then(res => res.data),
@@ -1251,23 +1263,23 @@ export const disciplinaryAPI = {
 // Transport Form APIs
 export const transportAPI = {
   // CRUD operations
-  getAllForms: (params = {}) => api.get('/transport-forms', { params }).then(res => res.data),
-  getFormById: (formId) => api.get(`/transport-forms/${formId}`).then(res => res.data),
+  getAllForms: (params = {}) => api.get('/transport-forms/admin', { params }).then(res => res.data),
+  getFormById: (formId) => api.get(`/transport-forms/admin/${formId}`).then(res => res.data),
   createForm: (formData) => api.post('/transport-forms', formData).then(res => res.data),
-  updateForm: (formId, formData) => api.put(`/transport-forms/${formId}`, formData).then(res => res.data),
-  deleteForm: (formId) => api.delete(`/transport-forms/${formId}`).then(res => res.data),
+  updateForm: (formId, formData) => api.put(`/transport-forms/admin/${formId}`, formData).then(res => res.data),
+  deleteForm: (formId) => api.delete(`/transport-forms/admin/${formId}`).then(res => res.data),
   
   // Status management
-  updateFormStatus: (formId, statusData) => api.patch(`/transport-forms/${formId}/status`, statusData).then(res => res.data),
+  updateFormStatus: (formId, statusData) => api.patch(`/transport-forms/admin/${formId}/status`, statusData).then(res => res.data),
   
   // Statistics
-  getFormStats: (period = 'month') => api.get(`/transport-forms/stats?period=${period}`).then(res => res.data),
+  getFormStats: (period = 'month') => api.get(`/transport-forms/admin/stats?period=${period}`).then(res => res.data),
   
   // PDF operations
-  downloadFormPDF: (formId) => api.get(`/transport-forms/${formId}/download-pdf`, { 
+  downloadFormPDF: (formId) => api.get(`/transport-forms/admin/${formId}/download`, { 
     responseType: 'blob' 
   }).then(res => res.data),
-  generateFormPDF: (formId) => api.post(`/transport-forms/${formId}/generate-pdf`).then(res => res.data),
+  generateFormPDF: (formId) => api.post(`/transport-forms/admin/${formId}/generate-pdf`).then(res => res.data),
 };
 
 export const syllabusAPI = {
