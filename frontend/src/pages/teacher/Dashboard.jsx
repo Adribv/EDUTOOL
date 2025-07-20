@@ -41,6 +41,7 @@ import LessonPlans from './LessonPlans';
 import SubstituteRequests from './SubstituteRequests';
 import SubstituteTeacherRequest from './SubstituteTeacherRequest';
 import TeacherRemarks from './TeacherRemarks';
+import { teacherRemarksAPI } from '../../services/api';
 
 // Feature tabs configuration
 const featureTabs = [
@@ -122,6 +123,13 @@ function DashboardOverview() {
     enabled: !!staffId && staffId !== 'undefined'
   });
 
+  // Fetch teacher remarks data for completion rate calculation
+  const { data: remarksData, isLoading: remarksLoading } = useQuery({
+    queryKey: ['teacherRemarks', staffId],
+    queryFn: () => teacherRemarksAPI.getAllForms({ teacherId: staffId }),
+    enabled: !!staffId && staffId !== 'undefined'
+  });
+
     // Show error if no valid staffId
   if (!staffId || staffId === 'undefined') {
     return (
@@ -135,7 +143,7 @@ function DashboardOverview() {
     );
   }
 
-  const isLoading = profileLoading || classesLoading || studentsLoading || parentsLoading || assignmentsLoading || timetableLoading || leaveRequestsLoading;
+  const isLoading = profileLoading || classesLoading || studentsLoading || parentsLoading || assignmentsLoading || timetableLoading || leaveRequestsLoading || remarksLoading;
 
   if (isLoading) {
     return (
@@ -165,8 +173,26 @@ function DashboardOverview() {
     averageAttendance: 85, // This would need to be calculated from attendance data
     averageGrade: 78, // This would need to be calculated from grades data
     assignmentsCompleted: 65, // This would need to be calculated from assignment submissions
-    studentSatisfaction: 4.2 // This would need to be fetched from feedback data
+    studentSatisfaction: 4.2, // This would need to be fetched from feedback data
   };
+
+  // Calculate completion rate from remarks data
+  const calculateOverallCompletionRate = () => {
+    if (!remarksData?.data || remarksData.data.length === 0) return 0;
+    
+    let totalLessonsCompleted = 0;
+    let totalLessonsPending = 0;
+    
+    remarksData.data.forEach(form => {
+      totalLessonsCompleted += (form.lessonsCompleted || 0);
+      totalLessonsPending += (form.lessonsPending || 0);
+    });
+    
+    const totalLessons = totalLessonsCompleted + totalLessonsPending;
+    return totalLessons > 0 ? Math.round((totalLessonsCompleted / totalLessons) * 100) : 0;
+  };
+
+  const overallCompletionRate = calculateOverallCompletionRate();
 
   const teacherName = profileData?.name || user?.name || 'Teacher';
   const teacherRole = profileData?.role || user?.role || 'Teacher';
@@ -295,6 +321,41 @@ function DashboardOverview() {
               >
                 Request a Substitute Teacher
               </Button>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Completion Rate Card */}
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
+            '&:hover': { transform: 'translateY(-4px)', transition: 'transform 0.3s ease' }
+          }}>
+            <CardContent>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Box>
+                  <Typography variant="h4" fontWeight="bold">
+                    {overallCompletionRate}%
+                  </Typography>
+                  <Typography variant="body2">Teaching Progress</Typography>
+                  <Box sx={{ mt: 1, width: '100%' }}>
+                    <LinearProgress
+                      variant="determinate"
+                      value={overallCompletionRate}
+                      sx={{
+                        height: 8,
+                        borderRadius: 4,
+                        backgroundColor: 'rgba(255,255,255,0.3)',
+                        '& .MuiLinearProgress-bar': {
+                          backgroundColor: 'white'
+                        }
+                      }}
+                    />
+                  </Box>
+                </Box>
+                <RateReview sx={{ fontSize: 40, opacity: 0.8 }} />
+              </Box>
             </CardContent>
           </Card>
         </Grid>

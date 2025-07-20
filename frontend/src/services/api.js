@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://api.edulives.com/api',
+  baseURL: 'http://localhost:5000/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -1310,6 +1310,33 @@ export const accountantAPI = {
   createExpense: (data) => api.post('/accountant/expenses', data),
   getIncomes: (params={}) => api.get('/accountant/incomes', { params }).then(res=>res.data),
   generateSampleData: () => api.post('/accountant/sample-data'),
+  
+  // Enhanced Salary Template Management
+  getSalaryTemplates: () => api.get('/accountant/salary-templates').then(res=>res.data),
+  getSalaryTemplateById: (id) => api.get(`/accountant/salary-templates/${id}`).then(res=>res.data),
+  createSalaryTemplate: (data) => api.post('/accountant/salary-templates', data).then(res=>res.data),
+  updateSalaryTemplate: (id, data) => api.put(`/accountant/salary-templates/${id}`, data).then(res=>res.data),
+  deleteSalaryTemplate: (id) => api.delete(`/accountant/salary-templates/${id}`).then(res=>res.data),
+  getSalaryTemplateStats: () => api.get('/accountant/salary-template-stats').then(res=>res.data),
+  getAvailableRoles: () => api.get('/accountant/available-roles').then(res=>res.data),
+  
+  // Staff Salary Management
+  getStaffList: (params={}) => api.get('/accountant/staff-list', { params }).then(res=>res.data),
+  getStaffSalaryHistory: (staffId, params={}) => api.get(`/accountant/staff-salary-history/${staffId}`, { params }).then(res=>res.data),
+  createSalaryRecord: (data) => api.post('/accountant/create-salary-record', data).then(res=>res.data),
+  updateSalaryRecord: (id, data) => api.put(`/accountant/update-salary-record/${id}`, data).then(res=>res.data),
+  bulkSalaryCreation: (data) => api.post('/accountant/bulk-salary-creation', data).then(res=>res.data),
+  getPendingSalaryApprovals: () => api.get('/accountant/pending-salary-approvals').then(res=>res.data),
+  
+  // Staff Management by Role
+  getStaffByRole: (role) => api.get(`/accountant/staff-by-role/${role}`).then(res=>res.data),
+  getRoleStatistics: () => api.get('/accountant/role-statistics').then(res=>res.data),
+  
+  // Template Application
+  applyTemplateToStaff: (data) => api.post('/accountant/apply-template-to-staff', data).then(res=>res.data),
+  getTemplatePreview: (templateId, staffIds) => api.get(`/accountant/template-preview/${templateId}`, { 
+    params: { staffIds } 
+  }).then(res=>res.data),
 };
 
 export const teacherRemarksAPI = {

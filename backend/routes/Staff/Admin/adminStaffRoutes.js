@@ -249,7 +249,9 @@ router.put('/supply-requests/:id/status', adminStaffController.updateSupplyReque
 // Fee Records Management Routes
 router.get('/fee-records/student', feeRecordsController.getStudentFeeRecords);
 router.post('/fee-records/student', feeRecordsController.createStudentFeeRecord);
+router.post('/fee-records/student/direct', feeRecordsController.createStudentFeeRecordDirect);
 router.post('/fee-records/student/bulk-import', feeRecordsController.bulkImportStudentFeeRecords);
+router.get('/fee-records/pending-approvals', feeRecordsController.getPendingFeeRecordApprovals);
 
 router.get('/fee-records/staff', feeRecordsController.getStaffSalaryRecords);
 router.post('/fee-records/staff', feeRecordsController.createStaffSalaryRecord);

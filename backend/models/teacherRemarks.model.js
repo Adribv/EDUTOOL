@@ -64,6 +64,18 @@ const teacherRemarksSchema = new mongoose.Schema({
     min: 0
   },
   
+  // Lesson Progress Tracking
+  lessonsCompleted: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  lessonsPending: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  
   // Teaching Method
   teachingMethodUsed: {
     type: String,
@@ -75,6 +87,14 @@ const teacherRemarksSchema = new mongoose.Schema({
     type: Number,
     min: 0,
     max: 100,
+    default: 0
+  },
+  
+  // Completion Ratio (decimal form, e.g., 0.75 for 75%)
+  completionRatio: {
+    type: Number,
+    min: 0,
+    max: 1,
     default: 0
   },
   
@@ -180,8 +200,18 @@ teacherRemarksSchema.index({ formStatus: 1, academicYear: 1 });
 
 // Pre-save middleware to update completion rate
 teacherRemarksSchema.pre('save', function(next) {
-  if (this.numberOfPeriodsAllotted > 0) {
+  // Calculate completion rate and ratio based on lessons completed and pending
+  const totalLessons = (this.lessonsCompleted || 0) + (this.lessonsPending || 0);
+  if (totalLessons > 0) {
+    this.completionRate = Math.round(((this.lessonsCompleted || 0) / totalLessons) * 100);
+    this.completionRatio = (this.lessonsCompleted || 0) / totalLessons;
+  } else if (this.numberOfPeriodsAllotted > 0) {
+    // Fallback to periods-based calculation if lessons not provided
     this.completionRate = Math.round((this.numberOfPeriodsTaken / this.numberOfPeriodsAllotted) * 100);
+    this.completionRatio = this.numberOfPeriodsTaken / this.numberOfPeriodsAllotted;
+  } else {
+    this.completionRate = 0;
+    this.completionRatio = 0;
   }
   
   // Update status based on completion rate and dates
@@ -205,6 +235,41 @@ teacherRemarksSchema.pre('save', function(next) {
   next();
 });
 
+// Pre-update middleware to handle completion rate calculation for findByIdAndUpdate
+teacherRemarksSchema.pre('findOneAndUpdate', function(next) {
+  const update = this.getUpdate();
+  
+  // If lessonsCompleted or lessonsPending are being updated, recalculate completion rate
+  if (update.lessonsCompleted !== undefined || update.lessonsPending !== undefined) {
+    const lessonsCompleted = update.lessonsCompleted || 0;
+    const lessonsPending = update.lessonsPending || 0;
+    const totalLessons = lessonsCompleted + lessonsPending;
+    
+    if (totalLessons > 0) {
+      update.completionRate = Math.round((lessonsCompleted / totalLessons) * 100);
+      update.completionRatio = lessonsCompleted / totalLessons;
+    } else {
+      update.completionRate = 0;
+      update.completionRatio = 0;
+    }
+    
+    // Update status based on completion rate
+    if (update.completionRate === 100) {
+      update.status = 'Completed';
+      if (!update.actualCompletionDate) {
+        update.actualCompletionDate = new Date();
+      }
+    } else if (update.completionRate > 0) {
+      update.status = 'In Progress';
+    } else {
+      update.status = 'Not started';
+    }
+  }
+  
+  update.updatedAt = new Date();
+  next();
+});
+
 // Static method to get remarks statistics
 teacherRemarksSchema.statics.getRemarksStats = async function(filters = {}) {
   const pipeline = [
@@ -214,7 +279,9 @@ teacherRemarksSchema.statics.getRemarksStats = async function(filters = {}) {
         _id: '$formStatus',
         count: { $sum: 1 },
         totalPeriodsAllotted: { $sum: '$numberOfPeriodsAllotted' },
-        totalPeriodsTaken: { $sum: '$numberOfPeriodsTaken' }
+        totalPeriodsTaken: { $sum: '$numberOfPeriodsTaken' },
+        totalLessonsCompleted: { $sum: '$lessonsCompleted' },
+        totalLessonsPending: { $sum: '$lessonsPending' }
       }
     }
   ];
@@ -224,6 +291,10 @@ teacherRemarksSchema.statics.getRemarksStats = async function(filters = {}) {
 
 // Instance method to calculate completion percentage
 teacherRemarksSchema.methods.calculateCompletionPercentage = function() {
+  const totalLessons = (this.lessonsCompleted || 0) + (this.lessonsPending || 0);
+  if (totalLessons > 0) {
+    return Math.round(((this.lessonsCompleted || 0) / totalLessons) * 100);
+  }
   if (this.numberOfPeriodsAllotted === 0) return 0;
   return Math.round((this.numberOfPeriodsTaken / this.numberOfPeriodsAllotted) * 100);
 };

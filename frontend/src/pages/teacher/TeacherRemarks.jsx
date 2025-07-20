@@ -34,7 +34,6 @@ import {
   AccordionDetails,
   Divider,
   LinearProgress,
-  Rating,
   Tabs,
   Tab
 } from '@mui/material';
@@ -90,24 +89,19 @@ const TeacherRemarks = () => {
     semester: ''
   });
 
-  // Progress form states
+  // Progress form states - focused on teacher progress tracking
   const [progressData, setProgressData] = useState({
     numberOfPeriodsTaken: '',
     actualCompletionDate: null,
     status: '',
-    remarksTopicsLeft: ''
+    remarksTopicsLeft: '',
+    lessonsCompleted: '',
+    lessonsPending: ''
   });
 
-  // Detailed remarks form states
+  // Teacher remarks form states - simplified for teacher progress
   const [remarksData, setRemarksData] = useState({
     teacherRemarks: '',
-    studentPerformance: 'Average',
-    classParticipation: 'Moderate',
-    homeworkCompletion: 'Sometimes Complete',
-    understandingLevel: 'Average',
-    areasOfConcern: '',
-    suggestionsForImprovement: '',
-    parentCommunication: '',
     formStatus: 'Draft'
   });
 
@@ -116,9 +110,6 @@ const TeacherRemarks = () => {
   const semesters = ['First Term', 'Second Term', 'Third Term', 'Annual'];
   const statuses = ['Not started', 'In Progress', 'Completed', 'Delayed'];
   const formStatuses = ['Draft', 'Submitted', 'Reviewed', 'Approved'];
-  const performanceLevels = ['Excellent', 'Good', 'Average', 'Below Average', 'Poor'];
-  const participationLevels = ['Very Active', 'Active', 'Moderate', 'Low', 'Very Low'];
-  const homeworkLevels = ['Always Complete', 'Usually Complete', 'Sometimes Complete', 'Rarely Complete', 'Never Complete'];
 
   // Get teacher ID from auth context or use a fallback for testing
   const teacherId = user?._id || user?.id || '507f1f77bcf86cd799439011';
@@ -140,6 +131,7 @@ const TeacherRemarks = () => {
       
       // Fetch all forms created by admin
       const response = await teacherRemarksAPI.getAllForms(params);
+      
       setForms(response.data);
       setPagination(prev => ({
         ...prev,
@@ -157,10 +149,17 @@ const TeacherRemarks = () => {
 
   const handleUpdateProgress = async () => {
     try {
-      console.log('Updating progress for form:', editingForm._id);
-      console.log('Progress data:', progressData);
+      const updateData = {
+        numberOfPeriodsTaken: progressData.numberOfPeriodsTaken,
+        actualCompletionDate: progressData.actualCompletionDate,
+        status: progressData.status,
+        remarksTopicsLeft: progressData.remarksTopicsLeft,
+        lessonsCompleted: parseInt(progressData.lessonsCompleted) || 0,
+        lessonsPending: parseInt(progressData.lessonsPending) || 0
+      };
       
-      const response = await teacherRemarksAPI.updateProgress(editingForm._id, progressData);
+      const response = await teacherRemarksAPI.updateProgress(editingForm._id, updateData);
+      
       setSuccess('Progress updated successfully');
       setOpenProgressDialog(false);
       setEditingForm(null);
@@ -191,7 +190,9 @@ const TeacherRemarks = () => {
       numberOfPeriodsTaken: form.numberOfPeriodsTaken || '',
       actualCompletionDate: form.actualCompletionDate ? new Date(form.actualCompletionDate) : null,
       status: form.status || '',
-      remarksTopicsLeft: form.remarksTopicsLeft || ''
+      remarksTopicsLeft: form.remarksTopicsLeft || '',
+      lessonsCompleted: form.lessonsCompleted || '',
+      lessonsPending: form.lessonsPending || ''
     });
     setOpenProgressDialog(true);
   };
@@ -200,13 +201,6 @@ const TeacherRemarks = () => {
     setEditingForm(form);
     setRemarksData({
       teacherRemarks: form.teacherRemarks || '',
-      studentPerformance: form.studentPerformance || 'Average',
-      classParticipation: form.classParticipation || 'Moderate',
-      homeworkCompletion: form.homeworkCompletion || 'Sometimes Complete',
-      understandingLevel: form.understandingLevel || 'Average',
-      areasOfConcern: form.areasOfConcern || '',
-      suggestionsForImprovement: form.suggestionsForImprovement || '',
-      parentCommunication: form.parentCommunication || '',
       formStatus: form.formStatus || 'Draft'
     });
     setOpenRemarksDialog(true);
@@ -222,20 +216,15 @@ const TeacherRemarks = () => {
       numberOfPeriodsTaken: '',
       actualCompletionDate: null,
       status: '',
-      remarksTopicsLeft: ''
+      remarksTopicsLeft: '',
+      lessonsCompleted: '',
+      lessonsPending: ''
     });
   };
 
   const resetRemarksData = () => {
     setRemarksData({
       teacherRemarks: '',
-      studentPerformance: 'Average',
-      classParticipation: 'Moderate',
-      homeworkCompletion: 'Sometimes Complete',
-      understandingLevel: 'Average',
-      areasOfConcern: '',
-      suggestionsForImprovement: '',
-      parentCommunication: '',
       formStatus: 'Draft'
     });
   };
@@ -273,16 +262,13 @@ const TeacherRemarks = () => {
     return new Date(date).toLocaleDateString();
   };
 
-  const getPerformanceIcon = (level) => {
-    switch (level) {
-      case 'Excellent': return <CheckCircleIcon color="success" />;
-      case 'Good': return <CheckCircleIcon color="primary" />;
-      case 'Average': return <ScheduleIcon color="warning" />;
-      case 'Below Average': return <WarningIcon color="warning" />;
-      case 'Poor': return <WarningIcon color="error" />;
-      default: return null;
-    }
-  };
+  // Calculate current completion rate for display in progress dialog
+  const currentCompletionRate = (() => {
+    const lessonsCompleted = parseInt(progressData.lessonsCompleted) || 0;
+    const lessonsPending = parseInt(progressData.lessonsPending) || 0;
+    const totalLessons = lessonsCompleted + lessonsPending;
+    return totalLessons > 0 ? Math.round((lessonsCompleted / totalLessons) * 100) : 0;
+  })();
 
   const filteredForms = forms.filter(form => {
     if (activeTab === 0) return true; // All forms
@@ -296,7 +282,7 @@ const TeacherRemarks = () => {
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <Box sx={{ p: 3 }}>
         <Typography variant="h4" gutterBottom>
-          Teacher Remarks Management
+          Teacher Progress Tracking
         </Typography>
 
         {/* Statistics Cards */}
@@ -305,7 +291,7 @@ const TeacherRemarks = () => {
             <Card>
               <CardContent>
                 <Typography color="textSecondary" gutterBottom>
-                  Total Forms
+                  Total Units
                 </Typography>
                 <Typography variant="h4">
                   {pagination.totalForms}
@@ -317,7 +303,7 @@ const TeacherRemarks = () => {
             <Card>
               <CardContent>
                 <Typography color="textSecondary" gutterBottom>
-                  Draft Forms
+                  Draft Progress
                 </Typography>
                 <Typography variant="h4">
                   {forms.filter(f => f.formStatus === 'Draft').length}
@@ -329,7 +315,7 @@ const TeacherRemarks = () => {
             <Card>
               <CardContent>
                 <Typography color="textSecondary" gutterBottom>
-                  Submitted Forms
+                  Submitted Progress
                 </Typography>
                 <Typography variant="h4">
                   {forms.filter(f => f.formStatus === 'Submitted').length}
@@ -349,14 +335,49 @@ const TeacherRemarks = () => {
               </CardContent>
             </Card>
           </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card sx={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: 'white'
+            }}>
+              <CardContent>
+                <Typography color="inherit" gutterBottom>
+                  Overall Completion Rate
+                </Typography>
+                <Typography variant="h4" sx={{ color: 'white' }}>
+                  {(() => {
+                    const totalCompletionRate = forms.reduce((sum, form) => sum + (form.completionRate || 0), 0);
+                    return forms.length > 0 ? Math.round(totalCompletionRate / forms.length) : 0;
+                  })()}%
+                </Typography>
+                <Box sx={{ mt: 1 }}>
+                  <LinearProgress
+                    variant="determinate"
+                    value={(() => {
+                      const totalCompletionRate = forms.reduce((sum, form) => sum + (form.completionRate || 0), 0);
+                      return forms.length > 0 ? Math.round(totalCompletionRate / forms.length) : 0;
+                    })()}
+                    sx={{
+                      height: 8,
+                      borderRadius: 4,
+                      backgroundColor: 'rgba(255,255,255,0.3)',
+                      '& .MuiLinearProgress-bar': {
+                        backgroundColor: 'white'
+                      }
+                    }}
+                  />
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
         </Grid>
 
         {/* Tabs */}
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
           <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
-            <Tab label="All Forms" />
-            <Tab label="Draft Forms" />
-            <Tab label="Submitted Forms" />
+            <Tab label="All Units" />
+            <Tab label="Draft Progress" />
+            <Tab label="Submitted Progress" />
             <Tab label="Delayed Units" />
           </Tabs>
         </Box>
@@ -491,6 +512,7 @@ const TeacherRemarks = () => {
                   <TableCell>Status</TableCell>
                   <TableCell>Form Status</TableCell>
                   <TableCell>Completion Rate</TableCell>
+                  <TableCell>Completion Ratio</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
@@ -520,16 +542,26 @@ const TeacherRemarks = () => {
                         <Box sx={{ width: '100%', mr: 1 }}>
                           <LinearProgress
                             variant="determinate"
-                            value={form.completionRate}
-                            color={form.completionRate === 100 ? 'success' : 'primary'}
+                            value={form.completionRate || 0}
+                            color={(form.completionRate || 0) === 100 ? 'success' : 'primary'}
                           />
                         </Box>
                         <Box sx={{ minWidth: 35 }}>
                           <Typography variant="body2" color="text.secondary">
-                            {form.completionRate}%
+                            {form.completionRate || 0}%
                           </Typography>
                         </Box>
                       </Box>
+                      {(!form.lessonsCompleted && !form.lessonsPending) && (
+                        <Typography variant="caption" color="warning.main" sx={{ display: 'block', mt: 0.5 }}>
+                          ⚠️ Click "Update Progress" to add lessons data
+                        </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">
+                        {(form.completionRatio || 0).toFixed(2)}
+                      </Typography>
                     </TableCell>
                     <TableCell>
                       <Tooltip title="View Details">
@@ -567,7 +599,7 @@ const TeacherRemarks = () => {
 
         {/* Progress Update Dialog */}
         <Dialog open={openProgressDialog} onClose={() => setOpenProgressDialog(false)} maxWidth="md" fullWidth>
-          <DialogTitle>Update Progress</DialogTitle>
+          <DialogTitle>Update Teaching Progress</DialogTitle>
           <DialogContent>
             <Grid container spacing={2} sx={{ mt: 1 }}>
               <Grid item xs={12} sm={6}>
@@ -588,6 +620,50 @@ const TeacherRemarks = () => {
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Lessons Completed"
+                  type="number"
+                  value={progressData.lessonsCompleted}
+                  onChange={(e) => setProgressData({ ...progressData, lessonsCompleted: e.target.value })}
+                  helperText="Number of lessons completed in this unit"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Lessons Pending"
+                  type="number"
+                  value={progressData.lessonsPending}
+                  onChange={(e) => setProgressData({ ...progressData, lessonsPending: e.target.value })}
+                  helperText="Number of lessons remaining in this unit"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Completion Rate Preview
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <Box sx={{ width: '100%', mr: 1 }}>
+                      <LinearProgress
+                        variant="determinate"
+                        value={currentCompletionRate}
+                        color={currentCompletionRate === 100 ? 'success' : 'primary'}
+                      />
+                    </Box>
+                    <Box sx={{ minWidth: 35 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        {currentCompletionRate}%
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    {progressData.lessonsCompleted || 0} completed / {parseInt(progressData.lessonsCompleted || 0) + parseInt(progressData.lessonsPending || 0)} total lessons
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12} sm={6}>
                 <FormControl fullWidth>
                   <InputLabel>Status</InputLabel>
                   <Select
@@ -603,11 +679,12 @@ const TeacherRemarks = () => {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Remarks/Topics Left"
+                  label="Topics/Remarks Left"
                   multiline
                   rows={3}
                   value={progressData.remarksTopicsLeft}
                   onChange={(e) => setProgressData({ ...progressData, remarksTopicsLeft: e.target.value })}
+                  helperText="Any remaining topics or important remarks about the unit progress"
                 />
               </Grid>
             </Grid>
@@ -620,9 +697,9 @@ const TeacherRemarks = () => {
           </DialogActions>
         </Dialog>
 
-        {/* Detailed Remarks Dialog */}
+        {/* Teacher Remarks Dialog */}
         <Dialog open={openRemarksDialog} onClose={() => setOpenRemarksDialog(false)} maxWidth="md" fullWidth>
-          <DialogTitle>Edit Teacher Remarks</DialogTitle>
+          <DialogTitle>Teacher Progress Remarks</DialogTitle>
           <DialogContent>
             <Grid container spacing={2} sx={{ mt: 1 }}>
               <Grid item xs={12}>
@@ -630,96 +707,11 @@ const TeacherRemarks = () => {
                   fullWidth
                   label="Teacher Remarks"
                   multiline
-                  rows={4}
+                  rows={6}
                   value={remarksData.teacherRemarks}
                   onChange={(e) => setRemarksData({ ...remarksData, teacherRemarks: e.target.value })}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Student Performance</InputLabel>
-                  <Select
-                    value={remarksData.studentPerformance}
-                    onChange={(e) => setRemarksData({ ...remarksData, studentPerformance: e.target.value })}
-                  >
-                    {performanceLevels.map(level => (
-                      <MenuItem key={level} value={level}>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          {getPerformanceIcon(level)}
-                          <Typography sx={{ ml: 1 }}>{level}</Typography>
-                        </Box>
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Class Participation</InputLabel>
-                  <Select
-                    value={remarksData.classParticipation}
-                    onChange={(e) => setRemarksData({ ...remarksData, classParticipation: e.target.value })}
-                  >
-                    {participationLevels.map(level => (
-                      <MenuItem key={level} value={level}>{level}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Homework Completion</InputLabel>
-                  <Select
-                    value={remarksData.homeworkCompletion}
-                    onChange={(e) => setRemarksData({ ...remarksData, homeworkCompletion: e.target.value })}
-                  >
-                    {homeworkLevels.map(level => (
-                      <MenuItem key={level} value={level}>{level}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Understanding Level</InputLabel>
-                  <Select
-                    value={remarksData.understandingLevel}
-                    onChange={(e) => setRemarksData({ ...remarksData, understandingLevel: e.target.value })}
-                  >
-                    {performanceLevels.map(level => (
-                      <MenuItem key={level} value={level}>{level}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Areas of Concern"
-                  multiline
-                  rows={3}
-                  value={remarksData.areasOfConcern}
-                  onChange={(e) => setRemarksData({ ...remarksData, areasOfConcern: e.target.value })}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Suggestions for Improvement"
-                  multiline
-                  rows={3}
-                  value={remarksData.suggestionsForImprovement}
-                  onChange={(e) => setRemarksData({ ...remarksData, suggestionsForImprovement: e.target.value })}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Parent Communication"
-                  multiline
-                  rows={2}
-                  value={remarksData.parentCommunication}
-                  onChange={(e) => setRemarksData({ ...remarksData, parentCommunication: e.target.value })}
+                  placeholder="Add your remarks about the unit progress, teaching experience, challenges faced, strategies used, or any other observations..."
+                  helperText="These remarks are for tracking your teaching progress and can include insights about the unit completion."
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -758,7 +750,7 @@ const TeacherRemarks = () => {
 
         {/* View Dialog */}
         <Dialog open={openViewDialog} onClose={() => setOpenViewDialog(false)} maxWidth="md" fullWidth>
-          <DialogTitle>Teacher Remarks Form Details</DialogTitle>
+          <DialogTitle>Unit Progress Details</DialogTitle>
           <DialogContent>
             {selectedForm && (
               <Grid container spacing={2}>
@@ -810,50 +802,58 @@ const TeacherRemarks = () => {
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <Typography variant="subtitle2">Completion Rate:</Typography>
-                  <Typography>{selectedForm.completionRate}%</Typography>
+                  <Typography>{selectedForm.completionRate || 0}%</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2">Completion Ratio:</Typography>
+                  <Typography>{(selectedForm.completionRatio || 0).toFixed(2)}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2">Periods Taken:</Typography>
+                  <Typography>{selectedForm.numberOfPeriodsTaken}/{selectedForm.numberOfPeriodsAllotted}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2">Lessons Completed:</Typography>
+                  <Typography>{selectedForm.lessonsCompleted || 0}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2">Lessons Pending:</Typography>
+                  <Typography>{selectedForm.lessonsPending || 0}</Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2">Lesson Progress:</Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                    <Box sx={{ width: '100%', mr: 1 }}>
+                      <LinearProgress
+                        variant="determinate"
+                        value={selectedForm.completionRate || 0}
+                        color={(selectedForm.completionRate || 0) === 100 ? 'success' : 'primary'}
+                      />
+                    </Box>
+                    <Box sx={{ minWidth: 35 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        {selectedForm.completionRate || 0}%
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                    {selectedForm.lessonsCompleted || 0} completed / {(selectedForm.lessonsCompleted || 0) + (selectedForm.lessonsPending || 0)} total lessons
+                  </Typography>
                 </Grid>
                 <Divider sx={{ my: 2, width: '100%' }} />
                 <Grid item xs={12}>
                   <Typography variant="h6" gutterBottom>Teacher Remarks</Typography>
                 </Grid>
                 <Grid item xs={12}>
-                  <Typography variant="subtitle2">General Remarks:</Typography>
+                  <Typography variant="subtitle2">Progress Remarks:</Typography>
                   <Typography>{selectedForm.teacherRemarks || 'No remarks yet'}</Typography>
                 </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2">Student Performance:</Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    {getPerformanceIcon(selectedForm.studentPerformance)}
-                    <Typography sx={{ ml: 1 }}>{selectedForm.studentPerformance || 'Not rated'}</Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2">Class Participation:</Typography>
-                  <Typography>{selectedForm.classParticipation || 'Not rated'}</Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2">Homework Completion:</Typography>
-                  <Typography>{selectedForm.homeworkCompletion || 'Not rated'}</Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2">Understanding Level:</Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    {getPerformanceIcon(selectedForm.understandingLevel)}
-                    <Typography sx={{ ml: 1 }}>{selectedForm.understandingLevel || 'Not rated'}</Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography variant="subtitle2">Areas of Concern:</Typography>
-                  <Typography>{selectedForm.areasOfConcern || 'None specified'}</Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography variant="subtitle2">Suggestions for Improvement:</Typography>
-                  <Typography>{selectedForm.suggestionsForImprovement || 'None specified'}</Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography variant="subtitle2">Parent Communication:</Typography>
-                  <Typography>{selectedForm.parentCommunication || 'None specified'}</Typography>
-                </Grid>
+                {selectedForm.remarksTopicsLeft && (
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle2">Topics/Remarks Left:</Typography>
+                    <Typography>{selectedForm.remarksTopicsLeft}</Typography>
+                  </Grid>
+                )}
               </Grid>
             )}
           </DialogContent>

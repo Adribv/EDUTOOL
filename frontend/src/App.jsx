@@ -10,6 +10,7 @@ import theme from './theme';
 
 // Context
 import { AuthProvider } from './context/AuthContext';
+import { StaffPermissionProvider } from './context/StaffPermissionContext';
 
 // Components
 import Layout from './components/layout/Layout';
@@ -29,6 +30,18 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 const AccountantLogin = lazy(() => import('./pages/auth/AccountantLogin'));
 const AccountantDashboard = lazy(() => import('./pages/accountant/AccountantDashboard'));
 const AccountantProfile = lazy(() => import('./pages/accountant/AccountantProfile'));
+
+// Main Dashboard
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+
+// Role-specific Dashboard Components
+const LibrarianDashboardProtected = lazy(() => import('./pages/Dashboard').then(module => ({ default: module.LibrarianDashboardProtected })));
+const CounselorDashboardProtected = lazy(() => import('./pages/Dashboard').then(module => ({ default: module.CounselorDashboardProtected })));
+const PTTeacherDashboardProtected = lazy(() => import('./pages/Dashboard').then(module => ({ default: module.PTTeacherDashboardProtected })));
+const EventHandlerDashboardProtected = lazy(() => import('./pages/Dashboard').then(module => ({ default: module.EventHandlerDashboardProtected })));
+const TransportManagerDashboardProtected = lazy(() => import('./pages/Dashboard').then(module => ({ default: module.TransportManagerDashboardProtected })));
+const SoftSkillsManagerDashboardProtected = lazy(() => import('./pages/Dashboard').then(module => ({ default: module.SoftSkillsManagerDashboardProtected })));
+const AdminDashboardProtected = lazy(() => import('./pages/Dashboard').then(module => ({ default: module.AdminDashboardProtected })));
 
 // Student Pages
 const StudentRoutes = lazy(() => import('./routes/StudentRoutes'));
@@ -83,65 +96,80 @@ function App() {
           <CssBaseline />
           <Router>
             <AuthProvider>
-              <Suspense fallback={<LoadingSpinner />}>
-                <Routes>
-                  {/* Public Routes */}
-                  <Route path="/" element={<Home />} />
-                  {/* Public Auth Routes */}
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/student-login" element={<StudentLogin />} />
-                  <Route path="/student-register" element={<StudentRegister />} />
-                  <Route path="/parent-login" element={<ParentLogin />} />
-                  <Route path="/parent-register" element={<ParentRegister />} />
-                  <Route path="/management-login" element={<ManagementLogin />} />
-                  <Route path="/accountant-login" element={<AccountantLogin />} />
-                  {/* Protected Routes */}
-                  <Route element={<ProtectedRoute allowedRoles={['Student']} />}>
-                    <Route path="/student/*" element={<StudentRoutes />} />
-                  </Route>
-                  <Route element={<ProtectedRoute allowedRoles={['Parent']} />}>
-                    <Route path="/parent/*" element={<ParentRoutes />} />
-                  </Route>
-                  {/* Management Routes */}
-                  <Route element={<ProtectedRoute allowedRoles={['Teacher']} />}>
-                    <Route path="/teacher/*" element={<TeacherRoutes />} />
-                  </Route>
-                  <Route element={<ProtectedRoute allowedRoles={['AdminStaff']} />}>
-                    <Route path="/admin/*" element={<AdminRoutes />} />
-                  </Route>
-                  <Route element={<ProtectedRoute allowedRoles={['HOD']} />}>
-                    <Route path="/hod/*" element={<HODRoutes />} />
-                  </Route>
-                  <Route element={<ProtectedRoute allowedRoles={['Principal']} />}>
-                    <Route path="/principal/*" element={<PrincipalRoutes />} />
-                  </Route>
-                  <Route element={<ProtectedRoute allowedRoles={['Counsellor']} />}>
-                    <Route path="/counselor/*" element={<CounselorRoutes />} />
-                  </Route>
-                  <Route element={<ProtectedRoute allowedRoles={['VicePrincipal']} />}>
-                    <Route path="/viceprincipal/dashboard" element={<VicePrincipalDashboard />} />
-                  </Route>
-                  <Route element={<ProtectedRoute allowedRoles={['Accountant']} />}>
-                    <Route path="/accountant/dashboard" element={<AccountantDashboard />} />
-                    <Route path="/accountant/profile" element={<AccountantProfile />} />
-                  </Route>
+              <StaffPermissionProvider>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <Routes>
+                    {/* Public Routes */}
+                    <Route path="/" element={<Home />} />
+                    {/* Public Auth Routes */}
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/student-login" element={<StudentLogin />} />
+                    <Route path="/student-register" element={<StudentRegister />} />
+                    <Route path="/parent-login" element={<ParentLogin />} />
+                    <Route path="/parent-register" element={<ParentRegister />} />
+                    <Route path="/management-login" element={<ManagementLogin />} />
+                    <Route path="/accountant-login" element={<AccountantLogin />} />
+                    
+                    {/* Main Dashboard Route */}
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    
+                    {/* Role-specific Dashboard Routes */}
+                    <Route path="/dashboard/librarian" element={<LibrarianDashboardProtected />} />
+                    <Route path="/dashboard/counselor" element={<CounselorDashboardProtected />} />
+                    <Route path="/dashboard/ptteacher" element={<PTTeacherDashboardProtected />} />
+                    <Route path="/dashboard/eventhandler" element={<EventHandlerDashboardProtected />} />
+                    <Route path="/dashboard/transportmanager" element={<TransportManagerDashboardProtected />} />
+                    <Route path="/dashboard/softskillsmanager" element={<SoftSkillsManagerDashboardProtected />} />
+                    <Route path="/dashboard/admin" element={<AdminDashboardProtected />} />
+                    
+                    {/* Protected Routes */}
+                    <Route element={<ProtectedRoute allowedRoles={['Student']} />}>
+                      <Route path="/student/*" element={<StudentRoutes />} />
+                    </Route>
+                    <Route element={<ProtectedRoute allowedRoles={['Parent']} />}>
+                      <Route path="/parent/*" element={<ParentRoutes />} />
+                    </Route>
+                    {/* Management Routes */}
+                    <Route element={<ProtectedRoute allowedRoles={['Teacher']} />}>
+                      <Route path="/teacher/*" element={<TeacherRoutes />} />
+                    </Route>
+                    <Route element={<ProtectedRoute allowedRoles={['AdminStaff']} />}>
+                      <Route path="/admin/*" element={<AdminRoutes />} />
+                    </Route>
+                    <Route element={<ProtectedRoute allowedRoles={['HOD']} />}>
+                      <Route path="/hod/*" element={<HODRoutes />} />
+                    </Route>
+                    <Route element={<ProtectedRoute allowedRoles={['Principal']} />}>
+                      <Route path="/principal/*" element={<PrincipalRoutes />} />
+                    </Route>
+                    <Route element={<ProtectedRoute allowedRoles={['Counsellor']} />}>
+                      <Route path="/counselor/*" element={<CounselorRoutes />} />
+                    </Route>
+                    <Route element={<ProtectedRoute allowedRoles={['VicePrincipal']} />}>
+                      <Route path="/viceprincipal/dashboard" element={<VicePrincipalDashboard />} />
+                    </Route>
+                    <Route element={<ProtectedRoute allowedRoles={['Accountant']} />}>
+                      <Route path="/accountant/dashboard" element={<AccountantDashboard />} />
+                      <Route path="/accountant/profile" element={<AccountantProfile />} />
+                    </Route>
 
-                  {/* 404 Route */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-              <ToastContainer
-                position="top-right"
-                autoClose={5000}
-                hideProgressBar={false}
-                newestOnTop={false}
-                closeOnClick
-                rtl={false}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-              />
+                    {/* 404 Route */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+                <ToastContainer
+                  position="top-right"
+                  autoClose={5000}
+                  hideProgressBar={false}
+                  newestOnTop={false}
+                  closeOnClick
+                  rtl={false}
+                  pauseOnFocusLoss
+                  draggable
+                  pauseOnHover
+                />
+              </StaffPermissionProvider>
             </AuthProvider>
           </Router>
         </ThemeProvider>

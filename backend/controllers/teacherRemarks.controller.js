@@ -152,7 +152,7 @@ exports.updateTeacherRemarksForm = async (req, res) => {
     const { id } = req.params;
     const updateData = req.body;
 
-    const teacherRemarksForm = await TeacherRemarks.findById(id);
+    const teacherRemarksForm = await TeacherRemarks.findOne({ _id: id });
     if (!teacherRemarksForm) {
       return res.status(404).json({
         success: false,
@@ -393,10 +393,12 @@ exports.updateRemarksFormProgress = async (req, res) => {
       numberOfPeriodsTaken,
       actualCompletionDate,
       status,
-      remarksTopicsLeft
+      remarksTopicsLeft,
+      lessonsCompleted,
+      lessonsPending
     } = req.body;
 
-    const teacherRemarksForm = await TeacherRemarks.findById(id);
+    const teacherRemarksForm = await TeacherRemarks.findOne({ _id: id });
     if (!teacherRemarksForm) {
       return res.status(404).json({
         success: false,
@@ -420,11 +422,13 @@ exports.updateRemarksFormProgress = async (req, res) => {
       actualCompletionDate: actualCompletionDate ? new Date(actualCompletionDate) : undefined,
       status,
       remarksTopicsLeft,
+      lessonsCompleted,
+      lessonsPending,
       updatedBy: req.user?.id && req.user.id !== 'test-user-id' ? req.user.id : null
     };
 
-    const updatedForm = await TeacherRemarks.findByIdAndUpdate(
-      id,
+    const updatedForm = await TeacherRemarks.findOneAndUpdate(
+      { _id: id },
       updateData,
       { new: true, runValidators: true }
     );
@@ -450,17 +454,10 @@ exports.updateDetailedTeacherRemarks = async (req, res) => {
     const { id } = req.params;
     const {
       teacherRemarks,
-      studentPerformance,
-      classParticipation,
-      homeworkCompletion,
-      understandingLevel,
-      areasOfConcern,
-      suggestionsForImprovement,
-      parentCommunication,
       formStatus
     } = req.body;
 
-    const teacherRemarksForm = await TeacherRemarks.findById(id);
+    const teacherRemarksForm = await TeacherRemarks.findOne({ _id: id });
     if (!teacherRemarksForm) {
       return res.status(404).json({
         success: false,
@@ -481,33 +478,26 @@ exports.updateDetailedTeacherRemarks = async (req, res) => {
 
     const updateData = {
       teacherRemarks,
-      studentPerformance,
-      classParticipation,
-      homeworkCompletion,
-      understandingLevel,
-      areasOfConcern,
-      suggestionsForImprovement,
-      parentCommunication,
       formStatus: formStatus || 'Submitted',
       updatedBy: req.user?.id && req.user.id !== 'test-user-id' ? req.user.id : null
     };
 
-    const updatedForm = await TeacherRemarks.findByIdAndUpdate(
-      id,
+    const updatedForm = await TeacherRemarks.findOneAndUpdate(
+      { _id: id },
       updateData,
       { new: true, runValidators: true }
     );
 
     res.json({
       success: true,
-      message: 'Detailed teacher remarks updated successfully',
+      message: 'Teacher remarks updated successfully',
       data: updatedForm
     });
   } catch (error) {
-    console.error('Error updating detailed teacher remarks:', error);
+    console.error('Error updating teacher remarks:', error);
     res.status(500).json({
       success: false,
-      message: 'Error updating detailed teacher remarks',
+      message: 'Error updating teacher remarks',
       error: error.message
     });
   }
@@ -823,17 +813,13 @@ exports.getTeacherRemarksSchema = (req, res) => {
     { name: 'status', type: 'String', required: false, enum: ['Not started', 'In Progress', 'Completed', 'Delayed'] },
     { name: 'numberOfPeriodsAllotted', type: 'Number', required: true },
     { name: 'numberOfPeriodsTaken', type: 'Number', required: false },
+    { name: 'lessonsCompleted', type: 'Number', required: false },
+    { name: 'lessonsPending', type: 'Number', required: false },
     { name: 'teachingMethodUsed', type: 'String', required: true },
     { name: 'completionRate', type: 'Number', required: false },
+    { name: 'completionRatio', type: 'Number', required: false },
     { name: 'remarksTopicsLeft', type: 'String', required: false },
     { name: 'teacherRemarks', type: 'String', required: false },
-    { name: 'studentPerformance', type: 'String', required: false, enum: ['Excellent', 'Good', 'Average', 'Below Average', 'Poor'] },
-    { name: 'classParticipation', type: 'String', required: false, enum: ['Very Active', 'Active', 'Moderate', 'Low', 'Very Low'] },
-    { name: 'homeworkCompletion', type: 'String', required: false, enum: ['Always Complete', 'Usually Complete', 'Sometimes Complete', 'Rarely Complete', 'Never Complete'] },
-    { name: 'understandingLevel', type: 'String', required: false, enum: ['Excellent', 'Good', 'Average', 'Below Average', 'Poor'] },
-    { name: 'areasOfConcern', type: 'String', required: false },
-    { name: 'suggestionsForImprovement', type: 'String', required: false },
-    { name: 'parentCommunication', type: 'String', required: false },
     { name: 'academicYear', type: 'String', required: true },
     { name: 'semester', type: 'String', required: true, enum: ['First Term', 'Second Term', 'Third Term', 'Annual'] },
     { name: 'formStatus', type: 'String', required: false, enum: ['Draft', 'Submitted', 'Reviewed', 'Approved'] }

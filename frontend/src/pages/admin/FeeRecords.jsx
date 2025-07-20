@@ -25,8 +25,6 @@ import {
   TableHead,
   TableRow,
   TablePagination,
-  Tabs,
-  Tab,
   Card,
   CardContent,
   Alert,
@@ -35,7 +33,8 @@ import {
   List,
   ListItem,
   ListItemText,
-  ListItemIcon
+  ListItemIcon,
+  InputAdornment
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -49,7 +48,6 @@ import {
   Receipt as ReceiptIcon,
   AttachMoney as MoneyIcon,
   School as SchoolIcon,
-  Work as WorkIcon,
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
   Error as ErrorIcon,
@@ -61,16 +59,12 @@ import Papa from 'papaparse';
 
 const FeeRecords = () => {
   const [loading, setLoading] = useState(true);
-  const [tabValue, setTabValue] = useState(0);
   const [studentFeeRecords, setStudentFeeRecords] = useState([]);
-  const [staffSalaryRecords, setStaffSalaryRecords] = useState([]);
   const [students, setStudents] = useState([]);
-  const [staff, setStaff] = useState([]);
   const [stats, setStats] = useState({});
   
   // Dialog states
   const [studentFeeDialog, setStudentFeeDialog] = useState(false);
-  const [staffSalaryDialog, setStaffSalaryDialog] = useState(false);
   const [importDialog, setImportDialog] = useState(false);
   const [previewDialog, setPreviewDialog] = useState(false);
   
@@ -79,9 +73,17 @@ const FeeRecords = () => {
     studentId: '',
     academicYear: new Date().getFullYear().toString(),
     term: 'Annual',
-    feeType: 'Tuition',
-    amount: '',
+    totalFee: '',
+    paymentReceived: '0',
     dueDate: '',
+    parentName: '',
+    contactNumber: '',
+    admissionNumber: '',
+    paymentMethod: '',
+    reminderDate: '',
+    followUpDate: '',
+    noticeIssueDate: '',
+    modeOfContact: '',
     remarks: '',
     parentContact: {
       name: '',
@@ -90,41 +92,9 @@ const FeeRecords = () => {
     }
   });
   
-  const [staffSalaryForm, setStaffSalaryForm] = useState({
-    staffId: '',
-    month: new Date().toLocaleString('default', { month: 'long' }),
-    year: new Date().getFullYear(),
-    basicSalary: '',
-    allowances: {
-      houseRentAllowance: 0,
-      dearnessAllowance: 0,
-      transportAllowance: 0,
-      medicalAllowance: 0,
-      otherAllowances: 0
-    },
-    deductions: {
-      providentFund: 0,
-      tax: 0,
-      insurance: 0,
-      otherDeductions: 0
-    },
-    remarks: '',
-    attendance: {
-      totalDays: 0,
-      presentDays: 0,
-      absentDays: 0,
-      leaveDays: 0
-    },
-    performance: {
-      rating: 5,
-      comments: ''
-    }
-  });
-  
   // Import states
   const [sheetUrl, setSheetUrl] = useState('');
   const [sheetData, setSheetData] = useState([]);
-  const [importType, setImportType] = useState('student');
   const [processing, setProcessing] = useState(false);
   
   // Pagination
@@ -134,7 +104,7 @@ const FeeRecords = () => {
 
   useEffect(() => {
     fetchData();
-  }, [tabValue, page, rowsPerPage]);
+  }, [page, rowsPerPage]);
 
   const fetchData = async () => {
     try {
@@ -148,37 +118,24 @@ const FeeRecords = () => {
         }
       };
       
-      const [studentsRes, staffRes, statsRes] = await Promise.all([
-        axios.get('https://api.edulives.com/api/admin-staff/students/public'),
-        axios.get('https://api.edulives.com/api/admin-staff/staff/public'),
-        axios.get('https://api.edulives.com/api/admin-staff/fee-records/stats/public')
+      const [studentsRes, statsRes] = await Promise.all([
+        axios.get('http://localhost:5000/api/admin-staff/students/public'),
+        axios.get('http://localhost:5000/api/admin-staff/fee-records/stats/public')
       ]);
       
       setStudents(studentsRes.data);
-      setStaff(staffRes.data);
       setStats(statsRes.data);
       
-      // Fetch records based on current tab
-      if (tabValue === 0) {
-        const studentRecordsRes = await axios.get(`https://api.edulives.com/api/admin-staff/fee-records/student?page=${page + 1}&limit=${rowsPerPage}`, config);
-        setStudentFeeRecords(studentRecordsRes.data.data);
-        setTotalRecords(studentRecordsRes.data.pagination.totalRecords);
-      } else {
-        const staffRecordsRes = await axios.get(`https://api.edulives.com/api/admin-staff/fee-records/staff?page=${page + 1}&limit=${rowsPerPage}`, config);
-        setStaffSalaryRecords(staffRecordsRes.data.data);
-        setTotalRecords(staffRecordsRes.data.pagination.totalRecords);
-      }
+      // Fetch student fee records
+      const studentRecordsRes = await axios.get(`http://localhost:5000/api/admin-staff/fee-records/student?page=${page + 1}&limit=${rowsPerPage}`, config);
+      setStudentFeeRecords(studentRecordsRes.data.data);
+      setTotalRecords(studentRecordsRes.data.pagination.totalRecords);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Failed to load data');
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleTabChange = (event, newValue) => {
-    setTabValue(newValue);
-    setPage(0);
   };
 
   const handleStudentFeeSubmit = async () => {
@@ -190,36 +147,15 @@ const FeeRecords = () => {
           'Authorization': `Bearer ${token}`
         }
       };
-      await axios.post('https://api.edulives.com/api/admin-staff/fee-records/student', studentFeeForm, config);
-      toast.success('Student fee record approval request submitted successfully');
+      // Use direct creation endpoint for immediate testing
+      await axios.post('http://localhost:5000/api/admin-staff/fee-records/student/direct', studentFeeForm, config);
+      toast.success('Student fee record created successfully');
       setStudentFeeDialog(false);
       resetStudentFeeForm();
       fetchData();
     } catch (error) {
       console.error('Error creating student fee record:', error);
       toast.error(error.response?.data?.message || 'Failed to create student fee record');
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  const handleStaffSalarySubmit = async () => {
-    try {
-      setProcessing(true);
-      const token = localStorage.getItem('token');
-      const config = {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      };
-      await axios.post('https://api.edulives.com/api/admin-staff/fee-records/staff', staffSalaryForm, config);
-      toast.success('Staff salary record approval request submitted successfully');
-      setStaffSalaryDialog(false);
-      resetStaffSalaryForm();
-      fetchData();
-    } catch (error) {
-      console.error('Error creating staff salary record:', error);
-      toast.error(error.response?.data?.message || 'Failed to create staff salary record');
     } finally {
       setProcessing(false);
     }
@@ -262,16 +198,12 @@ const FeeRecords = () => {
         }
       };
       
-      const endpoint = importType === 'student' 
-        ? 'https://api.edulives.com/api/admin-staff/fee-records/student/bulk-import'
-        : 'https://api.edulives.com/api/admin-staff/fee-records/staff/bulk-import';
-      
-      const response = await axios.post(endpoint, { records: sheetData }, config);
+      const response = await axios.post('http://localhost:5000/api/admin-staff/fee-records/student/bulk-import', { records: sheetData }, config);
       
       toast.success(`Bulk import completed! ${response.data.results.successful.length} successful, ${response.data.results.failed.length} failed`);
       
       if (response.data.results.failed.length > 0) {
-        const errorInfo = response.data.results.failed.map(f => `${f.studentName || f.staffName}: ${f.error}`).join('\n');
+        const errorInfo = response.data.results.failed.map(f => `${f.studentName}: ${f.error}`).join('\n');
         alert(`Failed imports:\n${errorInfo}`);
       }
       
@@ -288,52 +220,51 @@ const FeeRecords = () => {
     }
   };
 
+  const checkPendingApprovals = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const config = {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      };
+      const response = await axios.get('http://localhost:5000/api/admin-staff/fee-records/pending-approvals', config);
+      console.log('📋 Pending approvals:', response.data);
+      if (response.data.count > 0) {
+        toast.info(`Found ${response.data.count} pending fee record approvals`);
+        alert(`Pending Approvals:\n${response.data.pendingApprovals.map(approval => 
+          `- ${approval.title} (${approval.requesterId?.name || 'Unknown'})`
+        ).join('\n')}`);
+      } else {
+        toast.success('No pending fee record approvals found');
+      }
+    } catch (error) {
+      console.error('Error checking pending approvals:', error);
+      toast.error('Failed to check pending approvals');
+    }
+  };
+
   const resetStudentFeeForm = () => {
     setStudentFeeForm({
       studentId: '',
       academicYear: new Date().getFullYear().toString(),
       term: 'Annual',
-      feeType: 'Tuition',
-      amount: '',
+      totalFee: '',
+      paymentReceived: '0',
       dueDate: '',
+      parentName: '',
+      contactNumber: '',
+      admissionNumber: '',
+      paymentMethod: '',
+      reminderDate: '',
+      followUpDate: '',
+      noticeIssueDate: '',
+      modeOfContact: '',
       remarks: '',
       parentContact: {
         name: '',
         phone: '',
         email: ''
-      }
-    });
-  };
-
-  const resetStaffSalaryForm = () => {
-    setStaffSalaryForm({
-      staffId: '',
-      month: new Date().toLocaleString('default', { month: 'long' }),
-      year: new Date().getFullYear(),
-      basicSalary: '',
-      allowances: {
-        houseRentAllowance: 0,
-        dearnessAllowance: 0,
-        transportAllowance: 0,
-        medicalAllowance: 0,
-        otherAllowances: 0
-      },
-      deductions: {
-        providentFund: 0,
-        tax: 0,
-        insurance: 0,
-        otherDeductions: 0
-      },
-      remarks: '',
-      attendance: {
-        totalDays: 0,
-        presentDays: 0,
-        absentDays: 0,
-        leaveDays: 0
-      },
-      performance: {
-        rating: 5,
-        comments: ''
       }
     });
   };
@@ -368,15 +299,16 @@ const FeeRecords = () => {
   return (
     <Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4">Fee Records Management</Typography>
-        <Box>
+        <Typography variant="h4">Student Fee Records Management</Typography>
+        <Box display="flex" gap={2} alignItems="center">
           <Button
             variant="outlined"
+            size="small"
             onClick={async () => {
               try {
                 const token = localStorage.getItem('token');
                 console.log('🔑 Token:', token);
-                const response = await axios.post('https://api.edulives.com/api/admin-staff/fee-records/test', {
+                const response = await axios.post('http://localhost:5000/api/admin-staff/fee-records/test', {
                   test: 'data'
                 }, {
                   headers: {
@@ -390,31 +322,48 @@ const FeeRecords = () => {
                 toast.error('Test failed: ' + error.message);
               }
             }}
-            sx={{ mr: 2 }}
           >
             Test Auth
           </Button>
           <Button
             variant="outlined"
+            size="small"
+            onClick={checkPendingApprovals}
+          >
+            Check Pending Approvals
+          </Button>
+          <Button
+            variant="outlined"
+            size="small"
             startIcon={<UploadIcon />}
             onClick={() => setImportDialog(true)}
-            sx={{ mr: 2 }}
           >
             Import from Google Sheets
           </Button>
           <Button
             variant="contained"
+            size="large"
             startIcon={<AddIcon />}
-            onClick={() => tabValue === 0 ? setStudentFeeDialog(true) : setStaffSalaryDialog(true)}
+            onClick={() => setStudentFeeDialog(true)}
+            sx={{
+              px: 3,
+              py: 1.5,
+              fontWeight: 600,
+              boxShadow: 2,
+              '&:hover': {
+                boxShadow: 4,
+                transform: 'translateY(-1px)'
+              }
+            }}
           >
-            Add {tabValue === 0 ? 'Student Fee' : 'Staff Salary'} Record
+            Add Student Fee Record
           </Button>
         </Box>
       </Box>
 
       {/* Statistics Cards */}
       <Grid container spacing={3} mb={3}>
-        <Grid item xs={12} md={3}>
+        <Grid item xs={12} md={4}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
@@ -430,23 +379,7 @@ const FeeRecords = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={3}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center" mb={2}>
-                <WorkIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Staff Salary Records</Typography>
-              </Box>
-              <Typography variant="h4">
-                {stats.staffSalaryRecords?.totalRecords || 0}
-              </Typography>
-              <Typography variant="body2" color="textSecondary">
-                Total Net Salary: ₹{stats.staffSalaryRecords?.totalNetSalary || 0}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={3}>
+        <Grid item xs={12} md={4}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
@@ -454,15 +387,15 @@ const FeeRecords = () => {
                 <Typography variant="h6">Total Paid</Typography>
               </Box>
               <Typography variant="h4">
-                ₹{(stats.studentFeeRecords?.totalPaid || 0) + (stats.staffSalaryRecords?.totalPaid || 0)}
+                ₹{stats.studentFeeRecords?.totalPaid || 0}
               </Typography>
               <Typography variant="body2" color="textSecondary">
-                Combined payments
+                Student fees paid
               </Typography>
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={3}>
+        <Grid item xs={12} md={4}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
@@ -480,118 +413,71 @@ const FeeRecords = () => {
         </Grid>
       </Grid>
 
-      {/* Tabs */}
-      <Paper sx={{ mb: 3 }}>
-        <Tabs
-          value={tabValue}
-          onChange={handleTabChange}
-          indicatorColor="primary"
-          textColor="primary"
-        >
-          <Tab label="Student Fee Records" />
-          <Tab label="Staff Salary Records" />
-        </Tabs>
-      </Paper>
-
       {/* Records Table */}
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
-              {tabValue === 0 ? (
-                <>
-                  <TableCell>Student Name</TableCell>
-                  <TableCell>Roll Number</TableCell>
-                  <TableCell>Class</TableCell>
-                  <TableCell>Fee Type</TableCell>
-                  <TableCell>Amount</TableCell>
-                  <TableCell>Due Date</TableCell>
-                  <TableCell>Payment Status</TableCell>
-                  <TableCell>Approval Status</TableCell>
-                </>
-              ) : (
-                <>
-                  <TableCell>Staff Name</TableCell>
-                  <TableCell>Employee ID</TableCell>
-                  <TableCell>Designation</TableCell>
-                  <TableCell>Month/Year</TableCell>
-                  <TableCell>Basic Salary</TableCell>
-                  <TableCell>Net Salary</TableCell>
-                  <TableCell>Payment Status</TableCell>
-                  <TableCell>Approval Status</TableCell>
-                </>
-              )}
+              <TableCell>S.No</TableCell>
+              <TableCell>Student Name</TableCell>
+              <TableCell>Admission No</TableCell>
+              <TableCell>Class-Section</TableCell>
+              <TableCell>Parent Name</TableCell>
+              <TableCell>Contact Number</TableCell>
+              <TableCell>Total Fee</TableCell>
+              <TableCell>Payment Received</TableCell>
+              <TableCell>Balance Due</TableCell>
+              <TableCell>Due Date</TableCell>
+              <TableCell>Payment Status</TableCell>
+              <TableCell>Mode of Payment</TableCell>
+              <TableCell>Reminder Date</TableCell>
+              <TableCell>Follow Up Date</TableCell>
+              <TableCell>Notice Issue Date</TableCell>
+              <TableCell>Mode of Contact</TableCell>
+              <TableCell>Approval Status</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {tabValue === 0 ? (
-              studentFeeRecords.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} align="center">
-                    No student fee records found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                studentFeeRecords.map((record) => (
-                  <TableRow key={record._id}>
-                    <TableCell>{record.studentName}</TableCell>
-                    <TableCell>{record.rollNumber}</TableCell>
-                    <TableCell>{record.class}-{record.section}</TableCell>
-                    <TableCell>
-                      <Chip label={record.feeType} size="small" variant="outlined" />
-                    </TableCell>
-                    <TableCell>₹{record.amount}</TableCell>
-                    <TableCell>{new Date(record.dueDate).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={record.paymentStatus}
-                        color={getPaymentStatusColor(record.paymentStatus)}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={record.status}
-                        color={getStatusColor(record.status)}
-                        size="small"
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))
-              )
+            {studentFeeRecords.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={17} align="center">
+                  No student fee records found
+                </TableCell>
+              </TableRow>
             ) : (
-              staffSalaryRecords.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} align="center">
-                    No staff salary records found
+              studentFeeRecords.map((record, index) => (
+                <TableRow key={record._id}>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>{record.studentName}</TableCell>
+                  <TableCell>{record.admissionNumber || 'N/A'}</TableCell>
+                  <TableCell>{record.class}-{record.section}</TableCell>
+                  <TableCell>{record.parentName || 'N/A'}</TableCell>
+                  <TableCell>{record.contactNumber || 'N/A'}</TableCell>
+                  <TableCell>₹{record.totalFee || record.amount || 0}</TableCell>
+                  <TableCell>₹{record.paymentReceived || record.amountPaid || 0}</TableCell>
+                  <TableCell>₹{record.balanceDue || ((record.totalFee || record.amount || 0) - (record.paymentReceived || record.amountPaid || 0))}</TableCell>
+                  <TableCell>{new Date(record.dueDate).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={record.paymentStatus}
+                      color={getPaymentStatusColor(record.paymentStatus)}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell>{record.paymentMethod || 'N/A'}</TableCell>
+                  <TableCell>{record.reminderDate ? new Date(record.reminderDate).toLocaleDateString() : 'N/A'}</TableCell>
+                  <TableCell>{record.followUpDate ? new Date(record.followUpDate).toLocaleDateString() : 'N/A'}</TableCell>
+                  <TableCell>{record.noticeIssueDate ? new Date(record.noticeIssueDate).toLocaleDateString() : 'N/A'}</TableCell>
+                  <TableCell>{record.modeOfContact || 'N/A'}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={record.status}
+                      color={getStatusColor(record.status)}
+                      size="small"
+                    />
                   </TableCell>
                 </TableRow>
-              ) : (
-                staffSalaryRecords.map((record) => (
-                  <TableRow key={record._id}>
-                    <TableCell>{record.staffName}</TableCell>
-                    <TableCell>{record.employeeId}</TableCell>
-                    <TableCell>{record.designation}</TableCell>
-                    <TableCell>{record.month} {record.year}</TableCell>
-                    <TableCell>₹{record.basicSalary}</TableCell>
-                    <TableCell>₹{record.netSalary}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={record.paymentStatus}
-                        color={getPaymentStatusColor(record.paymentStatus)}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={record.status}
-                        color={getStatusColor(record.status)}
-                        size="small"
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))
-              )
+              ))
             )}
           </TableBody>
         </Table>
@@ -609,10 +495,14 @@ const FeeRecords = () => {
       </TableContainer>
 
       {/* Student Fee Record Dialog */}
-      <Dialog open={studentFeeDialog} onClose={() => setStudentFeeDialog(false)} maxWidth="md" fullWidth>
+      <Dialog open={studentFeeDialog} onClose={() => setStudentFeeDialog(false)} maxWidth="lg" fullWidth>
         <DialogTitle>Add Student Fee Record</DialogTitle>
         <DialogContent dividers>
           <Grid container spacing={2}>
+            {/* Student Information */}
+            <Grid item xs={12}>
+              <Typography variant="h6" gutterBottom>Student Information</Typography>
+            </Grid>
             <Grid item xs={12} md={6}>
               <FormControl fullWidth>
                 <InputLabel>Student</InputLabel>
@@ -630,10 +520,25 @@ const FeeRecords = () => {
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField
+                label="Admission Number"
+                fullWidth
+                value={studentFeeForm.admissionNumber}
+                onChange={(e) => setStudentFeeForm({ ...studentFeeForm, admissionNumber: e.target.value })}
+                required
+              />
+            </Grid>
+            
+            {/* Academic Information */}
+            <Grid item xs={12}>
+              <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Academic Information</Typography>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
                 label="Academic Year"
                 fullWidth
                 value={studentFeeForm.academicYear}
                 onChange={(e) => setStudentFeeForm({ ...studentFeeForm, academicYear: e.target.value })}
+                required
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -642,40 +547,73 @@ const FeeRecords = () => {
                 <Select
                   value={studentFeeForm.term}
                   onChange={(e) => setStudentFeeForm({ ...studentFeeForm, term: e.target.value })}
+                  required
                 >
                   <MenuItem value="Term 1">Term 1</MenuItem>
                   <MenuItem value="Term 2">Term 2</MenuItem>
                   <MenuItem value="Term 3">Term 3</MenuItem>
                   <MenuItem value="Annual">Annual</MenuItem>
+                  <MenuItem value="Quarter 1">Quarter 1</MenuItem>
+                  <MenuItem value="Quarter 2">Quarter 2</MenuItem>
+                  <MenuItem value="Quarter 3">Quarter 3</MenuItem>
+                  <MenuItem value="Quarter 4">Quarter 4</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel>Fee Type</InputLabel>
-                <Select
-                  value={studentFeeForm.feeType}
-                  onChange={(e) => setStudentFeeForm({ ...studentFeeForm, feeType: e.target.value })}
-                >
-                  <MenuItem value="Tuition">Tuition</MenuItem>
-                  <MenuItem value="Transportation">Transportation</MenuItem>
-                  <MenuItem value="Library">Library</MenuItem>
-                  <MenuItem value="Laboratory">Laboratory</MenuItem>
-                  <MenuItem value="Sports">Sports</MenuItem>
-                  <MenuItem value="Other">Other</MenuItem>
-                </Select>
-              </FormControl>
+            
+            {/* Parent Information */}
+            <Grid item xs={12}>
+              <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Parent Information</Typography>
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField
-                label="Amount"
-                type="number"
+                label="Parent Name"
                 fullWidth
-                value={studentFeeForm.amount}
-                onChange={(e) => setStudentFeeForm({ ...studentFeeForm, amount: e.target.value })}
+                value={studentFeeForm.parentName}
+                onChange={(e) => setStudentFeeForm({ ...studentFeeForm, parentName: e.target.value })}
+                required
               />
             </Grid>
             <Grid item xs={12} md={6}>
+              <TextField
+                label="Contact Number"
+                fullWidth
+                value={studentFeeForm.contactNumber}
+                onChange={(e) => setStudentFeeForm({ ...studentFeeForm, contactNumber: e.target.value })}
+                required
+              />
+            </Grid>
+            
+            {/* Fee Information */}
+            <Grid item xs={12}>
+              <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Fee Information</Typography>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                label="Total Fee"
+                type="number"
+                fullWidth
+                value={studentFeeForm.totalFee}
+                onChange={(e) => setStudentFeeForm({ ...studentFeeForm, totalFee: e.target.value })}
+                required
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                label="Payment Received"
+                type="number"
+                fullWidth
+                value={studentFeeForm.paymentReceived}
+                onChange={(e) => setStudentFeeForm({ ...studentFeeForm, paymentReceived: e.target.value })}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
               <TextField
                 label="Due Date"
                 type="date"
@@ -683,7 +621,91 @@ const FeeRecords = () => {
                 value={studentFeeForm.dueDate}
                 onChange={(e) => setStudentFeeForm({ ...studentFeeForm, dueDate: e.target.value })}
                 InputLabelProps={{ shrink: true }}
+                required
               />
+            </Grid>
+            
+            {/* Payment Details */}
+            <Grid item xs={12}>
+              <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Payment Details</Typography>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Mode of Payment</InputLabel>
+                <Select
+                  value={studentFeeForm.paymentMethod}
+                  onChange={(e) => setStudentFeeForm({ ...studentFeeForm, paymentMethod: e.target.value })}
+                >
+                  <MenuItem value="Cash">Cash</MenuItem>
+                  <MenuItem value="Bank Transfer">Bank Transfer</MenuItem>
+                  <MenuItem value="Credit Card">Credit Card</MenuItem>
+                  <MenuItem value="Debit Card">Debit Card</MenuItem>
+                  <MenuItem value="Cheque">Cheque</MenuItem>
+                  <MenuItem value="Online Payment">Online Payment</MenuItem>
+                  <MenuItem value="UPI">UPI</MenuItem>
+                  <MenuItem value="Other">Other</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Mode of Contact</InputLabel>
+                <Select
+                  value={studentFeeForm.modeOfContact}
+                  onChange={(e) => setStudentFeeForm({ ...studentFeeForm, modeOfContact: e.target.value })}
+                >
+                  <MenuItem value="Phone">Phone</MenuItem>
+                  <MenuItem value="Email">Email</MenuItem>
+                  <MenuItem value="SMS">SMS</MenuItem>
+                  <MenuItem value="WhatsApp">WhatsApp</MenuItem>
+                  <MenuItem value="In Person">In Person</MenuItem>
+                  <MenuItem value="Letter">Letter</MenuItem>
+                  <MenuItem value="Other">Other</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            {/* Reminder Dates */}
+            <Grid item xs={12}>
+              <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Reminder & Follow-up Dates</Typography>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                label="Reminder Date"
+                type="date"
+                fullWidth
+                value={studentFeeForm.reminderDate}
+                onChange={(e) => setStudentFeeForm({ ...studentFeeForm, reminderDate: e.target.value })}
+                InputLabelProps={{ shrink: true }}
+                helperText="Keep date format to select reminder date"
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                label="Follow Up Date"
+                type="date"
+                fullWidth
+                value={studentFeeForm.followUpDate}
+                onChange={(e) => setStudentFeeForm({ ...studentFeeForm, followUpDate: e.target.value })}
+                InputLabelProps={{ shrink: true }}
+                helperText="Keep date format to select date"
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                label="Notice Issue Date"
+                type="date"
+                fullWidth
+                value={studentFeeForm.noticeIssueDate}
+                onChange={(e) => setStudentFeeForm({ ...studentFeeForm, noticeIssueDate: e.target.value })}
+                InputLabelProps={{ shrink: true }}
+                helperText="Keep date format"
+              />
+            </Grid>
+            
+            {/* Additional Information */}
+            <Grid item xs={12}>
+              <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Additional Information</Typography>
             </Grid>
             <Grid item xs={12}>
               <TextField
@@ -704,237 +726,18 @@ const FeeRecords = () => {
           <Button
             variant="contained"
             onClick={handleStudentFeeSubmit}
-            disabled={processing || !studentFeeForm.studentId || !studentFeeForm.amount}
+            disabled={processing || !studentFeeForm.studentId || !studentFeeForm.totalFee || !studentFeeForm.parentName || !studentFeeForm.contactNumber || !studentFeeForm.admissionNumber}
             startIcon={processing ? <CircularProgress size={16} /> : <AddIcon />}
           >
-            {processing ? 'Submitting...' : 'Submit for Approval'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Staff Salary Record Dialog */}
-      <Dialog open={staffSalaryDialog} onClose={() => setStaffSalaryDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Add Staff Salary Record</DialogTitle>
-        <DialogContent dividers>
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel>Staff Member</InputLabel>
-                <Select
-                  value={staffSalaryForm.staffId}
-                  onChange={(e) => setStaffSalaryForm({ ...staffSalaryForm, staffId: e.target.value })}
-                >
-                  {staff.map((staffMember) => (
-                    <MenuItem key={staffMember._id} value={staffMember._id}>
-                      {staffMember.name} - {staffMember.employeeId}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel>Month</InputLabel>
-                <Select
-                  value={staffSalaryForm.month}
-                  onChange={(e) => setStaffSalaryForm({ ...staffSalaryForm, month: e.target.value })}
-                >
-                  {['January', 'February', 'March', 'April', 'May', 'June', 
-                    'July', 'August', 'September', 'October', 'November', 'December'].map((month) => (
-                    <MenuItem key={month} value={month}>{month}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="Year"
-                type="number"
-                fullWidth
-                value={staffSalaryForm.year}
-                onChange={(e) => setStaffSalaryForm({ ...staffSalaryForm, year: parseInt(e.target.value) })}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="Basic Salary"
-                type="number"
-                fullWidth
-                value={staffSalaryForm.basicSalary}
-                onChange={(e) => setStaffSalaryForm({ ...staffSalaryForm, basicSalary: e.target.value })}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>Allowances</Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={6} md={3}>
-                  <TextField
-                    label="HRA"
-                    type="number"
-                    fullWidth
-                    value={staffSalaryForm.allowances.houseRentAllowance}
-                    onChange={(e) => setStaffSalaryForm({
-                      ...staffSalaryForm,
-                      allowances: {
-                        ...staffSalaryForm.allowances,
-                        houseRentAllowance: parseFloat(e.target.value) || 0
-                      }
-                    })}
-                  />
-                </Grid>
-                <Grid item xs={6} md={3}>
-                  <TextField
-                    label="DA"
-                    type="number"
-                    fullWidth
-                    value={staffSalaryForm.allowances.dearnessAllowance}
-                    onChange={(e) => setStaffSalaryForm({
-                      ...staffSalaryForm,
-                      allowances: {
-                        ...staffSalaryForm.allowances,
-                        dearnessAllowance: parseFloat(e.target.value) || 0
-                      }
-                    })}
-                  />
-                </Grid>
-                <Grid item xs={6} md={3}>
-                  <TextField
-                    label="Transport"
-                    type="number"
-                    fullWidth
-                    value={staffSalaryForm.allowances.transportAllowance}
-                    onChange={(e) => setStaffSalaryForm({
-                      ...staffSalaryForm,
-                      allowances: {
-                        ...staffSalaryForm.allowances,
-                        transportAllowance: parseFloat(e.target.value) || 0
-                      }
-                    })}
-                  />
-                </Grid>
-                <Grid item xs={6} md={3}>
-                  <TextField
-                    label="Medical"
-                    type="number"
-                    fullWidth
-                    value={staffSalaryForm.allowances.medicalAllowance}
-                    onChange={(e) => setStaffSalaryForm({
-                      ...staffSalaryForm,
-                      allowances: {
-                        ...staffSalaryForm.allowances,
-                        medicalAllowance: parseFloat(e.target.value) || 0
-                      }
-                    })}
-                  />
-                </Grid>
-              </Grid>
-            </Grid>
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>Deductions</Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={6} md={3}>
-                  <TextField
-                    label="PF"
-                    type="number"
-                    fullWidth
-                    value={staffSalaryForm.deductions.providentFund}
-                    onChange={(e) => setStaffSalaryForm({
-                      ...staffSalaryForm,
-                      deductions: {
-                        ...staffSalaryForm.deductions,
-                        providentFund: parseFloat(e.target.value) || 0
-                      }
-                    })}
-                  />
-                </Grid>
-                <Grid item xs={6} md={3}>
-                  <TextField
-                    label="Tax"
-                    type="number"
-                    fullWidth
-                    value={staffSalaryForm.deductions.tax}
-                    onChange={(e) => setStaffSalaryForm({
-                      ...staffSalaryForm,
-                      deductions: {
-                        ...staffSalaryForm.deductions,
-                        tax: parseFloat(e.target.value) || 0
-                      }
-                    })}
-                  />
-                </Grid>
-                <Grid item xs={6} md={3}>
-                  <TextField
-                    label="Insurance"
-                    type="number"
-                    fullWidth
-                    value={staffSalaryForm.deductions.insurance}
-                    onChange={(e) => setStaffSalaryForm({
-                      ...staffSalaryForm,
-                      deductions: {
-                        ...staffSalaryForm.deductions,
-                        insurance: parseFloat(e.target.value) || 0
-                      }
-                    })}
-                  />
-                </Grid>
-                <Grid item xs={6} md={3}>
-                  <TextField
-                    label="Others"
-                    type="number"
-                    fullWidth
-                    value={staffSalaryForm.deductions.otherDeductions}
-                    onChange={(e) => setStaffSalaryForm({
-                      ...staffSalaryForm,
-                      deductions: {
-                        ...staffSalaryForm.deductions,
-                        otherDeductions: parseFloat(e.target.value) || 0
-                      }
-                    })}
-                  />
-                </Grid>
-              </Grid>
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Remarks"
-                multiline
-                rows={3}
-                fullWidth
-                value={staffSalaryForm.remarks}
-                onChange={(e) => setStaffSalaryForm({ ...staffSalaryForm, remarks: e.target.value })}
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setStaffSalaryDialog(false)} disabled={processing}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleStaffSalarySubmit}
-            disabled={processing || !staffSalaryForm.staffId || !staffSalaryForm.basicSalary}
-            startIcon={processing ? <CircularProgress size={16} /> : <AddIcon />}
-          >
-            {processing ? 'Submitting...' : 'Submit for Approval'}
+            {processing ? 'Creating...' : 'Create Fee Record'}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Import Dialog */}
       <Dialog open={importDialog} onClose={() => setImportDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Import from Google Sheets</DialogTitle>
+        <DialogTitle>Import Student Fee Records from Google Sheets</DialogTitle>
         <DialogContent dividers>
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Import Type</InputLabel>
-            <Select
-              value={importType}
-              onChange={(e) => setImportType(e.target.value)}
-            >
-              <MenuItem value="student">Student Fee Records</MenuItem>
-              <MenuItem value="staff">Staff Salary Records</MenuItem>
-            </Select>
-          </FormControl>
           <TextField
             label="Google Sheet URL"
             fullWidth
@@ -945,17 +748,11 @@ const FeeRecords = () => {
           />
           <Alert severity="info" sx={{ mt: 2 }}>
             <Typography variant="body2">
-              <strong>Required columns for {importType === 'student' ? 'Student Fee Records' : 'Staff Salary Records'}:</strong>
+              <strong>Required columns for Student Fee Records:</strong>
             </Typography>
-            {importType === 'student' ? (
-              <Typography variant="body2">
-                studentName, rollNumber, class, section, academicYear, term, feeType, amount, dueDate, remarks
-              </Typography>
-            ) : (
-              <Typography variant="body2">
-                staffName, employeeId, designation, department, month, year, basicSalary, allowances, deductions, remarks
-              </Typography>
-            )}
+            <Typography variant="body2">
+              studentName, rollNumber, admissionNumber, class, section, academicYear, term, totalFee, paymentReceived, dueDate, parentName, contactNumber, paymentMethod, reminderDate, followUpDate, noticeIssueDate, modeOfContact, remarks
+            </Typography>
           </Alert>
         </DialogContent>
         <DialogActions>
