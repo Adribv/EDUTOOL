@@ -44,6 +44,7 @@ import TransportFormsManagement from '../pages/admin/TransportFormsManagement';
 import TransportFormCreate from '../pages/admin/TransportFormCreate';
 import TransportFormView from '../pages/admin/TransportFormView';
 import TeacherRemarks from '../pages/admin/TeacherRemarks';
+import PermissionsManagement from '../pages/admin/PermissionsManagement';
 
 const AdminRoutes = () => {
   return (
@@ -102,6 +103,7 @@ const AdminRoutes = () => {
         <Route path="disciplinary-forms/template/new" element={<DisciplinaryFormTemplateEditor />} />
         <Route path="disciplinary-forms/template/:templateId/edit" element={<DisciplinaryFormTemplateEditor />} />
         <Route path="disciplinary-forms/template/:templateId" element={<DisciplinaryFormTemplateEditor />} />
+        <Route path="permissions" element={<PermissionsManagement />} />
       </Route>
     </Routes>
   );
