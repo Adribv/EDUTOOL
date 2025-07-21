@@ -86,6 +86,9 @@ router.get('/attendance/:class/:section/:date', attendanceController.getAttendan
 router.get('/attendance-report/:class/:section/:startDate/:endDate', attendanceController.generateAttendanceReport);
 router.get('/students/:class/:section', attendanceController.getStudentsByClass);
 
+// NEW: Get all attendance records for a class (optionally filter by section)
+router.get('/attendance/:class', attendanceController.getClassAttendance);
+
 // 5. Assignment and Homework Module
 router.post('/assignments', assignmentController.createAssignment);
 router.get('/assignments', assignmentController.getAssignments);

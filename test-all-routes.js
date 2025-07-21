@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const BASE_URL = 'https://api.edulives.com/api';
+const BASE_URL = 'http://localhost:5000/api';
 
 // Test configuration
 const testConfig = {

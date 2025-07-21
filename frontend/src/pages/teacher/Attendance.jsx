@@ -84,30 +84,17 @@ const Attendance = () => {
   const { user } = useAuth();
   const staffId = user?._id || user?.id;
   const queryClient = useQueryClient();
-  
-  const [loading, setLoading] = useState(false);
+  // State hooks
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedSection, setSelectedSection] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [attendanceData, setAttendanceData] = useState([]);
-  const [markingMode, setMarkingMode] = useState(false);
   const [reportDialog, setReportDialog] = useState(false);
   const [reportStartDate, setReportStartDate] = useState('');
   const [reportEndDate, setReportEndDate] = useState('');
-  const [activeTab, setActiveTab] = useState(0);
-
-  // Show error if no valid staffId
-  if (!staffId || staffId === 'undefined') {
-    return (
-      <Card>
-        <CardContent>
-          <Alert severity="error">
-            Unable to load attendance. User ID not found. Please try logging in again.
-          </Alert>
-        </CardContent>
-      </Card>
-    );
-  }
+  const [viewStudent, setViewStudent] = useState(null);
+  const [studentAttendanceHistory, setStudentAttendanceHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   // Fetch coordinated classes
   const { data: classesData, isLoading: classesLoading } = useQuery({
@@ -135,10 +122,9 @@ const Attendance = () => {
 
   // Mark attendance mutation
   const markAttendanceMutation = useMutation({
-    mutationFn: (data) => teacherAPI.markClassAttendance(data),
+    mutationFn: (attendancePayload) => teacherAPI.markClassAttendance(attendancePayload),
     onSuccess: () => {
       toast.success('Attendance marked successfully');
-      setMarkingMode(false);
       refetchAttendance();
       queryClient.invalidateQueries(['classAttendance']);
     },
@@ -151,7 +137,7 @@ const Attendance = () => {
   const generateReportMutation = useMutation({
     mutationFn: ({ className, section, startDate, endDate }) => 
       teacherAPI.generateAttendanceReport(className, section, startDate, endDate),
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success('Report generated successfully');
       // Handle report data display
     },
@@ -186,6 +172,19 @@ const Attendance = () => {
       }
     }
   }, [selectedClass, selectedSection, selectedDate, studentsData, existingAttendance]);
+
+  // Show error if no valid staffId
+  if (!staffId || staffId === 'undefined') {
+    return (
+      <Card>
+        <CardContent>
+          <Alert severity="error">
+            Unable to load attendance. User ID not found. Please try logging in again.
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const handleClassChange = (event) => {
     const classValue = event.target.value;
@@ -314,6 +313,55 @@ const Attendance = () => {
   };
 
   const stats = getAttendanceStats();
+
+  // Fetch full attendance history for a student
+  const handleViewRecord = async (student) => {
+    if (!selectedClass || !selectedSection) return;
+    setViewStudent(student);
+    setHistoryLoading(true);
+    setStudentAttendanceHistory([]);
+    try {
+      // Fetch all attendance records for the class
+      const allClassAttendance = await teacherAPI.getClassAttendance(selectedClass);
+      // Debug: log the student object
+      // eslint-disable-next-line no-console
+      console.log('DEBUG: Viewing record for student:', student);
+      const records = [];
+      (allClassAttendance || []).forEach((rec) => {
+        if (rec.section === selectedSection && Array.isArray(rec.attendanceData)) {
+          // Debug: log the attendanceData for this session
+          // eslint-disable-next-line no-console
+          console.log('DEBUG: attendanceData for date', rec.date, rec.attendanceData);
+          rec.attendanceData.forEach((s) => {
+            // Normalize roll numbers (remove leading zeros, to string)
+            const rollA = (s.studentRollNumber || '').replace(/^0+/, '').toLowerCase();
+            const rollB = (student.studentRollNumber || '').replace(/^0+/, '').toLowerCase();
+            // Normalize names (trim, lower)
+            const nameA = (s.studentName || '').trim().toLowerCase();
+            const nameB = (student.studentName || '').trim().toLowerCase();
+            // Debug: log what is being compared
+            // eslint-disable-next-line no-console
+            console.log('DEBUG: Compare', { rollA, rollB, nameA, nameB });
+            if (
+              rollA && rollB && rollA === rollB ||
+              nameA && nameB && nameA === nameB
+            ) {
+              records.push({
+                date: rec.date,
+                status: s.status,
+                remarks: s.remarks
+              });
+            }
+          });
+        }
+      });
+      setStudentAttendanceHistory(records);
+    } catch {
+      setStudentAttendanceHistory([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
 
   if (classesLoading || studentsLoading) {
     return (
@@ -531,6 +579,7 @@ const Attendance = () => {
                     <TableCell>Student Name</TableCell>
                     <TableCell>Status</TableCell>
                     <TableCell>Remarks</TableCell>
+                    <TableCell>Action</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -589,9 +638,19 @@ const Attendance = () => {
                           size="small"
                           placeholder="Add remarks..."
                           value={record.remarks}
-                          onChange={(e) => handleRemarksChange(index, e.target.value)}
+                          onChange={event => handleRemarksChange(index, event.target.value)}
                           sx={{ minWidth: 200 }}
                         />
+                      </TableCell>
+                      <TableCell>
+                        <Tooltip title="View Full Attendance Record">
+                          <IconButton onClick={() => handleViewRecord({
+                            ...record,
+                            _id: studentsData?.find(s => s.rollNumber === record.studentRollNumber)?._id
+                          })}>
+                            <Visibility />
+                          </IconButton>
+                        </Tooltip>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -708,6 +767,51 @@ const Attendance = () => {
           >
             {generateReportMutation.isLoading ? 'Generating...' : 'Generate Report'}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Student Attendance History Dialog */}
+      <Dialog
+        open={!!viewStudent}
+        onClose={() => setViewStudent(null)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          Attendance Record for {viewStudent?.studentName}
+        </DialogTitle>
+        <DialogContent>
+          {historyLoading ? (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight={120}>
+              <CircularProgress />
+            </Box>
+          ) : studentAttendanceHistory.length > 0 ? (
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Date</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Remarks</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {studentAttendanceHistory.map((rec, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell>{rec.date ? new Date(rec.date).toLocaleDateString() : ''}</TableCell>
+                      <TableCell>{rec.status}</TableCell>
+                      <TableCell>{rec.remarks}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <Typography>No attendance records found for this student.</Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setViewStudent(null)}>Close</Button>
         </DialogActions>
       </Dialog>
     </Box>

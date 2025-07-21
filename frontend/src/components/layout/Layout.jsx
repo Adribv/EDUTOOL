@@ -95,7 +95,7 @@ const Layout = () => {
       return [
         { text: 'Dashboard', icon: <Dashboard />, path: '/admin/dashboard' },
         { text: 'Profile', icon: <Person />, path: '/admin/profile' },
-        ...roleConfig[user.designation].sidebar
+        ...(roleConfig[user.designation]?.sidebar || [])
           .filter(item => item !== 'A_Subjects' && item !== 'A_Schedules')
           .map((item) => {
             // Map sidebar item to path and icon
@@ -105,6 +105,7 @@ const Layout = () => {
               'Students': <People />, 
               'Reports': <Assessment />,
               'FeeConfiguration': <Payment />, 
+            'Fee_Management': <Payment />,
               'Inventory_Management': <Inventory />, 
               'UserManagement': <People />,
               'A_Reports': <Assessment />, 
@@ -169,8 +170,7 @@ const Layout = () => {
       AdminStaff: [
         { text: 'Staff Management', icon: <People />, path: '/admin/staff' },
         { text: 'Student Records', icon: <School />, path: '/admin/students' },
-        { text: 'Fee Configuration', icon: <Payment />, path: '/admin/fees' },
-        { text: 'Fee Records', icon: <Payment />, path: '/admin/fee-records' },
+        { text: 'Fee Management', icon: <Payment />, path: '/admin/fee-management' },
         { text: 'Inventory', icon: <Inventory />, path: '/admin/inventory' },
         { text: 'Events', icon: <CalendarToday />, path: '/admin/events' },
         { text: 'Communications', icon: <Notifications />, path: '/admin/communications' },

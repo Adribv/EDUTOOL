@@ -264,7 +264,7 @@ export const adminAPI = {
   generateStudentReport: (params = {}) => api.get('/admin-staff/reports/enrollment', { params: { ...params, format: 'pdf' }, responseType: 'blob' }),
 
   // Fee Management
-  getFeeStructures: () => api.get('/admin-staff/fee-structure').then(res => res.data),
+  getFeeStructures: (params = {}) => api.get('/admin-staff/fee-structure', { params }).then(res => res.data),
   configureFeeStructure: (data) => api.post('/admin-staff/fee-structure/approval', data),
   updateFeeStructure: (id, data) => api.post('/admin-staff/fee-structure', { ...data, id }),
   deleteFeeStructure: (id) => api.delete(`/admin-staff/fee-structure/${id}`),
@@ -272,6 +272,8 @@ export const adminAPI = {
     params: { ...params, format: 'pdf' },
     responseType: 'blob'
   }),
+  // New helper to fetch payments (fee collection)
+  getPayments: (params = {}) => api.get('/admin-staff/fee-payments/public', { params }).then(res => res.data),
 
   // System Settings
   updateSchoolInfo: (data) => api.put('/admin-staff/configuration/school-info', data),

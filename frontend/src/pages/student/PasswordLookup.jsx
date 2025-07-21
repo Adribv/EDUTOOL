@@ -42,7 +42,7 @@ function PasswordLookup() {
   // Request password lookup mutation
   const requestLookupMutation = useMutation({
     mutationFn: async (data) => {
-      const response = await axios.post('https://api.edulives.com/api/students/password-lookup/request', data);
+      const response = await axios.post('http://localhost:5000/api/students/password-lookup/request', data);
       return response.data;
     },
     onSuccess: (data) => {
@@ -58,7 +58,7 @@ function PasswordLookup() {
   // Verify token mutation
   const verifyTokenMutation = useMutation({
     mutationFn: async (token) => {
-      const response = await axios.get(`https://api.edulives.com/api/students/password-lookup/verify/${token}`);
+      const response = await axios.get(`http://localhost:5000/api/students/password-lookup/verify/${token}`);
       return response.data;
     },
     onSuccess: (data) => {
@@ -74,7 +74,7 @@ function PasswordLookup() {
   // Reset password mutation
   const resetPasswordMutation = useMutation({
     mutationFn: async (data) => {
-      const response = await axios.post('https://api.edulives.com/api/students/password-lookup/reset', data);
+      const response = await axios.post('http://localhost:5000/api/students/password-lookup/reset', data);
       return response.data;
     },
     onSuccess: () => {
