@@ -36,6 +36,7 @@ import {
   Logout,
   Book,
   RateReview,
+  Psychology,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -56,11 +57,6 @@ const StudentLayout = ({ children }) => {
       text: 'Assignments',
       icon: <Assignment />,
       path: '/student/assignments',
-    },
-    {
-      text: 'Homework',
-      icon: <Book />,
-      path: '/student/homework',
     },
     {
       text: 'Exam Results',
@@ -98,12 +94,7 @@ const StudentLayout = ({ children }) => {
       path: '/student/fees',
     },
     {
-      text: 'Disciplinary Misconduct',
-      icon: <Assignment />,
-      path: '/student/disciplinary-misconduct',
-    },
-    {
-      text: 'Teacher Remarks',
+      text: 'Syllabus Completion',
       icon: <RateReview />,
       path: '/student/teacher-remarks',
     },
@@ -121,6 +112,11 @@ const StudentLayout = ({ children }) => {
       text: 'Profile Settings',
       icon: <Settings />,
       path: '/student/profile',
+    },
+    {
+      text: 'Counselling Request Form',
+      icon: <Psychology />,
+      path: '/student/counselling-request',
     },
   ];
 
@@ -187,7 +183,7 @@ const StudentLayout = ({ children }) => {
           </ListItemIcon>
           <ListItemText primary="Notifications" />
         </ListItemButton>
-        <ListItemButton onClick={() => navigate('/logout')} sx={{ color: '#fff', '& .MuiListItemIcon-root': { color: '#fff' } }}>
+        <ListItemButton onClick={() => navigate('/')} sx={{ color: '#fff', '& .MuiListItemIcon-root': { color: '#fff' } }}>
           <ListItemIcon>
             <Logout />
           </ListItemIcon>

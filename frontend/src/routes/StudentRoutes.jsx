@@ -29,6 +29,7 @@ import MCQAssignmentsList from '../pages/student/MCQAssignmentsList';
 import DisciplinaryFormAcknowledge from '../pages/student/DisciplinaryFormAcknowledge';
 import DisciplinaryMisconduct from '../pages/student/DisciplinaryMisconduct';
 import TeacherRemarksView from '../pages/student/TeacherRemarksView';
+import CounsellingRequestForm from '../components/CounsellingRequestForm';
 
 const StudentRoutes = () => {
   return (
@@ -86,6 +87,7 @@ const StudentRoutes = () => {
         
         {/* Teacher Remarks */}
         <Route path="/teacher-remarks" element={<TeacherRemarksView />} />
+        <Route path="/counselling-request" element={<CounsellingRequestForm />} />
       </Routes>
     </StudentLayout>
   );

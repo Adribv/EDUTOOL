@@ -5,6 +5,7 @@ import Profile from '../pages/counselor/Profile';
 import StudentCounseling from '../pages/counselor/StudentCounseling';
 import AppointmentManagement from '../pages/counselor/AppointmentManagement';
 import Reports from '../pages/counselor/Reports';
+import CounsellingRequestsDashboard from '../pages/counselor/CounsellingRequestsDashboard';
 
 const CounselorRoutes = () => {
   return (
@@ -16,6 +17,7 @@ const CounselorRoutes = () => {
         <Route path="counseling" element={<StudentCounseling />} />
         <Route path="appointments" element={<AppointmentManagement />} />
         <Route path="reports" element={<Reports />} />
+        <Route path="requests" element={<CounsellingRequestsDashboard />} />
       </Route>
     </Routes>
   );

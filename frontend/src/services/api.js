@@ -1337,6 +1337,11 @@ export const accountantAPI = {
   getTemplatePreview: (templateId, staffIds) => api.get(`/accountant/template-preview/${templateId}`, { 
     params: { staffIds } 
   }).then(res=>res.data),
+  getAllFeePayments: () => api.get('/accountant/fee-payments').then(res => res.data),
+  
+  // Students Fee Management
+  getAllStudentsFeeStatus: (params={}) => api.get('/accountant/students-fee-status', { params }).then(res => res.data),
+  getStudentFeeRecords: (studentId, params={}) => api.get(`/accountant/student-fee-records/${studentId}`, { params }).then(res => res.data),
 };
 
 export const teacherRemarksAPI = {
@@ -1360,5 +1365,9 @@ export const teacherRemarksAPI = {
   // Parent APIs
   getParentForms: (childId, params) => api.get(`/teacher-remarks/parent/${childId}`, { params }).then(res => res.data),
 };
+
+export const getStudentFeeStatus = () => fetch('/api/accountant/fee-status').then(res => res.json());
+export const getFeeStats = () => fetch('/api/accountant/fee-stats').then(res => res.json());
+export const getTransactionLog = () => fetch('/api/accountant/transaction-log').then(res => res.json());
 
 export default api;

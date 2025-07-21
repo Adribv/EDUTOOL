@@ -105,6 +105,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
 import { useStaffPermissions } from '../../context/StaffPermissionContext';
+import { accountantAPI } from '../../services/api';
+import A_ServiceRequests from './A_ServiceRequests';
 
 // Role Icons and Colors Mapping
 const roleIcons = {
@@ -1231,6 +1233,8 @@ const AdminDashboard = () => {
                 <Tab label="Staff Management" icon={<PeopleIcon />} />
                 <Tab label="Role Permissions" icon={<SecurityIcon />} />
                 <Tab label="Feature Permissions" icon={<SecurityIcon />} />
+                <Tab label="Permission" icon={<SecurityIcon />} />
+                <Tab label="Service Requests" icon={<AssignmentIcon />} />
               </Tabs>
             </Paper>
 
@@ -1567,6 +1571,74 @@ const AdminDashboard = () => {
                       </TableBody>
                     </Table>
                   </Paper>
+                </motion.div>
+              )}
+
+              {activeTab === 4 && (
+                <motion.div
+                  key="permission-tab"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Paper sx={{ p: 3 }}>
+                    <Typography variant="h6" sx={{ mb: 2 }}>Staff Permission Management</Typography>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Staff Member</TableCell>
+                          <TableCell>Role(s)</TableCell>
+                          <TableCell>Email</TableCell>
+                          <TableCell>Actions</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {staffMembers.map((staff) => (
+                          <TableRow key={staff._id}>
+                            <TableCell>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Avatar sx={{ width: 32, height: 32, bgcolor: roleColors[staff.primaryRole] }}>
+                                  <PersonIcon />
+                                </Avatar>
+                                <Typography variant="subtitle2">{staff.name}</Typography>
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              {staff.assignedRoles && staff.assignedRoles.length > 0
+                                ? staff.assignedRoles.map(role => (
+                                    <Chip key={role} label={role} size="small" sx={{ mr: 0.5, bgcolor: roleColors[role], color: '#fff' }} />
+                                  ))
+                                : <Chip label="No Roles" size="small" color="default" />}
+                            </TableCell>
+                            <TableCell>{staff.email}</TableCell>
+                            <TableCell>
+                              <Button
+                                variant="outlined"
+                                size="small"
+                                startIcon={<SecurityIcon />}
+                                onClick={() => handlePermissionToggle(staff)}
+                              >
+                                Edit Permissions
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </Paper>
+                </motion.div>
+              )}
+
+              {activeTab === 5 && (
+                <motion.div
+                  key="service-requests"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <A_ServiceRequests />
                 </motion.div>
               )}
             </AnimatePresence>

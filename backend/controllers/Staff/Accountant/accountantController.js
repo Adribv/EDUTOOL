@@ -5,6 +5,9 @@ const Staff = require('../../../models/Staff/staffModel');
 const SalaryTemplate = require('../../../models/Finance/salaryTemplateModel');
 const ApprovalRequest = require('../../../models/Staff/HOD/approvalRequest.model');
 const mongoose = require('mongoose');
+const StudentFeeRecord = require('../../../models/Finance/studentFeeRecordModel');
+const Student = require('../../../models/Student/studentModel');
+const FeeStructure = require('../../../models/Finance/feeStructureModel');
 
 // GET /api/accountant/summary
 exports.getSummary = async (req, res) => {
@@ -1014,5 +1017,244 @@ exports.getRoleStatistics = async (req, res) => {
   } catch (error) {
     console.error('Error fetching role statistics:', error);
     res.status(500).json({ message: 'Server error' });
+  }
+}; 
+
+// Get all students' fee status
+exports.getAllStudentFeeStatus = async (req, res) => {
+  try {
+    const records = await StudentFeeRecord.find()
+      .populate('studentId', 'name rollNumber class section')
+      .sort({ class: 1, section: 1, studentName: 1 });
+    res.json(records);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error });
+  }
+};
+
+// Get overall fee stats
+exports.getFeeStats = async (req, res) => {
+  try {
+    const paid = await StudentFeeRecord.aggregate([
+      { $group: { _id: null, totalPaid: { $sum: '$paymentReceived' }, totalFee: { $sum: '$totalFee' } } }
+    ]);
+    res.json({
+      totalFee: paid[0]?.totalFee || 0,
+      totalPaid: paid[0]?.totalPaid || 0,
+      totalPending: (paid[0]?.totalFee || 0) - (paid[0]?.totalPaid || 0)
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error });
+  }
+};
+
+// Get transaction log (salary credited, fee debited)
+exports.getTransactionLog = async (req, res) => {
+  try {
+    const feePayments = await FeePayment.find().populate('studentId', 'name rollNumber').sort({ paymentDate: -1 }).lean();
+    const salaryCredits = await StaffSalaryRecord.find().populate('staffId', 'name employeeId').sort({ paymentDate: -1 }).lean();
+
+    // Normalize and combine logs
+    const logs = [
+      ...feePayments.map(fp => ({
+        type: 'Fee Debited',
+        name: fp.studentId?.name,
+        id: fp.studentId?.rollNumber,
+        amount: fp.amountPaid,
+        date: fp.paymentDate,
+        method: fp.paymentMethod,
+        ref: fp.receiptNumber
+      })),
+      ...salaryCredits.map(sc => ({
+        type: 'Salary Credited',
+        name: sc.staffId?.name,
+        id: sc.staffId?.employeeId,
+        amount: sc.netSalary,
+        date: sc.paymentDate,
+        method: sc.paymentMethod,
+        ref: sc.transactionId
+      }))
+    ].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    res.json(logs);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error });
+  }
+}; 
+
+// GET /api/accountant/fee-payments
+exports.getAllFeePayments = async (req, res) => {
+  try {
+    const payments = await FeePayment.find()
+      .populate('studentId', 'name rollNumber class section email contactNumber')
+      .sort({ paymentDate: -1 });
+    res.json(payments);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error });
+  }
+};
+
+// GET /api/accountant/students-fee-status
+exports.getAllStudentsFeeStatus = async (req, res) => {
+  try {
+    const { academicYear, class: studentClass, section } = req.query;
+    const currentAcademicYear = academicYear || new Date().getFullYear().toString();
+
+    // Build query for students
+    const studentQuery = { status: 'Active' };
+    if (studentClass) studentQuery.class = studentClass;
+    if (section) studentQuery.section = section;
+
+    // Get all active students
+    const students = await Student.find(studentQuery)
+      .select('name rollNumber class section email contactNumber parentContact')
+      .sort({ class: 1, section: 1, rollNumber: 1 });
+
+    // Get all fee payments for the academic year
+    const feePayments = await FeePayment.find({ academicYear: currentAcademicYear })
+      .populate('studentId', '_id');
+
+    // Get all fee structures for the academic year
+    const feeStructures = await FeeStructure.find({ 
+      academicYear: currentAcademicYear,
+      isActive: true 
+    });
+
+    // Calculate fee status for each student
+    const studentsWithFeeStatus = students.map(student => {
+      // Find applicable fee structure
+      const feeStructure = feeStructures.find(fs => 
+        fs.class === student.class || 
+        fs.class === student.class.replace(/^Class\s/, '') ||
+        fs.class === student.class.match(/\d+/)?.[0]
+      );
+
+      const totalFeeAmount = feeStructure ? feeStructure.totalAmount : 0;
+
+      // Calculate payments made by this student
+      const studentPayments = feePayments.filter(payment => 
+        payment.studentId && payment.studentId._id.toString() === student._id.toString()
+      );
+
+      const totalPaid = studentPayments.reduce((sum, payment) => sum + payment.amountPaid, 0);
+      const pendingAmount = totalFeeAmount - totalPaid;
+
+      // Determine payment status
+      let paymentStatus = 'Pending';
+      if (totalPaid >= totalFeeAmount && totalFeeAmount > 0) {
+        paymentStatus = 'Completed';
+      } else if (totalPaid > 0) {
+        paymentStatus = 'Partial';
+      } else if (feeStructure && new Date() > feeStructure.dueDate) {
+        paymentStatus = 'Overdue';
+      }
+
+      return {
+        _id: student._id,
+        name: student.name,
+        rollNumber: student.rollNumber,
+        class: student.class,
+        section: student.section,
+        email: student.email,
+        contactNumber: student.contactNumber,
+        parentContact: student.parentContact,
+        totalFeeAmount,
+        totalPaid,
+        pendingAmount,
+        paymentStatus,
+        paymentCount: studentPayments.length,
+        lastPaymentDate: studentPayments.length > 0 ? 
+          Math.max(...studentPayments.map(p => new Date(p.paymentDate))) : null,
+        dueDate: feeStructure ? feeStructure.dueDate : null
+      };
+    });
+
+    res.json({
+      students: studentsWithFeeStatus,
+      summary: {
+        totalStudents: studentsWithFeeStatus.length,
+        paidStudents: studentsWithFeeStatus.filter(s => s.paymentStatus === 'Completed').length,
+        partialStudents: studentsWithFeeStatus.filter(s => s.paymentStatus === 'Partial').length,
+        pendingStudents: studentsWithFeeStatus.filter(s => s.paymentStatus === 'Pending').length,
+        overdueStudents: studentsWithFeeStatus.filter(s => s.paymentStatus === 'Overdue').length,
+        totalCollected: studentsWithFeeStatus.reduce((sum, s) => sum + s.totalPaid, 0),
+        totalPending: studentsWithFeeStatus.reduce((sum, s) => sum + s.pendingAmount, 0)
+      }
+    });
+  } catch (error) {
+    console.error('Error getting students fee status:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// GET /api/accountant/student-fee-records/:studentId
+exports.getStudentFeeRecords = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const { academicYear } = req.query;
+
+    // Get student details
+    const student = await Student.findById(studentId)
+      .select('name rollNumber class section email contactNumber parentContact');
+
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    // Build query for fee payments
+    const paymentQuery = { studentId };
+    if (academicYear) paymentQuery.academicYear = academicYear;
+
+    // Get all fee payments for the student
+    const feePayments = await FeePayment.find(paymentQuery)
+      .populate('feeStructureId')
+      .sort({ paymentDate: -1 });
+
+    // Get all fee structures for the student's class
+    const feeStructures = await FeeStructure.find({
+      $or: [
+        { class: student.class },
+        { class: student.class.replace(/^Class\s/, '') },
+        { class: student.class.match(/\d+/)?.[0] }
+      ],
+      ...(academicYear && { academicYear })
+    }).sort({ academicYear: -1, term: 1 });
+
+    // Get student fee records
+    const studentFeeRecords = await StudentFeeRecord.find({ studentId })
+      .populate('createdBy', 'name')
+      .populate('approvedBy', 'name')
+      .sort({ createdAt: -1 });
+
+    // Calculate totals
+    const totalPaid = feePayments.reduce((sum, payment) => sum + payment.amountPaid, 0);
+    const totalFeeAmount = feeStructures.reduce((sum, structure) => sum + structure.totalAmount, 0);
+    const pendingAmount = totalFeeAmount - totalPaid;
+
+    res.json({
+      student: {
+        _id: student._id,
+        name: student.name,
+        rollNumber: student.rollNumber,
+        class: student.class,
+        section: student.section,
+        email: student.email,
+        contactNumber: student.contactNumber,
+        parentContact: student.parentContact
+      },
+      feePayments,
+      feeStructures,
+      studentFeeRecords,
+      summary: {
+        totalFeeAmount,
+        totalPaid,
+        pendingAmount,
+        paymentCount: feePayments.length,
+        lastPaymentDate: feePayments.length > 0 ? feePayments[0].paymentDate : null
+      }
+    });
+  } catch (error) {
+    console.error('Error getting student fee records:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 }; 

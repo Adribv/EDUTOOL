@@ -22,6 +22,7 @@ import SubstituteTeacherRequest from '../pages/teacher/SubstituteTeacherRequest'
 import SubstituteRequests from '../pages/teacher/SubstituteRequests';
 import DisciplinaryFormCreate from '../pages/teacher/DisciplinaryFormCreate';
 import TeacherRemarks from '../pages/teacher/TeacherRemarks';
+import CounsellingRequestForm from '../components/CounsellingRequestForm';
 
 const TeacherRoutes = () => {
   return (
@@ -52,6 +53,7 @@ const TeacherRoutes = () => {
       {/* Disciplinary Forms Routes */}
       <Route path="disciplinary-forms/create" element={<DisciplinaryFormCreate />} />
       <Route path="disciplinary-forms/:formId" element={<DisciplinaryFormCreate />} />
+      <Route path="counselling-request" element={<CounsellingRequestForm />} />
     </Routes>
   );
 };

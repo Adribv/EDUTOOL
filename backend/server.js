@@ -6,6 +6,7 @@ const authModule = require('./modules/auth.modules');
 const mongoose = require('mongoose');
 const path = require('path');
 const fs = require('fs');
+const counsellingRequestRoutes = require('./routes/counsellingRequestRoutes');
 
 dotenv.config();
 const app = express();
@@ -107,6 +108,7 @@ app.use('/api/admin-staff/consent-forms', require('./routes/consentForm.routes')
 app.use('/api/disciplinary-forms', require('./routes/disciplinaryForm.routes'));
 app.use('/api/disciplinary-templates', require('./routes/disciplinaryFormTemplate.routes'));
 app.use('/api/transport-forms', require('./routes/transportForm.routes'));
+app.use('/api/counselling-requests', counsellingRequestRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

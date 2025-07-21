@@ -95,38 +95,40 @@ const Layout = () => {
       return [
         { text: 'Dashboard', icon: <Dashboard />, path: '/admin/dashboard' },
         { text: 'Profile', icon: <Person />, path: '/admin/profile' },
-        ...roleConfig[user.designation].sidebar.map((item) => {
-          // Map sidebar item to path and icon
-          const iconMap = {
-            'Attendance': <Assignment />, 
-            'Classes': <School />, 
-            'Students': <People />, 
-            'Reports': <Assessment />,
-            'FeeConfiguration': <Payment />, 
-            'Inventory_Management': <Inventory />, 
-            'UserManagement': <People />,
-            'A_Reports': <Assessment />, 
-            'A_Events': <Event />, 
-            'A_Communication': <Message />, 
-            'A_Settings': <Settings />,
-            'A_Users': <People />, 
-            'A_Classes': <School />, 
-            'A_Subjects': <Assignment />, 
-            'A_Schedules': <CalendarToday />,
-            'Exams': <Assignment />, 
-            'Results': <Assessment />, 
-            'SystemSettings': <Settings />,
-            'Enquiries': <Message />,
-            'Visitors': <GroupIcon />,
-            'Disciplinary_Forms': <Warning />,
-            'Teacher_Remarks': <RateReview />,
-          };
-          return {
-            text: item.replace(/_/g, ' '),
-            icon: iconMap[item] || <Assignment />,
-            path: `/admin/${item.toLowerCase().replace(/_/g, '-')}`,
-          };
-        })
+        ...roleConfig[user.designation].sidebar
+          .filter(item => item !== 'A_Subjects' && item !== 'A_Schedules')
+          .map((item) => {
+            // Map sidebar item to path and icon
+            const iconMap = {
+              'Attendance': <Assignment />, 
+              'Classes': <School />, 
+              'Students': <People />, 
+              'Reports': <Assessment />,
+              'FeeConfiguration': <Payment />, 
+              'Inventory_Management': <Inventory />, 
+              'UserManagement': <People />,
+              'A_Reports': <Assessment />, 
+              'A_Events': <Event />, 
+              'A_Communication': <Message />, 
+              'A_Settings': <Settings />,
+              'A_Users': <People />, 
+              'A_Classes': <School />, 
+              'A_Subjects': <Assignment />, 
+              'A_Schedules': <CalendarToday />,
+              'Exams': <Assignment />, 
+              'Results': <Assessment />, 
+              'SystemSettings': <Settings />,
+              'Enquiries': <Message />,
+              'Visitors': <GroupIcon />,
+              'Disciplinary_Forms': <Warning />,
+              'Teacher_Remarks': <RateReview />,
+            };
+            return {
+              text: item.replace(/_/g, ' '),
+              icon: iconMap[item] || <Assignment />,
+              path: `/admin/${item.toLowerCase().replace(/_/g, '-')}`,
+            };
+          })
       ].flat();
     }
 
@@ -173,17 +175,13 @@ const Layout = () => {
         { text: 'Events', icon: <CalendarToday />, path: '/admin/events' },
         { text: 'Communications', icon: <Notifications />, path: '/admin/communications' },
         { text: 'Classes', icon: <School />, path: '/admin/classes' },
-        { text: 'Subjects', icon: <Assignment />, path: '/admin/subjects' },
-        { text: 'Schedules', icon: <CalendarToday />, path: '/admin/schedules' },
+        // Removed Subjects and Schedules
         { text: 'System Settings', icon: <Settings />, path: '/admin/settings' },
         { text: 'User Management', icon: <People />, path: '/admin/users' },
         { text: 'Reports', icon: <Assessment />, path: '/admin/reports' },
         { text: 'Enquiries', icon: <Message />, path: '/admin/Enquiries' },
         { text: 'Visitors', icon: <GroupIcon />, path: '/admin/Visitors' },
         { text: 'Service Requests', icon: <Approval />, path: '/admin/service-requests' },
-        { text: 'Transport Forms', icon: <LocalShipping />, path: '/admin/transport-forms' },
-        { text: 'Disciplinary Forms', icon: <Warning />, path: '/admin/disciplinary-forms' },
-        { text: 'Teacher Remarks', icon: <RateReview />, path: '/admin/teacher-remarks' },
       ],
       ITAdmin: [
         { text: 'IT Admin Dashboard', icon: <Dashboard />, path: '/itadmin/dashboard' },
@@ -199,11 +197,13 @@ const Layout = () => {
         { text: 'Substitute Teacher Request', icon: <Approval />, path: '/teacher/substitute-request' },
         { text: 'My Substitute Requests', icon: <Approval />, path: '/teacher/substitute-requests' },
         { text: 'Teacher Remarks', icon: <RateReview />, path: '/teacher/teacher-remarks' },
+        { text: 'Counselling Request Form', icon: <Psychology />, path: '/teacher/counselling-request' },
       ],
       Student: [
         { text: 'Courses', icon: <School />, path: '/student/courses' },
         { text: 'Assignments', icon: <Assignment />, path: '/student/assignments' },
         { text: 'Calendar', icon: <CalendarToday />, path: '/student/calendar' },
+        { text: 'Counselling Request Form', icon: <Psychology />, path: '/student/counselling-request' },
       ],
       Principal: [
         { text: 'Staff Management', icon: <People />, path: '/principal/staff' },
@@ -212,6 +212,9 @@ const Layout = () => {
         { text: 'Academic Management', icon: <Book />, path: '/principal/academic' },
         { text: 'Approvals', icon: <Approval />, path: '/principal/approvals' },
         { text: 'Reports', icon: <Assessment />, path: '/principal/reports' },
+      ],
+      Counsellor: [
+        { text: 'Counselling Requests', icon: <Psychology />, path: '/counselor/requests' },
       ],
     };
 

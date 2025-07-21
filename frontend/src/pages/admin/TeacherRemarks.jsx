@@ -251,7 +251,7 @@ const TeacherRemarks = () => {
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <Box sx={{ p: 3 }}>
         <Typography variant="h4" gutterBottom>
-          Teacher Remarks Management
+          Syllabus Completion
         </Typography>
 
         {/* Statistics Cards */}

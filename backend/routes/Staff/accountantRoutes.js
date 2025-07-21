@@ -11,6 +11,10 @@ router.use(verifyToken);
 // Dashboard summary
 router.get('/summary', permit('Accountant'), accountantController.getSummary);
 
+// Students fee status
+router.get('/students-fee-status', permit('Accountant'), accountantController.getAllStudentsFeeStatus);
+router.get('/student-fee-records/:studentId', permit('Accountant'), accountantController.getStudentFeeRecords);
+
 // Expense management
 router.get('/expenses', permit('Accountant', 'Principal'), accountantController.getExpenses);
 router.post('/expenses', permit('Accountant'), accountantController.createExpense);

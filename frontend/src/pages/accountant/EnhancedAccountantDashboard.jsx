@@ -107,6 +107,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
+import { getStudentFeeStatus, getFeeStats, getTransactionLog } from '../../services/api';
 
 // Animated Stat Card Component
 const AnimatedStatCard = ({ icon: Icon, label, value, color, subtitle, trend, delay = 0 }) => (
@@ -203,6 +204,443 @@ const SalaryTemplateCard = ({ role, template, onSelect, isSelected }) => (
   </motion.div>
 );
 
+// Student Fee Status Manager Component
+const StudentFeeStatusManager = () => {
+  const theme = useTheme();
+  const [studentsData, setStudentsData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [studentRecordsDialog, setStudentRecordsDialog] = useState(false);
+  const [studentRecords, setStudentRecords] = useState(null);
+  const [loadingRecords, setLoadingRecords] = useState(false);
+  const [filters, setFilters] = useState({
+    academicYear: new Date().getFullYear().toString(),
+    class: '',
+    section: '',
+    paymentStatus: ''
+  });
+
+  // Load students fee status
+  useEffect(() => {
+    loadStudentsFeeStatus();
+  }, [filters]);
+
+  const loadStudentsFeeStatus = async () => {
+    try {
+      setLoading(true);
+      const data = await accountantAPI.getAllStudentsFeeStatus(filters);
+      setStudentsData(data);
+    } catch (error) {
+      console.error('Error loading students fee status:', error);
+      toast.error('Failed to load students fee status');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadStudentRecords = async (studentId) => {
+    try {
+      setLoadingRecords(true);
+      const data = await accountantAPI.getStudentFeeRecords(studentId, { 
+        academicYear: filters.academicYear 
+      });
+      setStudentRecords(data);
+    } catch (error) {
+      console.error('Error loading student records:', error);
+      toast.error('Failed to load student records');
+    } finally {
+      setLoadingRecords(false);
+    }
+  };
+
+  const handleStudentClick = async (student) => {
+    setSelectedStudent(student);
+    setStudentRecordsDialog(true);
+    await loadStudentRecords(student._id);
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Completed': return 'success';
+      case 'Partial': return 'warning';
+      case 'Overdue': return 'error';
+      default: return 'default';
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'Completed': return <CheckCircleIcon />;
+      case 'Partial': return <WarningIcon />;
+      case 'Overdue': return <ErrorIcon />;
+      default: return <InfoIcon />;
+    }
+  };
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+        <CircularProgress size={60} />
+      </Box>
+    );
+  }
+
+  return (
+    <Box>
+      {/* Summary Cards */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 2, textAlign: 'center', bgcolor: theme.palette.primary.light, color: 'white' }}>
+            <Typography variant="h4" sx={{ fontWeight: 700 }}>
+              {studentsData && studentsData.summary ? studentsData.summary.totalStudents : 0}
+            </Typography>
+            <Typography variant="body2">Total Students</Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 2, textAlign: 'center', bgcolor: theme.palette.success.light, color: 'white' }}>
+            <Typography variant="h4" sx={{ fontWeight: 700 }}>
+              {studentsData && studentsData.summary ? studentsData.summary.paidStudents : 0}
+            </Typography>
+            <Typography variant="body2">Fees Paid</Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 2, textAlign: 'center', bgcolor: theme.palette.warning.light, color: 'white' }}>
+            <Typography variant="h4" sx={{ fontWeight: 700 }}>
+              {studentsData && studentsData.summary ? studentsData.summary.partialStudents : 0}
+            </Typography>
+            <Typography variant="body2">Partial Payment</Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 2, textAlign: 'center', bgcolor: theme.palette.error.light, color: 'white' }}>
+            <Typography variant="h4" sx={{ fontWeight: 700 }}>
+              {studentsData && studentsData.summary ? studentsData.summary.overdueStudents : 0}
+            </Typography>
+            <Typography variant="body2">Overdue</Typography>
+          </Paper>
+        </Grid>
+      </Grid>
+
+      {/* Filters */}
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Typography variant="h6" sx={{ mb: 2 }}>Filters</Typography>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6} md={3}>
+            <TextField
+              label="Academic Year"
+              value={filters.academicYear}
+              onChange={(e) => setFilters({ ...filters, academicYear: e.target.value })}
+              fullWidth
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <TextField
+              label="Class"
+              value={filters.class}
+              onChange={(e) => setFilters({ ...filters, class: e.target.value })}
+              fullWidth
+              placeholder="e.g., 10, Class 10A"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <TextField
+              label="Section"
+              value={filters.section}
+              onChange={(e) => setFilters({ ...filters, section: e.target.value })}
+              fullWidth
+              placeholder="e.g., A, B, C"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl fullWidth>
+              <InputLabel>Payment Status</InputLabel>
+              <Select
+                value={filters.paymentStatus}
+                onChange={(e) => setFilters({ ...filters, paymentStatus: e.target.value })}
+              >
+                <MenuItem value="">All Status</MenuItem>
+                <MenuItem value="Completed">Completed</MenuItem>
+                <MenuItem value="Partial">Partial</MenuItem>
+                <MenuItem value="Pending">Pending</MenuItem>
+                <MenuItem value="Overdue">Overdue</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+        </Grid>
+      </Paper>
+
+      {/* Students Table */}
+      <Paper sx={{ p: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h6">All Students Fee Status</Typography>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button variant="outlined" startIcon={<RefreshIcon />} onClick={loadStudentsFeeStatus}>
+              Refresh
+            </Button>
+            <Button variant="outlined" startIcon={<DownloadIcon />}>
+              Export
+            </Button>
+          </Box>
+        </Box>
+        
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Student Details</TableCell>
+              <TableCell>Class & Section</TableCell>
+              <TableCell>Contact Info</TableCell>
+              <TableCell>Total Fee</TableCell>
+              <TableCell>Paid Amount</TableCell>
+              <TableCell>Pending Amount</TableCell>
+              <TableCell>Payment Status</TableCell>
+              <TableCell>Last Payment</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {studentsData && studentsData.students ? studentsData.students.map((student) => (
+              <TableRow key={student._id} hover>
+                <TableCell>
+                  <Box>
+                    <Typography 
+                      variant="subtitle2" 
+                      sx={{ 
+                        fontWeight: 600, 
+                        cursor: 'pointer', 
+                        color: theme.palette.primary.main,
+                        '&:hover': { textDecoration: 'underline' }
+                      }}
+                      onClick={() => handleStudentClick(student)}
+                    >
+                      {student.name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Roll: {student.rollNumber}
+                    </Typography>
+                  </Box>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2">
+                    {student.class} - {student.section}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Box>
+                    <Typography variant="body2">{student.email}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {student.contactNumber}
+                    </Typography>
+                  </Box>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    ₹{student.totalFeeAmount.toLocaleString('en-IN')}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2" sx={{ color: theme.palette.success.main, fontWeight: 600 }}>
+                    ₹{student.totalPaid.toLocaleString('en-IN')}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      color: student.pendingAmount > 0 ? theme.palette.error.main : theme.palette.success.main,
+                      fontWeight: 600 
+                    }}
+                  >
+                    ₹{student.pendingAmount.toLocaleString('en-IN')}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Chip
+                    icon={getStatusIcon(student.paymentStatus)}
+                    label={student.paymentStatus}
+                    color={getStatusColor(student.paymentStatus)}
+                    size="small"
+                  />
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2">
+                    {student.lastPaymentDate 
+                      ? new Date(student.lastPaymentDate).toLocaleDateString()
+                      : 'No payments'}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <IconButton 
+                    size="small" 
+                    onClick={() => handleStudentClick(student)}
+                    color="primary"
+                  >
+                    <ViewIcon />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            )) : null}
+          </TableBody>
+        </Table>
+      </Paper>
+
+      {/* Student Records Detail Dialog */}
+      <Dialog 
+        open={studentRecordsDialog} 
+        onClose={() => setStudentRecordsDialog(false)} 
+        maxWidth="lg" 
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <SchoolIcon color="primary" />
+            <Box>
+              <Typography variant="h6">
+                {selectedStudent ? selectedStudent.name : ''} - Fee Records
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Roll: {selectedStudent ? selectedStudent.rollNumber : ''} | Class: {selectedStudent ? selectedStudent.class : ''}-{selectedStudent ? selectedStudent.section : ''}
+              </Typography>
+            </Box>
+          </Box>
+        </DialogTitle>
+        
+        <DialogContent dividers>
+          {loadingRecords ? (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="300px">
+              <CircularProgress />
+            </Box>
+          ) : studentRecords ? (
+            <Box>
+              {/* Summary Cards */}
+              <Grid container spacing={2} sx={{ mb: 3 }}>
+                <Grid item xs={12} sm={3}>
+                  <Card sx={{ textAlign: 'center', p: 2, bgcolor: theme.palette.info.light, color: 'white' }}>
+                    <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                      ₹{studentRecords.summary.totalFeeAmount.toLocaleString('en-IN')}
+                    </Typography>
+                    <Typography variant="body2">Total Fee</Typography>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <Card sx={{ textAlign: 'center', p: 2, bgcolor: theme.palette.success.light, color: 'white' }}>
+                    <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                      ₹{studentRecords.summary.totalPaid.toLocaleString('en-IN')}
+                    </Typography>
+                    <Typography variant="body2">Total Paid</Typography>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <Card sx={{ textAlign: 'center', p: 2, bgcolor: theme.palette.error.light, color: 'white' }}>
+                    <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                      ₹{studentRecords.summary.pendingAmount.toLocaleString('en-IN')}
+                    </Typography>
+                    <Typography variant="body2">Pending</Typography>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <Card sx={{ textAlign: 'center', p: 2, bgcolor: theme.palette.warning.light, color: 'white' }}>
+                    <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                      {studentRecords.summary.paymentCount}
+                    </Typography>
+                    <Typography variant="body2">Payments</Typography>
+                  </Card>
+                </Grid>
+              </Grid>
+
+              {/* Payment History */}
+              <Typography variant="h6" sx={{ mb: 2 }}>Payment History</Typography>
+              {studentRecords.feePayments.length > 0 ? (
+                <Table sx={{ mb: 3 }}>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Receipt No.</TableCell>
+                      <TableCell>Date</TableCell>
+                      <TableCell>Amount</TableCell>
+                      <TableCell>Method</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell>Academic Year</TableCell>
+                      <TableCell>Term</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {studentRecords.feePayments.map((payment) => (
+                      <TableRow key={payment._id}>
+                        <TableCell>{payment.receiptNumber}</TableCell>
+                        <TableCell>{new Date(payment.paymentDate).toLocaleDateString()}</TableCell>
+                        <TableCell>₹{payment.amountPaid.toLocaleString('en-IN')}</TableCell>
+                        <TableCell>{payment.paymentMethod}</TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={payment.status} 
+                            color={payment.status === 'Completed' ? 'success' : 'warning'} 
+                            size="small" 
+                          />
+                        </TableCell>
+                        <TableCell>{payment.academicYear}</TableCell>
+                        <TableCell>{payment.term}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <Alert severity="info" sx={{ mb: 3 }}>No payment records found for this student.</Alert>
+              )}
+
+              {/* Fee Structures */}
+              <Typography variant="h6" sx={{ mb: 2 }}>Fee Structures</Typography>
+              {studentRecords.feeStructures.length > 0 ? (
+                <Table sx={{ mb: 3 }}>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Academic Year</TableCell>
+                      <TableCell>Term</TableCell>
+                      <TableCell>Class</TableCell>
+                      <TableCell>Total Amount</TableCell>
+                      <TableCell>Due Date</TableCell>
+                      <TableCell>Status</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {studentRecords.feeStructures.map((structure) => (
+                      <TableRow key={structure._id}>
+                        <TableCell>{structure.academicYear}</TableCell>
+                        <TableCell>{structure.term}</TableCell>
+                        <TableCell>{structure.class}</TableCell>
+                        <TableCell>₹{structure.totalAmount.toLocaleString('en-IN')}</TableCell>
+                        <TableCell>{new Date(structure.dueDate).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={structure.isActive ? 'Active' : 'Inactive'} 
+                            color={structure.isActive ? 'success' : 'default'} 
+                            size="small" 
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <Alert severity="warning">No fee structures found for this student's class.</Alert>
+              )}
+            </Box>
+          ) : (
+            <Alert severity="error">Failed to load student records.</Alert>
+          )}
+        </DialogContent>
+        
+        <DialogActions>
+          <Button onClick={() => setStudentRecordsDialog(false)}>Close</Button>
+          <Button variant="contained" startIcon={<DownloadIcon />}>
+            Download Report
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
+};
+
 // Enhanced Accountant Dashboard
 const EnhancedAccountantDashboard = () => {
   const theme = useTheme();
@@ -258,6 +696,23 @@ const EnhancedAccountantDashboard = () => {
   const { data: pendingApprovals, isLoading: loadingApprovals } = useQuery({
     queryKey: ['pending-salary-approvals'],
     queryFn: accountantAPI.getPendingSalaryApprovals
+  });
+
+  const { data: feeStatus, isLoading: loadingFeeStatus } = useQuery({
+    queryKey: ['student-fee-status'],
+    queryFn: getStudentFeeStatus
+  });
+  const { data: feeStats, isLoading: loadingFeeStats } = useQuery({
+    queryKey: ['fee-stats'],
+    queryFn: getFeeStats
+  });
+  const { data: transactionLog, isLoading: loadingTransactionLog } = useQuery({
+    queryKey: ['transaction-log'],
+    queryFn: getTransactionLog
+  });
+  const { data: allFeePayments, isLoading: loadingAllFeePayments } = useQuery({
+    queryKey: ['all-fee-payments'],
+    queryFn: accountantAPI.getAllFeePayments
   });
 
   // Mutations
@@ -429,6 +884,8 @@ const EnhancedAccountantDashboard = () => {
             <Tab label="Staff Salaries" icon={<PeopleIcon />} />
             <Tab label="Salary Templates" icon={<SettingsIcon />} />
             <Tab label="Pending Approvals" icon={<HistoryIcon />} />
+            <Tab label="Student Fee Status" icon={<AssessmentIcon />} />
+            <Tab label="Transaction Log" icon={<HistoryIcon />} />
           </Tabs>
         </Paper>
 
@@ -673,6 +1130,50 @@ const EnhancedAccountantDashboard = () => {
                   </List>
                 ) : (
                   <Alert severity="success">No pending salary approvals</Alert>
+                )}
+              </Paper>
+            </motion.div>
+          )}
+
+          {activeTab === 4 && (
+            <motion.div key="student-fee-status" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
+              <StudentFeeStatusManager />
+            </motion.div>
+          )}
+
+          {activeTab === 5 && (
+            <motion.div key="transaction-log" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
+              <Paper sx={{ p: 3 }}>
+                <Typography variant="h6" sx={{ mb: 2 }}>Transaction Log</Typography>
+                {loadingTransactionLog ? <CircularProgress /> : (
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Type</TableCell>
+                        <TableCell>Name</TableCell>
+                        <TableCell>ID</TableCell>
+                        <TableCell>Amount</TableCell>
+                        <TableCell>Date</TableCell>
+                        <TableCell>Method</TableCell>
+                        <TableCell>Reference</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {transactionLog?.map((log, idx) => (
+                        <TableRow key={idx}>
+                          <TableCell>
+                            <Chip label={log.type} color={log.type === 'Salary Credited' ? 'success' : 'error'} />
+                          </TableCell>
+                          <TableCell>{log.name}</TableCell>
+                          <TableCell>{log.id}</TableCell>
+                          <TableCell>₹{log.amount}</TableCell>
+                          <TableCell>{log.date ? new Date(log.date).toLocaleDateString() : ''}</TableCell>
+                          <TableCell>{log.method}</TableCell>
+                          <TableCell>{log.ref}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 )}
               </Paper>
             </motion.div>

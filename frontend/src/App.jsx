@@ -113,6 +113,8 @@ function App() {
                     
                     {/* Main Dashboard Route */}
                     <Route path="/dashboard" element={<Dashboard />} />
+                    {/* Temporary Test Dashboard Route (no auth/role protection) */}
+                    <Route path="/test-dashboard" element={<Dashboard />} />
                     
                     {/* Role-specific Dashboard Routes */}
                     <Route path="/dashboard/librarian" element={<LibrarianDashboardProtected />} />

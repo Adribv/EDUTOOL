@@ -27,6 +27,7 @@ import ParentTransportForms from '../pages/parent/ParentTransportForms';
 import ParentTransportFormCreate from '../pages/parent/ParentTransportFormCreate';
 import ParentTransportFormView from '../pages/parent/ParentTransportFormView';
 import TeacherRemarksView from '../pages/parent/TeacherRemarksView';
+import CounsellingRequestForm from '../components/CounsellingRequestForm';
 
 const ParentRoutes = () => {
   return (
@@ -65,6 +66,7 @@ const ParentRoutes = () => {
         <Route path="transport-forms/:formId" element={<ParentTransportFormView />} />
         <Route path="transport-forms/:formId/edit" element={<ParentTransportFormCreate />} />
         
+        <Route path="counselling-request" element={<CounsellingRequestForm />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>
