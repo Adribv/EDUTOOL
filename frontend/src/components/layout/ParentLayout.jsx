@@ -31,7 +31,7 @@ import {
   Warning as WarningIcon,
   LocalShipping,
   RateReview,
-  PsychologyIcon,
+  Psychology,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 
@@ -46,7 +46,7 @@ const navItems = [
   { text: 'Transport Forms', icon: <LocalShipping />, path: '/parent/transport-forms' },
   { text: 'Ward Misconduct', icon: <WarningIcon />, path: '/parent/ward-misconduct' },
   { text: 'Teacher Remarks', icon: <RateReview />, path: '/parent/teacher-remarks' },
-  { text: 'Counselling Request Form', icon: <PsychologyIcon />, path: '/parent/counselling-request' },
+  { text: 'Counselling Request Form', icon: <Psychology />, path: '/parent/counselling-request' },
 ];
 
 const ParentLayout = () => {

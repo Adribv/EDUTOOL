@@ -31,7 +31,7 @@ export default function Timetable() {
   React.useEffect(() => {
     if (user) {
       console.log('🔍 Testing API connection...');
-      fetch('http://localhost:5000/api/students/timetable', {
+      fetch('https://api.edulives.com/api/students/timetable', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

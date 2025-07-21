@@ -11,7 +11,7 @@ const LoginDiagnostic = () => {
     const userRole = localStorage.getItem('userRole');
     
     // Get current API URL
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const apiUrl = import.meta.env.VITE_API_URL || 'https://api.edulives.com/api';
     
     const results = {
       apiUrl,
