@@ -61,7 +61,7 @@ const featureTabs = [
   { label: 'Resources', icon: <Book />, key: 'resources' },
   { label: 'Lesson Plans', icon: <Work />, key: 'lessonPlans' },
   { label: 'Communication', icon: <Message />, key: 'communication' },
-  { label: 'Remarks', icon: <RateReview />, key: 'remarks' },
+  { label: 'Syllabus Completion', icon: <RateReview />, key: 'remarks' },
   { label: 'Projects', icon: <Psychology />, key: 'projects' },
   { label: 'Parent Interaction', icon: <Group />, key: 'parentInteraction' },
   { label: 'Feedback', icon: <Feedback />, key: 'feedback' },
@@ -1551,4 +1551,53 @@ export default function TeacherDashboard() {
     </Box>
   );
 }
-// ... existing code ...
+
+function StudentAttendanceRow({ student, staffId }) {
+  const [attendance, setAttendance] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    import('../../services/api').then(({ teacherAPI }) => {
+      teacherAPI.getStudentAttendancePercentage(staffId, student._id || student.id)
+        .then((res) => {
+          if (mounted) setAttendance(res?.attendanceStats?.attendancePercentage ?? null);
+        })
+        .catch(() => {
+          if (mounted) setAttendance(null);
+        })
+        .finally(() => {
+          if (mounted) setLoading(false);
+        });
+    });
+    return () => { mounted = false; };
+  }, [staffId, student._id, student.id]);
+
+  return (
+    <TableRow>
+      <TableCell>
+        <Box display="flex" alignItems="center">
+          <Avatar sx={{ mr: 2, width: 32, height: 32 }}>
+            {student.name?.charAt(0) || 'S'}
+          </Avatar>
+          {student.name}
+        </Box>
+      </TableCell>
+      <TableCell>{student.rollNumber}</TableCell>
+      <TableCell>{student.class}</TableCell>
+      <TableCell>{student.section}</TableCell>
+      <TableCell>
+        <Chip 
+          label={student.status || 'Active'} 
+          color={student.status === 'Active' ? 'success' : 'default'}
+          size="small"
+        />
+      </TableCell>
+      <TableCell>
+        {loading ? <CircularProgress size={20} /> :
+          attendance !== null ? `${attendance}%` : 'N/A'}
+      </TableCell>
+    </TableRow>
+  );
+}

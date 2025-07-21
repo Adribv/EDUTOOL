@@ -210,6 +210,33 @@ exports.generateAttendanceReport = async (req, res) => {
   }
 };
 
+// Get all attendance records for a class (optionally filter by section)
+exports.getClassAttendance = async (req, res) => {
+  try {
+    const { class: cls } = req.params;
+    const { section } = req.query;
+    // Check if teacher is coordinator of this class or assigned to this class
+    const staff = await Staff.findById(req.user.id).populate('coordinator');
+    const isCoordinator = staff.coordinator && staff.coordinator.some(
+      classObj => (classObj.name === cls || `${classObj.grade} ${classObj.section}` === cls)
+    );
+    const isAssigned = staff.assignedSubjects && staff.assignedSubjects.some(
+      subject => subject.class === cls && (!section || subject.section === section)
+    );
+    if (!isCoordinator && !isAssigned) {
+      return res.status(403).json({ message: 'You are not authorized to view attendance for this class' });
+    }
+    // Build query
+    const query = { class: cls };
+    if (section) query.section = section;
+    const records = await Attendance.find(query);
+    res.json(records);
+  } catch (error) {
+    console.error('Error getting class attendance:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // Get students by class and section (helper function for frontend)
 exports.getStudentsByClass = async (req, res) => {
   try {
