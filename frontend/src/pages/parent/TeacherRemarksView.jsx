@@ -248,7 +248,7 @@ const TeacherRemarksView = () => {
           <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
             <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
               <Tab label="All Units" />
-              <Tab label="Teacher Remarks" />
+              <Tab label="Syllabus Completion" />
               <Tab label="Delayed Units" />
               <Tab label="Completed Units" />
             </Tabs>

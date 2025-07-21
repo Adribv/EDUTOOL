@@ -365,7 +365,7 @@ const Dashboard = () => {
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
-                    Teacher Remarks
+                    Syllabus Completion
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
                     View teacher remarks and syllabus completion for your children

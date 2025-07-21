@@ -287,7 +287,7 @@ const SyllabusView = () => {
                     <TableCell>Teaching Method</TableCell>
                     <TableCell>Completion Rate</TableCell>
                     <TableCell>Remarks/Topics Left</TableCell>
-                    <TableCell>Teacher Remarks</TableCell>
+                    <TableCell>Syllabus Completion</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
