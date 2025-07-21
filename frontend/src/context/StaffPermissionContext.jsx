@@ -10,7 +10,8 @@ const ACTIONS = {
   CLEAR_PERMISSIONS: 'CLEAR_PERMISSIONS',
   ADD_STAFF_MEMBER: 'ADD_STAFF_MEMBER',
   REMOVE_STAFF_MEMBER: 'REMOVE_STAFF_MEMBER',
-  UPDATE_STAFF_STATUS: 'UPDATE_STAFF_STATUS'
+  UPDATE_STAFF_STATUS: 'UPDATE_STAFF_STATUS',
+  UPDATE_STAFF_PERMISSIONS: 'UPDATE_STAFF_PERMISSIONS'
 };
 
 // Initial State
@@ -136,6 +137,17 @@ const staffPermissionReducer = (state, action) => {
         staffMembers: statusUpdatedStaff
       };
 
+    case ACTIONS.UPDATE_STAFF_PERMISSIONS:
+      const permissionsUpdatedStaff = state.staffMembers.map(staff =>
+        staff._id === action.payload.staffId
+          ? { ...staff, permissions: action.payload.permissions }
+          : staff
+      );
+      return {
+        ...state,
+        staffMembers: permissionsUpdatedStaff
+      };
+
     default:
       return state;
   }
@@ -171,7 +183,45 @@ export const StaffPermissionProvider = ({ children }) => {
           primaryRole: 'librarian',
           assignedRoles: ['librarian'],
           joinDate: '2023-01-15',
-          status: 'Active'
+          status: 'Active',
+          permissions: {
+            inventory: {
+              view_inventory: true,
+              manage_inventory: true,
+              approve_requests: false,
+              generate_reports: true
+            },
+            student_records: {
+              view_students: true,
+              edit_students: false,
+              view_academics: false,
+              manage_attendance: false
+            },
+            teacher_remarks: {
+              view_remarks: true,
+              add_remarks: false,
+              edit_remarks: false,
+              approve_remarks: false
+            },
+            feedbacks: {
+              view_feedback: true,
+              respond_feedback: true,
+              manage_feedback: false,
+              generate_reports: false
+            },
+            events: {
+              view_events: true,
+              create_events: false,
+              manage_events: false,
+              approve_events: false
+            },
+            communication: {
+              send_messages: true,
+              view_messages: true,
+              manage_announcements: false,
+              access_notifications: true
+            }
+          }
         },
         {
           _id: '2',
@@ -181,7 +231,45 @@ export const StaffPermissionProvider = ({ children }) => {
           primaryRole: 'counselor',
           assignedRoles: ['counselor'],
           joinDate: '2023-02-20',
-          status: 'Active'
+          status: 'Active',
+          permissions: {
+            inventory: {
+              view_inventory: false,
+              manage_inventory: false,
+              approve_requests: false,
+              generate_reports: false
+            },
+            student_records: {
+              view_students: true,
+              edit_students: true,
+              view_academics: true,
+              manage_attendance: false
+            },
+            teacher_remarks: {
+              view_remarks: true,
+              add_remarks: true,
+              edit_remarks: true,
+              approve_remarks: false
+            },
+            feedbacks: {
+              view_feedback: true,
+              respond_feedback: true,
+              manage_feedback: true,
+              generate_reports: true
+            },
+            events: {
+              view_events: true,
+              create_events: true,
+              manage_events: false,
+              approve_events: false
+            },
+            communication: {
+              send_messages: true,
+              view_messages: true,
+              manage_announcements: true,
+              access_notifications: true
+            }
+          }
         },
         {
           _id: '3',
@@ -191,7 +279,45 @@ export const StaffPermissionProvider = ({ children }) => {
           primaryRole: 'ptteacher',
           assignedRoles: ['ptteacher'],
           joinDate: '2023-03-10',
-          status: 'Active'
+          status: 'Active',
+          permissions: {
+            inventory: {
+              view_inventory: true,
+              manage_inventory: false,
+              approve_requests: false,
+              generate_reports: false
+            },
+            student_records: {
+              view_students: true,
+              edit_students: false,
+              view_academics: false,
+              manage_attendance: true
+            },
+            teacher_remarks: {
+              view_remarks: true,
+              add_remarks: true,
+              edit_remarks: false,
+              approve_remarks: false
+            },
+            feedbacks: {
+              view_feedback: true,
+              respond_feedback: true,
+              manage_feedback: false,
+              generate_reports: false
+            },
+            events: {
+              view_events: true,
+              create_events: true,
+              manage_events: true,
+              approve_events: false
+            },
+            communication: {
+              send_messages: true,
+              view_messages: true,
+              manage_announcements: false,
+              access_notifications: true
+            }
+          }
         },
         {
           _id: '4',
@@ -201,7 +327,45 @@ export const StaffPermissionProvider = ({ children }) => {
           primaryRole: 'eventhandler',
           assignedRoles: ['eventhandler'],
           joinDate: '2023-04-05',
-          status: 'Active'
+          status: 'Active',
+          permissions: {
+            inventory: {
+              view_inventory: true,
+              manage_inventory: false,
+              approve_requests: false,
+              generate_reports: false
+            },
+            student_records: {
+              view_students: false,
+              edit_students: false,
+              view_academics: false,
+              manage_attendance: false
+            },
+            teacher_remarks: {
+              view_remarks: false,
+              add_remarks: false,
+              edit_remarks: false,
+              approve_remarks: false
+            },
+            feedbacks: {
+              view_feedback: true,
+              respond_feedback: true,
+              manage_feedback: false,
+              generate_reports: false
+            },
+            events: {
+              view_events: true,
+              create_events: true,
+              manage_events: true,
+              approve_events: true
+            },
+            communication: {
+              send_messages: true,
+              view_messages: true,
+              manage_announcements: true,
+              access_notifications: true
+            }
+          }
         },
         {
           _id: '5',
@@ -211,7 +375,45 @@ export const StaffPermissionProvider = ({ children }) => {
           primaryRole: 'transportmanager',
           assignedRoles: ['transportmanager'],
           joinDate: '2023-05-12',
-          status: 'Active'
+          status: 'Active',
+          permissions: {
+            inventory: {
+              view_inventory: false,
+              manage_inventory: false,
+              approve_requests: false,
+              generate_reports: false
+            },
+            student_records: {
+              view_students: true,
+              edit_students: false,
+              view_academics: false,
+              manage_attendance: false
+            },
+            teacher_remarks: {
+              view_remarks: false,
+              add_remarks: false,
+              edit_remarks: false,
+              approve_remarks: false
+            },
+            feedbacks: {
+              view_feedback: true,
+              respond_feedback: true,
+              manage_feedback: false,
+              generate_reports: false
+            },
+            events: {
+              view_events: true,
+              create_events: false,
+              manage_events: false,
+              approve_events: false
+            },
+            communication: {
+              send_messages: true,
+              view_messages: true,
+              manage_announcements: false,
+              access_notifications: true
+            }
+          }
         },
         {
           _id: '6',
@@ -221,7 +423,45 @@ export const StaffPermissionProvider = ({ children }) => {
           primaryRole: 'softskillsmanager',
           assignedRoles: ['softskillsmanager'],
           joinDate: '2023-06-18',
-          status: 'Active'
+          status: 'Active',
+          permissions: {
+            inventory: {
+              view_inventory: false,
+              manage_inventory: false,
+              approve_requests: false,
+              generate_reports: false
+            },
+            student_records: {
+              view_students: true,
+              edit_students: false,
+              view_academics: true,
+              manage_attendance: false
+            },
+            teacher_remarks: {
+              view_remarks: true,
+              add_remarks: true,
+              edit_remarks: false,
+              approve_remarks: false
+            },
+            feedbacks: {
+              view_feedback: true,
+              respond_feedback: true,
+              manage_feedback: true,
+              generate_reports: true
+            },
+            events: {
+              view_events: true,
+              create_events: false,
+              manage_events: false,
+              approve_events: false
+            },
+            communication: {
+              send_messages: true,
+              view_messages: true,
+              manage_announcements: false,
+              access_notifications: true
+            }
+          }
         }
       ];
 
@@ -260,7 +500,45 @@ export const StaffPermissionProvider = ({ children }) => {
         _id: Date.now().toString(),
         ...staffData,
         joinDate: new Date().toISOString(),
-        status: 'Active'
+        status: 'Active',
+        permissions: {
+          inventory: {
+            view_inventory: false,
+            manage_inventory: false,
+            approve_requests: false,
+            generate_reports: false
+          },
+          student_records: {
+            view_students: false,
+            edit_students: false,
+            view_academics: false,
+            manage_attendance: false
+          },
+          teacher_remarks: {
+            view_remarks: false,
+            add_remarks: false,
+            edit_remarks: false,
+            approve_remarks: false
+          },
+          feedbacks: {
+            view_feedback: false,
+            respond_feedback: false,
+            manage_feedback: false,
+            generate_reports: false
+          },
+          events: {
+            view_events: false,
+            create_events: false,
+            manage_events: false,
+            approve_events: false
+          },
+          communication: {
+            send_messages: false,
+            view_messages: false,
+            manage_announcements: false,
+            access_notifications: false
+          }
+        }
       };
       
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -305,6 +583,24 @@ export const StaffPermissionProvider = ({ children }) => {
     }
   };
 
+  // Update staff permissions
+  const updateStaffPermissions = async (staffId, newPermissions) => {
+    try {
+      // Mock API call - replace with actual API
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      dispatch({
+        type: ACTIONS.UPDATE_STAFF_PERMISSIONS,
+        payload: { staffId, permissions: newPermissions }
+      });
+      
+      return { success: true };
+    } catch (error) {
+      dispatch({ type: ACTIONS.SET_ERROR, payload: error.message });
+      return { success: false, error: error.message };
+    }
+  };
+
   // Check if user has specific permission
   const hasPermission = (permission) => {
     if (!user) return false;
@@ -321,6 +617,22 @@ export const StaffPermissionProvider = ({ children }) => {
       const roleDef = state.roleDefinitions[role];
       return roleDef && (roleDef.permissions.includes('*') || roleDef.permissions.includes(permission));
     });
+  };
+
+  // Check if user has specific feature permission
+  const hasFeaturePermission = (permission) => {
+    if (!user) return false;
+    
+    // Admin has all permissions
+    if (user.role === 'admin') return true;
+    
+    // Get user's assigned roles
+    const userStaff = state.staffMembers.find(staff => staff.email === user.email);
+    if (!userStaff) return false;
+    
+    // Check if user has the specific feature permission
+    const [category, feature] = permission.split('.');
+    return userStaff.permissions?.[category]?.[feature] || false;
   };
 
   // Check if user has any of the specified roles
@@ -344,6 +656,14 @@ export const StaffPermissionProvider = ({ children }) => {
     
     const userStaff = state.staffMembers.find(staff => staff.email === user.email);
     return userStaff ? userStaff.assignedRoles : [];
+  };
+
+  // Get user's feature permissions
+  const getUserFeaturePermissions = () => {
+    if (!user) return {};
+    
+    const userStaff = state.staffMembers.find(staff => staff.email === user.email);
+    return userStaff?.permissions || {};
   };
 
   // Get role definition
@@ -386,6 +706,7 @@ export const StaffPermissionProvider = ({ children }) => {
     
     // Actions
     updateStaffRoles,
+    updateStaffPermissions,
     addStaffMember,
     removeStaffMember,
     updateStaffStatus,
@@ -395,7 +716,9 @@ export const StaffPermissionProvider = ({ children }) => {
     // Utility functions
     hasPermission,
     hasRole,
+    hasFeaturePermission,
     getUserRoles,
+    getUserFeaturePermissions,
     getRoleDefinition,
     getAllRoleDefinitions,
     getStaffMember,

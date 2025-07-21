@@ -37,10 +37,13 @@ import {
   ListItemIcon,
   InputAdornment,
   Switch,
-  FormControlLabel
+  FormControlLabel,
+  Rating,
+  Avatar,
+  Badge
 } from '@mui/material';
 import {
-  Book as BookIcon,
+  LibraryBooks as LibraryIcon,
   Person as PersonIcon,
   School as SchoolIcon,
   Add as AddIcon,
@@ -64,11 +67,15 @@ import {
   Warning as WarningIcon,
   Error as ErrorIcon,
   Info as InfoIcon,
-  LibraryBooks as LibraryIcon,
-  Category as CategoryIcon,
-  LocalLibrary as StudentIcon,
+  Book as BookIcon,
   Bookmark as BookmarkIcon,
-  BookmarkBorder as BookmarkBorderIcon
+  LocalLibrary as LocalLibraryIcon,
+  School as StudentIcon,
+  Inventory as InventoryIcon,
+  RateReview as RemarksIcon,
+  Feedback as FeedbackIcon,
+  Event as EventIcon,
+  Message as MessageIcon
 } from '@mui/icons-material';
 import {
   XAxis,
@@ -88,6 +95,14 @@ import {
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useStaffPermissions } from '../../context/StaffPermissionContext';
+import { 
+  PermissionGate, 
+  PermissionFeatureCard, 
+  PermissionNavItem, 
+  PermissionButton,
+  PermissionStatus 
+} from '../../components/permissions/PermissionGate';
 import { toast } from 'react-toastify';
 
 // Animated Stat Card Component
@@ -140,7 +155,7 @@ const AnimatedStatCard = ({ icon: Icon, label, value, color, subtitle, trend, de
 );
 
 // Book Card Component
-const BookCard = ({ book, onEdit, onDelete, onBorrow }) => (
+const BookCard = ({ book, onEdit, onDelete, onView }) => (
   <motion.div
     whileHover={{ scale: 1.02 }}
     whileTap={{ scale: 0.98 }}
@@ -155,11 +170,11 @@ const BookCard = ({ book, onEdit, onDelete, onBorrow }) => (
           <Chip 
             label={book.status} 
             size="small" 
-            color={book.status === 'Available' ? 'success' : 'warning'} 
+            color={book.status === 'Available' ? 'success' : book.status === 'Borrowed' ? 'warning' : 'error'} 
           />
         </Box>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          By {book.author}
+          Author: {book.author}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
           ISBN: {book.isbn}
@@ -168,17 +183,15 @@ const BookCard = ({ book, onEdit, onDelete, onBorrow }) => (
           Category: {book.category}
         </Typography>
         <Box sx={{ display: 'flex', gap: 1, mt: 'auto' }}>
+          <IconButton size="small" onClick={() => onView(book)}>
+            <ViewIcon />
+          </IconButton>
           <IconButton size="small" onClick={() => onEdit(book)}>
             <EditIcon />
           </IconButton>
           <IconButton size="small" onClick={() => onDelete(book._id)}>
             <DeleteIcon />
           </IconButton>
-          {book.status === 'Available' && (
-            <IconButton size="small" onClick={() => onBorrow(book)}>
-              <BookmarkBorderIcon />
-            </IconButton>
-          )}
         </Box>
       </CardContent>
     </Card>
@@ -190,38 +203,33 @@ const LibrarianDashboard = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { logout } = useAuth();
+  const { getUserFeaturePermissions } = useStaffPermissions();
   const queryClient = useQueryClient();
 
   // State management
   const [activeTab, setActiveTab] = useState(0);
   const [bookDialog, setBookDialog] = useState(false);
-  const [borrowDialog, setBorrowDialog] = useState(false);
   const [selectedBook, setSelectedBook] = useState(null);
   const [bookForm, setBookForm] = useState({
     title: '',
     author: '',
     isbn: '',
     category: '',
-    description: '',
-    copies: 1,
-    location: '',
-    publishedYear: ''
+    copies: '',
+    status: 'Available'
   });
-  const [borrowForm, setBorrowForm] = useState({
-    studentId: '',
-    bookId: '',
-    dueDate: '',
-    remarks: ''
-  });
+
+  // Get user permissions
+  const userPermissions = getUserFeaturePermissions();
 
   // Mock data - replace with actual API calls
   const libraryStats = {
     totalBooks: 1250,
-    borrowedBooks: 89,
-    availableBooks: 1161,
-    overdueBooks: 12,
-    totalStudents: 450,
-    activeBorrowers: 67
+    borrowedBooks: 342,
+    availableBooks: 908,
+    totalMembers: 450,
+    overdueBooks: 15,
+    totalCategories: 25
   };
 
   const books = [
@@ -232,8 +240,7 @@ const LibrarianDashboard = () => {
       isbn: '978-0743273565',
       category: 'Fiction',
       status: 'Available',
-      copies: 3,
-      location: 'Shelf A1'
+      copies: 3
     },
     {
       _id: '2',
@@ -242,19 +249,7 @@ const LibrarianDashboard = () => {
       isbn: '978-0446310789',
       category: 'Fiction',
       status: 'Borrowed',
-      copies: 2,
-      location: 'Shelf A2'
-    }
-  ];
-
-  const borrowHistory = [
-    {
-      _id: '1',
-      studentName: 'John Doe',
-      bookTitle: 'The Great Gatsby',
-      borrowedDate: '2024-01-15',
-      dueDate: '2024-02-15',
-      status: 'Active'
+      copies: 2
     }
   ];
 
@@ -265,10 +260,8 @@ const LibrarianDashboard = () => {
       author: '',
       isbn: '',
       category: '',
-      description: '',
-      copies: 1,
-      location: '',
-      publishedYear: ''
+      copies: '',
+      status: 'Available'
     });
   };
 
@@ -281,16 +274,6 @@ const LibrarianDashboard = () => {
     setBookDialog(false);
     resetBookForm();
     toast.success('Book added successfully');
-  };
-
-  const handleBorrowSubmit = () => {
-    if (!borrowForm.studentId || !borrowForm.bookId || !borrowForm.dueDate) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
-    // Borrow logic here
-    setBorrowDialog(false);
-    toast.success('Book borrowed successfully');
   };
 
   return (
@@ -312,7 +295,7 @@ const LibrarianDashboard = () => {
               Library Management System
             </Typography>
             <Typography variant="body1" sx={{ opacity: 0.9 }}>
-              Comprehensive Book and Student Management
+              Comprehensive Library Resource Management
             </Typography>
           </motion.div>
           <Box sx={{ display: 'flex', gap: 1 }}>
@@ -339,43 +322,154 @@ const LibrarianDashboard = () => {
               label="Total Books"
               value={libraryStats.totalBooks}
               color={theme.palette.primary.main}
-              subtitle="In library collection"
-              trend={5.2}
+              subtitle="In library"
+              trend={12.5}
               delay={0.1}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <AnimatedStatCard
-              icon={StudentIcon}
+              icon={BookmarkIcon}
               label="Borrowed Books"
               value={libraryStats.borrowedBooks}
               color={theme.palette.warning.main}
-              subtitle="Currently borrowed"
-              trend={-2.1}
+              subtitle="Currently out"
+              trend={8.7}
               delay={0.2}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <AnimatedStatCard
-              icon={BookmarkIcon}
+              icon={LocalLibraryIcon}
               label="Available Books"
               value={libraryStats.availableBooks}
               color={theme.palette.success.main}
-              subtitle="Ready for borrowing"
-              trend={8.7}
+              subtitle="Ready to borrow"
+              trend={15.3}
               delay={0.3}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <AnimatedStatCard
-              icon={WarningIcon}
-              label="Overdue Books"
-              value={libraryStats.overdueBooks}
-              color={theme.palette.error.main}
-              subtitle="Need attention"
-              trend={-15.3}
+              icon={StudentIcon}
+              label="Total Members"
+              value={libraryStats.totalMembers}
+              color={theme.palette.info.main}
+              subtitle="Registered users"
+              trend={5.2}
               delay={0.4}
             />
+          </Grid>
+        </Grid>
+
+        {/* Feature Cards with Permissions */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} sm={6} md={4}>
+            <PermissionFeatureCard
+              title="Inventory Management"
+              description="Manage library inventory and book catalog"
+              icon={InventoryIcon}
+              permission="inventory.view_inventory"
+              color="primary"
+              onClick={() => setActiveTab(1)}
+            >
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="body2" color="text.secondary">
+                  {libraryStats.totalBooks} books in catalog
+                </Typography>
+                <PermissionStatus permission="inventory.view_inventory" />
+              </Box>
+            </PermissionFeatureCard>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={4}>
+            <PermissionFeatureCard
+              title="Student Records"
+              description="Access student information and records"
+              icon={StudentIcon}
+              permission="student_records.view_students"
+              color="success"
+              onClick={() => console.log('Navigate to student records')}
+            >
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="body2" color="text.secondary">
+                  {libraryStats.totalMembers} registered students
+                </Typography>
+                <PermissionStatus permission="student_records.view_students" />
+              </Box>
+            </PermissionFeatureCard>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={4}>
+            <PermissionFeatureCard
+              title="Teacher Remarks"
+              description="View and manage teacher remarks"
+              icon={RemarksIcon}
+              permission="teacher_remarks.view_remarks"
+              color="warning"
+              onClick={() => console.log('Navigate to teacher remarks')}
+            >
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="body2" color="text.secondary">
+                  Access teacher feedback
+                </Typography>
+                <PermissionStatus permission="teacher_remarks.view_remarks" />
+              </Box>
+            </PermissionFeatureCard>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={4}>
+            <PermissionFeatureCard
+              title="Feedback System"
+              description="Manage feedback and suggestions"
+              icon={FeedbackIcon}
+              permission="feedbacks.view_feedback"
+              color="info"
+              onClick={() => console.log('Navigate to feedback')}
+            >
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="body2" color="text.secondary">
+                  Respond to user feedback
+                </Typography>
+                <PermissionStatus permission="feedbacks.view_feedback" />
+              </Box>
+            </PermissionFeatureCard>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={4}>
+            <PermissionFeatureCard
+              title="Event Management"
+              description="Manage library events and activities"
+              icon={EventIcon}
+              permission="events.view_events"
+              color="secondary"
+              onClick={() => console.log('Navigate to events')}
+            >
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="body2" color="text.secondary">
+                  Library events and activities
+                </Typography>
+                <PermissionStatus permission="events.view_events" />
+              </Box>
+            </PermissionFeatureCard>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={4}>
+            <PermissionFeatureCard
+              title="Communication"
+              description="Send messages and announcements"
+              icon={MessageIcon}
+              permission="communication.send_messages"
+              color="error"
+              onClick={() => console.log('Navigate to communication')}
+            >
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="body2" color="text.secondary">
+                  Send messages to users
+                </Typography>
+                <PermissionStatus permission="communication.send_messages" />
+              </Box>
+            </PermissionFeatureCard>
           </Grid>
         </Grid>
 
@@ -384,7 +478,7 @@ const LibrarianDashboard = () => {
           <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
             <Tab label="Overview" icon={<TimelineIcon />} />
             <Tab label="Books" icon={<BookIcon />} />
-            <Tab label="Borrowing" icon={<StudentIcon />} />
+            <Tab label="Members" icon={<PersonIcon />} />
             <Tab label="Reports" icon={<AssessmentIcon />} />
           </Tabs>
         </Paper>
@@ -402,7 +496,7 @@ const LibrarianDashboard = () => {
               <Grid container spacing={3}>
                 <Grid item xs={12} md={8}>
                   <Paper sx={{ p: 3, height: 400 }}>
-                    <Typography variant="h6" sx={{ mb: 2 }}>Borrowing Trends</Typography>
+                    <Typography variant="h6" sx={{ mb: 2 }}>Book Borrowing Trends</Typography>
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={[
                         { month: 'Jan', borrowed: 45, returned: 42, overdue: 3 },
@@ -410,7 +504,7 @@ const LibrarianDashboard = () => {
                         { month: 'Mar', borrowed: 38, returned: 35, overdue: 3 },
                         { month: 'Apr', borrowed: 61, returned: 58, overdue: 3 },
                         { month: 'May', borrowed: 55, returned: 52, overdue: 3 },
-                        { month: 'Jun', borrowed: 67, returned: 64, overdue: 3 },
+                        { month: 'Jun', borrowed: 67, returned: 65, overdue: 2 },
                       ]}>
                         <XAxis dataKey="month" />
                         <YAxis />
@@ -467,103 +561,66 @@ const LibrarianDashboard = () => {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={() => setBookDialog(true)}
-                  sx={{ px: 3, py: 1.5 }}
-                >
-                  Add New Book
-                </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<UploadIcon />}
-                >
-                  Import Books
-                </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<DownloadIcon />}
-                >
-                  Export Catalog
-                </Button>
-              </Box>
+              <PermissionGate permission="inventory.view_inventory">
+                <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                  <PermissionButton
+                    permission="inventory.manage_inventory"
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={() => setBookDialog(true)}
+                  >
+                    Add Book
+                  </PermissionButton>
+                  <PermissionButton
+                    permission="inventory.generate_reports"
+                    variant="outlined"
+                    startIcon={<DownloadIcon />}
+                    onClick={() => console.log('Export books')}
+                  >
+                    Export Books
+                  </PermissionButton>
+                </Box>
 
-              <Grid container spacing={3}>
-                {books.map((book) => (
-                  <Grid item xs={12} sm={6} md={4} key={book._id}>
-                    <BookCard
-                      book={book}
-                      onEdit={(book) => {
-                        setSelectedBook(book);
-                        setBookForm(book);
-                        setBookDialog(true);
-                      }}
-                      onDelete={(id) => {
-                        // Delete logic
-                        toast.success('Book deleted successfully');
-                      }}
-                      onBorrow={(book) => {
-                        setSelectedBook(book);
-                        setBorrowForm({ ...borrowForm, bookId: book._id });
-                        setBorrowDialog(true);
-                      }}
-                    />
-                  </Grid>
-                ))}
-              </Grid>
+                <Grid container spacing={3}>
+                  {books.map((book) => (
+                    <Grid item xs={12} sm={6} md={4} key={book._id}>
+                      <BookCard
+                        book={book}
+                        onEdit={(book) => {
+                          setSelectedBook(book);
+                          setBookForm(book);
+                          setBookDialog(true);
+                        }}
+                        onDelete={(id) => {
+                          toast.success('Book deleted successfully');
+                        }}
+                        onView={(book) => {
+                          console.log('View book:', book);
+                        }}
+                      />
+                    </Grid>
+                  ))}
+                </Grid>
+              </PermissionGate>
             </motion.div>
           )}
 
           {activeTab === 2 && (
             <motion.div
-              key="borrowing"
+              key="members"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <Paper sx={{ p: 3 }}>
-                <Typography variant="h6" sx={{ mb: 2 }}>Borrowing History</Typography>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Student</TableCell>
-                      <TableCell>Book</TableCell>
-                      <TableCell>Borrowed Date</TableCell>
-                      <TableCell>Due Date</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {borrowHistory.map((record) => (
-                      <TableRow key={record._id}>
-                        <TableCell>{record.studentName}</TableCell>
-                        <TableCell>{record.bookTitle}</TableCell>
-                        <TableCell>{record.borrowedDate}</TableCell>
-                        <TableCell>{record.dueDate}</TableCell>
-                        <TableCell>
-                          <Chip 
-                            label={record.status} 
-                            size="small" 
-                            color={record.status === 'Active' ? 'success' : 'warning'} 
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <IconButton size="small">
-                            <ViewIcon />
-                          </IconButton>
-                          <IconButton size="small">
-                            <CheckCircleIcon />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </Paper>
+              <PermissionGate permission="student_records.view_students">
+                <Paper sx={{ p: 3 }}>
+                  <Typography variant="h6" sx={{ mb: 2 }}>Library Members</Typography>
+                  <Typography variant="body1" color="text.secondary">
+                    Access to student records is available. You can view member information and manage library accounts.
+                  </Typography>
+                </Paper>
+              </PermissionGate>
             </motion.div>
           )}
 
@@ -575,54 +632,57 @@ const LibrarianDashboard = () => {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
-                  <Paper sx={{ p: 3, height: 400 }}>
-                    <Typography variant="h6" sx={{ mb: 2 }}>Popular Books</Typography>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={[
-                        { title: 'The Great Gatsby', borrows: 25 },
-                        { title: 'To Kill a Mockingbird', borrows: 22 },
-                        { title: '1984', borrows: 18 },
-                        { title: 'Pride and Prejudice', borrows: 15 },
-                        { title: 'The Catcher in the Rye', borrows: 12 }
-                      ]}>
-                        <XAxis dataKey="title" />
-                        <YAxis />
-                        <RechartsTooltip />
-                        <Bar dataKey="borrows" fill={theme.palette.primary.main} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </Paper>
+              <PermissionGate permission="inventory.generate_reports">
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={6}>
+                    <Paper sx={{ p: 3, height: 400 }}>
+                      <Typography variant="h6" sx={{ mb: 2 }}>Monthly Borrowing Report</Typography>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={[
+                          { category: 'Fiction', borrowed: 45, returned: 42 },
+                          { category: 'Non-Fiction', borrowed: 38, returned: 35 },
+                          { category: 'Science', borrowed: 22, returned: 20 },
+                          { category: 'History', borrowed: 20, returned: 18 }
+                        ]}>
+                          <XAxis dataKey="category" />
+                          <YAxis />
+                          <RechartsTooltip />
+                          <Legend />
+                          <Bar dataKey="borrowed" fill={theme.palette.primary.main} />
+                          <Bar dataKey="returned" fill={theme.palette.success.main} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </Paper>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <Paper sx={{ p: 3, height: 400 }}>
+                      <Typography variant="h6" sx={{ mb: 2 }}>Member Activity</Typography>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={[
+                          { month: 'Jan', active: 120, new: 15 },
+                          { month: 'Feb', active: 135, new: 18 },
+                          { month: 'Mar', active: 110, new: 12 },
+                          { month: 'Apr', active: 145, new: 22 },
+                          { month: 'May', active: 130, new: 16 },
+                          { month: 'Jun', active: 155, new: 25 }
+                        ]}>
+                          <XAxis dataKey="month" />
+                          <YAxis />
+                          <RechartsTooltip />
+                          <Legend />
+                          <Line type="monotone" dataKey="active" stroke={theme.palette.primary.main} />
+                          <Line type="monotone" dataKey="new" stroke={theme.palette.success.main} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </Paper>
+                  </Grid>
                 </Grid>
-                <Grid item xs={12} md={6}>
-                  <Paper sx={{ p: 3, height: 400 }}>
-                    <Typography variant="h6" sx={{ mb: 2 }}>Monthly Activity</Typography>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={[
-                        { month: 'Jan', newBooks: 15, borrows: 45 },
-                        { month: 'Feb', newBooks: 12, borrows: 52 },
-                        { month: 'Mar', newBooks: 18, borrows: 38 },
-                        { month: 'Apr', newBooks: 10, borrows: 61 },
-                        { month: 'May', newBooks: 22, borrows: 55 },
-                        { month: 'Jun', newBooks: 14, borrows: 67 }
-                      ]}>
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <RechartsTooltip />
-                        <Legend />
-                        <Line type="monotone" dataKey="newBooks" stroke={theme.palette.success.main} />
-                        <Line type="monotone" dataKey="borrows" stroke={theme.palette.primary.main} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </Paper>
-                </Grid>
-              </Grid>
+              </PermissionGate>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Add Book Dialog */}
+        {/* Book Dialog */}
         <Dialog open={bookDialog} onClose={() => setBookDialog(false)} maxWidth="md" fullWidth>
           <DialogTitle>{selectedBook ? 'Edit Book' : 'Add New Book'}</DialogTitle>
           <DialogContent dividers>
@@ -652,28 +712,19 @@ const LibrarianDashboard = () => {
                 />
               </Grid>
               <Grid item xs={12} md={6}>
-                <TextField
-                  label="Category"
-                  fullWidth
-                  value={bookForm.category}
-                  onChange={(e) => setBookForm({ ...bookForm, category: e.target.value })}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  label="Published Year"
-                  fullWidth
-                  value={bookForm.publishedYear}
-                  onChange={(e) => setBookForm({ ...bookForm, publishedYear: e.target.value })}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  label="Location"
-                  fullWidth
-                  value={bookForm.location}
-                  onChange={(e) => setBookForm({ ...bookForm, location: e.target.value })}
-                />
+                <FormControl fullWidth>
+                  <InputLabel>Category</InputLabel>
+                  <Select
+                    value={bookForm.category}
+                    onChange={(e) => setBookForm({ ...bookForm, category: e.target.value })}
+                  >
+                    <MenuItem value="Fiction">Fiction</MenuItem>
+                    <MenuItem value="Non-Fiction">Non-Fiction</MenuItem>
+                    <MenuItem value="Science">Science</MenuItem>
+                    <MenuItem value="History">History</MenuItem>
+                    <MenuItem value="Biography">Biography</MenuItem>
+                  </Select>
+                </FormControl>
               </Grid>
               <Grid item xs={12} md={6}>
                 <TextField
@@ -684,15 +735,18 @@ const LibrarianDashboard = () => {
                   onChange={(e) => setBookForm({ ...bookForm, copies: e.target.value })}
                 />
               </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  label="Description"
-                  multiline
-                  rows={3}
-                  fullWidth
-                  value={bookForm.description}
-                  onChange={(e) => setBookForm({ ...bookForm, description: e.target.value })}
-                />
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Status</InputLabel>
+                  <Select
+                    value={bookForm.status}
+                    onChange={(e) => setBookForm({ ...bookForm, status: e.target.value })}
+                  >
+                    <MenuItem value="Available">Available</MenuItem>
+                    <MenuItem value="Borrowed">Borrowed</MenuItem>
+                    <MenuItem value="Maintenance">Maintenance</MenuItem>
+                  </Select>
+                </FormControl>
               </Grid>
             </Grid>
           </DialogContent>
@@ -700,53 +754,6 @@ const LibrarianDashboard = () => {
             <Button onClick={() => setBookDialog(false)}>Cancel</Button>
             <Button variant="contained" onClick={handleBookSubmit}>
               {selectedBook ? 'Update Book' : 'Add Book'}
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Borrow Book Dialog */}
-        <Dialog open={borrowDialog} onClose={() => setBorrowDialog(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>Borrow Book</DialogTitle>
-          <DialogContent dividers>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <FormControl fullWidth>
-                  <InputLabel>Student</InputLabel>
-                  <Select
-                    value={borrowForm.studentId}
-                    onChange={(e) => setBorrowForm({ ...borrowForm, studentId: e.target.value })}
-                  >
-                    <MenuItem value="1">John Doe - Class 10A</MenuItem>
-                    <MenuItem value="2">Jane Smith - Class 11B</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  label="Due Date"
-                  type="date"
-                  fullWidth
-                  value={borrowForm.dueDate}
-                  onChange={(e) => setBorrowForm({ ...borrowForm, dueDate: e.target.value })}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  label="Remarks"
-                  multiline
-                  rows={2}
-                  fullWidth
-                  value={borrowForm.remarks}
-                  onChange={(e) => setBorrowForm({ ...borrowForm, remarks: e.target.value })}
-                />
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setBorrowDialog(false)}>Cancel</Button>
-            <Button variant="contained" onClick={handleBorrowSubmit}>
-              Borrow Book
             </Button>
           </DialogActions>
         </Dialog>
