@@ -45,7 +45,7 @@ const navItems = [
   { text: 'Messages', icon: <Message />, path: '/parent/messages' },
   { text: 'Transport Forms', icon: <LocalShipping />, path: '/parent/transport-forms' },
   { text: 'Ward Misconduct', icon: <WarningIcon />, path: '/parent/ward-misconduct' },
-  { text: 'Teacher Remarks', icon: <RateReview />, path: '/parent/teacher-remarks' },
+  { text: 'Syllabus Completion', icon: <RateReview />, path: '/parent/teacher-remarks' },
   { text: 'Counselling Request Form', icon: <Psychology />, path: '/parent/counselling-request' },
 ];
 
