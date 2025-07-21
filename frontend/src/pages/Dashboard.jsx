@@ -245,18 +245,21 @@ const Dashboard = () => {
             Your Assigned Roles:
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            {userRoles.map((role) => (
-              <Chip
-                key={role}
-                label={roleNames[role]}
-                icon={<roleIcons[role] />}
-                sx={{ 
-                  bgcolor: `${roleColors[role]}20`,
-                  color: roleColors[role],
-                  fontWeight: 600
-                }}
-              />
-            ))}
+            {userRoles.map((role) => {
+              const RoleIcon = roleIcons[role];
+              return (
+                <Chip
+                  key={role}
+                  label={roleNames[role]}
+                  icon={<RoleIcon />}
+                  sx={{
+                    bgcolor: `${roleColors[role]}20`,
+                    color: roleColors[role],
+                    fontWeight: 600
+                  }}
+                />
+              );
+            })}
           </Box>
         </Paper>
 
