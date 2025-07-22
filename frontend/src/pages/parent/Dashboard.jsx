@@ -16,7 +16,12 @@ import {
   ListItem,
   ListItemText,
   ListItemAvatar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { parentAPI } from '../../services/api';
 import {
@@ -36,11 +41,51 @@ import { adminAPI } from '../../services/api';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const [childrenFeeStatus, setChildrenFeeStatus] = useState([]);
+  const [showFeePopup, setShowFeePopup] = useState(false);
 
   const { data: dashboardData, isLoading, error } = useQuery({
     queryKey: ['parent_dashboard'],
     queryFn: parentAPI.getDashboard,
   });
+
+  // Fetch children fee status
+  useEffect(() => {
+    const fetchChildrenFeeStatus = async () => {
+      try {
+        console.log('🔍 Fetching children fee status...');
+        // Only show once per session
+        if (localStorage.getItem('parentFeePopupShown')) {
+          console.log('⏭️ Parent fee popup already shown this session');
+          return;
+        }
+        
+        console.log('📞 Calling parentAPI.getChildrenFeeStatus()...');
+        const feeData = await parentAPI.getChildrenFeeStatus();
+        console.log('📋 Children fee status response:', feeData);
+        
+        if (feeData && feeData.length > 0) {
+          console.log('⚠️ Found children with pending fees:', feeData.length);
+          setChildrenFeeStatus(feeData);
+          setShowFeePopup(true);
+          localStorage.setItem('parentFeePopupShown', 'true');
+        } else {
+          console.log('✅ No children with pending fees');
+        }
+      } catch (err) {
+        console.error('❌ Error fetching children fee status:', err);
+      }
+    };
+
+    fetchChildrenFeeStatus();
+  }, []);
+
+  // Temporary function to clear localStorage for testing
+  const clearParentFeePopupFlag = () => {
+    localStorage.removeItem('parentFeePopupShown');
+    console.log('🗑️ Cleared parent fee popup flag');
+    window.location.reload();
+  };
 
   // Fetch events that have consent forms
   const { data: eventsWithConsentForms } = useQuery({
@@ -87,9 +132,100 @@ const Dashboard = () => {
 
   return (
     <Box p={3}>
+      {/* Fee Due Modal Popup for Children */}
+      <Dialog open={showFeePopup} onClose={() => setShowFeePopup(false)} maxWidth="md" fullWidth>
+        <DialogTitle>
+          <Box display="flex" alignItems="center">
+            <Payment color="error" sx={{ mr: 1 }} />
+            Pending Fee Payments for Your Children
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {childrenFeeStatus.length > 0 ? (
+            <Box>
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                {childrenFeeStatus.length} of your children have pending fee payments. Please pay as soon as possible to avoid penalties.
+              </Alert>
+              <List>
+                {childrenFeeStatus.map((child, index) => (
+                  <div key={child.studentId}>
+                    <ListItem>
+                      <ListItemAvatar>
+                        <Avatar>
+                          <Person />
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={
+                          <Box display="flex" alignItems="center" justifyContent="space-between">
+                            <Typography variant="h6">{child.studentName}</Typography>
+                            <Chip
+                              label={child.paymentStatus}
+                              color={child.paymentStatus === 'Overdue' ? 'error' : 'warning'}
+                              size="small"
+                            />
+                          </Box>
+                        }
+                        secondary={
+                          <Box>
+                            <Typography variant="body2">
+                              Roll Number: {child.rollNumber} | Class: {child.class}-{child.section}
+                            </Typography>
+                            <Typography variant="body2" color="error.main" sx={{ fontWeight: 'bold' }}>
+                              Amount Due: ₹{child.balanceDue}
+                            </Typography>
+                            <Typography variant="body2">
+                              Total Fee: ₹{child.totalFee} | Term: {child.term}
+                            </Typography>
+                            <Typography variant="body2">
+                              Due Date: {new Date(child.dueDate).toLocaleDateString()}
+                            </Typography>
+                          </Box>
+                        }
+                      />
+                    </ListItem>
+                    {index < childrenFeeStatus.length - 1 && <Divider />}
+                  </div>
+                ))}
+              </List>
+            </Box>
+          ) : (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight={100}>
+              <CircularProgress />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowFeePopup(false)} color="primary" variant="contained">
+            Close
+          </Button>
+          <Button
+            onClick={() => {
+              setShowFeePopup(false);
+              navigate('/parent/fees');
+            }}
+            color="error"
+            variant="outlined"
+            startIcon={<Payment />}
+          >
+            Pay Fees
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 'bold' }}>
         Parent Dashboard
       </Typography>
+     
+      {/* Temporary test button - remove in production */}
+      <Button 
+        onClick={clearParentFeePopupFlag}
+        size="small"
+        variant="outlined"
+        sx={{ mb: 2 }}
+      >
+        Clear Parent Fee Popup Flag (Test)
+      </Button>
 
       {!hasChildren ? (
         <Paper sx={{ p: 4, textAlign: 'center', mb: 3 }}>

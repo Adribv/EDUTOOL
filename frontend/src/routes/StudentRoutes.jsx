@@ -10,7 +10,7 @@ import Profile from '../pages/student/Profile';
 import Attendance from '../pages/student/Attendance';
 import StudyMaterials from '../pages/student/StudyMaterials';
 import Communication from '../pages/student/Communication';
-import FeeManagement from '../pages/student/FeeManagement';
+import Fees from '../pages/student/Fees';
 import Documents from '../pages/student/Documents';
 import Calendar from '../pages/student/Calendar';
 import Notifications from '../pages/student/Notifications';
@@ -30,6 +30,7 @@ import DisciplinaryFormAcknowledge from '../pages/student/DisciplinaryFormAcknow
 import DisciplinaryMisconduct from '../pages/student/DisciplinaryMisconduct';
 import TeacherRemarksView from '../pages/student/TeacherRemarksView';
 import CounsellingRequestForm from '../components/CounsellingRequestForm';
+import ITSupportRequest from '../pages/student/ITSupportRequest';
 
 const StudentRoutes = () => {
   return (
@@ -52,7 +53,11 @@ const StudentRoutes = () => {
         
         {/* Attendance */}
         <Route path="/attendance" element={<Attendance />} />
+        
+        {/* Service Requests */}
         <Route path="/leave-requests" element={<LeaveRequests />} />
+        <Route path="/counselling-request" element={<CounsellingRequestForm />} />
+        <Route path="/it-support-request" element={<ITSupportRequest />} />
         
         {/* Learning Resources */}
         <Route path="/study-materials" element={<StudyMaterials />} />
@@ -66,7 +71,7 @@ const StudentRoutes = () => {
         <Route path="/class-discussions" element={<ClassDiscussions />} />
         
         {/* Fee Management */}
-        <Route path="/fees" element={<FeeManagement />} />
+        <Route path="/fees" element={<Fees />} />
         <Route path="/payment-receipts" element={<PaymentReceipts />} />
         
         {/* Other */}
@@ -87,7 +92,6 @@ const StudentRoutes = () => {
         
         {/* Teacher Remarks */}
         <Route path="/teacher-remarks" element={<TeacherRemarksView />} />
-        <Route path="/counselling-request" element={<CounsellingRequestForm />} />
       </Routes>
     </StudentLayout>
   );

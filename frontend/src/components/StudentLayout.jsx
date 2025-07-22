@@ -14,6 +14,7 @@ import {
   Divider,
   Chip,
   Container,
+  Collapse,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -37,6 +38,10 @@ import {
   Book,
   RateReview,
   Psychology,
+  SupportAgent,
+  ExpandLess,
+  ExpandMore,
+  Computer,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -44,6 +49,7 @@ const drawerWidth = 280;
 
 const StudentLayout = ({ children }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [serviceRequestOpen, setServiceRequestOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -72,11 +78,6 @@ const StudentLayout = ({ children }) => {
       text: 'Attendance',
       icon: <Event />,
       path: '/student/attendance',
-    },
-    {
-      text: 'Leave Request',
-      icon: <Event />,
-      path: '/student/leave-requests',
     },
     {
       text: 'Study Materials',
@@ -113,10 +114,23 @@ const StudentLayout = ({ children }) => {
       icon: <Settings />,
       path: '/student/profile',
     },
+  ];
+
+  const serviceRequestItems = [
     {
-      text: 'Counselling Request Form',
+      text: 'Leave Request',
+      icon: <Event />,
+      path: '/student/leave-requests',
+    },
+    {
+      text: 'Counselling Request',
       icon: <Psychology />,
       path: '/student/counselling-request',
+    },
+    {
+      text: 'IT Support Request',
+      icon: <Computer />,
+      path: '/student/it-support-request',
     },
   ];
 
@@ -128,6 +142,12 @@ const StudentLayout = ({ children }) => {
     navigate(path);
     setMobileOpen(false);
   };
+
+  const handleServiceRequestToggle = () => {
+    setServiceRequestOpen(!serviceRequestOpen);
+  };
+
+  const isServiceRequestActive = serviceRequestItems.some(item => location.pathname === item.path);
 
   const drawer = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: '#0f172a' }}>
@@ -174,6 +194,76 @@ const StudentLayout = ({ children }) => {
             <ListItemText primary={item.text} sx={{ '& .MuiTypography-root': { fontSize: '1rem', fontWeight: 500, color: '#fff' } }} />
           </ListItemButton>
         ))}
+        
+        {/* Service Request Menu */}
+        <ListItemButton
+          onClick={handleServiceRequestToggle}
+          selected={isServiceRequestActive}
+          sx={{
+            borderRadius: 2,
+            mb: 0.5,
+            minHeight: 48,
+            color: '#fff',
+            '& .MuiListItemIcon-root': {
+              color: '#fff',
+              minWidth: 40,
+            },
+            '&.Mui-selected': {
+              backgroundColor: 'rgba(59,130,246,0.15)',
+              color: '#fff',
+              '& .MuiListItemIcon-root': {
+                color: '#fff',
+              },
+            },
+            '&:hover': {
+              backgroundColor: 'rgba(255,255,255,0.08)',
+            },
+          }}
+        >
+          <ListItemIcon>
+            <SupportAgent />
+          </ListItemIcon>
+          <ListItemText primary="Service Requests" sx={{ '& .MuiTypography-root': { fontSize: '1rem', fontWeight: 500, color: '#fff' } }} />
+          {serviceRequestOpen ? <ExpandLess sx={{ color: '#fff' }} /> : <ExpandMore sx={{ color: '#fff' }} />}
+        </ListItemButton>
+        
+        <Collapse in={serviceRequestOpen} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            {serviceRequestItems.map((item) => (
+              <ListItemButton
+                key={item.text}
+                onClick={() => handleNavigation(item.path)}
+                selected={location.pathname === item.path}
+                sx={{
+                  pl: 4,
+                  borderRadius: 2,
+                  mb: 0.5,
+                  ml: 2,
+                  mr: 1,
+                  minHeight: 40,
+                  color: 'rgba(255,255,255,0.8)',
+                  '& .MuiListItemIcon-root': {
+                    color: 'rgba(255,255,255,0.8)',
+                    minWidth: 35,
+                  },
+                  '&.Mui-selected': {
+                    backgroundColor: 'rgba(59,130,246,0.2)',
+                    color: '#fff',
+                    '& .MuiListItemIcon-root': {
+                      color: '#fff',
+                    },
+                  },
+                  '&:hover': {
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                  },
+                }}
+              >
+                <ListItemIcon>{item.icon}</ListItemIcon>
+                <ListItemText primary={item.text} sx={{ '& .MuiTypography-root': { fontSize: '0.9rem', fontWeight: 400 } }} />
+              </ListItemButton>
+            ))}
+          </List>
+        </Collapse>
       </List>
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)', mt: 1, mb: 1 }} />
       <List>
@@ -192,6 +282,16 @@ const StudentLayout = ({ children }) => {
       </List>
     </Box>
   );
+
+  const getCurrentPageTitle = () => {
+    const currentItem = menuItems.find(item => item.path === location.pathname);
+    if (currentItem) return currentItem.text;
+    
+    const serviceItem = serviceRequestItems.find(item => item.path === location.pathname);
+    if (serviceItem) return serviceItem.text;
+    
+    return 'Student Portal';
+  };
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -213,7 +313,7 @@ const StudentLayout = ({ children }) => {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div">
-            {menuItems.find(item => item.path === location.pathname)?.text || 'Student Portal'}
+            {getCurrentPageTitle()}
           </Typography>
         </Toolbar>
       </AppBar>

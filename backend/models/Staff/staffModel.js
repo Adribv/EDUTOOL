@@ -76,6 +76,13 @@ const staffSchema = new mongoose.Schema({
       showContactInfo: { type: Boolean, default: false }
     }
   },
+  permissions: {
+    timetable: { type: Boolean, default: false },
+    inventory: { type: Boolean, default: false },
+    communication: { type: Boolean, default: false },
+    reports: { type: Boolean, default: false },
+    events: { type: Boolean, default: false }
+  },
   assignedSubjects: [
     {
       class: String,

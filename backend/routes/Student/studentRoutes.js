@@ -17,6 +17,7 @@ const examinationController = require('../../controllers/Student/examinationCont
 const learningResourcesController = require('../../controllers/Student/learningResourcesController');
 const passwordLookupController = require('../../controllers/Student/passwordLookupController');
 const mcqController = require('../../controllers/Student/mcqController');
+const itSupportController = require('../../controllers/Student/itSupportController');
 
 // Auth routes
 router.post('/login', studentAuth.login);
@@ -58,6 +59,10 @@ router.get('/payment-status', feeController.getPaymentStatus);
 router.get('/payment-receipts/:paymentId', feeController.getPaymentReceipt);
 router.post('/payments', feeController.makePayment);
 
+// Fee testing routes
+router.get('/test-fee-records', feeController.testStudentFeeRecords);
+router.post('/create-test-fee-records', feeController.createTestFeeRecords);
+
 // Learning Resources routes
 router.get('/learning-resources/subjects', learningResourcesController.getAvailableSubjects);
 router.get('/learning-resources/:resourceId', learningResourcesController.getResourceDetails);
@@ -92,6 +97,14 @@ router.get('/mcq-assignments/:assignmentId', mcqController.getMCQAssignmentById)
 router.post('/mcq-assignments/:assignmentId/start', mcqController.startMCQAssignment);
 router.post('/mcq-assignments/:assignmentId/submit', mcqController.submitMCQAssignment);
 router.get('/mcq-assignments/:assignmentId/results', mcqController.getMCQSubmissionResults);
+
+// IT Support Request Management
+router.post('/it-support-requests', itSupportController.createITSupportRequest);
+router.get('/it-support-requests', itSupportController.getMyITSupportRequests);
+router.get('/it-support-requests/stats', itSupportController.getITSupportStats);
+router.get('/it-support-requests/:requestId', itSupportController.getITSupportRequestById);
+router.put('/it-support-requests/:requestId', itSupportController.updateITSupportRequest);
+router.delete('/it-support-requests/:requestId', itSupportController.deleteITSupportRequest);
 
 // Password Lookup routes (public routes - no authentication required)
 router.post('/password-lookup/request', passwordLookupController.requestPasswordLookup);

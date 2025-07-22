@@ -3516,3 +3516,18 @@ exports.bulkImportVisitors = async (req, res) => {
     res.status(500).json({ message: 'Server error during bulk import' });
   }
 };
+
+exports.updateStaffPermissions = async (req, res) => {
+  try {
+    const staff = await Staff.findById(req.params.id);
+    if (!staff) {
+      return res.status(404).json({ message: 'Staff not found' });
+    }
+    staff.permissions = { ...staff.permissions, ...req.body.permissions };
+    await staff.save();
+    res.json(staff);
+  } catch (error) {
+    console.error('Error updating staff permissions:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};

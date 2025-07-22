@@ -27,6 +27,10 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
   School,
@@ -67,6 +71,7 @@ import {
 } from '@mui/icons-material';
 import studentService from '../../services/studentService';
 import axios from 'axios';
+import { Alert as MuiAlert } from '@mui/material';
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -82,6 +87,7 @@ const Dashboard = () => {
   const [homework, setHomework] = useState([]);
   // eslint-disable-next-line no-unused-vars
   const [feeStatus, setFeeStatus] = useState(null);
+  const [showFeePopup, setShowFeePopup] = useState(false);
   const [learningResources, setLearningResources] = useState([]);
   const [leaveRequests, setLeaveRequests] = useState([]);
   
@@ -99,6 +105,7 @@ const Dashboard = () => {
   useEffect(() => {
     fetchDashboardData();
     fetchRemarksSchema();
+    fetchFeeStatus();
   }, []);
 
   const fetchRemarksSchema = async () => {
@@ -206,6 +213,45 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Fetch fee status and show popup if due
+  const fetchFeeStatus = async () => {
+    try {
+      console.log('🔍 Fetching fee status...');
+      // Only show once per session
+      if (localStorage.getItem('feePopupShown')) {
+        console.log('⏭️ Fee popup already shown this session');
+        return;
+      }
+      
+      console.log('📞 Calling studentService.getPaymentStatus()...');
+      const res = await studentService.getPaymentStatus();
+      console.log('📋 Payment status response:', res);
+      
+      if (res && res.data) {
+        console.log('💰 Fee data received:', res.data);
+        setFeeStatus(res.data);
+        if (res.data.dueAmount > 0) {
+          console.log('⚠️ Pending fees found, showing popup');
+          setShowFeePopup(true);
+          localStorage.setItem('feePopupShown', 'true');
+        } else {
+          console.log('✅ No pending fees');
+        }
+      } else {
+        console.log('❌ No fee data received');
+      }
+    } catch (err) {
+      console.error('❌ Error fetching fee status:', err);
+    }
+  };
+
+  // Temporary function to clear localStorage for testing
+  const clearFeePopupFlag = () => {
+    localStorage.removeItem('feePopupShown');
+    console.log('🗑️ Cleared fee popup flag');
+    window.location.reload();
   };
 
   const getGradeColor = (grade) => {
@@ -836,6 +882,15 @@ const Dashboard = () => {
               <Typography variant="h4" gutterBottom>
                 Welcome back, {profile?.name || 'Student'}!
               </Typography>
+              {/* Temporary test button - remove in production */}
+              <Button 
+                onClick={clearFeePopupFlag}
+                size="small"
+                variant="outlined"
+                sx={{ mb: 2 }}
+              >
+                Clear Fee Popup Flag (Test)
+              </Button>
               <Typography variant="body1" color="textSecondary" gutterBottom>
                 Student ID: {profile?.studentId} | Class: {profile?.class} {profile?.section}
               </Typography>
@@ -1092,6 +1147,92 @@ const Dashboard = () => {
           </Alert>
         </Snackbar>
       )}
+
+      {/* Fee Due Modal Popup */}
+      <Dialog open={showFeePopup} onClose={() => setShowFeePopup(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>
+          <Box display="flex" alignItems="center">
+            <Payment color="error" sx={{ mr: 1 }} />
+            Fee Payment Due
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {feeStatus ? (
+            <Box>
+              <MuiAlert severity="warning" sx={{ mb: 2 }}>
+                You have a pending fee payment. Please pay as soon as possible to avoid penalties.
+              </MuiAlert>
+              <Typography variant="h6" color="error.main" gutterBottom>
+                Amount Due: ₹{feeStatus.dueAmount}
+              </Typography>
+              {feeStatus.totalFee && (
+                <Typography variant="body2" gutterBottom>
+                  Total Fee: ₹{feeStatus.totalFee}
+                </Typography>
+              )}
+              {feeStatus.term && (
+                <Typography variant="body2" gutterBottom>
+                  Term: {feeStatus.term}
+                </Typography>
+              )}
+              <Typography variant="body2" gutterBottom>
+                Due Date: {feeStatus.dueDate}
+              </Typography>
+              {feeStatus.paymentStatus && (
+                <Chip
+                  label={feeStatus.paymentStatus}
+                  color={feeStatus.paymentStatus === 'Overdue' ? 'error' : 'warning'}
+                  sx={{ mb: 2 }}
+                />
+              )}
+              <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>
+                Payment History
+              </Typography>
+              {Array.isArray(feeStatus.paymentHistory) && feeStatus.paymentHistory.length > 0 ? (
+                <List dense>
+                  {feeStatus.paymentHistory.map((ph, idx) => (
+                    <ListItem key={ph.id || idx}>
+                      <ListItemText
+                        primary={`${ph.description} - ₹${ph.amount}`}
+                        secondary={`Date: ${ph.date} | Method: ${ph.method}`}
+                      />
+                      <Chip
+                        label={ph.status}
+                        color={ph.status === 'Completed' ? 'success' : 'warning'}
+                        size="small"
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              ) : (
+                <Typography variant="body2" color="textSecondary">
+                  No payments made yet.
+                </Typography>
+              )}
+            </Box>
+          ) : (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight={100}>
+              <CircularProgress />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowFeePopup(false)} color="primary" variant="contained">
+            Close
+          </Button>
+          <Button
+            onClick={() => {
+              setShowFeePopup(false);
+              window.location.href = '/student/fees';
+            }}
+            color="error"
+            variant="outlined"
+            startIcon={<Payment />}
+          >
+            Pay Now
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Teacher Remarks Form Structure */}
       <Box sx={{ my: 4 }}>

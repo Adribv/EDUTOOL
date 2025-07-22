@@ -137,6 +137,7 @@ router.put('/staff/:id', adminStaffController.updateStaff);
 router.delete('/staff/:id', adminStaffController.deleteStaff);
 router.get('/staff/:id/id-card', adminStaffController.generateStaffID);
 router.post('/staff/attendance', adminStaffController.trackStaffAttendance);
+router.patch('/staff/:id/permissions', adminStaffController.updateStaffPermissions);
 
 // Accountant Management
 router.get('/accountants', adminStaffController.getAllAccountants);

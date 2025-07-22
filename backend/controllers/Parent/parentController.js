@@ -10,6 +10,7 @@ const ExamResult = require('../../models/Staff/Teacher/examResult.model');
 const ReportCard = require('../../models/Student/reportCardModel');
 const FeeStructure = require('../../models/Finance/feeStructureModel');
 const FeePayment = require('../../models/Finance/feePaymentModel');
+const StudentFeeRecord = require('../../models/Finance/studentFeeRecordModel');
 const HealthRecord = require('../../models/Student/healthRecordModel');
 const Announcement = require('../../models/Communication/announcementModel');
 const Event = require('../../models/Admin/eventModel');
@@ -745,6 +746,160 @@ exports.getChildPaymentStatus = async (req, res) => {
   } catch (error) {
     console.error('Error fetching child payment status:', error);
     res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Get pending fee status for all children
+exports.getChildrenFeeStatus = async (req, res) => {
+  try {
+    console.log('🔍 Getting children fee status for parent:', req.user.id);
+    
+    const parent = await Parent.findById(req.user.id);
+    if (!parent) {
+      console.log('❌ Parent not found:', req.user.id);
+      return res.status(404).json({ message: 'Parent not found' });
+    }
+
+    console.log('✅ Parent found:', parent.name, 'Children:', parent.childRollNumbers);
+
+    if (!parent.childRollNumbers || parent.childRollNumbers.length === 0) {
+      console.log('⚠️ Parent has no children linked');
+      return res.json([]);
+    }
+
+    // Get all children
+    const children = await Student.find({
+      rollNumber: { $in: parent.childRollNumbers }
+    }).select('_id name rollNumber class section');
+
+    console.log(`👶 Found ${children.length} children for parent`);
+
+    const childrenWithPendingFees = [];
+    const currentAcademicYear = new Date().getFullYear().toString();
+
+    console.log('📅 Current academic year:', currentAcademicYear);
+
+    // Check each child for pending fees
+    for (const child of children) {
+      console.log(`🔍 Checking fees for ${child.name} (${child.rollNumber})`);
+      
+      const feeRecord = await StudentFeeRecord.findOne({
+        studentId: child._id,
+        academicYear: currentAcademicYear
+      }).sort({ createdAt: -1 });
+
+      console.log(`💰 Fee record for ${child.name}:`, feeRecord ? 'Found' : 'Not found');
+
+      if (feeRecord) {
+        const hasPendingFees = feeRecord.balanceDue > 0 || 
+                              ['Pending', 'Overdue', 'Partial'].includes(feeRecord.paymentStatus);
+        
+        console.log(`⚠️ ${child.name} has pending fees:`, hasPendingFees, 'Balance:', feeRecord.balanceDue, 'Status:', feeRecord.paymentStatus);
+        
+        if (hasPendingFees) {
+          childrenWithPendingFees.push({
+            studentId: child._id,
+            studentName: child.name,
+            rollNumber: child.rollNumber,
+            class: child.class,
+            section: child.section,
+            totalFee: feeRecord.totalFee,
+            paymentReceived: feeRecord.paymentReceived,
+            balanceDue: feeRecord.balanceDue,
+            dueDate: feeRecord.dueDate,
+            paymentStatus: feeRecord.paymentStatus,
+            term: feeRecord.term,
+            academicYear: feeRecord.academicYear
+          });
+        }
+      }
+    }
+
+    console.log(`✅ Found ${childrenWithPendingFees.length} children with pending fees`);
+    res.json(childrenWithPendingFees);
+  } catch (error) {
+    console.error('Error fetching children fee status:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Test endpoint to create test parent account
+exports.createTestParent = async (req, res) => {
+  try {
+    console.log('🏗️ Creating test parent account...');
+
+    // Get some students from the database
+    const students = await Student.find().limit(2);
+    
+    if (students.length === 0) {
+      return res.status(404).json({ message: 'No students found in database. Please add students first.' });
+    }
+
+    console.log(`✅ Found ${students.length} students`);
+
+    // Check if test parent already exists
+    const existingParent = await Parent.findOne({ email: 'testparent@example.com' });
+    
+    if (existingParent) {
+      return res.json({ 
+        message: 'Test parent already exists',
+        parent: {
+          id: existingParent._id,
+          name: existingParent.name,
+          email: existingParent.email,
+          childRollNumbers: existingParent.childRollNumbers
+        }
+      });
+    }
+
+    // Create test parent
+    const bcrypt = require('bcryptjs');
+    const hashedPassword = await bcrypt.hash('password123', 10);
+    
+    const testParent = new Parent({
+      name: 'Test Parent',
+      email: 'testparent@example.com',
+      password: hashedPassword,
+      contactNumber: '9876543210',
+      address: {
+        street: '123 Test Street',
+        city: 'Test City',
+        state: 'Test State',
+        postalCode: '123456',
+        country: 'Test Country'
+      },
+      childRollNumbers: students.map(s => s.rollNumber),
+      children: students.map(s => s._id)
+    });
+
+    await testParent.save();
+    
+    // Link students to parent
+    for (const student of students) {
+      if (!student.parents) student.parents = [];
+      student.parents.push(testParent._id);
+      await student.save();
+    }
+
+    console.log('✅ Created test parent account');
+
+    res.json({
+      message: 'Test parent account created successfully',
+      parent: {
+        id: testParent._id,
+        name: testParent.name,
+        email: testParent.email,
+        childRollNumbers: testParent.childRollNumbers
+      },
+      loginCredentials: {
+        email: 'testparent@example.com',
+        password: 'password123'
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error creating test parent:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 

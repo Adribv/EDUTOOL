@@ -22,6 +22,7 @@ const feedbackController = require('../../controllers/Staff/Teacher/feedbackCont
 const teacherLeaveRequestController = require('../../controllers/Staff/Teacher/teacherLeaveRequestController');
 const mcqAssignmentController = require('../../controllers/Staff/Teacher/mcqAssignmentController');
 const ApprovalRequest = require('../../models/Staff/HOD/approvalRequest.model');
+const itSupportController = require('../../controllers/Student/itSupportController');
 
 // Apply auth middleware to all routes
 router.use(verifyToken, permit('Teacher'));
@@ -176,5 +177,13 @@ router.get('/mcq-assignments/:assignmentId', mcqAssignmentController.getMCQAssig
 router.put('/mcq-assignments/:assignmentId', mcqAssignmentController.updateMCQAssignment);
 router.delete('/mcq-assignments/:assignmentId', mcqAssignmentController.deleteMCQAssignment);
 router.get('/mcq-assignments/:assignmentId/submissions', mcqAssignmentController.getMCQSubmissions);
+
+// IT Support Request Management
+router.post('/it-support-requests', itSupportController.createITSupportRequest);
+router.get('/it-support-requests', itSupportController.getMyITSupportRequests);
+router.get('/it-support-requests/stats', itSupportController.getITSupportStats);
+router.get('/it-support-requests/:requestId', itSupportController.getITSupportRequestById);
+router.put('/it-support-requests/:requestId', itSupportController.updateITSupportRequest);
+router.delete('/it-support-requests/:requestId', itSupportController.deleteITSupportRequest);
 
 module.exports = router;
