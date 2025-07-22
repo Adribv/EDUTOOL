@@ -23,16 +23,14 @@ import {
 import {
   Assignment as AssignmentIcon,
   LocalShipping as TransportIcon,
-  Warning as WarningIcon,
-  RateReview as RateReviewIcon
+  Warning as WarningIcon
 } from '@mui/icons-material';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { api } from '../../services/api';
 
 // Lazy load the components for better performance
 const TransportFormsManagement = lazy(() => import('./TransportFormsManagement'));
 const DisciplinaryFormsManagement = lazy(() => import('./DisciplinaryFormsManagement'));
-const TeacherRemarks = lazy(() => import('./TeacherRemarks'));
 
 const initialForm = {
   date: '',
@@ -339,12 +337,6 @@ const A_ServiceRequests = () => {
             <DisciplinaryFormsManagement />
           </Suspense>
         );
-      case 3:
-        return (
-          <Suspense fallback={<LoadingSpinner />}>
-            <TeacherRemarks />
-          </Suspense>
-        );
       default:
         return <StaffDutyAllocation />;
     }
@@ -353,33 +345,35 @@ const A_ServiceRequests = () => {
   return (
     <Box sx={{ p: 3 }}>
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
-        <Typography 
-          variant="h4" 
-          gutterBottom 
-          sx={{ 
-            fontWeight: 700, 
-            mb: 1,
-            background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}
+      <AnimatePresence mode="wait">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
         >
-          Service Requests Management
-        </Typography>
-        <Typography 
-          variant="body1" 
-          color="text.secondary" 
-          sx={{ mb: 4 }}
-        >
-          Manage all service requests including staff duties, transport forms, disciplinary forms, and syllabus completion
-        </Typography>
-      </motion.div>
+          <Typography 
+            variant="h4" 
+            gutterBottom 
+            sx={{ 
+              fontWeight: 700, 
+              mb: 1,
+              background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
+            Service Requests Management
+          </Typography>
+          <Typography 
+            variant="body1" 
+            color="text.secondary" 
+            sx={{ mb: 4 }}
+          >
+            Manage all service requests including staff duties, transport forms, and disciplinary forms
+          </Typography>
+        </motion.div>
+      </AnimatePresence>
 
       {/* Tabs Navigation */}
       <Paper sx={{ mb: 3 }}>
@@ -405,12 +399,6 @@ const A_ServiceRequests = () => {
           <Tab 
             label="Disciplinary Forms" 
             icon={<WarningIcon />} 
-            iconPosition="start"
-            sx={{ minHeight: 64 }}
-          />
-          <Tab 
-            label="Syllabus Completion" 
-            icon={<RateReviewIcon />} 
             iconPosition="start"
             sx={{ minHeight: 64 }}
           />

@@ -182,6 +182,7 @@ const Layout = () => {
         { text: 'Enquiries', icon: <Message />, path: '/admin/Enquiries' },
         { text: 'Visitors', icon: <GroupIcon />, path: '/admin/Visitors' },
         { text: 'Service Requests', icon: <Approval />, path: '/admin/service-requests' },
+        { text: 'Syllabus Completion', icon: <RateReview />, path: '/admin/syllabus-completion' },
       ],
       ITAdmin: [
         { text: 'IT Admin Dashboard', icon: <Dashboard />, path: '/itadmin/dashboard' },

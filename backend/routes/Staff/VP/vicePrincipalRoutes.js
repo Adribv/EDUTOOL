@@ -53,6 +53,12 @@ router.delete('/curriculum/:id', curriculumController.deleteCurriculumPlan);
 router.post('/curriculum/:id/approve', curriculumController.approveCurriculumPlan);
 router.post('/curriculum/:id/reject', curriculumController.rejectCurriculumPlan);
 router.get('/curriculum/grade/:grade', curriculumController.getCurriculumPlansByGrade);
+// Add new route for teacher remarks (point 4)
+router.get('/curriculum/:id/teacher-remarks', curriculumController.getTeacherRemarksForCurriculum);
+
+// Teacher Management Routes
+router.get('/teachers', curriculumController.getAllTeachers);
+router.get('/department/:departmentId/teachers', curriculumController.getTeachersByDepartment);
 
 // HOD Approval Management
 router.get('/hod-submissions', hodApprovalController.getAllHODSubmissions);

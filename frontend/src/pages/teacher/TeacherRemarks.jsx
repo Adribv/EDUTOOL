@@ -508,21 +508,31 @@ const TeacherRemarks = () => {
                   <TableCell>Class</TableCell>
                   <TableCell>Section</TableCell>
                   <TableCell>Subject</TableCell>
+                  <TableCell>Teacher Name</TableCell>
                   <TableCell>Unit/Chapter</TableCell>
+                  <TableCell>Start Date</TableCell>
+                  <TableCell>Planned Completion Date</TableCell>
+                  <TableCell>Actual Completion Date</TableCell>
                   <TableCell>Status</TableCell>
-                  <TableCell>Form Status</TableCell>
+                  <TableCell>No of Periods Allotted</TableCell>
+                  <TableCell>No of Periods Taken</TableCell>
+                  <TableCell>Teaching Method Used</TableCell>
                   <TableCell>Completion Rate</TableCell>
-                  <TableCell>Completion Ratio</TableCell>
+                  <TableCell>Remarks/Topics Left</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {filteredForms.map((form) => (
                   <TableRow key={form._id}>
-                    <TableCell>Class {form.class}</TableCell>
-                    <TableCell>Section {form.section}</TableCell>
+                    <TableCell>{form.class}</TableCell>
+                    <TableCell>{form.section}</TableCell>
                     <TableCell>{form.subject}</TableCell>
+                    <TableCell>{form.teacherName}</TableCell>
                     <TableCell>{form.unitChapter}</TableCell>
+                    <TableCell>{form.startDate ? new Date(form.startDate).toLocaleDateString() : '-'}</TableCell>
+                    <TableCell>{form.plannedCompletionDate ? new Date(form.plannedCompletionDate).toLocaleDateString() : '-'}</TableCell>
+                    <TableCell>{form.actualCompletionDate ? new Date(form.actualCompletionDate).toLocaleDateString() : '-'}</TableCell>
                     <TableCell>
                       <Chip
                         label={form.status}
@@ -530,39 +540,11 @@ const TeacherRemarks = () => {
                         size="small"
                       />
                     </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={form.formStatus}
-                        color={getFormStatusColor(form.formStatus)}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Box sx={{ width: '100%', mr: 1 }}>
-                          <LinearProgress
-                            variant="determinate"
-                            value={form.completionRate || 0}
-                            color={(form.completionRate || 0) === 100 ? 'success' : 'primary'}
-                          />
-                        </Box>
-                        <Box sx={{ minWidth: 35 }}>
-                          <Typography variant="body2" color="text.secondary">
-                            {form.completionRate || 0}%
-                          </Typography>
-                        </Box>
-                      </Box>
-                      {(!form.lessonsCompleted && !form.lessonsPending) && (
-                        <Typography variant="caption" color="warning.main" sx={{ display: 'block', mt: 0.5 }}>
-                          ⚠️ Click "Update Progress" to add lessons data
-                        </Typography>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary">
-                        {(form.completionRatio || 0).toFixed(2)}
-                      </Typography>
-                    </TableCell>
+                    <TableCell>{form.numberOfPeriodsAllotted || '-'}</TableCell>
+                    <TableCell>{form.numberOfPeriodsTaken || '0'}</TableCell>
+                    <TableCell>{form.teachingMethodUsed || '-'}</TableCell>
+                    <TableCell>{form.completionRate || '0'}</TableCell>
+                    <TableCell>{form.remarksTopicsLeft || '-'}</TableCell>
                     <TableCell>
                       <Tooltip title="View Details">
                         <IconButton onClick={() => handleViewForm(form)}>

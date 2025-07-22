@@ -22,6 +22,7 @@ import { toast } from 'react-toastify';
 import { api } from '../../services/api';
 import { useNavigate } from 'react-router-dom';
 import React from 'react';
+import CommentIcon from '@mui/icons-material/Comment';
 
 // API service for Vice Principal using axios instance (token auto-attached)
 const vpAPI = {
@@ -37,6 +38,10 @@ const vpAPI = {
   getAllDepartments: () => api.get('/vp/departments').then(res => res.data),
   assignHOD: (data) => api.post('/vp/department/hod', data).then(res => res.data),
   getHODs: () => api.get('/vp/hods').then(res => res.data),
+  
+  // Teacher Management
+  getTeachers: () => api.get('/vp/teachers').then(res => res.data),
+  getTeachersByDepartment: (departmentId) => api.get(`/vp/department/${departmentId}/teachers`).then(res => res.data),
   
   // Exam Management
   getExams: () => api.get('/vp/exams').then(res => res.data),
@@ -56,8 +61,12 @@ const vpAPI = {
   getApprovedCurriculumPlans: () => api.get('/vp/curriculum/approved').then(res => res.data),
   createCurriculum: (data) => api.post('/vp/curriculum', data).then(res => res.data),
   updateCurriculum: (data) => api.put(`/vp/curriculum/${data.id}`, data).then(res => res.data),
-  deleteCurriculum: (planId) => api.delete(`/vp/curriculum/${planId}`).then(res => res.data),
-  approveCurriculum: (planId) => api.post(`/vp/curriculum/${planId}/approve`).then(res => res.data),
+  deleteCurriculum: (curriculumId) => api.delete(`/vp/curriculum/${curriculumId}`).then(res => res.data),
+  approveCurriculum: (curriculumId) => api.post(`/vp/curriculum/${curriculumId}/approve`).then(res => res.data),
+  rejectCurriculum: (curriculumId, reason) => api.post(`/vp/curriculum/${curriculumId}/reject`, { reason }).then(res => res.data),
+  getCurriculumByGrade: (grade) => api.get(`/vp/curriculum/grade/${grade}`).then(res => res.data),
+  // Add new endpoint for teacher remarks
+  getTeacherRemarksForCurriculum: (curriculumId) => api.get(`/vp/curriculum/${curriculumId}/teacher-remarks`).then(res => res.data),
   
   // HOD Approval Management
   getHODSubmissions: () => api.get('/vp/hod-submissions').then(res => res.data),
@@ -76,7 +85,8 @@ const vpAPI = {
 };
 
 export default function VicePrincipalDashboard() {
-  const [tab, setTab] = useState(0);
+  const [mainTab, setMainTab] = useState(0);
+  const [subTab, setSubTab] = useState(0);
   const [editDialog, setEditDialog] = useState(false);
   const [editDept, setEditDept] = useState({});
   const [addDeptDialog, setAddDeptDialog] = useState(false);
@@ -104,7 +114,25 @@ export default function VicePrincipalDashboard() {
     room: 'Main Hall', 
     invigilator: 'To be assigned' 
   });
-  const [newCurriculum, setNewCurriculum] = useState({ departmentId: '', subject: '', grade: '', description: '', objectives: '' });
+  const [newCurriculum, setNewCurriculum] = useState({ 
+    departmentId: '', 
+    subject: '', 
+    grade: '', 
+    instructor: '', // Teacher/Instructor
+    description: '', 
+    objectives: '',
+    academicYear: new Date().getFullYear().toString(),
+    semester: 'First Term',
+    assessmentMethods: '',
+    learningResources: '',
+    totalHours: '',
+    contactHours: '',
+    prerequisites: '',
+    courseCode: '',
+    topics: [],
+    newTopic: { title: '', description: '', duration: '', learningOutcomes: [] },
+    newLearningOutcome: ''
+  });
   
   // Edit states for exams, timetables, and curriculum
   const [editExamDialog, setEditExamDialog] = useState(false);
@@ -144,6 +172,70 @@ export default function VicePrincipalDashboard() {
   // Curriculum details dialog state
   const [curriculumDetailsDialog, setCurriculumDetailsDialog] = useState(false);
   const [selectedCurriculum, setSelectedCurriculum] = useState(null);
+  
+  // Teacher remarks dialog state
+  const [teacherRemarksDialog, setTeacherRemarksDialog] = useState(false);
+  const [selectedCurriculumForRemarks, setSelectedCurriculumForRemarks] = useState(null);
+  const [teacherRemarks, setTeacherRemarks] = useState([]);
+  const [loadingTeacherRemarks, setLoadingTeacherRemarks] = useState(false);
+
+  // Tab configurations
+  const tabConfig = [
+    {
+      name: "Overview",
+      icon: <AssessmentIcon />,
+      subTabs: []
+    },
+    {
+      name: "Departments",
+      icon: <SchoolIcon />,
+      subTabs: []
+    },
+    {
+      name: "School Management",
+      icon: <SchoolIcon />,
+      subTabs: [
+        "HOD Management",
+        "Curriculum",
+        "Classes Time Table",
+        "Exams Schedule"
+      ]
+    },
+    {
+      name: "Staff Approvals",
+      icon: <ApprovalIcon />,
+      subTabs: [
+        "Leave Requests",
+        "Substitute Approvals",
+        "Lesson Plan Approvals"
+      ]
+    },
+    {
+      name: "Students Approvals",
+      icon: <ApprovalIcon />,
+      subTabs: [
+        "Leave Requests"
+      ]
+    },
+    {
+      name: "Service Requests",
+      icon: <ApprovalIcon />,
+      subTabs: [
+        "Leave Requests",
+        "IT Support Request",
+        "General Service Request"
+      ]
+    }
+  ];
+
+  const handleMainTabChange = (event, newValue) => {
+    setMainTab(newValue);
+    setSubTab(0); // Reset sub tab when main tab changes
+  };
+
+  const handleSubTabChange = (event, newValue) => {
+    setSubTab(newValue);
+  };
 
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -176,6 +268,7 @@ export default function VicePrincipalDashboard() {
   const { data: approvedCurriculumPlans, isLoading: loadingApprovedCurriculum } = useQuery({ queryKey: ['vpApprovedCurriculum'], queryFn: vpAPI.getApprovedCurriculumPlans });
   const { data: hodSubmissions, isLoading: loadingHODSubmissions } = useQuery({ queryKey: ['vpHODSubmissions'], queryFn: vpAPI.getHODSubmissions });
   const { data: serviceRequests, isLoading: loadingServiceRequests } = useQuery({ queryKey: ['vpServiceRequests'], queryFn: vpAPI.getServiceRequests });
+  const { data: teachers, isLoading: loadingTeachers } = useQuery({ queryKey: ['vpTeachers'], queryFn: vpAPI.getTeachers });
 
   // Mutations
   const updateDepartmentMutation = useMutation({
@@ -279,7 +372,25 @@ export default function VicePrincipalDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries(['vpCurriculum']);
       setCurriculumDialog(false);
-      setNewCurriculum({ departmentId: '', subject: '', grade: '', description: '', objectives: '' });
+      setNewCurriculum({ 
+        departmentId: '', 
+        subject: '', 
+        grade: '', 
+        instructor: '',
+        courseCode: '',
+        prerequisites: '',
+        totalHours: '',
+        contactHours: '',
+        description: '', 
+        objectives: '',
+        academicYear: new Date().getFullYear().toString(),
+        semester: 'First Term',
+        assessmentMethods: '',
+        learningResources: '',
+        topics: [],
+        newTopic: { title: '', description: '', duration: '', learningOutcomes: [] },
+        newLearningOutcome: ''
+      });
       toast.success('Curriculum plan created successfully');
     },
     onError: () => toast.error('Failed to create curriculum plan'),
@@ -361,6 +472,68 @@ export default function VicePrincipalDashboard() {
     onError: () => toast.error('Failed to change password'),
   });
 
+  // Function to handle viewing teacher remarks
+  const handleViewTeacherRemarks = async (curriculum) => {
+    setSelectedCurriculumForRemarks(curriculum);
+    setLoadingTeacherRemarks(true);
+    setTeacherRemarksDialog(true);
+    
+    try {
+      const response = await vpAPI.getTeacherRemarksForCurriculum(curriculum._id);
+      setTeacherRemarks(response.data || []);
+    } catch (error) {
+      console.error('Error fetching teacher remarks:', error);
+      toast.error('Failed to load teacher remarks');
+      setTeacherRemarks([]);
+    } finally {
+      setLoadingTeacherRemarks(false);
+    }
+  };
+
+  const handleCloseTeacherRemarksDialog = () => {
+    setTeacherRemarksDialog(false);
+    setSelectedCurriculumForRemarks(null);
+    setTeacherRemarks([]);
+  };
+
+  // Helper functions for curriculum topics
+  const addTopic = () => {
+    if (newCurriculum.newTopic.title && newCurriculum.newTopic.description) {
+      setNewCurriculum({
+        ...newCurriculum,
+        topics: [...newCurriculum.topics, { ...newCurriculum.newTopic }],
+        newTopic: { title: '', description: '', duration: '', learningOutcomes: [] },
+        newLearningOutcome: ''
+      });
+    }
+  };
+
+  const removeTopic = (index) => {
+    const updatedTopics = newCurriculum.topics.filter((_, i) => i !== index);
+    setNewCurriculum({ ...newCurriculum, topics: updatedTopics });
+  };
+
+  const addLearningOutcome = () => {
+    if (newCurriculum.newLearningOutcome) {
+      setNewCurriculum({
+        ...newCurriculum,
+        newTopic: {
+          ...newCurriculum.newTopic,
+          learningOutcomes: [...newCurriculum.newTopic.learningOutcomes, newCurriculum.newLearningOutcome]
+        },
+        newLearningOutcome: ''
+      });
+    }
+  };
+
+  const removeLearningOutcome = (index) => {
+    const updatedOutcomes = newCurriculum.newTopic.learningOutcomes.filter((_, i) => i !== index);
+    setNewCurriculum({
+      ...newCurriculum,
+      newTopic: { ...newCurriculum.newTopic, learningOutcomes: updatedOutcomes }
+    });
+  };
+
   if (user?.role !== 'VicePrincipal') {
     return <Box p={3}><Typography color="error">Access denied: Vice Principal only</Typography></Box>;
   }
@@ -424,21 +597,14 @@ export default function VicePrincipalDashboard() {
         </Box>
       </Box>
       
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3 }}>
-        <Tab label="Overview" icon={<AssessmentIcon />} />
-        <Tab label="Departments" icon={<SchoolIcon />} />
-        <Tab label="HOD Management" icon={<PeopleIcon />} />
-        <Tab label="Exams" icon={<EventIcon />} />
-        <Tab label="Timetables" icon={<ScheduleIcon />} />
-        <Tab label="Curriculum" icon={<BookIcon />} />
-        <Tab label="Approved Curriculum" icon={<CheckCircleIcon />} />
-        <Tab label="HOD Approvals" icon={<ApprovalIcon />} />
-        <Tab label="Service Requests" icon={<ApprovalIcon />} />
-        <Tab label="Substitute Approvals" icon={<ApprovalIcon />} />
+      <Tabs value={mainTab} onChange={handleMainTabChange} sx={{ mb: 3 }}>
+        {tabConfig.map((tab, index) => (
+          <Tab key={index} label={tab.name} icon={tab.icon} />
+        ))}
       </Tabs>
 
       {/* Overview Tab */}
-      {tab === 0 && (
+      {mainTab === 0 && (
         <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
             <Card>
@@ -551,7 +717,7 @@ export default function VicePrincipalDashboard() {
                 <Typography variant="h6" gutterBottom>Curriculum by Grade</Typography>
                 <Grid container spacing={2}>
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((grade) => {
-                    const gradeCurriculum = curriculumPlans?.filter(plan => plan.grade === grade) || [];
+                    const gradeCurriculum = curriculumPlans?.filter(plan => plan.grade === grade.toString()) || [];
                     const approvedCount = gradeCurriculum.filter(plan => plan.status === 'Approved').length;
                     const totalCount = gradeCurriculum.length;
                     const completionPercentage = totalCount > 0 ? Math.round((approvedCount / totalCount) * 100) : 0;
@@ -569,8 +735,8 @@ export default function VicePrincipalDashboard() {
                             '&:hover': { bgcolor: 'action.hover' }
                           }}
                           onClick={() => {
-                            setTab(5); // Switch to Curriculum tab
-                            setCurriculumViewMode('grade');
+                            setMainTab(2); // Switch to School Management tab
+                            setSubTab(2); // Switch to Curriculum sub tab
                             setSelectedGrade(grade);
                           }}
                         >
@@ -600,7 +766,7 @@ export default function VicePrincipalDashboard() {
       )}
 
       {/* Departments Tab */}
-      {tab === 1 && (
+      {mainTab === 1 && (
         <Box>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
             <Typography variant="h6">Department Management</Typography>
@@ -705,8 +871,17 @@ export default function VicePrincipalDashboard() {
         </Box>
       )}
 
-      {/* HOD Management Tab */}
-      {tab === 2 && (
+      {/* School Management Tab */}
+      {mainTab === 2 && (
+        <Box>
+          <Tabs value={subTab} onChange={handleSubTabChange} sx={{ mb: 3 }}>
+            {tabConfig[2].subTabs.map((subTab, index) => (
+              <Tab key={index} label={subTab} />
+            ))}
+          </Tabs>
+
+          {/* HOD Management Sub Tab */}
+          {subTab === 0 && (
         <Card>
           <CardContent>
             <Typography variant="h6" gutterBottom>HOD Management</Typography>
@@ -763,175 +938,8 @@ export default function VicePrincipalDashboard() {
         </Card>
       )}
 
-      {/* Exams Tab */}
-      {tab === 3 && (
-        <Box>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Typography variant="h6">Exam Management</Typography>
-            <Button variant="contained" startIcon={<AddIcon />} onClick={() => setExamDialog(true)}>
-              Add Exam
-            </Button>
-          </Box>
-          
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Exam Name</TableCell>
-                  <TableCell>Department</TableCell>
-                  <TableCell>Grade</TableCell>
-                  <TableCell>Subject</TableCell>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Duration</TableCell>
-                  <TableCell>Type</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {exams?.map((exam) => (
-                  <TableRow key={exam._id}>
-                    <TableCell>{exam.subject}</TableCell>
-                    <TableCell>{exam.departmentId?.name}</TableCell>
-                    <TableCell>{exam.class}</TableCell>
-                    <TableCell>{exam.subject}</TableCell>
-                    <TableCell>{new Date(exam.examDate).toLocaleDateString()}</TableCell>
-                    <TableCell>{exam.duration} mins</TableCell>
-                    <TableCell>{exam.examType}</TableCell>
-                    <TableCell>
-                      <IconButton 
-                        size="small" 
-                        color="primary"
-                        onClick={() => {
-                          setEditingExam({
-                            id: exam._id,
-                            departmentId: exam.departmentId?._id,
-                            name: exam.subject,
-                            grade: exam.class,
-                            subject: exam.subject,
-                            date: new Date(exam.examDate).toISOString().split('T')[0],
-                            duration: exam.duration,
-                            type: exam.examType
-                          });
-                          setEditExamDialog(true);
-                        }}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton 
-                        size="small" 
-                        color="error"
-                        onClick={() => {
-                          if (window.confirm('Are you sure you want to delete this exam?')) {
-                            deleteExamMutation.mutate(exam._id);
-                          }
-                        }}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
-      )}
-
-      {/* Timetables Tab */}
-      {tab === 4 && (
-        <Box>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Typography variant="h6">Exam Timetable Management</Typography>
-            <Button variant="contained" startIcon={<AddIcon />} onClick={() => setTimetableDialog(true)}>
-              Schedule Exam
-            </Button>
-          </Box>
-          
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Exam Name</TableCell>
-                  <TableCell>Department</TableCell>
-                  <TableCell>Subject</TableCell>
-                  <TableCell>Grade</TableCell>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Time</TableCell>
-                  <TableCell>Duration</TableCell>
-                  <TableCell>Room</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {timetables?.map((timetable) => (
-                  <TableRow key={timetable._id}>
-                    <TableCell>{timetable.examName}</TableCell>
-                    <TableCell>{timetable.departmentId?.name}</TableCell>
-                    <TableCell>{timetable.subject}</TableCell>
-                    <TableCell>{timetable.grade}</TableCell>
-                    <TableCell>{new Date(timetable.examDate).toLocaleDateString()}</TableCell>
-                    <TableCell>{timetable.startTime} - {timetable.endTime}</TableCell>
-                    <TableCell>{timetable.duration} mins</TableCell>
-                    <TableCell>{timetable.room}</TableCell>
-                    <TableCell>
-                      <Chip 
-                        label={timetable.status} 
-                        color={
-                          timetable.status === 'Completed' ? 'success' : 
-                          timetable.status === 'In Progress' ? 'warning' : 
-                          timetable.status === 'Cancelled' ? 'error' : 'primary'
-                        } 
-                        size="small" 
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <IconButton 
-                        size="small" 
-                        color="primary"
-                        onClick={() => {
-                          setEditingTimetable({
-                            id: timetable._id,
-                            departmentId: timetable.departmentId?._id,
-                            examId: timetable.examId?._id,
-                            examName: timetable.examName,
-                            subject: timetable.subject,
-                            grade: timetable.grade,
-                            examDate: new Date(timetable.examDate).toISOString().split('T')[0],
-                            startTime: timetable.startTime,
-                            endTime: timetable.endTime,
-                            duration: timetable.duration,
-                            examType: timetable.examType,
-                            room: timetable.room,
-                            invigilator: timetable.invigilator
-                          });
-                          setEditTimetableDialog(true);
-                        }}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton 
-                        size="small" 
-                        color="error"
-                        onClick={() => {
-                          if (window.confirm('Are you sure you want to delete this exam schedule?')) {
-                            deleteTimetableMutation.mutate(timetable._id);
-                          }
-                        }}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
-      )}
-
-      {/* Curriculum Tab */}
-      {tab === 5 && (
+          {/* Curriculum Sub Tab */}
+          {subTab === 1 && (
         <Box>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
             <Typography variant="h6">Curriculum Management</Typography>
@@ -989,7 +997,7 @@ export default function VicePrincipalDashboard() {
                             </TableRow>
                           </TableHead>
                           <TableBody>
-                            {curriculumPlans?.filter(plan => plan.grade === selectedGrade)?.map((plan) => (
+                            {curriculumPlans?.filter(plan => plan.grade === selectedGrade.toString())?.map((plan) => (
                               <TableRow key={plan._id}>
                                 <TableCell>
                                   <Typography variant="body2" fontWeight="medium">
@@ -1038,6 +1046,25 @@ export default function VicePrincipalDashboard() {
                                   >
                                     <DeleteIcon />
                                   </IconButton>
+                                  <IconButton 
+                                    size="small" 
+                                    color="info"
+                                    onClick={() => handleViewTeacherRemarks(plan)}
+                                    title="View Teacher Remarks (Point 4)"
+                                  >
+                                    <CommentIcon />
+                                  </IconButton>
+                                  <IconButton 
+                                    size="small" 
+                                    color="secondary"
+                                    onClick={() => {
+                                      setSelectedCurriculum(plan);
+                                      setCurriculumDetailsDialog(true);
+                                    }}
+                                    title="View Curriculum Template"
+                                  >
+                                    <BookIcon />
+                                  </IconButton>
                                   {plan.status === 'Draft' && (
                                     <IconButton 
                                       size="small" 
@@ -1050,7 +1077,7 @@ export default function VicePrincipalDashboard() {
                                 </TableCell>
                               </TableRow>
                             ))}
-                            {curriculumPlans?.filter(plan => plan.grade === selectedGrade)?.length === 0 && (
+                            {curriculumPlans?.filter(plan => plan.grade === selectedGrade.toString())?.length === 0 && (
                               <TableRow>
                                 <TableCell colSpan={5} align="center">
                                   <Typography variant="body2" color="textSecondary">
@@ -1074,13 +1101,13 @@ export default function VicePrincipalDashboard() {
                       </Typography>
                       <Box mb={2}>
                         <Typography variant="body2" color="textSecondary">
-                          Total Subjects: {curriculumPlans?.filter(plan => plan.grade === selectedGrade)?.length || 0}
+                          Total Subjects: {curriculumPlans?.filter(plan => plan.grade === selectedGrade.toString())?.length || 0}
                         </Typography>
                         <Typography variant="body2" color="textSecondary">
-                          Approved: {curriculumPlans?.filter(plan => plan.grade === selectedGrade && plan.status === 'Approved')?.length || 0}
+                                                      Approved: {curriculumPlans?.filter(plan => plan.grade === selectedGrade.toString() && plan.status === 'Approved')?.length || 0}
                         </Typography>
                         <Typography variant="body2" color="textSecondary">
-                          Pending: {curriculumPlans?.filter(plan => plan.grade === selectedGrade && plan.status === 'Draft')?.length || 0}
+                                                      Pending: {curriculumPlans?.filter(plan => plan.grade === selectedGrade.toString() && plan.status === 'Draft')?.length || 0}
                         </Typography>
                       </Box>
                       
@@ -1136,7 +1163,7 @@ export default function VicePrincipalDashboard() {
           ) : (
             // Department-wise Curriculum View (Original)
             <Grid container spacing={2}>
-              {curriculumPlans?.map((plan) => (
+                                          {curriculumPlans?.filter(plan => plan.grade === selectedGrade.toString())?.map((plan) => (
                 <Grid item xs={12} md={6} key={plan._id}>
                   <Card>
                     <CardContent>
@@ -1208,213 +1235,441 @@ export default function VicePrincipalDashboard() {
         </Box>
       )}
 
-      {/* Approved Curriculum Tab */}
-      {tab === 6 && (
+          {/* Classes Time Table Sub Tab */}
+          {subTab === 2 && (
         <Box>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Typography variant="h6">Approved Curriculum Plans</Typography>
-            <Box display="flex" gap={1}>
-              <Button 
-                variant="outlined"
-                onClick={() => {
-                  setTab(5); // Switch to Curriculum tab
-                  setCurriculumViewMode('grade');
-                }}
-              >
-                Manage Curriculum
+                <Typography variant="h6">Classes Time Table</Typography>
+                <Button variant="contained" startIcon={<AddIcon />} onClick={() => setTimetableDialog(true)}>
+                  Schedule Exam
               </Button>
-            </Box>
           </Box>
 
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={8}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    All Approved Curriculum Plans ({approvedCurriculumPlans?.length || 0})
-                  </Typography>
-                  <TableContainer>
+              <TableContainer component={Paper}>
                     <Table>
                       <TableHead>
                         <TableRow>
+                      <TableCell>Exam Name</TableCell>
+                      <TableCell>Department</TableCell>
                           <TableCell>Subject</TableCell>
                           <TableCell>Grade</TableCell>
-                          <TableCell>Department</TableCell>
-                          <TableCell>Created By</TableCell>
-                          <TableCell>Approved By</TableCell>
-                          <TableCell>Approved Date</TableCell>
+                      <TableCell>Date</TableCell>
+                      <TableCell>Time</TableCell>
+                      <TableCell>Duration</TableCell>
+                      <TableCell>Room</TableCell>
+                      <TableCell>Status</TableCell>
                           <TableCell>Actions</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {approvedCurriculumPlans?.map((plan) => (
-                          <TableRow key={plan._id}>
+                    {timetables?.map((timetable) => (
+                      <TableRow key={timetable._id}>
+                        <TableCell>{timetable.examName}</TableCell>
+                        <TableCell>{timetable.departmentId?.name}</TableCell>
+                        <TableCell>{timetable.subject}</TableCell>
+                        <TableCell>{timetable.grade}</TableCell>
+                        <TableCell>{new Date(timetable.examDate).toLocaleDateString()}</TableCell>
+                        <TableCell>{timetable.startTime} - {timetable.endTime}</TableCell>
+                        <TableCell>{timetable.duration} mins</TableCell>
+                        <TableCell>{timetable.room}</TableCell>
                             <TableCell>
-                              <Typography variant="body2" fontWeight="medium">
-                                {plan.subject}
-                              </Typography>
+                          <Chip 
+                            label={timetable.status} 
+                            color={
+                              timetable.status === 'Completed' ? 'success' : 
+                              timetable.status === 'In Progress' ? 'warning' : 
+                              timetable.status === 'Cancelled' ? 'error' : 'primary'
+                            } 
+                            size="small" 
+                          />
                             </TableCell>
                             <TableCell>
-                              <Chip label={`Grade ${plan.grade}`} size="small" color="primary" />
+                          <IconButton 
+                            size="small" 
+                            color="primary"
+                            onClick={() => {
+                              setEditingTimetable({
+                                id: timetable._id,
+                                departmentId: timetable.departmentId?._id,
+                                examId: timetable.examId?._id,
+                                examName: timetable.examName,
+                                subject: timetable.subject,
+                                grade: timetable.grade,
+                                examDate: new Date(timetable.examDate).toISOString().split('T')[0],
+                                startTime: timetable.startTime,
+                                endTime: timetable.endTime,
+                                duration: timetable.duration,
+                                examType: timetable.examType,
+                                room: timetable.room,
+                                invigilator: timetable.invigilator
+                              });
+                              setEditTimetableDialog(true);
+                            }}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                          <IconButton 
+                            size="small" 
+                            color="error"
+                            onClick={() => {
+                              if (window.confirm('Are you sure you want to delete this exam schedule?')) {
+                                deleteTimetableMutation.mutate(timetable._id);
+                              }
+                            }}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
                             </TableCell>
-                            <TableCell>{plan.departmentId?.name}</TableCell>
-                            <TableCell>{plan.createdBy?.name}</TableCell>
-                            <TableCell>{plan.approvedBy?.name}</TableCell>
-                            <TableCell>
-                              {plan.approvedAt ? new Date(plan.approvedAt).toLocaleDateString() : 'N/A'}
-                            </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          )}
+
+          {/* Exams Schedule Sub Tab */}
+          {subTab === 3 && (
+            <Box>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography variant="h6">Exams Schedule</Typography>
+                <Button variant="contained" startIcon={<AddIcon />} onClick={() => setExamDialog(true)}>
+                  Add Exam
+                </Button>
+              </Box>
+              
+              <TableContainer component={Paper}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Exam Name</TableCell>
+                      <TableCell>Department</TableCell>
+                      <TableCell>Grade</TableCell>
+                      <TableCell>Subject</TableCell>
+                      <TableCell>Date</TableCell>
+                      <TableCell>Duration</TableCell>
+                      <TableCell>Type</TableCell>
+                      <TableCell>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {exams?.map((exam) => (
+                      <TableRow key={exam._id}>
+                        <TableCell>{exam.subject}</TableCell>
+                        <TableCell>{exam.departmentId?.name}</TableCell>
+                        <TableCell>{exam.class}</TableCell>
+                        <TableCell>{exam.subject}</TableCell>
+                        <TableCell>{new Date(exam.examDate).toLocaleDateString()}</TableCell>
+                        <TableCell>{exam.duration} mins</TableCell>
+                        <TableCell>{exam.examType}</TableCell>
                             <TableCell>
                               <IconButton 
                                 size="small" 
                                 color="primary"
                                 onClick={() => {
-                                  setEditingCurriculum({
-                                    id: plan._id,
-                                    departmentId: plan.departmentId?._id,
-                                    subject: plan.subject,
-                                    grade: plan.grade,
-                                    description: plan.description,
-                                    objectives: plan.objectives
+                              setEditingExam({
+                                id: exam._id,
+                                departmentId: exam.departmentId?._id,
+                                name: exam.subject,
+                                grade: exam.class,
+                                subject: exam.subject,
+                                date: new Date(exam.examDate).toISOString().split('T')[0],
+                                duration: exam.duration,
+                                type: exam.examType
                                   });
-                                  setEditCurriculumDialog(true);
+                              setEditExamDialog(true);
                                 }}
                               >
                                 <EditIcon />
                               </IconButton>
                               <IconButton 
                                 size="small" 
-                                color="info"
+                            color="error"
                                 onClick={() => {
-                                  setSelectedCurriculum(plan);
-                                  setCurriculumDetailsDialog(true);
+                              if (window.confirm('Are you sure you want to delete this exam?')) {
+                                deleteExamMutation.mutate(exam._id);
+                              }
                                 }}
                               >
-                                <BookIcon />
+                            <DeleteIcon />
                               </IconButton>
                             </TableCell>
                           </TableRow>
                         ))}
-                        {approvedCurriculumPlans?.length === 0 && (
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          )}
+        </Box>
+      )}
+
+      {/* Staff Approvals Tab */}
+      {mainTab === 3 && (
+        <Box>
+          <Tabs value={subTab} onChange={handleSubTabChange} sx={{ mb: 3 }}>
+            {tabConfig[3].subTabs.map((subTab, index) => (
+              <Tab key={index} label={subTab} />
+            ))}
+          </Tabs>
+
+          {/* Leave Requests Sub Tab */}
+          {subTab === 0 && (
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Leave Requests</Typography>
+                <TableContainer>
+                  <Table>
+                    <TableHead>
                           <TableRow>
-                            <TableCell colSpan={7} align="center">
-                              <Typography variant="body2" color="textSecondary">
-                                No approved curriculum plans found
-                              </Typography>
-                            </TableCell>
+                        <TableCell>Date</TableCell>
+                        <TableCell>Staff Name</TableCell>
+                        <TableCell>Reason</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell>Actions</TableCell>
                           </TableRow>
-                        )}
+                    </TableHead>
+                    <TableBody>
+                      {hodSubmissions?.map((submission) => (
+                        <TableRow key={submission._id}>
+                          <TableCell>{submission.requestData?.date}</TableCell>
+                          <TableCell>{submission.requestData?.staffName}</TableCell>
+                          <TableCell>{submission.requestData?.reason}</TableCell>
+                          <TableCell>
+                            <Chip 
+                              label={submission.status} 
+                              color={submission.status === 'Pending' ? 'warning' : submission.status === 'Approved' ? 'success' : 'error'} 
+                              size="small" 
+                            />
+                          </TableCell>
+                          <TableCell>
+                            {submission.status === 'Pending' && (
+                              <>
+                                <IconButton 
+                                  size="small" 
+                                  color="success"
+                                  onClick={() => approveHODSubmissionMutation.mutate(submission._id)}
+                                >
+                                  <CheckCircleIcon />
+                                </IconButton>
+                                <IconButton size="small" color="error">
+                                  <WarningIcon />
+                                </IconButton>
+                              </>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
                       </TableBody>
                     </Table>
                   </TableContainer>
                 </CardContent>
               </Card>
-            </Grid>
+          )}
 
-            <Grid item xs={12} md={4}>
+          {/* Substitute Approvals Sub Tab */}
+          {subTab === 1 && (
               <Card>
                 <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Approved Curriculum Summary
-                  </Typography>
-                  
-                  <Box mb={3}>
-                    <Typography variant="body2" color="textSecondary" gutterBottom>
-                      Total Approved Plans: {approvedCurriculumPlans?.length || 0}
-                    </Typography>
-                    
-                    <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
-                      By Grade Level:
-                    </Typography>
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((grade) => {
-                      const gradeCount = approvedCurriculumPlans?.filter(plan => plan.grade === grade)?.length || 0;
-                      return gradeCount > 0 ? (
-                        <Box key={grade} display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                          <Typography variant="body2">Grade {grade}</Typography>
-                          <Chip label={gradeCount} size="small" color="success" />
-                        </Box>
-                      ) : null;
-                    })}
-                  </Box>
+                <Typography variant="h6" gutterBottom>Substitute Teacher Requests</Typography>
+                <TableContainer component={Paper} sx={{ mt: 2 }}>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Request Date</TableCell>
+                        <TableCell>Absent Teacher</TableCell>
+                        <TableCell>Department</TableCell>
+                        <TableCell>Reason</TableCell>
+                        <TableCell>Absence Dates</TableCell>
+                        <TableCell>Periods</TableCell>
+                        <TableCell>Classes</TableCell>
+                        <TableCell>Suggested Substitute</TableCell>
+                        <TableCell>Remarks</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell>Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {(serviceRequests?.filter(req => req.requestType === 'SubstituteTeacherRequest' && req.currentApprover === 'VP' && req.status === 'Pending') || []).map((req) => (
+                        <TableRow key={req._id}>
+                          <TableCell>{req.requestData?.requestDate}</TableCell>
+                          <TableCell>{req.requestData?.absentTeacherName}</TableCell>
+                          <TableCell>{req.requestData?.department}</TableCell>
+                          <TableCell>{req.requestData?.reasonForAbsence}</TableCell>
+                          <TableCell>{req.requestData?.absenceFrom} - {req.requestData?.absenceTo}</TableCell>
+                          <TableCell>{req.requestData?.periods}</TableCell>
+                          <TableCell>{req.requestData?.classes}</TableCell>
+                          <TableCell>{req.requestData?.suggestedSubstitute}</TableCell>
+                          <TableCell>{req.requestData?.remarks}</TableCell>
+                          <TableCell>
+                            <Chip 
+                              label={req.status} 
+                              color={req.status === 'Pending' ? 'warning' : req.status === 'Approved' ? 'success' : 'error'} 
+                              size="small" 
+                            />
+                          </TableCell>
+                          <TableCell>
+                            {req.status === 'Pending' && req.currentApprover === 'VP' && (
+                              <>
+                                <IconButton 
+                                  size="small" 
+                                  color="success"
+                                  onClick={() => approveServiceRequestMutation.mutate({ 
+                                    requestId: req._id, 
+                                    comments: 'Approved by VP' 
+                                  })}
+                                >
+                                  <CheckCircleIcon />
+                                </IconButton>
+                                <IconButton 
+                                  size="small" 
+                                  color="error"
+                                  onClick={() => rejectServiceRequestMutation.mutate({ 
+                                    requestId: req._id, 
+                                    comments: 'Rejected by VP' 
+                                  })}
+                                >
+                                  <WarningIcon />
+                                </IconButton>
+                              </>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </CardContent>
+            </Card>
+          )}
 
-                  <Divider sx={{ my: 2 }} />
-
-                  <Typography variant="subtitle2" gutterBottom>
-                    By Department:
-                  </Typography>
-                  {departments?.map((dept) => {
-                    const deptCount = approvedCurriculumPlans?.filter(plan => plan.departmentId?._id === dept._id)?.length || 0;
-                    return deptCount > 0 ? (
-                      <Box key={dept._id} display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                        <Typography variant="body2">{dept.name}</Typography>
-                        <Chip label={deptCount} size="small" color="primary" />
-                      </Box>
-                    ) : null;
-                  })}
-
-                  <Divider sx={{ my: 2 }} />
-
-                  <Typography variant="subtitle2" gutterBottom>
-                    Recent Approvals:
-                  </Typography>
-                  {approvedCurriculumPlans?.slice(0, 3).map((plan) => (
-                    <Box key={plan._id} sx={{ mb: 1, p: 1, bgcolor: 'background.paper', borderRadius: 1 }}>
-                      <Typography variant="body2" fontWeight="medium">
-                        {plan.subject} - Grade {plan.grade}
-                      </Typography>
-                      <Typography variant="caption" color="textSecondary">
-                        Approved: {plan.approvedAt ? new Date(plan.approvedAt).toLocaleDateString() : 'N/A'}
-                      </Typography>
-                    </Box>
+          {/* Lesson Plan Approvals Sub Tab */}
+          {subTab === 2 && (
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Lesson Plan Approvals</Typography>
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Date</TableCell>
+                        <TableCell>Staff Name</TableCell>
+                        <TableCell>Subject</TableCell>
+                        <TableCell>Grade</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell>Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {serviceRequests?.filter(request => request.requestType === 'LessonPlanApprovalRequest' && request.currentApprover === 'VP' && request.status === 'Pending').map((request) => (
+                        <TableRow key={request._id}>
+                          <TableCell>{request.requestData?.date}</TableCell>
+                          <TableCell>{request.requestData?.staffName}</TableCell>
+                          <TableCell>{request.requestData?.subject}</TableCell>
+                          <TableCell>{request.requestData?.grade}</TableCell>
+                          <TableCell>
+                            <Chip 
+                              label={request.status} 
+                              color={request.status === 'Pending' ? 'warning' : request.status === 'Approved' ? 'success' : 'error'} 
+                              size="small" 
+                            />
+                          </TableCell>
+                          <TableCell>
+                            {request.status === 'Pending' && request.currentApprover === 'VP' && (
+                              <>
+                                <IconButton 
+                                  size="small" 
+                                  color="success"
+                                  onClick={() => approveServiceRequestMutation.mutate({ 
+                                    requestId: request._id, 
+                                    comments: 'Approved by VP' 
+                                  })}
+                                >
+                                  <CheckCircleIcon />
+                                </IconButton>
+                                <IconButton 
+                                  size="small" 
+                                  color="error"
+                                  onClick={() => rejectServiceRequestMutation.mutate({ 
+                                    requestId: request._id, 
+                                    comments: 'Rejected by VP' 
+                                  })}
+                                >
+                                  <WarningIcon />
+                                </IconButton>
+                              </>
+                            )}
+                          </TableCell>
+                        </TableRow>
                   ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
                 </CardContent>
               </Card>
-            </Grid>
-          </Grid>
+          )}
         </Box>
       )}
 
-      {/* HOD Approvals Tab */}
-      {tab === 7 && (
+      {/* Students Approvals Tab */}
+      {mainTab === 4 && (
+        <Box>
+          <Tabs value={subTab} onChange={handleSubTabChange} sx={{ mb: 3 }}>
+            {tabConfig[4].subTabs.map((subTab, index) => (
+              <Tab key={index} label={subTab} />
+            ))}
+          </Tabs>
+
+          {/* Leave Requests Sub Tab */}
+          {subTab === 0 && (
         <Card>
           <CardContent>
-            <Typography variant="h6" gutterBottom>HOD Submissions Pending Approval</Typography>
+                <Typography variant="h6" gutterBottom>Leave Requests</Typography>
             <TableContainer>
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>HOD</TableCell>
-                    <TableCell>Department</TableCell>
-                    <TableCell>Submission Type</TableCell>
-                    <TableCell>Title</TableCell>
+                        <TableCell>Date</TableCell>
+                        <TableCell>Student Name</TableCell>
+                        <TableCell>Reason</TableCell>
                     <TableCell>Status</TableCell>
                     <TableCell>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {hodSubmissions?.map((submission) => (
-                    <TableRow key={submission._id}>
-                      <TableCell>{submission.hod?.name}</TableCell>
-                      <TableCell>{submission.department?.name}</TableCell>
-                      <TableCell>{submission.type}</TableCell>
-                      <TableCell>{submission.title}</TableCell>
+                      {serviceRequests?.filter(request => request.requestType === 'LeaveRequest' && request.currentApprover === 'VP' && request.status === 'Pending').map((request) => (
+                        <TableRow key={request._id}>
+                          <TableCell>{request.requestData?.date}</TableCell>
+                          <TableCell>{request.requestData?.studentName}</TableCell>
+                          <TableCell>{request.requestData?.reason}</TableCell>
                       <TableCell>
                         <Chip 
-                          label={submission.status} 
-                          color={submission.status === 'Pending' ? 'warning' : submission.status === 'Approved' ? 'success' : 'error'} 
+                              label={request.status} 
+                              color={request.status === 'Pending' ? 'warning' : request.status === 'Approved' ? 'success' : 'error'} 
                           size="small" 
                         />
                       </TableCell>
                       <TableCell>
-                        {submission.status === 'Pending' && (
+                            {request.status === 'Pending' && request.currentApprover === 'VP' && (
                           <>
                             <IconButton 
                               size="small" 
                               color="success"
-                              onClick={() => approveHODSubmissionMutation.mutate(submission._id)}
+                                  onClick={() => approveServiceRequestMutation.mutate({ 
+                                    requestId: request._id, 
+                                    comments: 'Approved by VP' 
+                                  })}
                             >
                               <CheckCircleIcon />
                             </IconButton>
-                            <IconButton size="small" color="error">
+                                <IconButton 
+                                  size="small" 
+                                  color="error"
+                                  onClick={() => rejectServiceRequestMutation.mutate({ 
+                                    requestId: request._id, 
+                                    comments: 'Rejected by VP' 
+                                  })}
+                                >
                               <WarningIcon />
                             </IconButton>
                           </>
@@ -1428,17 +1683,23 @@ export default function VicePrincipalDashboard() {
           </CardContent>
         </Card>
       )}
+        </Box>
+      )}
 
-      {/* Service Request Approvals Tab */}
-      {tab === 8 && (
+      {/* Service Requests Tab */}
+      {mainTab === 5 && (
+        <Box>
+          <Tabs value={subTab} onChange={handleSubTabChange} sx={{ mb: 3 }}>
+            {tabConfig[5].subTabs.map((subTab, index) => (
+              <Tab key={index} label={subTab} />
+            ))}
+          </Tabs>
+
+          {/* Leave Requests Sub Tab */}
+          {subTab === 0 && (
         <Card>
           <CardContent>
-            <Typography variant="h6" gutterBottom>Service Requests Pending Approval</Typography>
-            {loadingServiceRequests ? (
-              <Box display="flex" justifyContent="center" p={3}>
-                <CircularProgress />
-              </Box>
-            ) : (
+                <Typography variant="h6" gutterBottom>Leave Requests</Typography>
               <TableContainer>
                 <Table>
                   <TableHead>
@@ -1454,8 +1715,7 @@ export default function VicePrincipalDashboard() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {serviceRequests?.filter(request => request.requestType !== 'SubstituteTeacherRequest').length > 0 ? (
-                      serviceRequests.filter(request => request.requestType !== 'SubstituteTeacherRequest').map((request) => (
+                      {serviceRequests?.filter(request => request.requestType === 'LeaveRequest' && request.currentApprover === 'VP' && request.status === 'Pending').map((request) => (
                         <TableRow key={request._id}>
                           <TableCell>{request.requestData?.date}</TableCell>
                           <TableCell>{request.requestData?.staffName}</TableCell>
@@ -1497,73 +1757,115 @@ export default function VicePrincipalDashboard() {
                             )}
                           </TableCell>
                         </TableRow>
-                      ))
-                    ) : (
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* IT Support Request Sub Tab */}
+          {subTab === 1 && (
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>IT Support Request</Typography>
+                <TableContainer>
+                  <Table>
+                    <TableHead>
                       <TableRow>
-                        <TableCell colSpan={8} align="center">
-                          <Typography variant="body2" color="textSecondary">
-                            No service requests pending approval
-                          </Typography>
-                        </TableCell>
+                        <TableCell>Date</TableCell>
+                        <TableCell>Staff Name</TableCell>
+                        <TableCell>Issue</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell>Actions</TableCell>
                       </TableRow>
-                    )}
+                    </TableHead>
+                    <TableBody>
+                      {serviceRequests?.filter(request => request.requestType === 'ITSupportRequest' && request.currentApprover === 'VP' && request.status === 'Pending').map((request) => (
+                        <TableRow key={request._id}>
+                          <TableCell>{request.requestData?.date}</TableCell>
+                          <TableCell>{request.requestData?.staffName}</TableCell>
+                          <TableCell>{request.requestData?.issue}</TableCell>
+                          <TableCell>
+                            <Chip 
+                              label={request.status} 
+                              color={request.status === 'Pending' ? 'warning' : request.status === 'Approved' ? 'success' : 'error'} 
+                              size="small" 
+                            />
+                          </TableCell>
+                          <TableCell>
+                            {request.status === 'Pending' && request.currentApprover === 'VP' && (
+                              <>
+                                <IconButton 
+                                  size="small" 
+                                  color="success"
+                                  onClick={() => approveServiceRequestMutation.mutate({ 
+                                    requestId: request._id, 
+                                    comments: 'Approved by VP' 
+                                  })}
+                                >
+                                  <CheckCircleIcon />
+                                </IconButton>
+                                <IconButton 
+                                  size="small" 
+                                  color="error"
+                                  onClick={() => rejectServiceRequestMutation.mutate({ 
+                                    requestId: request._id, 
+                                    comments: 'Rejected by VP' 
+                                  })}
+                                >
+                                  <WarningIcon />
+                                </IconButton>
+                              </>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
                   </TableBody>
                 </Table>
               </TableContainer>
-            )}
           </CardContent>
         </Card>
       )}
 
-      {/* Substitute Approvals Tab */}
-      {tab === 9 && (
+          {/* General Service Request Sub Tab */}
+          {subTab === 2 && (
         <Card>
           <CardContent>
-            <Typography variant="h6" gutterBottom>Substitute Teacher Requests Pending Approval</Typography>
-            <TableContainer component={Paper} sx={{ mt: 2 }}>
+                <Typography variant="h6" gutterBottom>General Service Request</Typography>
+                <TableContainer>
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Request Date</TableCell>
-                    <TableCell>Absent Teacher</TableCell>
-                    <TableCell>Department</TableCell>
-                    <TableCell>Reason</TableCell>
-                    <TableCell>Absence Dates</TableCell>
-                    <TableCell>Periods</TableCell>
-                    <TableCell>Classes</TableCell>
-                    <TableCell>Suggested Substitute</TableCell>
-                    <TableCell>Remarks</TableCell>
+                        <TableCell>Date</TableCell>
+                        <TableCell>Staff Name</TableCell>
+                        <TableCell>Service Type</TableCell>
                     <TableCell>Status</TableCell>
                     <TableCell>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {(serviceRequests?.filter(req => req.requestType === 'SubstituteTeacherRequest' && req.currentApprover === 'VP' && req.status === 'Pending') || []).map((req) => (
-                    <TableRow key={req._id}>
-                      <TableCell>{req.requestData?.requestDate}</TableCell>
-                      <TableCell>{req.requestData?.absentTeacherName}</TableCell>
-                      <TableCell>{req.requestData?.department}</TableCell>
-                      <TableCell>{req.requestData?.reasonForAbsence}</TableCell>
-                      <TableCell>{req.requestData?.absenceFrom} - {req.requestData?.absenceTo}</TableCell>
-                      <TableCell>{req.requestData?.periods}</TableCell>
-                      <TableCell>{req.requestData?.classes}</TableCell>
-                      <TableCell>{req.requestData?.suggestedSubstitute}</TableCell>
-                      <TableCell>{req.requestData?.remarks}</TableCell>
+                      {serviceRequests?.filter(request => request.requestType === 'GeneralServiceRequest' && request.currentApprover === 'VP' && request.status === 'Pending').map((request) => (
+                        <TableRow key={request._id}>
+                          <TableCell>{request.requestData?.date}</TableCell>
+                          <TableCell>{request.requestData?.staffName}</TableCell>
+                          <TableCell>{request.requestData?.serviceType}</TableCell>
                       <TableCell>
                         <Chip 
-                          label={req.status} 
-                          color={req.status === 'Pending' ? 'warning' : req.status === 'Approved' ? 'success' : 'error'} 
+                              label={request.status} 
+                              color={request.status === 'Pending' ? 'warning' : request.status === 'Approved' ? 'success' : 'error'} 
                           size="small" 
                         />
                       </TableCell>
                       <TableCell>
-                        {req.status === 'Pending' && req.currentApprover === 'VP' && (
+                            {request.status === 'Pending' && request.currentApprover === 'VP' && (
                           <>
                             <IconButton 
                               size="small" 
                               color="success"
                               onClick={() => approveServiceRequestMutation.mutate({ 
-                                requestId: req._id, 
+                                    requestId: request._id, 
                                 comments: 'Approved by VP' 
                               })}
                             >
@@ -1573,7 +1875,7 @@ export default function VicePrincipalDashboard() {
                               size="small" 
                               color="error"
                               onClick={() => rejectServiceRequestMutation.mutate({ 
-                                requestId: req._id, 
+                                    requestId: request._id, 
                                 comments: 'Rejected by VP' 
                               })}
                             >
@@ -1589,6 +1891,8 @@ export default function VicePrincipalDashboard() {
             </TableContainer>
           </CardContent>
         </Card>
+          )}
+        </Box>
       )}
 
       {/* Dialogs */}
@@ -1919,9 +2223,17 @@ export default function VicePrincipalDashboard() {
       </Dialog>
 
       {/* Add Curriculum Dialog */}
-      <Dialog open={curriculumDialog} onClose={() => setCurriculumDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Add Curriculum Plan</DialogTitle>
+      <Dialog open={curriculumDialog} onClose={() => setCurriculumDialog(false)} maxWidth="lg" fullWidth>
+        <DialogTitle>
+          <Box display="flex" alignItems="center" gap={1}>
+            <BookIcon color="primary" />
+            Add Curriculum Plan
+          </Box>
+        </DialogTitle>
         <DialogContent>
+          <Typography variant="h6" gutterBottom sx={{ mt: 1 }}>
+            1. Basic Information
+          </Typography>
           <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
               <FormControl fullWidth margin="normal">
@@ -1956,19 +2268,124 @@ export default function VicePrincipalDashboard() {
             </Grid>
           </Grid>
 
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Subject</InputLabel>
-            <Select
-              value={newCurriculum.subject}
-              onChange={(e) => setNewCurriculum({ ...newCurriculum, subject: e.target.value })}
-              label="Subject"
-            >
-              {availableSubjects.map((subject) => (
-                <MenuItem key={subject} value={subject}>{subject}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Subject</InputLabel>
+                <Select
+                  value={newCurriculum.subject}
+                  onChange={(e) => setNewCurriculum({ ...newCurriculum, subject: e.target.value })}
+                  label="Subject"
+                >
+                  {availableSubjects.map((subject) => (
+                    <MenuItem key={subject} value={subject}>{subject}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Instructor/Teacher</InputLabel>
+                <Select
+                  value={newCurriculum.instructor}
+                  onChange={(e) => setNewCurriculum({ ...newCurriculum, instructor: e.target.value })}
+                  label="Instructor/Teacher"
+                >
+                  {teachers?.map((teacher) => (
+                    <MenuItem key={teacher._id} value={teacher._id}>
+                      {teacher.name} ({teacher.email})
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
 
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Academic Year</InputLabel>
+                <Select
+                  value={newCurriculum.academicYear}
+                  onChange={(e) => setNewCurriculum({ ...newCurriculum, academicYear: e.target.value })}
+                  label="Academic Year"
+                >
+                  {[new Date().getFullYear(), new Date().getFullYear() + 1, new Date().getFullYear() + 2].map((year) => (
+                    <MenuItem key={year} value={year.toString()}>{year}-{(year + 1).toString().slice(-2)}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Semester/Term</InputLabel>
+                <Select
+                  value={newCurriculum.semester}
+                  onChange={(e) => setNewCurriculum({ ...newCurriculum, semester: e.target.value })}
+                  label="Semester/Term"
+                >
+                  <MenuItem value="First Term">First Term</MenuItem>
+                  <MenuItem value="Second Term">Second Term</MenuItem>
+                  <MenuItem value="Third Term">Third Term</MenuItem>
+                  <MenuItem value="Annual">Annual</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <TextField 
+                label="Course Code" 
+                fullWidth 
+                margin="normal"
+                placeholder="e.g., MATH101, ENG201"
+                value={newCurriculum.courseCode} 
+                onChange={e => setNewCurriculum({ ...newCurriculum, courseCode: e.target.value })} 
+              />
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <TextField 
+                label="Prerequisites" 
+                fullWidth 
+                margin="normal"
+                placeholder="e.g., Grade 6 Mathematics, Basic Algebra"
+                value={newCurriculum.prerequisites} 
+                onChange={e => setNewCurriculum({ ...newCurriculum, prerequisites: e.target.value })} 
+              />
+            </Grid>
+          </Grid>
+
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <TextField 
+                label="Total Hours" 
+                fullWidth 
+                margin="normal"
+                placeholder="e.g., 120 hours"
+                value={newCurriculum.totalHours} 
+                onChange={e => setNewCurriculum({ ...newCurriculum, totalHours: e.target.value })} 
+              />
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <TextField 
+                label="Contact Hours" 
+                fullWidth 
+                margin="normal"
+                placeholder="e.g., 80 hours"
+                value={newCurriculum.contactHours} 
+                onChange={e => setNewCurriculum({ ...newCurriculum, contactHours: e.target.value })} 
+              />
+            </Grid>
+          </Grid>
+
+          <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+            2. Description
+          </Typography>
           <TextField 
             label="Description" 
             fullWidth 
@@ -1980,6 +2397,9 @@ export default function VicePrincipalDashboard() {
             onChange={e => setNewCurriculum({ ...newCurriculum, description: e.target.value })} 
           />
           
+          <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+            3. Learning Objectives
+          </Typography>
           <TextField 
             label="Learning Objectives" 
             fullWidth 
@@ -1990,6 +2410,179 @@ export default function VicePrincipalDashboard() {
             value={newCurriculum.objectives} 
             onChange={e => setNewCurriculum({ ...newCurriculum, objectives: e.target.value })} 
           />
+
+          <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+            4. Weekly/Unit-Wise Syllabus Plan
+          </Typography>
+          <Typography variant="body2" color="textSecondary" gutterBottom>
+            This section will be populated with teacher remarks and feedback during implementation.
+          </Typography>
+          <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1, border: '1px dashed grey' }}>
+            <Typography variant="body2" color="textSecondary" align="center">
+              Teacher remarks will be added here as the curriculum is implemented
+            </Typography>
+          </Box>
+
+          <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+            5. Assessment Methods
+          </Typography>
+          <TextField 
+            label="Assessment Methods" 
+            fullWidth 
+            margin="normal" 
+            multiline 
+            rows={3}
+            placeholder="Describe the assessment methods (quizzes, assignments, projects, examinations)..."
+            value={newCurriculum.assessmentMethods} 
+            onChange={e => setNewCurriculum({ ...newCurriculum, assessmentMethods: e.target.value })} 
+          />
+
+          <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+            6. Learning Resources
+          </Typography>
+          <TextField 
+            label="Learning Resources" 
+            fullWidth 
+            margin="normal" 
+            multiline 
+            rows={3}
+            placeholder="List the learning resources (textbooks, digital resources, laboratory equipment)..."
+            value={newCurriculum.learningResources} 
+            onChange={e => setNewCurriculum({ ...newCurriculum, learningResources: e.target.value })} 
+          />
+
+          <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+            Topics & Learning Outcomes (Optional)
+          </Typography>
+          <Typography variant="body2" color="textSecondary" gutterBottom>
+            Add specific topics and their learning outcomes:
+          </Typography>
+          
+          <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1, mb: 2 }}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <TextField 
+                  label="Topic Title" 
+                  fullWidth 
+                  size="small"
+                  value={newCurriculum.newTopic.title} 
+                  onChange={e => setNewCurriculum({ 
+                    ...newCurriculum, 
+                    newTopic: { ...newCurriculum.newTopic, title: e.target.value } 
+                  })} 
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField 
+                  label="Duration" 
+                  fullWidth 
+                  size="small"
+                  placeholder="e.g., 2 weeks"
+                  value={newCurriculum.newTopic.duration} 
+                  onChange={e => setNewCurriculum({ 
+                    ...newCurriculum, 
+                    newTopic: { ...newCurriculum.newTopic, duration: e.target.value } 
+                  })} 
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField 
+                  label="Topic Description" 
+                  fullWidth 
+                  size="small"
+                  multiline 
+                  rows={2}
+                  value={newCurriculum.newTopic.description} 
+                  onChange={e => setNewCurriculum({ 
+                    ...newCurriculum, 
+                    newTopic: { ...newCurriculum.newTopic, description: e.target.value } 
+                  })} 
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <Box display="flex" gap={1} alignItems="center">
+                  <TextField 
+                    label="Learning Outcome" 
+                    fullWidth 
+                    size="small"
+                    value={newCurriculum.newLearningOutcome} 
+                    onChange={e => setNewCurriculum({ ...newCurriculum, newLearningOutcome: e.target.value })} 
+                  />
+                  <Button 
+                    variant="outlined" 
+                    size="small" 
+                    onClick={addLearningOutcome}
+                    disabled={!newCurriculum.newLearningOutcome}
+                  >
+                    Add
+                  </Button>
+                </Box>
+                {newCurriculum.newTopic.learningOutcomes.length > 0 && (
+                  <Box sx={{ mt: 1 }}>
+                    {newCurriculum.newTopic.learningOutcomes.map((outcome, index) => (
+                      <Chip 
+                        key={index}
+                        label={outcome}
+                        size="small"
+                        onDelete={() => removeLearningOutcome(index)}
+                        sx={{ mr: 0.5, mb: 0.5 }}
+                      />
+                    ))}
+                  </Box>
+                )}
+              </Grid>
+              <Grid item xs={12}>
+                <Button 
+                  variant="outlined" 
+                  onClick={addTopic}
+                  disabled={!newCurriculum.newTopic.title || !newCurriculum.newTopic.description}
+                  startIcon={<AddIcon />}
+                >
+                  Add Topic
+                </Button>
+              </Grid>
+            </Grid>
+          </Box>
+
+          {newCurriculum.topics.length > 0 && (
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Added Topics ({newCurriculum.topics.length}):
+              </Typography>
+              {newCurriculum.topics.map((topic, index) => (
+                <Box key={index} sx={{ p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1, mb: 1 }}>
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Typography variant="body2" fontWeight="medium">
+                      {topic.title} ({topic.duration})
+                    </Typography>
+                    <Button 
+                      size="small" 
+                      color="error" 
+                      onClick={() => removeTopic(index)}
+                    >
+                      Remove
+                    </Button>
+                  </Box>
+                  <Typography variant="body2" color="textSecondary">
+                    {topic.description}
+                  </Typography>
+                  {topic.learningOutcomes.length > 0 && (
+                    <Box sx={{ mt: 1 }}>
+                      {topic.learningOutcomes.map((outcome, idx) => (
+                        <Chip 
+                          key={idx}
+                          label={outcome}
+                          size="small"
+                          variant="outlined"
+                          sx={{ mr: 0.5, mb: 0.5 }}
+                        />
+                      ))}
+                    </Box>
+                  )}
+                </Box>
+              ))}
+            </Box>
+          )}
 
           <Box mt={2}>
             <Typography variant="subtitle2" gutterBottom>
@@ -2597,6 +3190,92 @@ export default function VicePrincipalDashboard() {
               Edit Plan
             </Button>
           )}
+        </DialogActions>
+      </Dialog>
+
+      {/* Teacher Remarks Dialog for Point 4 */}
+      <Dialog open={teacherRemarksDialog} onClose={handleCloseTeacherRemarksDialog} maxWidth="lg" fullWidth>
+        <DialogTitle>
+          <Box display="flex" alignItems="center" gap={1}>
+            <CommentIcon color="primary" />
+            Teacher Remarks - Point 4: Weekly/Unit-Wise Syllabus Plan
+            {selectedCurriculumForRemarks && (
+              <Typography variant="subtitle2" color="textSecondary">
+                ({selectedCurriculumForRemarks.subject} - Grade {selectedCurriculumForRemarks.grade})
+              </Typography>
+            )}
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {loadingTeacherRemarks ? (
+            <Box display="flex" justifyContent="center" p={3}>
+              <CircularProgress />
+            </Box>
+          ) : teacherRemarks.length > 0 ? (
+            <Box>
+              <Typography variant="body2" color="textSecondary" gutterBottom>
+                This table shows teacher remarks and feedback for the curriculum implementation:
+              </Typography>
+              <TableContainer component={Paper} sx={{ mt: 2 }}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell><strong>Week / Unit</strong></TableCell>
+                      <TableCell><strong>Teacher Name</strong></TableCell>
+                      <TableCell><strong>Remarks / Feedback</strong></TableCell>
+                      <TableCell><strong>Action Taken</strong></TableCell>
+                      <TableCell><strong>Date</strong></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {teacherRemarks.map((remark, index) => (
+                      <TableRow key={remark._id || index}>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight="medium">
+                            {remark.unitChapter || `Week ${index + 1}`}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {remark.teacherName || 'N/A'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {remark.teacherRemarks || remark.remarksTopicsLeft || 'No remarks provided'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {remark.status === 'Completed' ? 'Completed' : 
+                             remark.status === 'In Progress' ? 'In Progress' : 
+                             remark.status === 'Delayed' ? 'Needs Attention' : 'Not Started'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {remark.startDate ? new Date(remark.startDate).toLocaleDateString() : 'N/A'}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          ) : (
+            <Box textAlign="center" p={3}>
+              <Typography variant="body2" color="textSecondary">
+                No teacher remarks found for this curriculum plan.
+              </Typography>
+              <Typography variant="caption" color="textSecondary">
+                Teachers can add remarks through their dashboard.
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseTeacherRemarksDialog}>Close</Button>
         </DialogActions>
       </Dialog>
     </Box>

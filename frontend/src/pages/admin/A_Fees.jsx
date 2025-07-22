@@ -62,8 +62,8 @@ const A_Fees = () => {
     const fetchData = async () => {
       try {
         const [feeRes, approvalRes, classRes] = await Promise.all([
-          axios.get('https://api.edulives.com/api/admin-staff/fee-structure/public'),
-          axios.get('https://api.edulives.com/api/admin-staff/approvals?requestType=Fee')
+                axios.get('https://api.edulives.com/api/admin-staff/fee-structure/public'),
+      axios.get('https://api.edulives.com/api/admin-staff/approvals?requestType=Fee')
         ]);
         
         setFeeStructures(feeRes.data);
@@ -80,7 +80,7 @@ const A_Fees = () => {
 
   const fetchClasses = async () => {
     try {
-      const response = await axios.get('https://api.edulives.com/api/admin-staff/classes/public');
+              const response = await axios.get('https://api.edulives.com/api/admin-staff/classes/public');
       console.log('Classes data received:', response.data);
       setClasses(response.data);
     } catch (error) {

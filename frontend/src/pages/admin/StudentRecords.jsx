@@ -109,7 +109,7 @@ function StudentRecords() {
   const { data: students = [], isLoading: studentsLoading } = useQuery({
     queryKey: ['students'],
     queryFn: async () => {
-      const response = await axios.get('https://api.edulives.com/api/admin-staff/students/public');
+              const response = await axios.get('https://api.edulives.com/api/admin-staff/students/public');
       return response.data;
     },
     onError: (error) => {
@@ -122,7 +122,7 @@ function StudentRecords() {
   const { data: classes = [], isLoading: classesLoading } = useQuery({
     queryKey: ['classes'],
     queryFn: async () => {
-      const response = await axios.get('https://api.edulives.com/api/admin-staff/classes/public');
+              const response = await axios.get('https://api.edulives.com/api/admin-staff/classes/public');
       return response.data;
     },
     onError: (error) => {
@@ -143,7 +143,7 @@ function StudentRecords() {
       });
       const config = { headers: { 'Content-Type': 'multipart/form-data' } };
       if (selectedStudent) {
-        await axios.put(`https://api.edulives.com/api/admin-staff/students/public/${selectedStudent._id}`, formData, config);
+                  await axios.put(`https://api.edulives.com/api/admin-staff/students/public/${selectedStudent._id}`, formData, config);
       } else {
                   await axios.post('https://api.edulives.com/api/admin-staff/students/public', formData, config);
       }

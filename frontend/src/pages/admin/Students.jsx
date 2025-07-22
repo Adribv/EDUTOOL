@@ -57,7 +57,7 @@ function Students() {
   const { data: students, isLoading: studentsLoading } = useQuery({
     queryKey: ['students'],
     queryFn: async () => {
-      const response = await axios.get('https://api.edulives.com/api/admin-staff/students');
+              const response = await axios.get('https://api.edulives.com/api/admin-staff/students');
       return response.data;
     }
   });
@@ -66,7 +66,7 @@ function Students() {
   const { data: classes, isLoading: classesLoading } = useQuery({
     queryKey: ['classes'],
     queryFn: async () => {
-      const response = await axios.get('https://api.edulives.com/api/admin-staff/classes');
+              const response = await axios.get('https://api.edulives.com/api/admin-staff/classes');
       return response.data;
     }
   });
@@ -75,7 +75,7 @@ function Students() {
   const mutation = useMutation({
     mutationFn: async (values) => {
       if (selectedStudent) {
-        await axios.put(`https://api.edulives.com/api/admin-staff/students/${selectedStudent.id}`, values);
+                  await axios.put(`https://api.edulives.com/api/admin-staff/students/${selectedStudent.id}`, values);
       } else {
                   await axios.post('https://api.edulives.com/api/admin-staff/students', values);
       }

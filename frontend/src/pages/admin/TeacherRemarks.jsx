@@ -87,19 +87,27 @@ const TeacherRemarks = () => {
     class: '',
     section: '',
     subject: '',
+    teacherName: '',
     unitChapter: '',
-    startDate: null,
-    plannedCompletionDate: null,
+    startDate: '',
+    plannedCompletionDate: '',
+    actualCompletionDate: '',
+    status: 'Not started',
     numberOfPeriodsAllotted: '',
+    numberOfPeriodsTaken: '0',
     teachingMethodUsed: '',
-    academicYear: '',
-    semester: ''
+    completionRate: '0',
+    remarks: '',
+    academicYear: new Date().getFullYear().toString(),
+    semester: 'First Term'
   });
 
   const classes = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
   const sections = ['A', 'B', 'C', 'D', 'E', 'F'];
+  const subjects = ['Mathematics', 'English', 'Science', 'Social Studies', 'History', 'Geography', 'Physics', 'Chemistry', 'Biology', 'Computer Science', 'Art', 'Music', 'Physical Education', 'Economics', 'Business Studies', 'Literature', 'Environmental Science', 'Psychology', 'Sociology', 'Political Science'];
+  const statusOptions = ['Not started', 'In Progress', 'Completed', 'Delayed'];
+  const teachingMethods = ['Lecture', 'Activity based', 'Project', 'Discussion', 'Demonstration', 'Laboratory', 'Field Trip', 'Audio-Visual', 'Interactive', 'Blended Learning', 'Problem Solving', 'Case Study', 'Role Play', 'Simulation', 'Other'];
   const semesters = ['First Term', 'Second Term', 'Third Term', 'Annual'];
-  const statuses = ['Not started', 'In Progress', 'Completed', 'Delayed'];
   const formStatuses = ['Draft', 'Submitted', 'Reviewed', 'Approved'];
 
   useEffect(() => {
@@ -183,11 +191,17 @@ const TeacherRemarks = () => {
       class: form.class,
       section: form.section,
       subject: form.subject,
+      teacherName: form.teacherName,
       unitChapter: form.unitChapter,
-      startDate: new Date(form.startDate),
-      plannedCompletionDate: new Date(form.plannedCompletionDate),
+      startDate: form.startDate,
+      plannedCompletionDate: form.plannedCompletionDate,
+      actualCompletionDate: form.actualCompletionDate,
+      status: form.status,
       numberOfPeriodsAllotted: form.numberOfPeriodsAllotted,
+      numberOfPeriodsTaken: form.numberOfPeriodsTaken,
       teachingMethodUsed: form.teachingMethodUsed,
+      completionRate: form.completionRate,
+      remarks: form.remarks,
       academicYear: form.academicYear,
       semester: form.semester
     });
@@ -204,13 +218,19 @@ const TeacherRemarks = () => {
       class: '',
       section: '',
       subject: '',
+      teacherName: '',
       unitChapter: '',
-      startDate: null,
-      plannedCompletionDate: null,
+      startDate: '',
+      plannedCompletionDate: '',
+      actualCompletionDate: '',
+      status: 'Not started',
       numberOfPeriodsAllotted: '',
+      numberOfPeriodsTaken: '0',
       teachingMethodUsed: '',
-      academicYear: '',
-      semester: ''
+      completionRate: '0',
+      remarks: '',
+      academicYear: new Date().getFullYear().toString(),
+      semester: 'First Term'
     });
   };
 
@@ -358,7 +378,7 @@ const TeacherRemarks = () => {
                     onChange={(e) => handleFilterChange('status', e.target.value)}
                   >
                     <MenuItem value="">All Statuses</MenuItem>
-                    {statuses.map(status => (
+                    {statusOptions.map(status => (
                       <MenuItem key={status} value={status}>{status}</MenuItem>
                     ))}
                   </Select>
@@ -432,20 +452,31 @@ const TeacherRemarks = () => {
                   <TableCell>Class</TableCell>
                   <TableCell>Section</TableCell>
                   <TableCell>Subject</TableCell>
+                  <TableCell>Teacher Name</TableCell>
                   <TableCell>Unit/Chapter</TableCell>
+                  <TableCell>Start Date</TableCell>
+                  <TableCell>Planned Completion Date</TableCell>
+                  <TableCell>Actual Completion Date</TableCell>
                   <TableCell>Status</TableCell>
-                  <TableCell>Form Status</TableCell>
+                  <TableCell>No of Periods Allotted</TableCell>
+                  <TableCell>No of Periods Taken</TableCell>
+                  <TableCell>Teaching Method Used</TableCell>
                   <TableCell>Completion Rate</TableCell>
+                  <TableCell>Remarks/Topics Left</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {forms.map((form) => (
                   <TableRow key={form._id}>
-                    <TableCell>Class {form.class}</TableCell>
-                    <TableCell>Section {form.section}</TableCell>
+                    <TableCell>{form.class}</TableCell>
+                    <TableCell>{form.section}</TableCell>
                     <TableCell>{form.subject}</TableCell>
+                    <TableCell>{form.teacherName}</TableCell>
                     <TableCell>{form.unitChapter}</TableCell>
+                    <TableCell>{form.startDate ? new Date(form.startDate).toLocaleDateString() : '-'}</TableCell>
+                    <TableCell>{form.plannedCompletionDate ? new Date(form.plannedCompletionDate).toLocaleDateString() : '-'}</TableCell>
+                    <TableCell>{form.actualCompletionDate ? new Date(form.actualCompletionDate).toLocaleDateString() : '-'}</TableCell>
                     <TableCell>
                       <Chip
                         label={form.status}
@@ -453,14 +484,11 @@ const TeacherRemarks = () => {
                         size="small"
                       />
                     </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={form.formStatus}
-                        color={getFormStatusColor(form.formStatus)}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>{form.completionRate}%</TableCell>
+                    <TableCell>{form.numberOfPeriodsAllotted || '-'}</TableCell>
+                    <TableCell>{form.numberOfPeriodsTaken || '0'}</TableCell>
+                    <TableCell>{form.teachingMethodUsed || '-'}</TableCell>
+                    <TableCell>{form.completionRate || '0'}</TableCell>
+                    <TableCell>{form.remarks || '-'}</TableCell>
                     <TableCell>
                       <Tooltip title="View Details">
                         <IconButton onClick={() => handleViewForm(form)}>
@@ -536,6 +564,14 @@ const TeacherRemarks = () => {
                   onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                 />
               </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Teacher Name"
+                  value={formData.teacherName}
+                  onChange={(e) => setFormData({ ...formData, teacherName: e.target.value })}
+                />
+              </Grid>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
@@ -561,6 +597,27 @@ const TeacherRemarks = () => {
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
+                <DatePicker
+                  label="Actual Completion Date"
+                  value={formData.actualCompletionDate}
+                  onChange={(date) => setFormData({ ...formData, actualCompletionDate: date })}
+                  renderInput={(params) => <TextField {...params} fullWidth />}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Status</InputLabel>
+                  <Select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  >
+                    {statusOptions.map(status => (
+                      <MenuItem key={status} value={status}>{status}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Number of Periods Allotted"
@@ -572,9 +629,42 @@ const TeacherRemarks = () => {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Teaching Method Used"
-                  value={formData.teachingMethodUsed}
-                  onChange={(e) => setFormData({ ...formData, teachingMethodUsed: e.target.value })}
+                  label="Number of Periods Taken"
+                  type="number"
+                  value={formData.numberOfPeriodsTaken}
+                  onChange={(e) => setFormData({ ...formData, numberOfPeriodsTaken: e.target.value })}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Teaching Method Used</InputLabel>
+                  <Select
+                    value={formData.teachingMethodUsed}
+                    onChange={(e) => setFormData({ ...formData, teachingMethodUsed: e.target.value })}
+                  >
+                    {teachingMethods.map(method => (
+                      <MenuItem key={method} value={method}>{method}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Completion Rate"
+                  type="number"
+                  value={formData.completionRate}
+                  onChange={(e) => setFormData({ ...formData, completionRate: e.target.value })}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Remarks/Topics Left"
+                  multiline
+                  rows={4}
+                  value={formData.remarks}
+                  onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -629,6 +719,10 @@ const TeacherRemarks = () => {
                   <Typography variant="subtitle2">Subject:</Typography>
                   <Typography>{selectedForm.subject}</Typography>
                 </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2">Teacher Name:</Typography>
+                  <Typography>{selectedForm.teacherName}</Typography>
+                </Grid>
                 <Grid item xs={12}>
                   <Typography variant="subtitle2">Unit/Chapter:</Typography>
                   <Typography>{selectedForm.unitChapter}</Typography>
@@ -668,16 +762,8 @@ const TeacherRemarks = () => {
                   <Typography>{selectedForm.completionRate}%</Typography>
                 </Grid>
                 <Grid item xs={12}>
-                  <Typography variant="subtitle2">Teacher Remarks:</Typography>
-                  <Typography>{selectedForm.teacherRemarks || 'No remarks yet'}</Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography variant="subtitle2">Areas of Concern:</Typography>
-                  <Typography>{selectedForm.areasOfConcern || 'None specified'}</Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography variant="subtitle2">Suggestions for Improvement:</Typography>
-                  <Typography>{selectedForm.suggestionsForImprovement || 'None specified'}</Typography>
+                  <Typography variant="subtitle2">Remarks/Topics Left:</Typography>
+                  <Typography>{selectedForm.remarks || 'None specified'}</Typography>
                 </Grid>
               </Grid>
             )}

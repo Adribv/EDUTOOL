@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Department = require('../../../models/Staff/HOD/department.model');
+const TeacherRemarks = require('../../../models/teacherRemarks.model');
 
 // Create a curriculum plan model
 const curriculumPlanSchema = new mongoose.Schema({
@@ -16,6 +17,27 @@ const curriculumPlanSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  instructor: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Staff',
+    required: false
+  },
+  courseCode: {
+    type: String,
+    default: ''
+  },
+  prerequisites: {
+    type: String,
+    default: ''
+  },
+  totalHours: {
+    type: String,
+    default: ''
+  },
+  contactHours: {
+    type: String,
+    default: ''
+  },
   description: {
     type: String,
     required: true
@@ -23,6 +45,23 @@ const curriculumPlanSchema = new mongoose.Schema({
   objectives: {
     type: String,
     required: true
+  },
+  academicYear: {
+    type: String,
+    required: true
+  },
+  semester: {
+    type: String,
+    enum: ['First Term', 'Second Term', 'Third Term', 'Annual'],
+    required: true
+  },
+  assessmentMethods: {
+    type: String,
+    default: ''
+  },
+  learningResources: {
+    type: String,
+    default: ''
   },
   topics: [{
     title: String,
@@ -85,7 +124,23 @@ exports.getApprovedCurriculumPlans = async (req, res) => {
 // Create a new curriculum plan
 exports.createCurriculumPlan = async (req, res) => {
   try {
-    const { departmentId, subject, grade, description, objectives, topics } = req.body;
+    const { 
+      departmentId, 
+      subject, 
+      grade, 
+      instructor,
+      courseCode,
+      prerequisites,
+      totalHours,
+      contactHours,
+      description, 
+      objectives, 
+      topics,
+      academicYear,
+      semester,
+      assessmentMethods,
+      learningResources
+    } = req.body;
     
     // Verify department exists
     const department = await Department.findById(departmentId);
@@ -97,8 +152,17 @@ exports.createCurriculumPlan = async (req, res) => {
       departmentId: department._id,
       subject,
       grade,
+      instructor: instructor || null,
+      courseCode: courseCode || '',
+      prerequisites: prerequisites || '',
+      totalHours: totalHours || '',
+      contactHours: contactHours || '',
       description,
       objectives,
+      academicYear: academicYear || new Date().getFullYear().toString(),
+      semester: semester || 'First Term',
+      assessmentMethods: assessmentMethods || '',
+      learningResources: learningResources || '',
       topics: topics || [],
       status: 'Draft',
       createdBy: req.user.id
@@ -108,6 +172,7 @@ exports.createCurriculumPlan = async (req, res) => {
     
     const populatedPlan = await CurriculumPlan.findById(curriculumPlan._id)
       .populate('departmentId', 'name')
+      .populate('instructor', 'name email')
       .populate('createdBy', 'name email');
     
     res.status(201).json({ message: 'Curriculum plan created successfully', plan: populatedPlan });
@@ -233,6 +298,67 @@ exports.deleteCurriculumPlan = async (req, res) => {
     res.json({ message: 'Curriculum plan deleted successfully' });
   } catch (error) {
     console.error('Error deleting curriculum plan:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+}; 
+
+// Get teacher remarks for a curriculum plan (for point 4)
+exports.getTeacherRemarksForCurriculum = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const curriculumPlan = await CurriculumPlan.findById(id);
+    if (!curriculumPlan) {
+      return res.status(404).json({ message: 'Curriculum plan not found' });
+    }
+    // Map curriculum fields to teacher remarks query
+    const filter = {
+      class: curriculumPlan.grade,
+      subject: curriculumPlan.subject,
+      academicYear: curriculumPlan.academicYear || '',
+      semester: curriculumPlan.semester || '',
+    };
+    // Optionally, add section if available
+    if (curriculumPlan.section) filter.section = curriculumPlan.section;
+    // Fetch teacher remarks
+    const remarks = await TeacherRemarks.find(filter).sort({ startDate: 1 });
+    res.json({ success: true, data: remarks });
+  } catch (error) {
+    console.error('Error fetching teacher remarks for curriculum:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Get all teachers
+exports.getAllTeachers = async (req, res) => {
+  try {
+    const Staff = require('../../../models/Staff/staffModel');
+    const teachers = await Staff.find({ role: 'Teacher' })
+      .select('name email department')
+      .populate('department', 'name')
+      .sort({ name: 1 });
+    
+    res.json(teachers);
+  } catch (error) {
+    console.error('Error fetching teachers:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Get teachers by department
+exports.getTeachersByDepartment = async (req, res) => {
+  try {
+    const { departmentId } = req.params;
+    const Staff = require('../../../models/Staff/staffModel');
+    const teachers = await Staff.find({ 
+      role: 'Teacher', 
+      department: departmentId 
+    })
+      .select('name email')
+      .sort({ name: 1 });
+    
+    res.json(teachers);
+  } catch (error) {
+    console.error('Error fetching teachers by department:', error);
     res.status(500).json({ message: 'Server error' });
   }
 }; 

@@ -75,6 +75,7 @@ const FeeRecords = () => {
     term: 'Annual',
     totalFee: '',
     paymentReceived: '0',
+    balanceDue: '0',
     dueDate: '',
     parentName: '',
     contactNumber: '',
@@ -127,7 +128,7 @@ const FeeRecords = () => {
       setStats(statsRes.data);
       
       // Fetch student fee records
-      const studentRecordsRes = await axios.get(`https://api.edulives.com/api/admin-staff/fee-records/student?page=${page + 1}&limit=${rowsPerPage}`, config);
+              const studentRecordsRes = await axios.get(`https://api.edulives.com/api/admin-staff/fee-records/student?page=${page + 1}&limit=${rowsPerPage}`, config);
       setStudentFeeRecords(studentRecordsRes.data.data);
       setTotalRecords(studentRecordsRes.data.pagination.totalRecords);
     } catch (error) {
@@ -148,7 +149,7 @@ const FeeRecords = () => {
         }
       };
       // Use direct creation endpoint for immediate testing
-      await axios.post('https://api.edulives.com/api/admin-staff/fee-records/student/direct', studentFeeForm, config);
+              await axios.post('https://api.edulives.com/api/admin-staff/fee-records/student/direct', studentFeeForm, config);
       toast.success('Student fee record created successfully');
       setStudentFeeDialog(false);
       resetStudentFeeForm();
@@ -198,7 +199,7 @@ const FeeRecords = () => {
         }
       };
       
-      const response = await axios.post('https://api.edulives.com/api/admin-staff/fee-records/student/bulk-import', { records: sheetData }, config);
+              const response = await axios.post('https://api.edulives.com/api/admin-staff/fee-records/student/bulk-import', { records: sheetData }, config);
       
       toast.success(`Bulk import completed! ${response.data.results.successful.length} successful, ${response.data.results.failed.length} failed`);
       
@@ -228,7 +229,7 @@ const FeeRecords = () => {
           'Authorization': `Bearer ${token}`
         }
       };
-      const response = await axios.get('https://api.edulives.com/api/admin-staff/fee-records/pending-approvals', config);
+              const response = await axios.get('https://api.edulives.com/api/admin-staff/fee-records/pending-approvals', config);
       console.log('📋 Pending approvals:', response.data);
       if (response.data.count > 0) {
         toast.info(`Found ${response.data.count} pending fee record approvals`);
@@ -251,6 +252,7 @@ const FeeRecords = () => {
       term: 'Annual',
       totalFee: '',
       paymentReceived: '0',
+      balanceDue: '0',
       dueDate: '',
       parentName: '',
       contactNumber: '',
@@ -611,6 +613,19 @@ const FeeRecords = () => {
                 InputProps={{
                   startAdornment: <InputAdornment position="start">₹</InputAdornment>,
                 }}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                label="Balance Due"
+                type="number"
+                fullWidth
+                value={Math.max(0, (parseFloat(studentFeeForm.totalFee) || 0) - (parseFloat(studentFeeForm.paymentReceived) || 0))}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                }}
+                disabled
+                helperText="Calculated automatically"
               />
             </Grid>
             <Grid item xs={12} md={4}>

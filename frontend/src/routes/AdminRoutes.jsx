@@ -44,6 +44,8 @@ import TransportFormsManagement from '../pages/admin/TransportFormsManagement';
 import TransportFormCreate from '../pages/admin/TransportFormCreate';
 import TransportFormView from '../pages/admin/TransportFormView';
 import TeacherRemarks from '../pages/admin/TeacherRemarks';
+import SyllabusCompletion from '../pages/admin/SyllabusCompletion';
+import CurriculumTemplateDemo from '../pages/admin/CurriculumTemplateDemo';
 
 const AdminRoutes = () => {
   return (
@@ -86,8 +88,12 @@ const AdminRoutes = () => {
         <Route path="Visitors" element={<Visitors />} />
         <Route path="Enquiries" element={<A_Enquiries />} />
         <Route path="service-requests" element={<A_ServiceRequests />} />
+        {/* Syllabus Completion Route */}
+        <Route path="syllabus-completion" element={<SyllabusCompletion />} />
         {/* Teacher Remarks Routes */}
         <Route path="teacher-remarks" element={<TeacherRemarks />} />
+        {/* Curriculum Template Demo Route */}
+        <Route path="curriculum-template-demo" element={<CurriculumTemplateDemo />} />
         {/* Transport Forms Routes */}
         <Route path="transport-forms" element={<TransportFormsManagement />} />
         <Route path="transport-forms/create" element={<TransportFormCreate />} />
