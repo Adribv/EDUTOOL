@@ -109,6 +109,7 @@ app.use('/api/disciplinary-forms', require('./routes/disciplinaryForm.routes'));
 app.use('/api/disciplinary-templates', require('./routes/disciplinaryFormTemplate.routes'));
 app.use('/api/transport-forms', require('./routes/transportForm.routes'));
 app.use('/api/counselling-requests', counsellingRequestRoutes);
+app.use('/api/admin', require('./routes/Admin/adminRoutes'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {

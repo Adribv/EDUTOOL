@@ -1,16 +1,16 @@
 import { Box, Typography, Alert } from '@mui/material';
 
-const DepartmentManagement = () => {
+const MemberManagement = () => {
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom>
-        Department Management
+        Member Management
       </Typography>
       <Alert severity="info">
-        This feature is coming soon. You'll be able to manage your department here.
+        This feature is coming soon. You'll be able to manage library members here.
       </Alert>
     </Box>
   );
 };
 
-export default DepartmentManagement; 
+export default MemberManagement; 

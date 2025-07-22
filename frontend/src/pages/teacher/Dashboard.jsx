@@ -1,7 +1,7 @@
 // ... existing code ...
 // (The code will be replaced with a full-featured, tabbed/accordion dashboard for teachers, covering all teacherRoutes.js features, with dynamic API calls and UI for each.)
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box, Typography, Tabs, Tab, Card, CardContent, Button, Grid, Dialog, DialogTitle, DialogContent, DialogActions, 
   TextField, Table, TableHead, TableRow, TableCell, TableBody, CircularProgress, IconButton, Accordion, 
@@ -21,7 +21,7 @@ import {
   Favorite, FavoriteBorder, ThumbUp, ThumbDown, VisibilityOff, Archive, Unarchive,
   Block, Report, Flag, Bookmark, BookmarkBorder, PlayArrow, Pause, Stop, SkipNext,
   VolumeUp, VolumeOff, Fullscreen, FullscreenExit, ZoomIn, ZoomOut, RotateLeft, RotateRight,
-  SupervisorAccount, People, Cancel, Approval, RateReview
+  SupervisorAccount, People, Cancel, Approval, RateReview, Computer
 } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { teacherAPI, staffAPI } from '../../services/api';
@@ -38,34 +38,106 @@ import Communication from './Communication';
 import LeaveRequests from './LeaveRequests';
 import TeacherLeaveRequests from './TeacherLeaveRequests';
 import LessonPlans from './LessonPlans';
-import SubstituteRequests from './SubstituteRequests';
 import SubstituteTeacherRequest from './SubstituteTeacherRequest';
 import TeacherRemarks from './TeacherRemarks';
 import { teacherRemarksAPI } from '../../services/api';
+import { api } from '../../services/api';
+import CounsellingRequestForm from '../../components/CounsellingRequestForm';
+import ITSupportRequest from '../student/ITSupportRequest';
+
+// Service Request Component
+function ServiceRequest() {
+  const [activeServiceTab, setActiveServiceTab] = useState(0);
+
+  const handleServiceTabChange = (event, newValue) => {
+    setActiveServiceTab(newValue);
+  };
+
+  const serviceTabs = [
+    { label: 'Substitute Request', icon: <Approval /> },
+    { label: 'Counselling Request', icon: <Psychology /> },
+    { label: 'IT Support Request', icon: <Computer /> },
+  ];
+
+  const renderServiceContent = () => {
+    switch (activeServiceTab) {
+      case 0:
+        return <SubstituteTeacherRequest />;
+      case 1:
+        return <CounsellingRequestForm />;
+      case 2:
+        return <ITSupportRequest />;
+      default:
+        return <SubstituteTeacherRequest />;
+    }
+  };
+
+  return (
+    <Box>
+      <Typography variant="h4" gutterBottom>
+        Service Requests
+      </Typography>
+      
+      <Card sx={{ mb: 3 }}>
+        <Tabs
+          value={activeServiceTab}
+          onChange={handleServiceTabChange}
+          variant="fullWidth"
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+        >
+          {serviceTabs.map((tab, index) => (
+            <Tab
+              key={index}
+              label={
+                <Box display="flex" alignItems="center" gap={1}>
+                  {tab.icon}
+                  {tab.label}
+                </Box>
+              }
+              sx={{
+                alignItems: 'flex-start',
+                textAlign: 'left',
+                minHeight: 64,
+                py: 2,
+                px: 2,
+                '&.Mui-selected': {
+                  bgcolor: 'action.selected',
+                },
+                '&:hover': {
+                  bgcolor: 'action.hover',
+                }
+              }}
+            />
+          ))}
+        </Tabs>
+      </Card>
+
+      <Card>
+        <CardContent>
+          {renderServiceContent()}
+        </CardContent>
+      </Card>
+    </Box>
+  );
+}
 
 // Feature tabs configuration
-const featureTabs = [
-  { label: 'Dashboard', icon: <Dashboard />, key: 'dashboard' },
-  { label: 'Profile', icon: <Person />, key: 'profile' },
-  { label: 'Classes', icon: <Class />, key: 'classes' },
-  { label: 'Timetable', icon: <Schedule />, key: 'timetable' },
-  { label: 'Attendance', icon: <CheckCircle />, key: 'attendance' },
-  { label: 'Assignments', icon: <Assignment />, key: 'assignments' },
-  { label: 'Exams', icon: <Assessment />, key: 'exams' },
-  { label: 'Grades', icon: <Grade />, key: 'grades' },
-  { label: 'Students', icon: <Group />, key: 'students' },
-  { label: "Student's Approvals", icon: <Event />, key: 'leaveRequests' },
-  { label: "Substitute Requests", icon: <Approval />, key: 'substituteRequests' },
-  { label: "New Substitute Request", icon: <Add />, key: 'newSubstituteRequest' },
-  { label: "Leave Request", icon: <Assignment />, key: 'teacherLeaveRequests' },
-  { label: 'Resources', icon: <Book />, key: 'resources' },
-  { label: 'Lesson Plans', icon: <Work />, key: 'lessonPlans' },
-  { label: 'Communication', icon: <Message />, key: 'communication' },
-  { label: 'Syllabus Completion', icon: <RateReview />, key: 'remarks' },
-  { label: 'Projects', icon: <Psychology />, key: 'projects' },
-  { label: 'Parent Interaction', icon: <Group />, key: 'parentInteraction' },
-  { label: 'Feedback', icon: <Feedback />, key: 'feedback' },
-  { label: 'Notifications', icon: <Notifications />, key: 'notifications' },
+const allFeatureTabs = [
+  { label: 'Dashboard', icon: <Dashboard />, key: 'dashboard', module: 'dashboard' },
+  { label: 'Profile', icon: <Person />, key: 'profile', module: 'profile' },
+  { label: 'Classes', icon: <Class />, key: 'classes', module: 'classes' },
+  { label: 'Timetable', icon: <Schedule />, key: 'timetable', module: 'timetable' },
+  { label: 'Attendance', icon: <CheckCircle />, key: 'attendance', module: 'attendance' },
+  { label: 'Assignments', icon: <Assignment />, key: 'assignments', module: 'assignments' },
+  { label: 'Exams', icon: <Assessment />, key: 'exams', module: 'exams' },
+  { label: 'Students', icon: <Group />, key: 'students', module: 'students' },
+  { label: "Student's Approvals", icon: <Event />, key: 'leaveRequests', module: 'leaveRequests' },
+  { label: "Leave Request", icon: <Assignment />, key: 'teacherLeaveRequests', module: 'teacherLeaveRequests' },
+  { label: 'Resources', icon: <Book />, key: 'resources', module: 'resources' },
+  { label: 'Lesson Plans', icon: <Work />, key: 'lessonPlans', module: 'lessonPlans' },
+  { label: 'Communication', icon: <Message />, key: 'communication', module: 'communications' },
+  { label: 'Syllabus Completion', icon: <RateReview />, key: 'remarks', module: 'remarks' },
+  { label: 'Service Request', icon: <Psychology />, key: 'serviceRequest', module: 'serviceRequest' },
 ];
 
 // Dashboard Overview Component
@@ -1400,6 +1472,26 @@ export default function TeacherDashboard() {
   const [activeTab, setActiveTab] = useState(0);
   const [anchorEl, setAnchorEl] = useState(null);
   const _staffId = user?._id || user?.id; // Try both _id and id properties
+  const [permissions, setPermissions] = useState(null);
+  const [loadingPermissions, setLoadingPermissions] = useState(true);
+
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      try {
+        if (!_staffId) return;
+        const res = await api.get(`/admin/permissions/${_staffId}`);
+        setPermissions(res.data.data?.permissions || {});
+      } catch (err) {
+        setPermissions({});
+      } finally {
+        setLoadingPermissions(false);
+      }
+    };
+    fetchPermissions();
+  }, [_staffId]);
+
+  // Show all features, none disabled
+  const featureTabs = useMemo(() => allFeatureTabs, []);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -1435,37 +1527,33 @@ export default function TeacherDashboard() {
       case 6:
         return <Exams />;
       case 7:
-        return <div>Grades Component</div>;
-      case 8:
         return <StudentsManagement />;
-      case 9:
+      case 8:
         return <LeaveRequests />;
-      case 10:
-        return <SubstituteRequests />;
-      case 11:
-        return <SubstituteTeacherRequest />;
-      case 12:
+      case 9:
         return <TeacherLeaveRequests />;
-      case 13:
+      case 10:
         return <LearningResources />;
-      case 14:
+      case 11:
         return <LessonPlans />;
-      case 15:
+      case 12:
         return <Communication />;
-      case 16:
+      case 13:
         return <TeacherRemarks />;
-      case 17:
-        return <div>Projects Component</div>;
-      case 18:
-        return <div>Parent Interaction Component</div>;
-      case 19:
-        return <div>Feedback Component</div>;
-      case 20:
-        return <div>Notifications Component</div>;
+      case 14:
+        return <ServiceRequest />;
       default:
         return <DashboardOverview />;
     }
   };
+
+  if (loadingPermissions) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -1514,37 +1602,88 @@ export default function TeacherDashboard() {
       {/* Main Content */}
       <Box sx={{ display: 'flex', flex: 1 }}>
         {/* Sidebar with Tabs */}
-        <Box sx={{ width: 280, bgcolor: 'background.paper', borderRight: 1, borderColor: 'divider' }}>
-          <Tabs
-            orientation="vertical"
-            value={activeTab}
-            onChange={handleTabChange}
-            sx={{ borderRight: 1, borderColor: 'divider', minHeight: 'calc(100vh - 64px)' }}
-          >
-            {featureTabs.map((tab) => (
-              <Tab
-                key={tab.key}
-                label={
-                  <Box display="flex" alignItems="center" gap={1}>
-                    {tab.icon}
-                    {tab.label}
-                  </Box>
+        <Box sx={{ 
+          width: 280, 
+          bgcolor: 'background.paper', 
+          borderRight: 1, 
+          borderColor: 'divider',
+          height: 'calc(100vh - 64px)',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'relative'
+        }}>
+          <Box sx={{
+            flex: 1,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            '&::-webkit-scrollbar': {
+              width: '6px'
+            },
+            '&::-webkit-scrollbar-track': {
+              background: '#f1f1f1'
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: '#c1c1c1',
+              borderRadius: '3px'
+            },
+            '&::-webkit-scrollbar-thumb:hover': {
+              background: '#a8a8a8'
+            }
+          }}>
+            <Tabs
+              orientation="vertical"
+              value={activeTab}
+              onChange={handleTabChange}
+              sx={{ 
+                borderRight: 1, 
+                borderColor: 'divider',
+                minHeight: '100%',
+                '& .MuiTabs-indicator': {
+                  left: 0
+                },
+                '& .MuiTabs-flexContainer': {
+                  minHeight: '100%'
                 }
-                sx={{
-                  alignItems: 'flex-start',
-                  textAlign: 'left',
-                  minHeight: 64,
-                  '&.Mui-selected': {
-                    bgcolor: 'action.selected',
-                  },
-                }}
-              />
-            ))}
-          </Tabs>
+              }}
+            >
+              {featureTabs.map((tab, idx) => (
+                <Tab
+                  key={tab.key}
+                  label={
+                    <Box display="flex" alignItems="center" gap={1}>
+                      {tab.icon}
+                      {tab.label}
+                    </Box>
+                  }
+                  sx={{
+                    alignItems: 'flex-start',
+                    textAlign: 'left',
+                    minHeight: 64,
+                    py: 2,
+                    px: 2,
+                    '&.Mui-selected': {
+                      bgcolor: 'action.selected',
+                    },
+                    '&:hover': {
+                      bgcolor: 'action.hover',
+                    }
+                  }}
+                  disabled={tab.disabled}
+                />
+              ))}
+            </Tabs>
+          </Box>
         </Box>
 
         {/* Content Area */}
-        <Box sx={{ flex: 1, p: 3, overflow: 'auto' }}>
+        <Box sx={{ 
+          flex: 1, 
+          p: 3, 
+          height: 'calc(100vh - 64px)',
+          overflowY: 'auto',
+          overflowX: 'hidden'
+        }}>
           {renderTabContent()}
         </Box>
       </Box>

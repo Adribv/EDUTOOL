@@ -1,16 +1,16 @@
 import { Box, Typography, Alert } from '@mui/material';
 
-const DepartmentManagement = () => {
+const NetworkManagement = () => {
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom>
-        Department Management
+        Network Management
       </Typography>
       <Alert severity="info">
-        This feature is coming soon. You'll be able to manage your department here.
+        This feature is coming soon. You'll be able to manage network here.
       </Alert>
     </Box>
   );
 };
 
-export default DepartmentManagement; 
+export default NetworkManagement; 

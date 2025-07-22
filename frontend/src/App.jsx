@@ -45,17 +45,15 @@ const AdminDashboardProtected = lazy(() => import('./pages/Dashboard').then(modu
 
 // Student Pages
 const StudentRoutes = lazy(() => import('./routes/StudentRoutes'));
-// Teacher Pages
-const TeacherRoutes = lazy(() => import('./routes/TeacherRoutes'));
 // Parent Pages
 const ParentRoutes = lazy(() => import('./routes/ParentRoutes'));
-// Admin Pages
+// Management Pages (unified for all management roles)
+const ManagementRoutes = lazy(() => import('./routes/ManagementRoutes'));
+// Individual route components (kept for backward compatibility)
 const AdminRoutes = lazy(() => import('./routes/AdminRoutes'));
-// HOD Pages
+const TeacherRoutes = lazy(() => import('./routes/TeacherRoutes'));
 const HODRoutes = lazy(() => import('./routes/HODRoutes'));
-// Principal Pages
 const PrincipalRoutes = lazy(() => import('./routes/PrincipalRoutes'));
-// Counselor Pages
 const CounselorRoutes = lazy(() => import('./routes/CounselorRoutes'));
 // Vice Principal Pages
 const VicePrincipalDashboard = lazy(() => import('./pages/viceprincipal/VicePrincipalDashboard'));
@@ -132,11 +130,16 @@ function App() {
                     <Route element={<ProtectedRoute allowedRoles={['Parent']} />}>
                       <Route path="/parent/*" element={<ParentRoutes />} />
                     </Route>
-                    {/* Management Routes */}
+                    {/* Management Routes - Unified system for all management roles */}
+                    <Route element={<ProtectedRoute allowedRoles={['Admin', 'Principal', 'Vice Principal', 'HOD', 'Teacher', 'Librarian', 'Wellness Counsellor', 'IT Support', 'Accountant', 'AdminStaff']} />}>
+                      <Route path="/management/*" element={<ManagementRoutes />} />
+                    </Route>
+                    
+                    {/* Individual role routes (kept for backward compatibility) */}
                     <Route element={<ProtectedRoute allowedRoles={['Teacher']} />}>
                       <Route path="/teacher/*" element={<TeacherRoutes />} />
                     </Route>
-                    <Route element={<ProtectedRoute allowedRoles={['AdminStaff']} />}>
+                    <Route element={<ProtectedRoute allowedRoles={['AdminStaff', 'Admin']} />}>
                       <Route path="/admin/*" element={<AdminRoutes />} />
                     </Route>
                     <Route element={<ProtectedRoute allowedRoles={['HOD']} />}>
@@ -145,10 +148,10 @@ function App() {
                     <Route element={<ProtectedRoute allowedRoles={['Principal']} />}>
                       <Route path="/principal/*" element={<PrincipalRoutes />} />
                     </Route>
-                    <Route element={<ProtectedRoute allowedRoles={['Counsellor']} />}>
+                    <Route element={<ProtectedRoute allowedRoles={['Counsellor', 'Wellness Counsellor']} />}>
                       <Route path="/counselor/*" element={<CounselorRoutes />} />
                     </Route>
-                    <Route element={<ProtectedRoute allowedRoles={['VicePrincipal']} />}>
+                    <Route element={<ProtectedRoute allowedRoles={['VicePrincipal', 'Vice Principal']} />}>
                       <Route path="/viceprincipal/dashboard" element={<VicePrincipalDashboard />} />
                     </Route>
                     <Route element={<ProtectedRoute allowedRoles={['Accountant']} />}>

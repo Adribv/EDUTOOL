@@ -21,6 +21,8 @@ router.post('/profile/image', parentController.uploadProfileImage);
 
 // 1. Child Profile Access
 router.get('/children', parentController.getChildrenProfiles);
+router.get('/children/fee-status', parentController.getChildrenFeeStatus);
+router.post('/create-test-parent', parentController.createTestParent);
 router.get('/children/:rollNumber', parentController.getChildProfile);
 router.post('/children/:rollNumber/update-request', parentController.requestProfileUpdate);
 

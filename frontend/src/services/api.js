@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: 'https://api.edulives.com/api',
+  baseURL: 'http://localhost:5000/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -138,6 +138,18 @@ export const studentAPI = {
   submitMCQAssignment: (assignmentId, data) => api.post(`/students/mcq-assignments/${assignmentId}/submit`, data),
   getMCQSubmissionResults: (assignmentId) => api.get(`/students/mcq-assignments/${assignmentId}/results`),
   
+  // Test functions
+  testStudentFeeRecords: () => api.get('/students/test-fee-records'),
+  createTestFeeRecords: () => api.post('/students/create-test-fee-records'),
+  
+  // IT Support Request Management
+  createITSupportRequest: (data) => api.post('/students/it-support-requests', data),
+  getITSupportRequests: () => api.get('/students/it-support-requests'),
+  getITSupportStats: () => api.get('/students/it-support-requests/stats'),
+  getITSupportRequestById: (requestId) => api.get(`/students/it-support-requests/${requestId}`),
+  updateITSupportRequest: (requestId, data) => api.put(`/students/it-support-requests/${requestId}`, data),
+  deleteITSupportRequest: (requestId) => api.delete(`/students/it-support-requests/${requestId}`),
+  
   // Legacy endpoints for backward compatibility
   getDashboard: () => api.get('/students/profile'),
 };
@@ -215,6 +227,7 @@ export const parentAPI = {
   getAnnouncements: () => api.get('/parents/announcements'),
   getSchoolCalendar: (params) => api.get('/parents/calendar', { params }),
   linkStudent: (rollNumber) => api.post('/parents/link-student', { rollNumber }),
+  getChildrenFeeStatus: () => api.get('/parents/children/fee-status').then(res => res.data),
 
   // Parent Transport Form APIs
   getParentTransportForms: () => api.get('/parents/transport-forms').then(res => res.data),
@@ -228,6 +241,9 @@ export const parentAPI = {
   downloadAdminTransportFormPDF: (formId) => api.get(`/parents/transport-forms/${formId}/download-admin-pdf`, { 
     responseType: 'blob' 
   }).then(res => res.data),
+
+  // Test functions
+  createTestParent: () => api.post('/parents/create-test-parent').then(res => res.data),
 };
 
 // Admin endpoints
@@ -411,6 +427,16 @@ export const adminAPI = {
     responseType: 'blob' 
   }).then(res => res.data),
   generateTransportFormPDF: (formId) => api.post(`/transport-forms/admin/${formId}/generate-pdf`).then(res => res.data),
+
+  // Permissions Management
+  getAllStaffPermissions: () => api.get('/admin/permissions/staff').then(res => res.data.data || []),
+  getStaffPermissions: (staffId) => api.get(`/admin/permissions/${staffId}`).then(res => res.data.data),
+  assignRoleAndPermissions: (staffId, data) => api.post(`/admin/permissions/${staffId}/assign`, data).then(res => res.data),
+  updateStaffPermissions: (staffId, data) => api.put(`/admin/permissions/${staffId}`, data).then(res => res.data),
+  removeStaffPermissions: (staffId) => api.delete(`/admin/permissions/${staffId}`).then(res => res.data),
+  getAvailableRoles: () => api.get('/admin/permissions/roles').then(res => res.data.data || []),
+  getPermissionSummary: () => api.get('/admin/permissions/summary').then(res => res.data.data || []),
+  bulkAssignPermissions: (data) => api.post('/admin/permissions/bulk-assign', data).then(res => res.data),
 
   // Supplier Management
   getSuppliers: () => api.get('/admin-staff/suppliers').then(res=>res.data),
@@ -1044,6 +1070,19 @@ export const teacherAPI = {
     if (filters.subject && filters.subject !== 'all') params.append('subject', filters.subject);
     return api.get(`/staffs/${staffId}/published-examinations?${params.toString()}`).then(res => res.data);
   },
+
+  // Counselling Request Management
+  createCounsellingRequest: (data) => api.post('/counselling-requests', data).then(res => res.data),
+  getCounsellingRequests: (params) => api.get('/counselling-requests', { params }).then(res => res.data),
+  getCounsellingRequestStats: (params) => api.get('/counselling-requests/stats', { params }).then(res => res.data),
+
+  // IT Support Request Management
+  createITSupportRequest: (data) => api.post('/teachers/it-support-requests', data).then(res => res.data),
+  getITSupportRequests: (params) => api.get('/teachers/it-support-requests', { params }).then(res => res.data),
+  getITSupportRequestStats: (params) => api.get('/teachers/it-support-requests/stats', { params }).then(res => res.data),
+  getITSupportRequestById: (requestId) => api.get(`/teachers/it-support-requests/${requestId}`).then(res => res.data),
+  updateITSupportRequest: (requestId, data) => api.put(`/teachers/it-support-requests/${requestId}`, data).then(res => res.data),
+  deleteITSupportRequest: (requestId) => api.delete(`/teachers/it-support-requests/${requestId}`).then(res => res.data),
 };
 
 // HOD endpoints
@@ -1344,6 +1383,28 @@ export const accountantAPI = {
   // Students Fee Management
   getAllStudentsFeeStatus: (params={}) => api.get('/accountant/students-fee-status', { params }).then(res => res.data),
   getStudentFeeRecords: (studentId, params={}) => api.get(`/accountant/student-fee-records/${studentId}`, { params }).then(res => res.data),
+
+  // Permissions Management
+  getAllStaffPermissions: () => api.get('/admin/permissions/staff').then(res => res.data.data || []),
+  getStaffPermissions: (staffId) => api.get(`/admin/permissions/${staffId}`).then(res => res.data.data),
+  assignRoleAndPermissions: (staffId, data) => api.post(`/admin/permissions/${staffId}/assign`, data).then(res => res.data),
+  updateStaffPermissions: (staffId, data) => api.put(`/admin/permissions/${staffId}`, data).then(res => res.data),
+  removeStaffPermissions: (staffId) => api.delete(`/admin/permissions/${staffId}`).then(res => res.data),
+  getAvailableRoles: () => api.get('/admin/permissions/roles').then(res => res.data.data || []),
+  getPermissionSummary: () => api.get('/admin/permissions/summary').then(res => res.data.data || []),
+  bulkAssignPermissions: (data) => api.post('/admin/permissions/bulk-assign', data).then(res => res.data),
+
+  // Transport Form Management
+  getTransportForms: (params) => api.get('/transport-forms/admin', { params }).then(res => res.data),
+  getTransportFormById: (formId) => api.get(`/transport-forms/admin/${formId}`).then(res => res.data),
+  createTransportForm: (formData) => api.post('/transport-forms', formData).then(res => res.data),
+  updateTransportForm: (formId, formData) => api.put(`/transport-forms/admin/${formId}`, formData).then(res => res.data),
+  deleteTransportForm: (formId) => api.delete(`/transport-forms/admin/${formId}`).then(res => res.data),
+  getTransportFormStats: (params) => api.get('/transport-forms/admin/stats', { params }).then(res => res.data),
+  downloadTransportFormPDF: (formId) => api.get(`/transport-forms/admin/${formId}/download`, { 
+    responseType: 'blob' 
+  }).then(res => res.data),
+  generateTransportFormPDF: (formId) => api.post(`/transport-forms/admin/${formId}/generate-pdf`).then(res => res.data),
 };
 
 export const teacherRemarksAPI = {
