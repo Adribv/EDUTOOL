@@ -98,6 +98,13 @@ const adminService = {
   // Communication Management
   getAnnouncements: () => api.get('/admin-staff/communications'),
   createAnnouncement: (data) => api.post('/admin-staff/communications', data),
+  
+  // Staff Document Upload
+  uploadStaffDocuments: (formData) => api.post('/admin-staff/staff/upload-documents', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  }),
   updateAnnouncement: (id, data) => api.put(`/admin-staff/communications/${id}`, data),
   deleteAnnouncement: (id) => api.delete(`/admin-staff/communications/${id}`),
   

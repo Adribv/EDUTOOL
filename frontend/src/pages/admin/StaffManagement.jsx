@@ -37,6 +37,7 @@ import {
 } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminAPI } from '../../services/api';
+import adminService from '../../services/adminService';
 import { toast } from 'react-toastify';
 
 const roles = [
@@ -75,7 +76,13 @@ function StaffManagement() {
     joiningDate: new Date().toISOString().split('T')[0],
     qualification: '',
     experience: '',
-    coordinator: []
+    coordinator: [],
+    dateOfBirth: '',
+    lastWorkingDate: '',
+    workingStatus: 'Working',
+    remarks: '',
+    workedSchools: [],
+    supportingDocuments: []
   });
 
   const queryClient = useQueryClient();
@@ -155,7 +162,13 @@ function StaffManagement() {
         joiningDate: staff.joiningDate,
         qualification: staff.qualification,
         experience: staff.experience,
-        coordinator: staff.coordinator || []
+        coordinator: staff.coordinator || [],
+        dateOfBirth: staff.dateOfBirth ? new Date(staff.dateOfBirth).toISOString().split('T')[0] : '',
+        lastWorkingDate: staff.lastWorkingDate ? new Date(staff.lastWorkingDate).toISOString().split('T')[0] : '',
+        workingStatus: staff.workingStatus || 'Working',
+        remarks: staff.remarks || '',
+        workedSchools: staff.workedSchools || [],
+        supportingDocuments: staff.supportingDocuments || []
       });
     } else {
       setSelectedStaff(null);
@@ -166,12 +179,24 @@ function StaffManagement() {
         role: '',
         department: '',
         contactNumber: '',
-        address: '',
+        address: {
+          street: '',
+          city: '',
+          state: '',
+          postalCode: '',
+          country: 'India'
+        },
         employeeId: '',
         joiningDate: new Date().toISOString().split('T')[0],
         qualification: '',
         experience: '',
-        coordinator: []
+        coordinator: [],
+        dateOfBirth: '',
+        lastWorkingDate: '',
+        workingStatus: 'Working',
+        remarks: '',
+        workedSchools: [],
+        supportingDocuments: []
       });
     }
     setOpen(true);
@@ -198,7 +223,13 @@ function StaffManagement() {
       joiningDate: new Date().toISOString().split('T')[0],
       qualification: '',
       experience: '',
-      coordinator: []
+      coordinator: [],
+      dateOfBirth: '',
+      lastWorkingDate: '',
+      workingStatus: 'Working',
+      remarks: '',
+      workedSchools: [],
+      supportingDocuments: []
     });
   };
 
@@ -499,6 +530,8 @@ ${Object.entries(reportData.filters)
               <TableCell>Department</TableCell>
               <TableCell>Experience</TableCell>
               <TableCell>Phone</TableCell>
+              <TableCell>Working Status</TableCell>
+              <TableCell>DOB</TableCell>
               <TableCell>Coordinated Classes</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
@@ -524,6 +557,16 @@ ${Object.entries(reportData.filters)
                 <TableCell>{member.department?.name || 'No Department'}</TableCell>
                 <TableCell>{member.experience}</TableCell>
                 <TableCell>{member.phone}</TableCell>
+                <TableCell>
+                  <Chip
+                    label={member.workingStatus || 'Working'}
+                    color={member.workingStatus === 'Left' ? 'error' : 'success'}
+                    size="small"
+                  />
+                </TableCell>
+                <TableCell>
+                  {member.dateOfBirth ? new Date(member.dateOfBirth).toLocaleDateString() : 'Not specified'}
+                </TableCell>
                 <TableCell>{member.coordinator?.map(c => c.name).join(', ') || 'No Coordinated Classes'}</TableCell>
                 <TableCell>
                   <Tooltip title="Edit">
@@ -738,6 +781,278 @@ ${Object.entries(reportData.filters)
                 </MenuItem>
               ))}
             </TextField>
+            
+            {/* New fields as requested */}
+            <TextField
+              fullWidth
+              label="Date of Birth"
+              name="dateOfBirth"
+              type="date"
+              value={formData.dateOfBirth}
+              onChange={handleInputChange}
+              InputLabelProps={{ shrink: true }}
+              sx={{ mb: 2 }}
+            />
+            
+            <TextField
+              fullWidth
+              label="Last Working Date"
+              name="lastWorkingDate"
+              type="date"
+              value={formData.lastWorkingDate}
+              onChange={handleInputChange}
+              InputLabelProps={{ shrink: true }}
+              sx={{ mb: 2 }}
+            />
+            
+            <TextField
+              fullWidth
+              select
+              label="Working Status"
+              name="workingStatus"
+              value={formData.workingStatus}
+              onChange={handleInputChange}
+              sx={{ mb: 2 }}
+            >
+              <MenuItem value="Working">Working</MenuItem>
+              <MenuItem value="Left">Left</MenuItem>
+            </TextField>
+            
+            <TextField
+              fullWidth
+              label="Remarks"
+              name="remarks"
+              value={formData.remarks}
+              onChange={handleInputChange}
+              multiline
+              rows={3}
+              sx={{ mb: 2 }}
+            />
+            
+            {/* Worked Schools Section */}
+            <Typography variant="h6" sx={{ mb: 2, mt: 3 }}>
+              Worked Schools
+            </Typography>
+            {formData.workedSchools.map((school, index) => (
+              <Box key={index} sx={{ mb: 2, p: 2, border: '1px solid #ddd', borderRadius: 1 }}>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="School Name"
+                      value={school.schoolName || ''}
+                      onChange={(e) => {
+                        const updatedSchools = [...formData.workedSchools];
+                        updatedSchools[index] = { ...school, schoolName: e.target.value };
+                        setFormData(prev => ({ ...prev, workedSchools: updatedSchools }));
+                      }}
+                      sx={{ mb: 2 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Position"
+                      value={school.position || ''}
+                      onChange={(e) => {
+                        const updatedSchools = [...formData.workedSchools];
+                        updatedSchools[index] = { ...school, position: e.target.value };
+                        setFormData(prev => ({ ...prev, workedSchools: updatedSchools }));
+                      }}
+                      sx={{ mb: 2 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="From Date"
+                      type="date"
+                      value={school.fromDate ? new Date(school.fromDate).toISOString().split('T')[0] : ''}
+                      onChange={(e) => {
+                        const updatedSchools = [...formData.workedSchools];
+                        updatedSchools[index] = { ...school, fromDate: e.target.value };
+                        setFormData(prev => ({ ...prev, workedSchools: updatedSchools }));
+                      }}
+                      InputLabelProps={{ shrink: true }}
+                      sx={{ mb: 2 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="To Date"
+                      type="date"
+                      value={school.toDate ? new Date(school.toDate).toISOString().split('T')[0] : ''}
+                      onChange={(e) => {
+                        const updatedSchools = [...formData.workedSchools];
+                        updatedSchools[index] = { ...school, toDate: e.target.value };
+                        setFormData(prev => ({ ...prev, workedSchools: updatedSchools }));
+                      }}
+                      InputLabelProps={{ shrink: true }}
+                      sx={{ mb: 2 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Reason for Leaving"
+                      value={school.reasonForLeaving || ''}
+                      onChange={(e) => {
+                        const updatedSchools = [...formData.workedSchools];
+                        updatedSchools[index] = { ...school, reasonForLeaving: e.target.value };
+                        setFormData(prev => ({ ...prev, workedSchools: updatedSchools }));
+                      }}
+                      multiline
+                      rows={2}
+                      sx={{ mb: 2 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      onClick={() => {
+                        const updatedSchools = formData.workedSchools.filter((_, i) => i !== index);
+                        setFormData(prev => ({ ...prev, workedSchools: updatedSchools }));
+                      }}
+                    >
+                      Remove School
+                    </Button>
+                  </Grid>
+                </Grid>
+              </Box>
+            ))}
+            <Button
+              variant="outlined"
+              onClick={() => {
+                setFormData(prev => ({
+                  ...prev,
+                  workedSchools: [...prev.workedSchools, {
+                    schoolName: '',
+                    position: '',
+                    fromDate: '',
+                    toDate: '',
+                    reasonForLeaving: ''
+                  }]
+                }));
+              }}
+              sx={{ mb: 2 }}
+            >
+              Add Worked School
+            </Button>
+            
+            {/* Supporting Documents Section */}
+            <Typography variant="h6" sx={{ mb: 2, mt: 3 }}>
+              Supporting Documents
+            </Typography>
+            {formData.supportingDocuments.map((doc, index) => (
+              <Box key={index} sx={{ mb: 2, p: 2, border: '1px solid #ddd', borderRadius: 1 }}>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      select
+                      label="Document Type"
+                      value={doc.documentType || ''}
+                      onChange={(e) => {
+                        const updatedDocs = [...formData.supportingDocuments];
+                        updatedDocs[index] = { ...doc, documentType: e.target.value };
+                        setFormData(prev => ({ ...prev, supportingDocuments: updatedDocs }));
+                      }}
+                      sx={{ mb: 2 }}
+                    >
+                      <MenuItem value="qualification">Qualification</MenuItem>
+                      <MenuItem value="experience">Experience</MenuItem>
+                      <MenuItem value="identity">Identity</MenuItem>
+                      <MenuItem value="other">Other</MenuItem>
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Description"
+                      value={doc.description || ''}
+                      onChange={(e) => {
+                        const updatedDocs = [...formData.supportingDocuments];
+                        updatedDocs[index] = { ...doc, description: e.target.value };
+                        setFormData(prev => ({ ...prev, supportingDocuments: updatedDocs }));
+                      }}
+                      sx={{ mb: 2 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                      onChange={async (e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          try {
+                            const formDataToUpload = new FormData();
+                            formDataToUpload.append('documents', file);
+                            formDataToUpload.append('documentType', doc.documentType || 'other');
+                            formDataToUpload.append('description', doc.description || '');
+                            
+                            const response = await adminService.uploadStaffDocuments(formDataToUpload);
+                            
+                            if (response.data && response.data.files && response.data.files.length > 0) {
+                              const uploadedFile = response.data.files[0];
+                              const updatedDocs = [...formData.supportingDocuments];
+                              updatedDocs[index] = { 
+                                ...doc, 
+                                fileName: uploadedFile.fileName,
+                                filePath: uploadedFile.filePath,
+                                uploadedAt: uploadedFile.uploadedAt
+                              };
+                              setFormData(prev => ({ ...prev, supportingDocuments: updatedDocs }));
+                              toast.success('File uploaded successfully');
+                            }
+                          } catch (error) {
+                            console.error('File upload error:', error);
+                            toast.error('Failed to upload file. Please try again.');
+                          }
+                        }
+                      }}
+                      style={{ marginBottom: '16px' }}
+                    />
+                    {doc.fileName && (
+                      <Typography variant="body2" color="textSecondary">
+                        Selected file: {doc.fileName}
+                      </Typography>
+                    )}
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      onClick={() => {
+                        const updatedDocs = formData.supportingDocuments.filter((_, i) => i !== index);
+                        setFormData(prev => ({ ...prev, supportingDocuments: updatedDocs }));
+                      }}
+                    >
+                      Remove Document
+                    </Button>
+                  </Grid>
+                </Grid>
+              </Box>
+            ))}
+            <Button
+              variant="outlined"
+              onClick={() => {
+                setFormData(prev => ({
+                  ...prev,
+                  supportingDocuments: [...prev.supportingDocuments, {
+                    documentType: '',
+                    fileName: '',
+                    filePath: '',
+                    description: ''
+                  }]
+                }));
+              }}
+              sx={{ mb: 2 }}
+            >
+              Add Supporting Document
+            </Button>
           </Box>
         </DialogContent>
         <DialogActions>

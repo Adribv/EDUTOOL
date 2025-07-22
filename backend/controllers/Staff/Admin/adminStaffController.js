@@ -19,6 +19,7 @@ const ScheduleModel = require('../../../models/Admin/scheduleModel');
 const Parent = require('../../../models/Parent/parentModel');
 const Supplier = require('../../../models/Admin/supplierModel');
 const SupplyRequest = require('../../../models/Admin/supplyRequestModel');
+const uploadStaffDocuments = require('../../../middlewares/uploadStaffDocumentsMiddleware');
 
 // 1. Student Records Management
 exports.getAllStudents = async (req, res) => {
@@ -508,7 +509,13 @@ exports.registerStaff = async (req, res) => {
       contactNumber,
       email,
       address,
-      coordinator
+      coordinator,
+      dateOfBirth,
+      lastWorkingDate,
+      workingStatus,
+      remarks,
+      workedSchools,
+      supportingDocuments
     } = req.body;
 
     // Check if staff with employee ID already exists
@@ -559,7 +566,13 @@ exports.registerStaff = async (req, res) => {
         country: address?.country || 'India'
       },
       coordinator: coordinatorClasses,
-      assignedSubjects: []
+      assignedSubjects: [],
+      dateOfBirth: dateOfBirth || null,
+      lastWorkingDate: lastWorkingDate || null,
+      workingStatus: workingStatus || 'Working',
+      remarks: remarks || '',
+      workedSchools: workedSchools || [],
+      supportingDocuments: supportingDocuments || []
     });
 
     await newStaff.save();
@@ -3529,5 +3542,36 @@ exports.updateStaffPermissions = async (req, res) => {
   } catch (error) {
     console.error('Error updating staff permissions:', error);
     res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Upload staff supporting documents
+exports.uploadStaffDocuments = async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: 'No files uploaded' });
+    }
+
+    const uploadedFiles = [];
+    
+    for (const file of req.files) {
+      const fileInfo = {
+        documentType: req.body.documentType || 'other',
+        fileName: file.originalname,
+        filePath: file.path.replace(/\\/g, '/'), // Convert Windows backslashes to forward slashes
+        uploadedAt: new Date(),
+        description: req.body.description || ''
+      };
+      
+      uploadedFiles.push(fileInfo);
+    }
+
+    res.status(200).json({
+      message: 'Files uploaded successfully',
+      files: uploadedFiles
+    });
+  } catch (error) {
+    console.error('Error uploading staff documents:', error);
+    res.status(500).json({ message: 'Server error during file upload' });
   }
 };

@@ -37,6 +37,35 @@ const staffSchema = new mongoose.Schema({
   joiningDate: Date,
   qualification: String,
   experience: String,
+  // New fields as requested
+  dateOfBirth: Date,
+  lastWorkingDate: Date,
+  workingStatus: {
+    type: String,
+    enum: ['Working', 'Left'],
+    default: 'Working'
+  },
+  remarks: String,
+  workedSchools: [{
+    schoolName: String,
+    position: String,
+    fromDate: Date,
+    toDate: Date,
+    reasonForLeaving: String
+  }],
+  supportingDocuments: [{
+    documentType: {
+      type: String,
+      enum: ['qualification', 'experience', 'identity', 'other']
+    },
+    fileName: String,
+    filePath: String,
+    uploadedAt: {
+      type: Date,
+      default: Date.now
+    },
+    description: String
+  }],
   bio: {
     type: String,
     maxlength: 500

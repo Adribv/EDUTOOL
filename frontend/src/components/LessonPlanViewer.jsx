@@ -79,7 +79,7 @@ const LessonPlanViewer = ({ lessonPlan, open, onClose }) => {
   const handleDownload = (url, filename) => {
     if (url) {
       const link = document.createElement('a');
-              link.href = `https://api.edulives.com/${url}`;
+      link.href = `https://api.edulives.com/${url}`;
       link.download = filename || 'lesson-plan';
       document.body.appendChild(link);
       link.click();
@@ -94,7 +94,7 @@ const LessonPlanViewer = ({ lessonPlan, open, onClose }) => {
         setPreviewUrl(`https://api.edulives.com/${url}`);
       } else {
         // For other files, try to open in new tab
-                  window.open(`https://api.edulives.com/${url}`, '_blank');
+        window.open(`https://api.edulives.com/${url}`, '_blank');
       }
     }
   };

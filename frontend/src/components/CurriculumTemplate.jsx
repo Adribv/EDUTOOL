@@ -166,8 +166,8 @@ const CurriculumTemplate = ({ curriculumData, teacherRemarks = [] }) => {
                           <Typography variant="body2" color="textSecondary">
                             No teacher remarks available. Teachers can add remarks through their dashboard.
                           </Typography>
-                        </TableRow>
-                      )
+                        </TableCell>
+                      </TableRow>
                     )}
                   </TableBody>
                 </Table>

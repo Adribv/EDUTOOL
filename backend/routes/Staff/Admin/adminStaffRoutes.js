@@ -9,6 +9,7 @@ const { verifyToken } = require('../../../middlewares/authMiddleware');
 const uploadProfileImage = require('../../../middlewares/uploadProfileImageMiddleware');
 const uploadStudentFiles = require('../../../middlewares/uploadStudentFilesMiddleware');
 const upload = require('../../../middlewares/uploadMiddleware');
+const uploadStaffDocuments = require('../../../middlewares/uploadStaffDocumentsMiddleware');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -138,6 +139,7 @@ router.delete('/staff/:id', adminStaffController.deleteStaff);
 router.get('/staff/:id/id-card', adminStaffController.generateStaffID);
 router.post('/staff/attendance', adminStaffController.trackStaffAttendance);
 router.patch('/staff/:id/permissions', adminStaffController.updateStaffPermissions);
+router.post('/staff/upload-documents', uploadStaffDocuments.array('documents', 5), adminStaffController.uploadStaffDocuments);
 
 // Accountant Management
 router.get('/accountants', adminStaffController.getAllAccountants);
