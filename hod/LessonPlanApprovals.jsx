@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Box,
   Typography,
@@ -24,7 +25,8 @@ import {
   IconButton,
   Tooltip,
   Badge,
-  Divider
+  Divider,
+  MenuItem
 } from '@mui/material';
 import {
   CheckCircle as ApproveIcon,
@@ -33,10 +35,9 @@ import {
   Download as DownloadIcon,
   Refresh as RefreshIcon,
   Assignment as LessonPlanIcon,
-  Person as PersonIcon,
   Edit as EditIcon
 } from '@mui/icons-material';
-import { principalAPI } from '../../services/api';
+import { hodAPI } from '../../services/api';
 import { toast } from 'react-toastify';
 import LessonPlanViewer from '../../components/LessonPlanViewer';
 import LessonPlanTemplate from '../../components/LessonPlanTemplate';
@@ -52,6 +53,8 @@ const LessonPlanApprovals = () => {
   const [feedback, setFeedback] = useState('');
   const [processing, setProcessing] = useState(false);
   const [templateData, setTemplateData] = useState(null);
+  const [filterStatus, setFilterStatus] = useState('all');
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     fetchLessonPlans();
@@ -60,7 +63,7 @@ const LessonPlanApprovals = () => {
   const fetchLessonPlans = async () => {
     try {
       setLoading(true);
-      const response = await principalAPI.getLessonPlansForApproval();
+      const response = await hodAPI.getLessonPlansForReview();
       setLessonPlans(response);
     } catch (error) {
       console.error('Error fetching lesson plans:', error);
@@ -75,12 +78,13 @@ const LessonPlanApprovals = () => {
     
     try {
       setProcessing(true);
-      await principalAPI.approveLessonPlan(selectedPlan._id, {
-        status: 'Principal_Approved',
+      await hodAPI.reviewLessonPlan(selectedPlan._id, {
+        status: 'HOD_Approved',
         feedback: feedback
       });
       
-      toast.success('Lesson plan approved and published');
+      toast.success('Lesson plan approved and forwarded to Principal');
+      queryClient.invalidateQueries(['hodLessonPlanHistory']);
       setApprovalDialog(false);
       setFeedback('');
       setSelectedPlan(null);
@@ -98,12 +102,13 @@ const LessonPlanApprovals = () => {
     
     try {
       setProcessing(true);
-      await principalAPI.approveLessonPlan(selectedPlan._id, {
+      await hodAPI.reviewLessonPlan(selectedPlan._id, {
         status: 'Rejected',
         feedback: feedback
       });
       
       toast.success('Lesson plan rejected');
+      queryClient.invalidateQueries(['hodLessonPlanHistory']);
       setRejectionDialog(false);
       setFeedback('');
       setSelectedPlan(null);
@@ -154,11 +159,12 @@ const LessonPlanApprovals = () => {
     try {
       setProcessing(true);
       // Update the lesson plan with modified template data only (no status change)
-      await principalAPI.approveLessonPlan(selectedPlan._id, {
+      await hodAPI.reviewLessonPlan(selectedPlan._id, {
         templateData: templateData
       });
       
       toast.success('Template updated successfully');
+      queryClient.invalidateQueries(['hodLessonPlanHistory']);
       setTemplateEditDialog(false);
       setTemplateData(null);
       setSelectedPlan(null);
@@ -173,6 +179,7 @@ const LessonPlanApprovals = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
+      case 'Pending': return 'warning';
       case 'HOD_Approved': return 'info';
       case 'Principal_Approved': return 'success';
       case 'Published': return 'success';
@@ -183,6 +190,7 @@ const LessonPlanApprovals = () => {
 
   const getStatusLabel = (status) => {
     switch (status) {
+      case 'Pending': return 'Pending HOD Approval';
       case 'HOD_Approved': return 'Pending Principal Approval';
       case 'Principal_Approved': return 'Approved by Principal';
       case 'Published': return 'Published';
@@ -208,13 +216,23 @@ const LessonPlanApprovals = () => {
             <LessonPlanIcon />
           </Badge>
         </Typography>
-        <Button
-          variant="outlined"
-          startIcon={<RefreshIcon />}
-          onClick={fetchLessonPlans}
-        >
-          Refresh
-        </Button>
+        <Box display="flex" gap={1}>
+          <TextField
+            select
+            size="small"
+            label="Filter"
+            value={filterStatus}
+            onChange={(e)=>setFilterStatus(e.target.value)}
+          >
+            <MenuItem value="all">All</MenuItem>
+            <MenuItem value="Pending">Pending</MenuItem>
+            <MenuItem value="HOD_Approved">HOD Approved</MenuItem>
+            <MenuItem value="Principal_Approved">Principal Approved</MenuItem>
+            <MenuItem value="Published">Published</MenuItem>
+            <MenuItem value="Rejected">Rejected</MenuItem>
+          </TextField>
+          <Button variant="outlined" startIcon={<RefreshIcon />} onClick={fetchLessonPlans}>Refresh</Button>
+        </Box>
       </Box>
 
       {lessonPlans.length === 0 ? (
@@ -224,7 +242,7 @@ const LessonPlanApprovals = () => {
               No lesson plans pending approval
             </Typography>
             <Typography variant="body2" color="textSecondary" align="center">
-              All lesson plans have been reviewed or there are no new submissions from HODs.
+              All lesson plans have been reviewed or there are no new submissions.
             </Typography>
           </CardContent>
         </Card>
@@ -237,13 +255,13 @@ const LessonPlanApprovals = () => {
                 <TableCell>Title</TableCell>
                 <TableCell>Subject</TableCell>
                 <TableCell>Class</TableCell>
-                <TableCell>HOD Approved</TableCell>
+                <TableCell>Submitted</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {lessonPlans.map((plan) => (
+              {lessonPlans.filter((p)=>filterStatus==='all' || p.status===filterStatus).map((plan) => (
                 <TableRow key={plan._id}>
                   <TableCell>
                     <Typography variant="body2" fontWeight="medium">
@@ -264,14 +282,7 @@ const LessonPlanApprovals = () => {
                   <TableCell>{plan.subject}</TableCell>
                   <TableCell>{plan.class || '-'}</TableCell>
                   <TableCell>
-                    <Box>
-                      <Typography variant="body2" fontWeight="medium">
-                        {plan.hodApprovedBy?.name || 'Unknown'}
-                      </Typography>
-                      <Typography variant="caption" color="textSecondary">
-                        {plan.hodApprovedAt ? new Date(plan.hodApprovedAt).toLocaleDateString() : '-'}
-                      </Typography>
-                    </Box>
+                    {new Date(plan.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
                     <Chip
@@ -292,9 +303,9 @@ const LessonPlanApprovals = () => {
                         <ViewIcon />
                       </IconButton>
                     </Tooltip>
-                    {plan.status === 'HOD_Approved' && (
+                    {plan.status === 'Pending' && (
                       <>
-                        <Tooltip title="Approve & Publish">
+                        <Tooltip title="Approve">
                           <IconButton
                             size="small"
                             color="success"
@@ -334,7 +345,7 @@ const LessonPlanApprovals = () => {
                         <IconButton
                           size="small"
                           component="a"
-                          href={`http://localhost:5000/${plan.pdfUrl}`}
+                          href={`https://api.edulives.com/${plan.pdfUrl}`}
                           target="_blank"
                         >
                           <DownloadIcon />
@@ -351,13 +362,10 @@ const LessonPlanApprovals = () => {
 
       {/* Approval Dialog */}
       <Dialog open={approvalDialog} onClose={() => setApprovalDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Approve & Publish Lesson Plan</DialogTitle>
+        <DialogTitle>Approve Lesson Plan</DialogTitle>
         <DialogContent>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            This lesson plan has been approved by HOD and is ready for final approval and publication.
-          </Alert>
           <Typography variant="body2" color="textSecondary" gutterBottom>
-            This lesson plan will be published and made available to students.
+            This lesson plan will be forwarded to the Principal for final approval.
           </Typography>
           <TextField
             label="Feedback (Optional)"
@@ -381,7 +389,7 @@ const LessonPlanApprovals = () => {
             disabled={processing}
             startIcon={processing ? <CircularProgress size={16} /> : <ApproveIcon />}
           >
-            {processing ? 'Approving...' : 'Approve & Publish'}
+            {processing ? 'Approving...' : 'Approve & Forward to Principal'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -391,7 +399,7 @@ const LessonPlanApprovals = () => {
         <DialogTitle>Reject Lesson Plan</DialogTitle>
         <DialogContent>
           <Alert severity="warning" sx={{ mb: 2 }}>
-            This action will reject the lesson plan and notify the teacher and HOD.
+            This action will reject the lesson plan and notify the teacher.
           </Alert>
           <TextField
             label="Rejection Reason"
@@ -432,7 +440,7 @@ const LessonPlanApprovals = () => {
               lessonPlan={templateData}
               onSave={setTemplateData}
               isEditing={true}
-              userRole="Principal"
+              userRole="HOD"
               readOnly={false}
             />
           )}

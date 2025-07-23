@@ -68,7 +68,7 @@ function StudentRegister() {
 
   const registerMutation = useMutation({
     mutationFn: async (values) => {
-      const response = await axios.post('https://api.edulives.com/api/students/register', values);
+      const response = await axios.post('http://localhost:5000/api/students/register', values);
       console.log(response.data);
       return response.data;
     },

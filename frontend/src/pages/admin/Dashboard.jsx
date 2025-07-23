@@ -32,8 +32,8 @@ import {
   Notifications as NotificationsIcon,
   TrendingUp as TrendingUpIcon,
   Warning,
+  AccountBalance,
 } from '@mui/icons-material';
-import { useQuery } from '@tanstack/react-query';
 import { adminAPI } from '../../services/api';
 import { toast } from 'react-toastify';
 import { roleConfig } from './roleConfig';
@@ -314,6 +314,16 @@ function AdminDashboard() {
                     href="/admin/events"
                   >
                     Event Management
+                  </Button>
+                </Grid>
+                <Grid xs={6}>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    startIcon={<AccountBalance />}
+                    href="/admin/salary-payroll"
+                  >
+                    Salary Payroll
                   </Button>
                 </Grid>
               </Grid>

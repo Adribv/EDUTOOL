@@ -345,7 +345,7 @@ const LessonPlanApprovals = () => {
                         <IconButton
                           size="small"
                           component="a"
-                          href={`https://api.edulives.com/${plan.pdfUrl}`}
+                          href={`http://localhost:5000/${plan.pdfUrl}`}
                           target="_blank"
                         >
                           <DownloadIcon />

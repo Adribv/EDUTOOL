@@ -75,7 +75,7 @@ function FeeConfiguration() {
   const { data: classes = [], isLoading: classesLoading } = useQuery({
     queryKey: ['classes'],
     queryFn: async () => {
-              const response = await axios.get('https://api.edulives.com/api/admin-staff/classes/public');
+              const response = await axios.get('http://localhost:5000/api/admin-staff/classes/public');
       return response.data;
     },
     onError: (error) => {
@@ -92,7 +92,7 @@ function FeeConfiguration() {
   const { data: feeStructures, isLoading: isLoadingStructures } = useQuery({
     queryKey: ['feeStructures'],
     queryFn: async () => {
-              const response = await axios.get('https://api.edulives.com/api/admin-staff/fee-structure/public');
+              const response = await axios.get('http://localhost:5000/api/admin-staff/fee-structure/public');
       return response.data;
     },
     onError: (error) => {
@@ -116,10 +116,10 @@ function FeeConfiguration() {
   const mutation = useMutation({
     mutationFn: async (values) => {
       if (selectedFee) {
-        return axios.put(`https://api.edulives.com/api/admin-staff/fee-structure/public/${selectedFee._id}`, values);
+        return axios.put(`http://localhost:5000/api/admin-staff/fee-structure/public/${selectedFee._id}`, values);
       } else {
         // Create approval request instead of directly creating fee
-                  return axios.post('https://api.edulives.com/api/admin-staff/fee-structure/approval', values);
+                  return axios.post('http://localhost:5000/api/admin-staff/fee-structure/approval', values);
       }
     },
     onSuccess: () => {
@@ -138,7 +138,7 @@ function FeeConfiguration() {
   });
 
   const deleteMutation = useMutation({
-          mutationFn: (id) => axios.delete(`https://api.edulives.com/api/admin-staff/fee-structure/public/${id}`),
+          mutationFn: (id) => axios.delete(`http://localhost:5000/api/admin-staff/fee-structure/public/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries(['feeStructures']);
       toast.success('Fee structure deleted successfully');

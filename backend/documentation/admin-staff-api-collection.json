@@ -1571,7 +1571,7 @@
   "variable": [
     {
       "key": "base_url",
-              "value": "https://api.edulives.com",
+              "value": "http://localhost:5000",
       "type": "string"
     },
     {

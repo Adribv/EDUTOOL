@@ -15,6 +15,11 @@ router.get('/summary', permit('Accountant'), accountantController.getSummary);
 router.get('/students-fee-status', permit('Accountant'), accountantController.getAllStudentsFeeStatus);
 router.get('/student-fee-records/:studentId', permit('Accountant'), accountantController.getStudentFeeRecords);
 
+// Fee payments and statistics
+router.get('/fee-payments', permit('Accountant'), accountantController.getAllFeePayments);
+router.get('/fee-stats', permit('Accountant'), accountantController.getFeeStats);
+router.get('/transaction-log', permit('Accountant'), accountantController.getTransactionLog);
+
 // Expense management
 router.get('/expenses', permit('Accountant', 'Principal'), accountantController.getExpenses);
 router.post('/expenses', permit('Accountant'), accountantController.createExpense);

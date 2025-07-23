@@ -189,6 +189,7 @@ export const staffAPI = {
   getAttendance: () => api.get('/admin-staff/attendance'),
   getEvents: () => api.get('/admin-staff/events'),
   getNotifications: () => api.get('/admin-staff/notifications'),
+  getSalaryRecords: (staffId) => api.get(`/staffs/salary-records/${staffId}`).then(res => res.data),
 };
 
 // Parent endpoints
@@ -1115,6 +1116,9 @@ export const hodAPI = {
   // Staff Management
   getStaff: () => api.get('/hod/staff'),
   getStaffDetails: (staffId) => api.get(`/hod/staff/${staffId}`),
+  createStaff: (data) => api.post('/hod/staff', data),
+  updateStaff: (staffId, data) => api.put(`/hod/staff/${staffId}`, data),
+  deleteStaff: (staffId) => api.delete(`/hod/staff/${staffId}`),
   assignStaffToCourse: (courseId, staffId) => 
     api.post(`/hod/courses/${courseId}/staff/${staffId}`),
   removeStaffFromCourse: (courseId, staffId) => 
@@ -1152,9 +1156,11 @@ export const hodAPI = {
   // Department Statistics
   getDepartmentStatistics: () => api.get('/hod/department/stats').then(res => res.data),
   getAllStaff: () => api.get('/hod/staff').then(res => res.data),
-  getTeacherAttendance: () => api.get('/hod/staff/attendance').then(res => res.data),
-  getAllEvaluations: () => api.get('/hod/staff/evaluations').then(res => res.data),
-  getClassAllocationRecommendations: () => api.get('/hod/staff/class-allocation').then(res => res.data),
+  getTeacherAttendance: () => api.get('/hod/teacher-attendance').then(res => res.data),
+  markAttendance: (data) => api.post('/hod/teacher-attendance', data).then(res => res.data),
+  getAllEvaluations: () => api.get('/hod/teacher-evaluations').then(res => res.data),
+  createEvaluation: (data) => api.post('/hod/teacher-evaluations', data).then(res => res.data),
+  getClassAllocationRecommendations: () => api.get('/hod/class-allocation/recommendations').then(res => res.data),
   allocateClass: (allocationData) => api.post('/hod/class-allocation', allocationData).then(res => res.data),
   
   // Department Reports
@@ -1404,7 +1410,7 @@ export const accountantAPI = {
   assignRoleAndPermissions: (staffId, data) => api.post(`/admin/permissions/${staffId}/assign`, data).then(res => res.data),
   updateStaffPermissions: (staffId, data) => api.put(`/admin/permissions/${staffId}`, data).then(res => res.data),
   removeStaffPermissions: (staffId) => api.delete(`/admin/permissions/${staffId}`).then(res => res.data),
-  getAvailableRoles: () => api.get('/admin/permissions/roles').then(res => res.data.data || []),
+  getAvailablePermissionRoles: () => api.get('/admin/permissions/roles').then(res => res.data.data || []),
   getPermissionSummary: () => api.get('/admin/permissions/summary').then(res => res.data.data || []),
   bulkAssignPermissions: (data) => api.post('/admin/permissions/bulk-assign', data).then(res => res.data),
 

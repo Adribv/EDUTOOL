@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const BASE_URL = 'https://api.edulives.com/api';
+const BASE_URL = 'http://localhost:5000/api';
 
 // Test configuration
 const testConfig = {
@@ -234,7 +234,7 @@ const testHealthCheck = async () => {
   console.log('\n🏥 Testing Health Check...');
   
   try {
-    const response = await axios.get('https://api.edulives.com/health', { timeout: 5000 });
+    const response = await axios.get('http://localhost:5000/health', { timeout: 5000 });
     if (response.status === 200) {
       logTest('Health Check', 'PASS');
     } else {

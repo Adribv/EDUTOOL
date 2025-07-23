@@ -106,12 +106,67 @@ const staffSalaryRecordSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Index for efficient queries
-staffSalaryRecordSchema.index({ staffId: 1, month: 1, year: 1 });
 staffSalaryRecordSchema.index({ department: 1 });
 staffSalaryRecordSchema.index({ paymentStatus: 1 });
 staffSalaryRecordSchema.index({ status: 1 });
 
 // Ensure unique salary record per staff per month
 staffSalaryRecordSchema.index({ staffId: 1, month: 1, year: 1 }, { unique: true });
+
+// Pre-save middleware to ensure correct salary calculations
+staffSalaryRecordSchema.pre('save', function(next) {
+  // Calculate total allowances with proper type conversion
+  const allowances = this.allowances || {};
+  const totalAllowances = Object.values(allowances).reduce((sum, val) => {
+    const numVal = parseFloat(val) || 0;
+    return sum + numVal;
+  }, 0);
+  
+  // Calculate total deductions with proper type conversion
+  const deductions = this.deductions || {};
+  const totalDeductions = Object.values(deductions).reduce((sum, val) => {
+    const numVal = parseFloat(val) || 0;
+    return sum + numVal;
+  }, 0);
+  
+  // Ensure basic salary is a number
+  const basicSalary = parseFloat(this.basicSalary) || 0;
+  
+  // Recalculate gross and net salary
+  this.grossSalary = basicSalary + totalAllowances;
+  this.netSalary = this.grossSalary - totalDeductions;
+  
+  // Ensure all values are numbers
+  this.basicSalary = basicSalary;
+  
+  next();
+});
+
+// Pre-update middleware for findByIdAndUpdate operations
+staffSalaryRecordSchema.pre('findOneAndUpdate', function(next) {
+  const update = this.getUpdate();
+  
+  if (update.basicSalary || update.allowances || update.deductions) {
+    const basicSalary = parseFloat(update.basicSalary) || 0;
+    const allowances = update.allowances || {};
+    const deductions = update.deductions || {};
+    
+    const totalAllowances = Object.values(allowances).reduce((sum, val) => {
+      const numVal = parseFloat(val) || 0;
+      return sum + numVal;
+    }, 0);
+    
+    const totalDeductions = Object.values(deductions).reduce((sum, val) => {
+      const numVal = parseFloat(val) || 0;
+      return sum + numVal;
+    }, 0);
+    
+    update.grossSalary = basicSalary + totalAllowances;
+    update.netSalary = update.grossSalary - totalDeductions;
+    update.basicSalary = basicSalary;
+  }
+  
+  next();
+});
 
 module.exports = mongoose.model('StaffSalaryRecord', staffSalaryRecordSchema); 

@@ -50,6 +50,7 @@ import {
   Warning,
   LocalShipping,
   RateReview,
+  AccountBalance,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import Logo from './Logo';
@@ -131,9 +132,17 @@ const Layout = () => {
       ].flat();
     }
 
-    // For HOD users, return empty array to hide sidebar
+    // For HOD users, provide specific navigation
     if (user?.role === 'HOD') {
-      return [];
+      return [
+        { text: 'Dashboard', icon: <Dashboard />, path: '/hod/dashboard' },
+        { text: 'Profile', icon: <Person />, path: '/hod/profile' },
+        { text: 'Department Management', icon: <School />, path: '/hod/department' },
+        { text: 'Staff Management', icon: <People />, path: '/hod/staff' },
+        { text: 'Course Management', icon: <Assignment />, path: '/hod/courses' },
+        { text: 'Reports', icon: <Assessment />, path: '/hod/reports' },
+        { text: 'Lesson Plan Approvals', icon: <Approval />, path: '/hod/lesson-plans' },
+      ];
     }
 
     const getBasePath = () => {
@@ -182,6 +191,7 @@ const Layout = () => {
         { text: 'Visitors', icon: <GroupIcon />, path: '/admin/Visitors' },
         { text: 'Service Requests', icon: <Approval />, path: '/admin/service-requests' },
         { text: 'Syllabus Completion', icon: <RateReview />, path: '/admin/syllabus-completion' },
+        { text: 'Salary Payroll', icon: <AccountBalance />, path: '/admin/salary-payroll' },
       ],
       ITAdmin: [
         { text: 'IT Admin Dashboard', icon: <Dashboard />, path: '/itadmin/dashboard' },
@@ -249,9 +259,8 @@ const Layout = () => {
     return location.pathname === path || location.pathname.startsWith(path);
   }, [location.pathname]);
 
-  // Check if user is HOD to determine layout
-  const isHOD = user?.role === 'HOD';
-  const currentDrawerWidth = isHOD ? 0 : (drawerCollapsed && !isMobile ? 80 : drawerWidth);
+  // Calculate drawer width based on collapse state and mobile
+  const currentDrawerWidth = drawerCollapsed && !isMobile ? 80 : drawerWidth;
 
   const drawer = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -362,8 +371,8 @@ const Layout = () => {
       <AppBar
         position="fixed"
         sx={{
-          width: { md: isHOD ? '100%' : `calc(100% - ${currentDrawerWidth}px)` },
-          ml: { md: isHOD ? 0 : `${currentDrawerWidth}px` },
+          width: { md: user?.role === 'HOD' ? '100%' : `calc(100% - ${currentDrawerWidth}px)` },
+          ml: { md: user?.role === 'HOD' ? 0 : `${currentDrawerWidth}px` },
           bgcolor: 'white',
           color: 'text.primary',
           boxShadow: '0px 1px 3px rgba(0, 0, 0, 0.1), 0px 1px 2px rgba(0, 0, 0, 0.06)',
@@ -375,15 +384,17 @@ const Layout = () => {
         }}
       >
         <Toolbar sx={{ minHeight: 64 }}>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { md: isHOD ? 'none' : 'block' } }}
-          >
-            <MenuIcon />
-          </IconButton>
+          {user?.role !== 'HOD' && (
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              edge="start"
+              onClick={handleDrawerToggle}
+              sx={{ mr: 2, display: { md: 'block' } }}
+            >
+              <MenuIcon />
+            </IconButton>
+          )}
           <Typography 
             variant="h6" 
             noWrap 
@@ -426,7 +437,7 @@ const Layout = () => {
       </AppBar>
 
       {/* Only show navigation drawer if not HOD */}
-      {!isHOD && (
+      {user?.role !== 'HOD' && (
         <Box
           component="nav"
           sx={{ 
@@ -487,7 +498,7 @@ const Layout = () => {
         sx={{
           flexGrow: 1,
           p: { xs: 2, md: 3 },
-          width: { md: isHOD ? '100%' : `calc(100% - ${currentDrawerWidth}px)` },
+          width: { md: user?.role === 'HOD' ? '100%' : `calc(100% - ${currentDrawerWidth}px)` },
           transition: theme.transitions.create(['width', 'margin'], {
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.leavingScreen,

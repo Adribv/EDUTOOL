@@ -380,14 +380,14 @@ const LessonPlans = () => {
                   </Tooltip>
                   {plan.pdfUrl && (
                     <Tooltip title="Download PDF">
-                      <IconButton component="a" href={`https://api.edulives.com/${plan.pdfUrl}`} target="_blank" rel="noopener noreferrer">
+                      <IconButton component="a" href={`http://localhost:5000/${plan.pdfUrl}`} target="_blank" rel="noopener noreferrer">
                         <OpenInNewIcon />
                       </IconButton>
                     </Tooltip>
                   )}
                   {plan.videoUrl && (
                     <Tooltip title="Download Video">
-                      <IconButton component="a" href={`https://api.edulives.com/${plan.videoUrl}`} download>
+                      <IconButton component="a" href={`http://localhost:5000/${plan.videoUrl}`} download>
                         <DownloadIcon />
                       </IconButton>
                     </Tooltip>

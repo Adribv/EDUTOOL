@@ -82,13 +82,12 @@ import {
   Work,
   Notifications,
   Dashboard as DashboardIcon,
-  AccountBalance,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
-import SalaryPayroll from '../teacher/SalaryPayroll';
 
 // API service for HOD using the configured api instance
 const hodAPI = {
@@ -148,7 +147,8 @@ const Dashboard = () => {
   const [tabValue, setTabValue] = useState(0);
   const [evaluationDialog, setEvaluationDialog] = useState(false);
   const [allocationDialog, setAllocationDialog] = useState(false);
-  const [_selectedTeacher, setSelectedTeacher] = useState(null);
+  const [selectedTeacher, setSelectedTeacher] = useState(null);
+  const [reviewDialog, setReviewDialog] = useState(false);
   
   // Teacher Management States
   const [teacherDialog, setTeacherDialog] = useState(false);
@@ -188,7 +188,8 @@ const Dashboard = () => {
     }
   });
 
-  // Get user's department
+  // Get user's role and department
+  const userRole = user?.role || user?.designation || 'HOD';
   const userDepartment = user?.department || 'General';
 
   // Queries
@@ -409,64 +410,28 @@ const Dashboard = () => {
   }
 
   return (
-    <Box sx={{ flexGrow: 1, p: { xs: 1, md: 3 }, backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
+    <Box sx={{ flexGrow: 1, p: { xs: 1, md: 3 } }}>
       {/* Header */}
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        mb: 3, 
-        p: 2,
-        backgroundColor: 'white',
-        borderRadius: 2,
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-      }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Box>
-          <Typography variant="h4" sx={{ 
-            fontSize: { xs: '1.5rem', md: '2rem' },
-            fontWeight: 600,
-            color: '#1976d2'
-          }}>
-        HOD Dashboard
+          <Typography variant="h4" gutterBottom sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }}>
+            Welcome, {user?.name || userRole}
           </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Badge badgeContent={3} color="error">
-            <IconButton>
-              <Notifications />
-            </IconButton>
-          </Badge>
-          <Avatar sx={{ bgcolor: '#1976d2', width: 40, height: 40 }}>
-            H
-          </Avatar>
-        </Box>
-      </Box>
-
-      {/* Welcome Section */}
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        mb: 3,
-        p: 2,
-        backgroundColor: 'white',
-        borderRadius: 2,
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-      }}>
-        <Box>
-          <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
-            Welcome, HOD
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
             <Chip 
-              label="HOD" 
+              label={userRole} 
               color="primary" 
-              size="small"
-              sx={{ fontWeight: 600 }}
+              size="small" 
+              icon={<SupervisorAccount />}
             />
-            <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
-              6860f8e526d2b99ee270a590
-            </Typography>
+            {userDepartment && (
+              <Chip 
+                label={userDepartment} 
+                color="secondary" 
+                size="small" 
+                variant="outlined"
+              />
+            )}
           </Box>
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
@@ -479,10 +444,7 @@ const Dashboard = () => {
             variant="contained"
             startIcon={<Download />}
             onClick={() => hodAPI.generateDepartmentReport().then(() => toast.success('Report downloaded'))}
-            sx={{ 
-              backgroundColor: '#1976d2',
-              '&:hover': { backgroundColor: '#1565c0' }
-            }}
+            size={isMobile ? 'small' : 'medium'}
           >
             Download Report
           </Button>
@@ -490,114 +452,54 @@ const Dashboard = () => {
       </Box>
 
       {/* Statistics Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
+      <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={6} sm={3}>
-          <Card sx={{ 
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            borderRadius: 2,
-            '&:hover': { transform: 'translateY(-2px)', transition: 'transform 0.2s' }
-          }}>
-            <CardContent sx={{ textAlign: 'center', p: 3 }}>
-              <People sx={{ 
-                fontSize: 48, 
-                mb: 2, 
-                color: '#1976d2' 
-              }} />
-              <Typography variant="h3" sx={{ 
-                fontWeight: 700,
-                color: '#1976d2',
-                mb: 1
-              }}>
-                {teachers?.length || 1}
+          <Card>
+            <CardContent sx={{ textAlign: 'center' }}>
+              <People color="primary" sx={{ fontSize: 40, mb: 1 }} />
+              <Typography variant="h4" color="primary">
+                {teachers?.length || 0}
               </Typography>
-              <Typography variant="body1" sx={{ 
-                color: '#666',
-                fontWeight: 500
-              }}>
+              <Typography variant="body2" color="text.secondary">
                 Total Staff
               </Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid item xs={6} sm={3}>
-          <Card sx={{ 
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            borderRadius: 2,
-            '&:hover': { transform: 'translateY(-2px)', transition: 'transform 0.2s' }
-          }}>
-            <CardContent sx={{ textAlign: 'center', p: 3 }}>
-              <School sx={{ 
-                fontSize: 48, 
-                mb: 2, 
-                color: '#ff9800' 
-              }} />
-              <Typography variant="h3" sx={{ 
-                fontWeight: 700,
-                color: '#ff9800',
-                mb: 1
-              }}>
-                {teachers?.filter(staff => staff.role === 'Teacher').length || 1}
+          <Card>
+            <CardContent sx={{ textAlign: 'center' }}>
+              <School color="secondary" sx={{ fontSize: 40, mb: 1 }} />
+              <Typography variant="h4" color="secondary">
+                {teachers?.filter(staff => staff.role === 'Teacher').length || 0}
               </Typography>
-              <Typography variant="body1" sx={{ 
-                color: '#666',
-                fontWeight: 500
-              }}>
+              <Typography variant="body2" color="text.secondary">
                 Teachers
               </Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid item xs={6} sm={3}>
-          <Card sx={{ 
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            borderRadius: 2,
-            '&:hover': { transform: 'translateY(-2px)', transition: 'transform 0.2s' }
-          }}>
-            <CardContent sx={{ textAlign: 'center', p: 3 }}>
-              <Assignment sx={{ 
-                fontSize: 48, 
-                mb: 2, 
-                color: '#4caf50' 
-              }} />
-              <Typography variant="h3" sx={{ 
-                fontWeight: 700,
-                color: '#4caf50',
-                mb: 1
-              }}>
-                {departmentStats?.activeCourses || 2}
+          <Card>
+            <CardContent sx={{ textAlign: 'center' }}>
+              <Assignment color="success" sx={{ fontSize: 40, mb: 1 }} />
+              <Typography variant="h4" color="success.main">
+                {departmentStats?.activeCourses || 0}
               </Typography>
-              <Typography variant="body1" sx={{ 
-                color: '#666',
-                fontWeight: 500
-              }}>
+              <Typography variant="body2" color="text.secondary">
                 Active Courses
               </Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid item xs={6} sm={3}>
-          <Card sx={{ 
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            borderRadius: 2,
-            '&:hover': { transform: 'translateY(-2px)', transition: 'transform 0.2s' }
-          }}>
-            <CardContent sx={{ textAlign: 'center', p: 3 }}>
-              <Assessment sx={{ 
-                fontSize: 48, 
-                mb: 2, 
-                color: '#ffc107' 
-              }} />
-              <Typography variant="h3" sx={{ 
-                fontWeight: 700,
-                color: '#ffc107',
-                mb: 1
-              }}>
+          <Card>
+            <CardContent sx={{ textAlign: 'center' }}>
+              <Assessment color="warning" sx={{ fontSize: 40, mb: 1 }} />
+              <Typography variant="h4" color="warning.main">
                 {evaluations?.length || 0}
               </Typography>
-              <Typography variant="body1" sx={{ 
-                color: '#666',
-                fontWeight: 500
-              }}>
+              <Typography variant="body2" color="text.secondary">
                 Total Evaluations
               </Typography>
             </CardContent>
@@ -606,36 +508,13 @@ const Dashboard = () => {
       </Grid>
 
       {/* Main Content with Tabs */}
-      <Paper sx={{ 
-        width: '100%',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        borderRadius: 2,
-        overflow: 'hidden'
-      }}>
+      <Paper sx={{ width: '100%' }}>
         <Tabs 
           value={tabValue} 
           onChange={handleTabChange} 
           variant={isMobile ? "scrollable" : "fullWidth"}
           scrollButtons={isMobile ? "auto" : false}
-          sx={{ 
-            borderBottom: 1, 
-            borderColor: '#e0e0e0',
-            backgroundColor: 'white',
-            '& .MuiTab-root': {
-              textTransform: 'none',
-              fontWeight: 500,
-              fontSize: '0.9rem',
-              minHeight: 64,
-              '&.Mui-selected': {
-                color: '#1976d2',
-                fontWeight: 600
-              }
-            },
-            '& .MuiTabs-indicator': {
-              backgroundColor: '#1976d2',
-              height: 3
-            }
-          }}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
         >
           <Tab label="Overview" icon={<DashboardIcon />} />
           <Tab label="Staff Management" icon={<People />} />
@@ -644,7 +523,6 @@ const Dashboard = () => {
           <Tab label="Class Allocation" icon={<Class />} />
           <Tab label="Department Reports" icon={<Assignment />} />
           <Tab label="Lesson Plan Approvals" icon={<Analytics />} />
-          <Tab label="Salary Payroll" icon={<AccountBalance />} />
         </Tabs>
 
         {/* Overview Tab */}
@@ -1081,27 +959,9 @@ const Dashboard = () => {
 
         {/* Lesson Plan Approvals Tab */}
         <TabPanel value={tabValue} index={6}>
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            mb: 3,
-            p: 2,
-            backgroundColor: 'white',
-            borderRadius: 2,
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}>
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              Lesson Plan Approvals
-            </Typography>
-            <Button 
-              variant="contained" 
-              onClick={() => window.location.href = '/hod/lesson-plans'}
-              sx={{ 
-                backgroundColor: '#1976d2',
-                '&:hover': { backgroundColor: '#1565c0' }
-              }}
-            >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h6">Lesson Plan Approvals</Typography>
+            <Button variant="contained" onClick={() => window.location.href = '/hod/lesson-plans'}>
               View All Lesson Plans
             </Button>
           </Box>
@@ -1138,40 +998,14 @@ const Dashboard = () => {
               </Table>
             </TableContainer>
           ) : (
-            <Card sx={{ 
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              borderRadius: 2,
-              backgroundColor: 'white'
-            }}>
-              <CardContent sx={{ p: 4, textAlign: 'center' }}>
-                <Typography variant="body1" sx={{ 
-                  color: '#666',
-                  fontSize: '1.1rem'
-                }}>
+            <Card>
+              <CardContent>
+                <Typography variant="body2" color="textSecondary" align="center">
                   No lesson plan submissions found.
                 </Typography>
               </CardContent>
             </Card>
           )}
-        </TabPanel>
-
-        {/* Salary Payroll Tab */}
-        <TabPanel value={tabValue} index={7}>
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            mb: 3,
-            p: 2,
-            backgroundColor: 'white',
-            borderRadius: 2,
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}>
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              Salary & Payroll Management
-            </Typography>
-          </Box>
-          <SalaryPayroll />
         </TabPanel>
       </Paper>
 
