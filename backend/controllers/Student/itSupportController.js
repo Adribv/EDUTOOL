@@ -6,22 +6,17 @@ const Staff = require('../../models/Staff/staffModel');
 exports.createITSupportRequest = async (req, res) => {
   try {
     const requesterId = req.user.id;
-    const { requesterType = 'Student' } = req.body;
-    
-    let requester;
-    
-    if (requesterType === 'Student') {
-      requester = await Student.findById(requesterId);
-      if (!requester) {
-        return res.status(404).json({ message: 'Student not found' });
-      }
-    } else if (requesterType === 'Teacher') {
+    // Accept any authenticated user
+    let requester = await Student.findById(requesterId);
+    let requesterType = 'Student';
+    if (!requester) {
       requester = await Staff.findById(requesterId);
-      if (!requester) {
-        return res.status(404).json({ message: 'Teacher not found' });
-      }
+      requesterType = 'Staff';
     }
-
+    if (!requester) {
+      // Fallback: allow submission with minimal info
+      requester = { name: req.body.requesterInfo?.name || 'Unknown', email: req.body.requesterInfo?.emailAddress || '' };
+    }
     const {
       requesterInfo,
       deviceEquipmentInfo,
@@ -32,23 +27,19 @@ exports.createITSupportRequest = async (req, res) => {
       requesterSignature,
       dateOfRequest
     } = req.body;
-
     // Validate required fields
     if (!issueDescription || !priorityLevel || !requestedAction) {
       return res.status(400).json({ 
         message: 'Missing required fields: issueDescription, priorityLevel, requestedAction' 
       });
     }
-
     // Create the IT support request
     const itSupportRequest = new ITSupportRequest({
       dateOfRequest: dateOfRequest || new Date(),
       requesterInfo: requesterInfo || {
         name: requester.name,
-        designationRole: requesterType === 'Student' ? 'Student' : requester.role || 'Teacher',
-        departmentClass: requesterType === 'Student' 
-          ? `${requester.class} - ${requester.section}` 
-          : requester.department || '',
+        designationRole: requester.role || 'Staff',
+        departmentClass: requester.department || '',
         contactNumber: requester.contactNumber || requester.phone || '',
         emailAddress: requester.email
       },
@@ -71,11 +62,9 @@ exports.createITSupportRequest = async (req, res) => {
       requesterType,
       status: 'Submitted'
     });
-
     console.log('About to save IT support request for:', requesterType, requesterId);
     await itSupportRequest.save();
     console.log('IT support request saved successfully with number:', itSupportRequest.requestNumber);
-
     res.status(201).json({
       success: true,
       message: 'IT Support Request submitted successfully',
@@ -84,7 +73,6 @@ exports.createITSupportRequest = async (req, res) => {
         request: itSupportRequest
       }
     });
-
   } catch (error) {
     console.error('Error creating IT support request:', error);
     res.status(500).json({ 
@@ -99,19 +87,13 @@ exports.createITSupportRequest = async (req, res) => {
 exports.getMyITSupportRequests = async (req, res) => {
   try {
     const requesterId = req.user.id;
-    const { requesterType = 'Student' } = req.query;
-    
-    const requests = await ITSupportRequest.find({
-      requesterId,
-      requesterType
-    }).sort({ dateOfRequest: -1 });
-
+    // Allow both students and staff to view their own requests
+    const requests = await ITSupportRequest.find({ requesterId }).sort({ dateOfRequest: -1 });
     res.json({
       success: true,
       message: 'IT Support Requests retrieved successfully',
       data: requests
     });
-
   } catch (error) {
     console.error('Error retrieving IT support requests:', error);
     res.status(500).json({ 
@@ -126,23 +108,18 @@ exports.getMyITSupportRequests = async (req, res) => {
 exports.getITSupportRequestById = async (req, res) => {
   try {
     const { requestId } = req.params;
-    const studentId = req.user.id;
-
+    const userId = req.user.id;
     const request = await ITSupportRequest.findOne({
       _id: requestId,
-      requesterId: studentId,
-      requesterType: 'Student'
+      requesterId: userId
     });
-
     if (!request) {
       return res.status(404).json({ message: 'IT Support Request not found' });
     }
-
     res.json({
       message: 'IT Support Request retrieved successfully',
       request
     });
-
   } catch (error) {
     console.error('Error retrieving IT support request:', error);
     res.status(500).json({ 
@@ -152,55 +129,30 @@ exports.getITSupportRequestById = async (req, res) => {
   }
 };
 
-// Update an IT support request (only if status is 'Submitted')
+// Update an IT support request (allow IT/admin/teacher to update any request by ID)
 exports.updateITSupportRequest = async (req, res) => {
   try {
     const { requestId } = req.params;
-    const studentId = req.user.id;
-
-    const request = await ITSupportRequest.findOne({
-      _id: requestId,
-      requesterId: studentId,
-      requesterType: 'Student'
-    });
-
+    // Find by ID only (no requester restriction)
+    const request = await ITSupportRequest.findById(requestId);
     if (!request) {
       return res.status(404).json({ message: 'IT Support Request not found' });
     }
-
-    // Only allow updates if status is 'Submitted'
-    if (request.status !== 'Submitted') {
-      return res.status(400).json({ 
-        message: 'Cannot update request that has been processed by IT department' 
-      });
+    // Allow updating status and reply
+    const { status, reply } = req.body;
+    if (status) request.status = status;
+    if (reply !== undefined) request.reply = reply;
+    // Optionally allow updating actionTaken for legacy support
+    if (req.body.itDepartmentUse && req.body.itDepartmentUse.actionTaken) {
+      request.itDepartmentUse = request.itDepartmentUse || {};
+      request.itDepartmentUse.actionTaken = req.body.itDepartmentUse.actionTaken;
     }
-
-    const {
-      deviceEquipmentInfo,
-      issueDescription,
-      priorityLevel,
-      requestedAction,
-      preferredContactTime
-    } = req.body;
-
-    // Update the fields
-    if (deviceEquipmentInfo) {
-      request.deviceEquipmentInfo = { ...request.deviceEquipmentInfo, ...deviceEquipmentInfo };
-    }
-    if (issueDescription) request.issueDescription = issueDescription;
-    if (priorityLevel) request.priorityLevel = priorityLevel;
-    if (requestedAction) request.requestedAction = requestedAction;
-    if (preferredContactTime !== undefined) request.preferredContactTime = preferredContactTime;
-
     request.updatedAt = new Date();
-
     await request.save();
-
     res.json({
       message: 'IT Support Request updated successfully',
       request
     });
-
   } catch (error) {
     console.error('Error updating IT support request:', error);
     res.status(500).json({ 
@@ -248,16 +200,14 @@ exports.deleteITSupportRequest = async (req, res) => {
   }
 };
 
-// Get request statistics for the student
+// Get request statistics for the student or staff
 exports.getITSupportStats = async (req, res) => {
   try {
-    const studentId = req.user.id;
-
+    const userId = req.user.id;
     const stats = await ITSupportRequest.aggregate([
       {
         $match: {
-          requesterId: studentId,
-          requesterType: 'Student'
+          requesterId: userId
         }
       },
       {
@@ -267,12 +217,7 @@ exports.getITSupportStats = async (req, res) => {
         }
       }
     ]);
-
-    const totalRequests = await ITSupportRequest.countDocuments({
-      requesterId: studentId,
-      requesterType: 'Student'
-    });
-
+    const totalRequests = await ITSupportRequest.countDocuments({ requesterId: userId });
     const statsObject = {
       total: totalRequests,
       submitted: 0,
@@ -281,24 +226,30 @@ exports.getITSupportStats = async (req, res) => {
       resolved: 0,
       closed: 0
     };
-
     stats.forEach(stat => {
       const status = stat._id.toLowerCase().replace(' ', '');
       if (statsObject.hasOwnProperty(status)) {
         statsObject[status] = stat.count;
       }
     });
-
     res.json({
       message: 'IT Support Request statistics retrieved successfully',
       stats: statsObject
     });
-
   } catch (error) {
     console.error('Error retrieving IT support stats:', error);
     res.status(500).json({ 
       message: 'Failed to retrieve IT support statistics',
       error: error.message 
     });
+  }
+}; 
+
+exports.getAllITSupportRequests = async (req, res) => {
+  try {
+    const requests = await ITSupportRequest.find().sort({ dateOfRequest: -1 });
+    res.json({ success: true, data: requests });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
 }; 

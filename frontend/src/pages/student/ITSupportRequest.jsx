@@ -117,7 +117,7 @@ const ITSupportRequest = () => {
     try {
       const params = isTeacher ? { requesterType: 'Teacher' } : {};
       const response = await api.getITSupportRequests(params);
-      setRequests(response.data.requests || []);
+      setRequests(response.data?.data || response.data || []);
     } catch (error) {
       console.error('Error fetching requests:', error);
       toast.error('Failed to fetch IT support requests');
@@ -200,6 +200,7 @@ const ITSupportRequest = () => {
         ...formData,
         requesterType: isTeacher ? 'Teacher' : 'Student'
       };
+      console.log(submissionData);
       const response = await api.createITSupportRequest(submissionData);
       toast.success(`IT Support Request submitted successfully! Request Number: ${response.data.requestNumber}`);
       
@@ -629,6 +630,7 @@ const ITSupportRequest = () => {
                         <TableCell>Device Type</TableCell>
                         <TableCell>Priority</TableCell>
                         <TableCell>Status</TableCell>
+                        <TableCell>Reply</TableCell>
                         <TableCell>Actions</TableCell>
                       </TableRow>
                     </TableHead>
@@ -653,6 +655,7 @@ const ITSupportRequest = () => {
                                 size="small"
                               />
                             </TableCell>
+                            <TableCell>{request.reply || '-'}</TableCell>
                             <TableCell>
                               <Button
                                 size="small"
@@ -743,6 +746,13 @@ const ITSupportRequest = () => {
                     <Divider sx={{ my: 2 }} />
                     <Typography variant="subtitle2" color="text.secondary">IT Department Action</Typography>
                     <Typography variant="body1">{selectedRequest.itDepartmentUse.actionTaken}</Typography>
+                  </Grid>
+                )}
+                {selectedRequest.reply && (
+                  <Grid item xs={12}>
+                    <Divider sx={{ my: 2 }} />
+                    <Typography variant="subtitle2" color="text.secondary">Reply</Typography>
+                    <Typography variant="body1">{selectedRequest.reply}</Typography>
                   </Grid>
                 )}
               </Grid>

@@ -31,6 +31,12 @@ const eventSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  category: {
+    type: String,
+    enum: ['Event', 'Club', 'Competition', 'Cultural'],
+    required: true
+  },
+  skills: [{ type: String }],
   audience: {
     type: [String],
     enum: ['Students', 'Staff', 'Parents', 'All'],

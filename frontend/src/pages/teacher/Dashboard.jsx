@@ -1533,7 +1533,7 @@ export default function TeacherDashboard() {
     { key: 'parent', role: 'parent' },
     { key: 'ptTeacher', role: 'ptTeacher' },
     { key: 'softSkillsManager', role: 'skillsCoordinator' },
-    { key: 'transportManager', role: 'transportManager' },
+    { key: 'transportManager', role: 'supportStaffsManager' },
     { key: 'wellness', role: 'wellness' },
     { key: 'examiner', role: 'examinationController' },
     { key: 'supportStaffManager', role: 'supportStaffsManager' },

@@ -136,6 +136,11 @@ const itSupportRequestSchema = new mongoose.Schema({
     enum: ['Submitted', 'Received', 'In Progress', 'Resolved', 'Closed'],
     default: 'Submitted'
   },
+  // Reply/comments from IT/teacher
+  reply: {
+    type: String,
+    default: ''
+  },
   
   // Student/Staff reference
   requesterId: {

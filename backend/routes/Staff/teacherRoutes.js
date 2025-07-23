@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const { verifyToken } = require('../../middlewares/authMiddleware');
-const { permit } = require('../../middlewares/roleMiddleware');
 const upload = require('../../middlewares/uploadMiddleware');
 const uploadLessonPlan = require('../../middlewares/uploadLessonPlanMiddleware');
 const uploadExamPaper = require('../../middlewares/uploadExamPaperMiddleware');
@@ -24,8 +23,8 @@ const mcqAssignmentController = require('../../controllers/Staff/Teacher/mcqAssi
 const ApprovalRequest = require('../../models/Staff/HOD/approvalRequest.model');
 const itSupportController = require('../../controllers/Student/itSupportController');
 
-// Apply auth middleware to all routes
-router.use(verifyToken, permit('Teacher'));
+// Apply only authentication middleware to all routes (no role check)
+router.use(verifyToken);
 
 // Test route to check if teacher routes are working
 router.get('/test', (req, res) => {
@@ -105,6 +104,16 @@ router.get('/exams', examController.getExams);
 router.get('/vp-exams', examController.getVPScheduledExams);
 router.post('/exams/:examId/results', examController.enterExamResults);
 router.get('/exams/:examId/performance-report', examController.generatePerformanceReport);
+router.post('/exams/mark-sheet', examController.generateMarkSheet);
+router.post('/exams/transcript', examController.generateTranscript);
+router.post('/exams/lock-paper', examController.lockExamPaper);
+router.post('/exams/moderate-paper', examController.moderateExamPaper);
+router.get('/exams/analytics', examController.examAnalytics);
+router.get('/exam-timetables', examController.getAllExamTimetables);
+router.get('/all-exams', examController.getAllExams);
+router.get('/all-exam-papers', examController.getAllExamPapers);
+router.get('/all-staff', examController.getAllStaff);
+router.put('/exam-timetable/:id', examController.updateExamTimetable);
 
 // 7. Learning Material Repository
 router.get('/lesson-plan-options', learningMaterialController.getLessonPlanOptions);
@@ -178,12 +187,13 @@ router.put('/mcq-assignments/:assignmentId', mcqAssignmentController.updateMCQAs
 router.delete('/mcq-assignments/:assignmentId', mcqAssignmentController.deleteMCQAssignment);
 router.get('/mcq-assignments/:assignmentId/submissions', mcqAssignmentController.getMCQSubmissions);
 
-// IT Support Request Management
+// IT Support Request Management (shared for both students and staff)
 router.post('/it-support-requests', itSupportController.createITSupportRequest);
 router.get('/it-support-requests', itSupportController.getMyITSupportRequests);
 router.get('/it-support-requests/stats', itSupportController.getITSupportStats);
 router.get('/it-support-requests/:requestId', itSupportController.getITSupportRequestById);
 router.put('/it-support-requests/:requestId', itSupportController.updateITSupportRequest);
 router.delete('/it-support-requests/:requestId', itSupportController.deleteITSupportRequest);
+router.get('/all-it-support-requests', itSupportController.getAllITSupportRequests);
 
 module.exports = router;

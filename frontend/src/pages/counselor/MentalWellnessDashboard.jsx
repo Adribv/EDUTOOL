@@ -73,7 +73,9 @@ import {
   Event as EventIcon,
   Schedule as ScheduleIcon,
   Notifications as NotificationIcon,
-  Security as SecurityIcon
+  Security as SecurityIcon,
+  Visibility as VisibilityIcon,
+  Lock as LockIcon
 } from '@mui/icons-material';
 import {
   XAxis,
@@ -93,7 +95,9 @@ import {
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { usePermission } from '../../components/PermissionGuard';
 import { toast } from 'react-toastify';
+import { api } from '../../services/api';
 
 // Animated Stat Card Component
 const AnimatedStatCard = ({ icon: Icon, label, value, color, subtitle, trend, delay = 0 }) => (
@@ -145,7 +149,7 @@ const AnimatedStatCard = ({ icon: Icon, label, value, color, subtitle, trend, de
 );
 
 // Session Card Component
-const SessionCard = ({ session, onEdit, onDelete, onView }) => (
+const SessionCard = ({ session, onEdit, onDelete, onView, canEdit }) => (
   <motion.div
     whileHover={{ scale: 1.02 }}
     whileTap={{ scale: 0.98 }}
@@ -176,12 +180,16 @@ const SessionCard = ({ session, onEdit, onDelete, onView }) => (
           <IconButton size="small" onClick={() => onView(session)}>
             <ViewIcon />
           </IconButton>
-          <IconButton size="small" onClick={() => onEdit(session)}>
-            <EditIcon />
-          </IconButton>
-          <IconButton size="small" onClick={() => onDelete(session._id)}>
-            <DeleteIcon />
-          </IconButton>
+          {canEdit && onEdit && (
+            <IconButton size="small" onClick={() => onEdit(session)}>
+              <EditIcon />
+            </IconButton>
+          )}
+          {canEdit && onDelete && (
+            <IconButton size="small" onClick={() => onDelete(session._id)}>
+              <DeleteIcon />
+            </IconButton>
+          )}
         </Box>
       </CardContent>
     </Card>
@@ -193,6 +201,7 @@ const MentalWellnessDashboard = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { logout } = useAuth();
+  const { canView, canEdit, loading, error, dashboardName } = usePermission('mentalWellness');
   const queryClient = useQueryClient();
 
   // State management
@@ -258,6 +267,15 @@ const MentalWellnessDashboard = () => {
     }
   ];
 
+  // Fetch all counselling requests
+  const { data: counsellingRequests, isLoading: loadingRequests, error: requestsError, refetch } = useQuery({
+    queryKey: ['counsellingRequests'],
+    queryFn: async () => {
+      const res = await api.get('/counselling-requests');
+      return res.data?.data || [];
+    }
+  });
+
   // Helper functions
   const resetSessionForm = () => {
     setSessionForm({
@@ -271,6 +289,10 @@ const MentalWellnessDashboard = () => {
   };
 
   const handleSessionSubmit = () => {
+    if (!canEdit) {
+      toast.error('You do not have permission to perform this action');
+      return;
+    }
     if (!sessionForm.studentId || !sessionForm.date || !sessionForm.time) {
       toast.error('Please fill in all required fields');
       return;
@@ -282,6 +304,10 @@ const MentalWellnessDashboard = () => {
   };
 
   const handleAssessmentSubmit = () => {
+    if (!canEdit) {
+      toast.error('You do not have permission to perform this action');
+      return;
+    }
     if (!assessmentForm.studentId || !assessmentForm.assessmentType) {
       toast.error('Please fill in all required fields');
       return;
@@ -291,9 +317,72 @@ const MentalWellnessDashboard = () => {
     toast.success('Assessment recorded successfully');
   };
 
+  // Show loading while permissions are being fetched
+  if (loading) {
+    return (
+      <Box sx={{ p: 4, textAlign: 'center' }}>
+        <Paper sx={{ p: 4, maxWidth: 400, mx: 'auto' }}>
+          <CircularProgress sx={{ mb: 2 }} />
+          <Typography variant="body2" color="text.secondary">
+            Loading permissions...
+          </Typography>
+        </Paper>
+      </Box>
+    );
+  }
+
+  // Show error if permissions failed to load
+  if (error) {
+    return (
+      <Box sx={{ p: 4, textAlign: 'center' }}>
+        <Paper sx={{ p: 4, maxWidth: 400, mx: 'auto' }}>
+          <SecurityIcon sx={{ fontSize: 60, color: 'error.main', mb: 2 }} />
+          <Typography variant="h6" gutterBottom>
+            Permission Error
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {error}
+          </Typography>
+          <Button 
+            variant="contained" 
+            onClick={() => navigate('/dashboard')}
+          >
+            Go to Dashboard
+          </Button>
+        </Paper>
+      </Box>
+    );
+  }
+
+  // Show access denied if no view permission
+  if (!canView) {
+    return (
+      <Box sx={{ p: 4, textAlign: 'center' }}>
+        <Paper sx={{ p: 4, maxWidth: 400, mx: 'auto' }}>
+          <SecurityIcon sx={{ fontSize: 60, color: 'error.main', mb: 2 }} />
+          <Typography variant="h6" gutterBottom>
+            Access Denied
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            You don't have permission to view the {dashboardName}.
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Please contact your administrator for access.
+          </Typography>
+          <Button 
+            variant="contained" 
+            onClick={() => navigate('/dashboard')}
+          >
+            Go to Dashboard
+          </Button>
+        </Paper>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ minHeight: '100vh', background: theme.palette.grey[50] }}>
-      {/* Header */}
+      {/* Header with permission indicator */}
       <Box sx={{ 
         background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
         color: 'white',
@@ -313,7 +402,15 @@ const MentalWellnessDashboard = () => {
               Student Mental Health and Wellbeing Management
             </Typography>
           </motion.div>
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            {!canEdit && (
+              <Chip 
+                icon={<VisibilityIcon />} 
+                label="View Only" 
+                color="warning" 
+                sx={{ color: 'white', bgcolor: 'rgba(255,255,255,0.2)' }}
+              />
+            )}
             <Tooltip title="Profile">
               <IconButton onClick={() => navigate('/counselor/profile')} sx={{ color: 'white' }}>
                 <AccountCircle />
@@ -380,7 +477,7 @@ const MentalWellnessDashboard = () => {
         {/* Main Content Tabs */}
         <Paper sx={{ mb: 3 }}>
           <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
-            <Tab label="Overview" icon={<TimelineIcon />} />
+            <Tab label="Counselling Requests" icon={<PsychologyIcon />} />
             <Tab label="Sessions" icon={<PsychologyIcon />} />
             <Tab label="Assessments" icon={<AssessmentIcon />} />
             <Tab label="Reports" icon={<AssessmentIcon />} />
@@ -391,67 +488,68 @@ const MentalWellnessDashboard = () => {
         <AnimatePresence mode="wait">
           {activeTab === 0 && (
             <motion.div
-              key="overview"
+              key="counselling-requests"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={8}>
-                  <Paper sx={{ p: 3, height: 400 }}>
-                    <Typography variant="h6" sx={{ mb: 2 }}>Wellness Trends</Typography>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={[
-                        { month: 'Jan', sessions: 45, assessments: 32, improvements: 28 },
-                        { month: 'Feb', sessions: 52, assessments: 38, improvements: 35 },
-                        { month: 'Mar', sessions: 38, assessments: 25, improvements: 22 },
-                        { month: 'Apr', sessions: 61, assessments: 45, improvements: 42 },
-                        { month: 'May', sessions: 55, assessments: 40, improvements: 38 },
-                        { month: 'Jun', sessions: 67, assessments: 52, improvements: 48 },
-                      ]}>
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <RechartsTooltip />
-                        <Legend />
-                        <Area type="monotone" dataKey="sessions" stackId="1" stroke={theme.palette.primary.main} fill={theme.palette.primary.main} fillOpacity={0.6} />
-                        <Area type="monotone" dataKey="assessments" stackId="1" stroke={theme.palette.secondary.main} fill={theme.palette.secondary.main} fillOpacity={0.6} />
-                        <Area type="monotone" dataKey="improvements" stackId="1" stroke={theme.palette.success.main} fill={theme.palette.success.main} fillOpacity={0.6} />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </Paper>
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <Paper sx={{ p: 3, height: 400 }}>
-                    <Typography variant="h6" sx={{ mb: 2 }}>Session Types</Typography>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={[
-                            { name: 'Individual', value: 65, color: theme.palette.primary.main },
-                            { name: 'Group', value: 25, color: theme.palette.secondary.main },
-                            { name: 'Crisis', value: 10, color: theme.palette.error.main }
-                          ]}
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={80}
-                          dataKey="value"
-                        >
-                          {[
-                            { name: 'Individual', value: 65, color: theme.palette.primary.main },
-                            { name: 'Group', value: 25, color: theme.palette.secondary.main },
-                            { name: 'Crisis', value: 10, color: theme.palette.error.main }
-                          ].map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <RechartsTooltip />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </Paper>
-                </Grid>
-              </Grid>
+              <Paper sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h6">All Counselling Requests</Typography>
+                  <Button startIcon={<RefreshIcon />} onClick={refetch}>Refresh</Button>
+                </Box>
+                {loadingRequests ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}><CircularProgress /></Box>
+                ) : requestsError ? (
+                  <Alert severity="error">Failed to load requests</Alert>
+                ) : (
+                  <Box sx={{ width: '100%', overflowX: 'auto', minWidth: 900 }}>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>School Name</TableCell>
+                          <TableCell>Date of Request</TableCell>
+                          <TableCell>Requested By</TableCell>
+                          <TableCell>Student Name</TableCell>
+                          <TableCell>Contact</TableCell>
+                          <TableCell>Email</TableCell>
+                          <TableCell>Reasons</TableCell>
+                          <TableCell>Description</TableCell>
+                          <TableCell>Preferred Mode</TableCell>
+                          <TableCell>Preferred Time</TableCell>
+                          <TableCell>Signature</TableCell>
+                          <TableCell>Date</TableCell>
+                          <TableCell>Date Received</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {counsellingRequests.map((req) => (
+                          <TableRow key={req._id}>
+                            <TableCell>{req.schoolName}</TableCell>
+                            <TableCell>{req.dateOfRequest ? new Date(req.dateOfRequest).toLocaleString() : ''}</TableCell>
+                            <TableCell>{req.requestedBy}{req.requestedByOther ? ` (${req.requestedByOther})` : ''}</TableCell>
+                            <TableCell>{req.studentDetails?.fullName || ''}</TableCell>
+                            <TableCell>{req.contactNumber}</TableCell>
+                            <TableCell>{req.email}</TableCell>
+                            <TableCell>
+                              {Array.isArray(req.reasons)
+                                ? req.reasons.join(', ')
+                                : req.reasons || ''}
+                            </TableCell>
+                            <TableCell>{req.briefDescription}</TableCell>
+                            <TableCell>{req.preferredMode}</TableCell>
+                            <TableCell>{req.preferredTime}</TableCell>
+                            <TableCell>{req.signature}</TableCell>
+                            <TableCell>{req.date ? new Date(req.date).toLocaleString() : ''}</TableCell>
+                            <TableCell>{req.dateReceived ? new Date(req.dateReceived).toLocaleString() : ''}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </Box>
+                )}
+              </Paper>
             </motion.div>
           )}
 
@@ -464,21 +562,25 @@ const MentalWellnessDashboard = () => {
               transition={{ duration: 0.3 }}
             >
               <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={() => setSessionDialog(true)}
-                  sx={{ px: 3, py: 1.5 }}
-                >
-                  Schedule Session
-                </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<AssessmentIcon />}
-                  onClick={() => setAssessmentDialog(true)}
-                >
-                  New Assessment
-                </Button>
+                {canEdit && (
+                  <>
+                    <Button
+                      variant="contained"
+                      startIcon={<AddIcon />}
+                      onClick={() => setSessionDialog(true)}
+                      sx={{ px: 3, py: 1.5 }}
+                    >
+                      Schedule Session
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      startIcon={<AssessmentIcon />}
+                      onClick={() => setAssessmentDialog(true)}
+                    >
+                      New Assessment
+                    </Button>
+                  </>
+                )}
                 <Button
                   variant="outlined"
                   startIcon={<DownloadIcon />}
@@ -492,19 +594,20 @@ const MentalWellnessDashboard = () => {
                   <Grid item xs={12} sm={6} md={4} key={session._id}>
                     <SessionCard
                       session={session}
-                      onEdit={(session) => {
+                      onEdit={canEdit ? (session) => {
                         setSelectedSession(session);
                         setSessionForm(session);
                         setSessionDialog(true);
-                      }}
-                      onDelete={(id) => {
+                      } : null}
+                      onDelete={canEdit ? (id) => {
                         // Delete logic
                         toast.success('Session deleted successfully');
-                      }}
+                      } : null}
                       onView={(session) => {
                         // View logic
                         console.log('View session:', session);
                       }}
+                      canEdit={canEdit}
                     />
                   </Grid>
                 ))}
@@ -530,7 +633,7 @@ const MentalWellnessDashboard = () => {
                       <TableCell>Score</TableCell>
                       <TableCell>Date</TableCell>
                       <TableCell>Status</TableCell>
-                      <TableCell>Actions</TableCell>
+                      {canEdit && <TableCell>Actions</TableCell>}
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -553,14 +656,16 @@ const MentalWellnessDashboard = () => {
                             color={assessment.status === 'Completed' ? 'success' : 'warning'} 
                           />
                         </TableCell>
-                        <TableCell>
-                          <IconButton size="small">
-                            <ViewIcon />
-                          </IconButton>
-                          <IconButton size="small">
-                            <EditIcon />
-                          </IconButton>
-                        </TableCell>
+                        {canEdit && (
+                          <TableCell>
+                            <IconButton size="small">
+                              <ViewIcon />
+                            </IconButton>
+                            <IconButton size="small">
+                              <EditIcon />
+                            </IconButton>
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                   </TableBody>

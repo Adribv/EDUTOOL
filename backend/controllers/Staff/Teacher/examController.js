@@ -423,3 +423,153 @@ exports.getVPScheduledExams = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+// Generate mark sheet for a class/exam
+exports.generateMarkSheet = async (req, res) => {
+  try {
+    const { examId, class: cls, section } = req.query;
+    const ExamResult = require('../../../models/Staff/Teacher/examResult.model');
+    const Student = require('../../../models/Student/studentModel');
+    const results = await ExamResult.find({ examId, class: cls, section }).populate('studentId', 'name rollNumber');
+    const markSheet = results.map(r => ({
+      student: r.studentId?.name,
+      rollNumber: r.studentId?.rollNumber,
+      marks: r.score,
+      grade: r.grade,
+      status: r.status
+    }));
+    res.json({ success: true, data: markSheet });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Generate transcript for a student
+exports.generateTranscript = async (req, res) => {
+  try {
+    const { studentId } = req.query;
+    const ExamResult = require('../../../models/Staff/Teacher/examResult.model');
+    const results = await ExamResult.find({ studentId }).populate('examId', 'title date subject totalMarks');
+    const transcript = results.map(r => ({
+      exam: r.examId?.title,
+      subject: r.examId?.subject,
+      date: r.examId?.date,
+      marks: r.score,
+      grade: r.grade,
+      totalMarks: r.examId?.totalMarks
+    }));
+    res.json({ success: true, data: transcript });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Lock/unlock exam paper (secure content)
+exports.lockExamPaper = async (req, res) => {
+  try {
+    const { examPaperId, lock } = req.body;
+    const ExamPaper = require('../../../models/Staff/HOD/examPaper.model');
+    const paper = await ExamPaper.findById(examPaperId);
+    if (!paper) return res.status(404).json({ message: 'Exam paper not found' });
+    paper.status = lock ? 'Locked' : 'Draft';
+    await paper.save();
+    res.json({ success: true, message: `Exam paper ${lock ? 'locked' : 'unlocked'}` });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Moderate exam paper (approve/reject)
+exports.moderateExamPaper = async (req, res) => {
+  try {
+    const { examPaperId, action, feedback } = req.body;
+    const ExamPaper = require('../../../models/Staff/HOD/examPaper.model');
+    const paper = await ExamPaper.findById(examPaperId);
+    if (!paper) return res.status(404).json({ message: 'Exam paper not found' });
+    if (action === 'approve') {
+      paper.status = 'Approved';
+      paper.moderationFeedback = feedback || '';
+    } else if (action === 'reject') {
+      paper.status = 'Rejected';
+      paper.moderationFeedback = feedback || '';
+    }
+    await paper.save();
+    res.json({ success: true, message: `Exam paper ${action}d` });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Exam analytics: grade distribution, average, top/bottom performers
+exports.examAnalytics = async (req, res) => {
+  try {
+    const { examId } = req.query;
+    const ExamResult = require('../../../models/Staff/Teacher/examResult.model');
+    const results = await ExamResult.find({ examId });
+    if (!results.length) return res.json({ success: true, data: { average: 0, gradeDistribution: {}, top: null, bottom: null } });
+    const total = results.reduce((sum, r) => sum + (r.score || 0), 0);
+    const average = total / results.length;
+    const gradeDistribution = {};
+    results.forEach(r => { gradeDistribution[r.grade] = (gradeDistribution[r.grade] || 0) + 1; });
+    const sorted = results.sort((a, b) => b.score - a.score);
+    res.json({ success: true, data: { average, gradeDistribution, top: sorted[0], bottom: sorted[sorted.length - 1] } });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Get all exam timetables (for examiner dashboard)
+exports.getAllExamTimetables = async (req, res) => {
+  try {
+    const timetables = await ExamTimetable.find().populate('departmentId', 'name').populate('createdBy', 'name email');
+    res.json({ success: true, data: timetables });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Get all exams (for examiner dashboard)
+exports.getAllExams = async (req, res) => {
+  try {
+    const exams = await Exam.find();
+    res.json({ success: true, data: exams });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Get all exam papers (for examiner dashboard)
+exports.getAllExamPapers = async (req, res) => {
+  try {
+    const papers = await VPExam.find();
+    res.json({ success: true, data: papers });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Get all staff (for invigilator assignment)
+exports.getAllStaff = async (req, res) => {
+  try {
+    const staff = await Staff.find({}, 'name email role');
+    res.json({ success: true, data: staff });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Update exam timetable (assign invigilator/room)
+exports.updateExamTimetable = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { invigilator, room } = req.body;
+    const timetable = await ExamTimetable.findById(id);
+    if (!timetable) return res.status(404).json({ message: 'Timetable not found' });
+    if (invigilator) timetable.invigilator = invigilator;
+    if (room) timetable.room = room;
+    await timetable.save();
+    res.json({ success: true, message: 'Timetable updated', data: timetable });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

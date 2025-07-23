@@ -45,6 +45,27 @@ const maintenanceSchema = new mongoose.Schema({
   }
 });
 
+const scheduleSchema = new mongoose.Schema({
+  date: { type: Date, required: true },
+  startTime: String,
+  endTime: String,
+  route: String,
+  driver: String
+});
+
+const fuelLogSchema = new mongoose.Schema({
+  date: { type: Date, default: Date.now },
+  liters: Number,
+  cost: Number,
+  filledBy: String
+});
+
+const driverIncidentSchema = new mongoose.Schema({
+  date: { type: Date, default: Date.now },
+  description: String,
+  actionTaken: String
+});
+
 const transportSchema = new mongoose.Schema({
   vehicleNumber: {
     type: String,
@@ -84,7 +105,10 @@ const transportSchema = new mongoose.Schema({
     type: String,
     enum: ['Active', 'Under Maintenance', 'Inactive'],
     default: 'Active'
-  }
+  },
+  schedules: [scheduleSchema],
+  fuelLogs: [fuelLogSchema],
+  driverIncidents: [driverIncidentSchema]
 }, { timestamps: true });
 
 module.exports = mongoose.model('Transport', transportSchema);

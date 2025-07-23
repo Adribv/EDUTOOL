@@ -145,7 +145,22 @@ const TeacherITSupportRequest = () => {
         ...formData,
         requesterId: user?._id || user?.id,
         requesterType: 'Teacher',
-        status: 'Submitted'
+        status: 'Submitted',
+        // Map deviceEquipmentInfo fields to backend schema
+        deviceEquipmentInfo: {
+          typeOfDevice: formData.deviceEquipmentInfo.deviceType || 'Other',
+          deviceAssetId: formData.deviceEquipmentInfo.serialNumber || '',
+          operatingSystem: formData.deviceEquipmentInfo.operatingSystem || '',
+          otherDeviceType: '',
+        },
+        // Map priorityLevel and requestedAction to match backend enums
+        priorityLevel: formData.priorityLevel === 'Low' ? 'Low - Minor inconvenience'
+          : formData.priorityLevel === 'Medium' ? 'Medium - Work impacted, workaround possible'
+          : formData.priorityLevel === 'High' ? 'High - Work halted, needs urgent resolution'
+          : formData.priorityLevel,
+        requestedAction: ['Troubleshoot & Fix', 'Replace Device/Part', 'Software Installation/Update', 'Network Configuration', 'Other'].includes(formData.requestedAction)
+          ? formData.requestedAction
+          : 'Other',
       };
 
       const response = await teacherAPI.createITSupportRequest(payload);

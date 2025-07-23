@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const extracurricularAchievementSchema = new mongoose.Schema({
-  studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Student', required: true },
+  studentName: { type: String, required: true },
   title: { type: String, required: true },
   description: { type: String, required: true },
   date: { type: Date, required: true },
@@ -17,7 +17,7 @@ const extracurricularAchievementSchema = new mongoose.Schema({
   },
   position: String,
   certificateUrl: String,
-  recordedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Staff', required: true }
+  recordedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Staff' }
 }, { timestamps: true });
 
 module.exports = mongoose.model('ExtracurricularAchievement', extracurricularAchievementSchema);
