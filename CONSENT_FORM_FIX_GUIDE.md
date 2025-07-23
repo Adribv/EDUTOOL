@@ -2,7 +2,7 @@
 
 ## Issue Description
 
-The consent form at URL `http://localhost:3000/parent/consent-form/685ed9d3a1e86249ef52ceb8` is showing the error:
+The consent form at URL `https://edulives.com/parent/consent-form/685ed9d3a1e86249ef52ceb8` is showing the error:
 
 > "Consent form data is incomplete. Please contact the school administration."
 
@@ -104,7 +104,7 @@ To prevent this issue in the future:
 
 After applying any of the solutions:
 
-1. Navigate to `http://localhost:3000/parent/consent-form/685ed9d3a1e86249ef52ceb8`
+1. Navigate to `https://edulives.com/parent/consent-form/685ed9d3a1e86249ef52ceb8`
 2. The form should now load properly without the error
 3. Parents should be able to fill out the consent form
 

@@ -421,38 +421,10 @@ const Dashboard = () => {
         borderRadius: 2,
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
       }}>
-        <Box>
-          <Typography variant="h4" sx={{ 
-            fontSize: { xs: '1.5rem', md: '2rem' },
-            fontWeight: 600,
-            color: '#1976d2'
-          }}>
-        HOD Dashboard
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Badge badgeContent={3} color="error">
-            <IconButton>
-              <Notifications />
-            </IconButton>
-          </Badge>
-          <Avatar sx={{ bgcolor: '#1976d2', width: 40, height: 40 }}>
-            H
-          </Avatar>
-        </Box>
-      </Box>
+        
 
       {/* Welcome Section */}
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        mb: 3,
-        p: 2,
-        backgroundColor: 'white',
-        borderRadius: 2,
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-      }}>
+      
         <Box>
           <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
             Welcome, HOD

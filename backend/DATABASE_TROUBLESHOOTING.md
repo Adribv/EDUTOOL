@@ -28,7 +28,7 @@ NODE_ENV=development
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 
 # CORS Origin
-CORS_ORIGIN=http://localhost:3000
+CORS_ORIGIN=https://edulives.com
 ```
 
 ### 3. Testing the Connection
