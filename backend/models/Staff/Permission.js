@@ -1,227 +1,31 @@
 const mongoose = require('mongoose');
 
+// Permission schema: One document per staffId, all roles and access levels in roleAssignments array
 const permissionSchema = new mongoose.Schema({
-  // Staff member reference
+  // Staff member reference (unique)
   staffId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Staff',
-    required: true
-  },
-  
-  // Role information
-  role: {
-    type: String,
     required: true,
-    enum: [
-      'Admin',
-      'Principal', 
-      'Vice Principal',
-      'HOD',
-      'Teacher',
-      'Accountant',
-      'Librarian',
-      'Wellness Counsellor',
-      'IT Support',
-      'Office Manager',
-      'Facility Manager',
-      'Support Staff'
-    ]
+    unique: true // Enforce one document per staff
   },
-  
+  // Assigned roles and access levels (all roles for this staff)
+  roleAssignments: [
+    {
+      role: { type: String, required: true },
+      access: { type: String, enum: ['Unauthorized', 'View Access', 'Edit Access'], required: true }
+    }
+  ],
   // Department (for HODs and department-specific roles)
   department: {
     type: String,
     enum: ['Academics', 'Administration', 'Support Staff', 'IT', 'Library', 'Wellness', 'Finance']
   },
-  
-  // Access levels for different modules
-  permissions: {
-    // Academic Management
-    students: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    teachers: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    classes: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    subjects: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    timetable: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    attendance: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    assignments: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    exams: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    
-    // Financial Management
-    fees: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    payments: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    salaries: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    expenses: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    
-    // Administrative
-    staff: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    parents: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    communications: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    events: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    
-    // Reports and Analytics
-    reports: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    analytics: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    
-    // System Management
-    settings: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    users: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    permissions: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    
-    // Specialized Modules
-    library: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    wellness: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    counselling: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    itSupport: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    inventory: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    transport: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    disciplinary: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    }
+  // Remarks/notes
+  remarks: {
+    type: String,
+    default: ''
   },
-  
-  // Custom permissions for specific roles
-  customPermissions: [{
-    module: String,
-    access: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access']
-    }
-  }],
-  
-  // Approval permissions
-  approvalPermissions: {
-    leaves: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    expenses: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    events: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    },
-    communications: {
-      type: String,
-      enum: ['No Access', 'View Access', 'Edit Access'],
-      default: 'No Access'
-    }
-  },
-  
   // Metadata
   assignedBy: {
     type: mongoose.Schema.Types.ObjectId,
@@ -243,9 +47,11 @@ const permissionSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Index for performance
-permissionSchema.index({ staffId: 1, role: 1 });
-permissionSchema.index({ role: 1, department: 1 });
+// Remove legacy/extra indexes (do not add)
+// permissionSchema.index({ staffId: 1, role: 1 });
+// permissionSchema.index({ role: 1, department: 1 });
+// Add unique index for staffId
+permissionSchema.index({ staffId: 1 }, { unique: true });
 
 // Pre-save middleware to update lastModified
 permissionSchema.pre('save', function(next) {

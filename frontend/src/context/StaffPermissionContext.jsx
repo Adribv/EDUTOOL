@@ -159,14 +159,14 @@ const StaffPermissionContext = createContext();
 // Provider Component
 export const StaffPermissionProvider = ({ children }) => {
   const [state, dispatch] = useReducer(staffPermissionReducer, initialState);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   // Load staff permissions on mount
   useEffect(() => {
-    if (user) {
+    if (user && !authLoading) {
       loadStaffPermissions();
     }
-  }, [user]);
+  }, [user, authLoading]);
 
   // Mock API call - replace with actual API
   const loadStaffPermissions = async () => {

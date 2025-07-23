@@ -3,6 +3,7 @@ const Staff = require('../../models/Staff/staffModel');
 
 // Get all staff with their permissions
 exports.getAllStaffPermissions = async (req, res) => {
+  console.log("getAllStaffPermissions");
   try {
     const staffWithPermissions = await Staff.aggregate([
       {
@@ -17,14 +18,12 @@ exports.getAllStaffPermissions = async (req, res) => {
         $project: {
           name: 1,
           email: 1,
-          role: 1,
           department: 1,
           designation: 1,
           permissions: { $arrayElemAt: ['$permissions', 0] }
         }
       }
     ]);
-
     res.json({
       success: true,
       data: staffWithPermissions
@@ -43,17 +42,13 @@ exports.getAllStaffPermissions = async (req, res) => {
 exports.getStaffPermissions = async (req, res) => {
   try {
     const { staffId } = req.params;
-    
-    const permissions = await Permission.findOne({ staffId, isActive: true })
-      .populate('staffId', 'name email role department');
-    
+    let permissions = await Permission.findOne({ staffId, isActive: true })
+      .populate('staffId', 'name email department');
     if (!permissions) {
-      return res.status(404).json({
-        success: false,
-        message: 'Permissions not found for this staff member'
-      });
+      // Create a default Permission document if not found
+      permissions = new Permission({ staffId, roleAssignments: [], isActive: true });
+      await permissions.save();
     }
-
     res.json({
       success: true,
       data: permissions
@@ -68,149 +63,23 @@ exports.getStaffPermissions = async (req, res) => {
   }
 };
 
-// Assign role and permissions to staff
-exports.assignRoleAndPermissions = async (req, res) => {
+// Restore logic to store assigned roles in the Permission model (permissions modal)
+exports.saveStaffRolesAndAccess = async (req, res) => {
   try {
     const { staffId } = req.params;
-    const { role, department, permissions, customPermissions, approvalPermissions } = req.body;
-    const assignedBy = req.user.id;
-
-    // Verify staff exists
-    const staff = await Staff.findById(staffId);
-    if (!staff) {
-      return res.status(404).json({
-        success: false,
-        message: 'Staff member not found'
-      });
-    }
-
-    // Get default permissions for the role
-    let defaultPermissions = Permission.getDefaultPermissions(role, department);
-    
-    // Merge with custom permissions if provided
-    const finalPermissions = {
-      ...defaultPermissions.permissions,
-      ...permissions
-    };
-
-    // Check if permissions already exist
-    let existingPermissions = await Permission.findOne({ staffId, isActive: true });
-    
-    if (existingPermissions) {
-      // Update existing permissions
-      existingPermissions.role = role;
-      existingPermissions.department = department;
-      existingPermissions.permissions = finalPermissions;
-      existingPermissions.customPermissions = customPermissions || [];
-      existingPermissions.approvalPermissions = approvalPermissions || existingPermissions.approvalPermissions;
-      existingPermissions.assignedBy = assignedBy;
-      existingPermissions.lastModified = new Date();
-      
-      await existingPermissions.save();
-      
-      res.json({
-        success: true,
-        message: 'Permissions updated successfully',
-        data: existingPermissions
-      });
+    const { roleAssignments, department, remarks } = req.body;
+    let permission = await Permission.findOne({ staffId, isActive: true });
+    if (!permission) {
+      permission = new Permission({ staffId, roleAssignments, department, remarks, isActive: true });
     } else {
-      // Create new permissions
-      const newPermissions = new Permission({
-        staffId,
-        role,
-        department,
-        permissions: finalPermissions,
-        customPermissions: customPermissions || [],
-        approvalPermissions: approvalPermissions || {},
-        assignedBy
-      });
-      
-      await newPermissions.save();
-      
-      res.status(201).json({
-        success: true,
-        message: 'Role and permissions assigned successfully',
-        data: newPermissions
-      });
+      permission.roleAssignments = roleAssignments;
+      permission.department = department;
+      permission.remarks = remarks;
     }
-
-    // Update staff role
-    staff.role = role;
-    if (department) staff.department = department;
-    await staff.save();
-
+    await permission.save();
+    res.json({ success: true, data: permission });
   } catch (error) {
-    console.error('Error assigning role and permissions:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to assign role and permissions',
-      error: error.message
-    });
-  }
-};
-
-// Update specific permissions for a staff member
-exports.updateStaffPermissions = async (req, res) => {
-  try {
-    const { staffId } = req.params;
-    const { permissions, customPermissions, approvalPermissions, role, department, reportingTo, remarks } = req.body;
-    const assignedBy = req.user.id;
-
-    let existingPermissions = await Permission.findOne({ staffId, isActive: true });
-
-    if (!existingPermissions) {
-      // If not found, create new permissions document (upsert behavior)
-      const newPermissions = new Permission({
-        staffId,
-        role: role || 'Teacher',
-        department,
-        permissions: permissions || {},
-        customPermissions: customPermissions || [],
-        approvalPermissions: approvalPermissions || {},
-        assignedBy,
-        reportingTo: reportingTo || '',
-        remarks: remarks || '',
-        isActive: true
-      });
-      await newPermissions.save();
-      return res.status(201).json({
-        success: true,
-        message: 'Permissions created successfully',
-        data: newPermissions
-      });
-    }
-
-    // Update permissions
-    if (permissions) {
-      existingPermissions.permissions = { ...existingPermissions.permissions, ...permissions };
-    }
-    if (customPermissions) {
-      existingPermissions.customPermissions = customPermissions;
-    }
-    if (approvalPermissions) {
-      existingPermissions.approvalPermissions = { ...existingPermissions.approvalPermissions, ...approvalPermissions };
-    }
-    if (role) existingPermissions.role = role;
-    if (department) existingPermissions.department = department;
-    if (reportingTo) existingPermissions.reportingTo = reportingTo;
-    if (remarks) existingPermissions.remarks = remarks;
-    existingPermissions.assignedBy = assignedBy;
-    existingPermissions.lastModified = new Date();
-
-    await existingPermissions.save();
-
-    res.json({
-      success: true,
-      message: 'Permissions updated successfully',
-      data: existingPermissions
-    });
-  } catch (error) {
-    console.error('Error updating permissions:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update permissions',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: 'Failed to save roles and access', error: error.message });
   }
 };
 
@@ -328,54 +197,40 @@ exports.getPermissionSummary = async (req, res) => {
   }
 };
 
-// Bulk assign permissions
+// Bulk assign role assignments
 exports.bulkAssignPermissions = async (req, res) => {
   try {
-    const { assignments } = req.body; // Array of { staffId, role, department, permissions }
-    const assignedBy = req.user.id;
+    const { assignments } = req.body; // Array of { staffId, roleAssignments, department, remarks }
+    const assignedBy = req.user?.id || null;
     const results = [];
-
     for (const assignment of assignments) {
       try {
-        const { staffId, role, department, permissions } = assignment;
-        
-        // Get default permissions for the role
-        const defaultPermissions = Permission.getDefaultPermissions(role, department);
-        const finalPermissions = {
-          ...defaultPermissions.permissions,
-          ...permissions
-        };
-
-        // Update or create permissions
-        const updatedPermissions = await Permission.findOneAndUpdate(
-          { staffId, isActive: true },
-          {
-            role,
+        const { staffId, roleAssignments, department, remarks } = assignment;
+        let existingPermissions = await Permission.findOne({ staffId, isActive: true });
+        if (existingPermissions) {
+          existingPermissions.roleAssignments = roleAssignments || [];
+          existingPermissions.department = department || existingPermissions.department;
+          existingPermissions.remarks = remarks || existingPermissions.remarks;
+          if (assignedBy) existingPermissions.assignedBy = assignedBy;
+          existingPermissions.lastModified = new Date();
+          await existingPermissions.save();
+          results.push({ staffId, success: true, permissions: existingPermissions });
+        } else {
+          const newPermissions = new Permission({
+            staffId,
+            roleAssignments: roleAssignments || [],
             department,
-            permissions: finalPermissions,
+            remarks: remarks || '',
             assignedBy,
-            lastModified: new Date()
-          },
-          { upsert: true, new: true }
-        );
-
-        // Update staff role
-        await Staff.findByIdAndUpdate(staffId, { role, department });
-
-        results.push({
-          staffId,
-          success: true,
-          permissions: updatedPermissions
-        });
+            isActive: true
+          });
+          await newPermissions.save();
+          results.push({ staffId, success: true, permissions: newPermissions });
+        }
       } catch (error) {
-        results.push({
-          staffId: assignment.staffId,
-          success: false,
-          error: error.message
-        });
+        results.push({ staffId: assignment.staffId, success: false, error: error.message });
       }
     }
-
     res.json({
       success: true,
       message: 'Bulk assignment completed',

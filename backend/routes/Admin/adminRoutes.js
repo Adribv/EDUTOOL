@@ -71,14 +71,14 @@ router.get('/test-staff', (req, res) => {
   });
 });
 
-// Permissions management routes - simplified for testing
-router.get('/permissions/staff', verifyToken, permissionsController.getAllStaffPermissions);
-router.get('/permissions/roles', verifyToken, permissionsController.getAvailableRoles);
-router.get('/permissions/summary', verifyToken, permissionsController.getPermissionSummary);
-router.get('/permissions/:staffId', verifyToken, permissionsController.getStaffPermissions);
-router.post('/permissions/:staffId/assign', verifyToken, permissionsController.assignRoleAndPermissions);
-router.put('/permissions/:staffId', verifyToken, permissionsController.updateStaffPermissions);
-router.delete('/permissions/:staffId', verifyToken, permissionsController.removeStaffPermissions);
-router.post('/permissions/bulk-assign', verifyToken, permissionsController.bulkAssignPermissions);
+// Remove all old permissions routes
+// Add new minimal permissions route
+router.put('/permissions/:staffId', permissionsController.saveStaffRolesAndAccess);
+
+// Get all staff permissions (for admin dashboard)
+router.get('/permissions', permissionsController.getAllStaffPermissions);
+
+// Get permissions for a specific staff member
+router.get('/permissions/:staffId', permissionsController.getStaffPermissions);
 
 module.exports = router; 

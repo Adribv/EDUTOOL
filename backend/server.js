@@ -111,6 +111,45 @@ app.use('/api/transport-forms', require('./routes/transportForm.routes'));
 app.use('/api/counselling-requests', counsellingRequestRoutes);
 app.use('/api/admin', require('./routes/Admin/adminRoutes'));
 
+// --- MOCK STAFF DATA AND PERMISSIONS ENDPOINT FOR DEMO ---
+let staffList = [
+  {
+    _id: '1',
+    name: 'John Doe',
+    email: 'john@example.com',
+    department: 'Academics',
+    remarks: '',
+    roleAssignments: [
+      { role: 'itAdmin', access: 'View Access' }
+    ]
+  },
+  {
+    _id: '2',
+    name: 'Jane Smith',
+    email: 'jane@example.com',
+    department: 'Library',
+    remarks: '',
+    roleAssignments: [
+      { role: 'librarian', access: 'Edit Access' }
+    ]
+  }
+  // Add more staff as needed
+];
+
+// PUT endpoint to update staff permissions/roles
+app.put('/api/admin/permissions/:staffId', (req, res) => {
+  const { staffId } = req.params;
+  const { roleAssignments, department, remarks } = req.body;
+  const staff = staffList.find(s => s._id === staffId);
+  if (!staff) {
+    return res.status(404).json({ success: false, message: 'Staff not found' });
+  }
+  staff.roleAssignments = roleAssignments || [];
+  staff.department = department || staff.department;
+  staff.remarks = remarks || staff.remarks;
+  return res.json({ success: true, data: staff });
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err);

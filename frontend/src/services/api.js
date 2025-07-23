@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: 'https://api.edulives.com/api',
+  baseURL: 'http://localhost:5000/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -429,7 +429,18 @@ export const adminAPI = {
   generateTransportFormPDF: (formId) => api.post(`/transport-forms/admin/${formId}/generate-pdf`).then(res => res.data),
 
   // Permissions Management
-  getAllStaffPermissions: () => api.get('/admin/permissions/staff').then(res => res.data.data || []),
+  getAllStaffPermissions: () =>
+    api.get('/admin/permissions/staff')
+      .then(res => {
+        // If the response is HTML, log and throw an error
+        if (typeof res.data === 'string' && res.data.startsWith('<!doctype html')) {
+          console.error('❌ Received HTML instead of JSON from /admin/permissions/staff:', res.data);
+          throw new Error('Received HTML instead of JSON from /admin/permissions/staff. Check backend or proxy config.');
+        }
+        // Log the raw response for debugging
+        console.log('Raw /admin/permissions/staff response:', res.data);
+        return res.data.data || [];
+      }),
   getStaffPermissions: (staffId) => api.get(`/admin/permissions/${staffId}`).then(res => res.data.data),
   assignRoleAndPermissions: (staffId, data) => api.post(`/admin/permissions/${staffId}/assign`, data).then(res => res.data),
   updateStaffPermissions: (staffId, data) => api.put(`/admin/permissions/${staffId}`, data).then(res => res.data),
@@ -804,6 +815,9 @@ export const adminAPI = {
   addVisitor: (data) => api.post('/admin-staff/visitors', data),
   updateVisitorExit: (id, data={}) => api.put(`/admin-staff/visitors/${id}/exit`, data),
   bulkImportVisitors: (visitors, config) => api.post('/admin-staff/visitors/bulk', { visitors }, config),
+
+  // Add new minimal API for saving staff roles and access
+  saveStaffRolesAndAccess: (staffId, data) => api.put(`/admin/permissions/${staffId}`, data).then(res => res.data),
 };
 
 // Teacher API functions

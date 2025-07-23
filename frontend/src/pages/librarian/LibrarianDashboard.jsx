@@ -277,41 +277,7 @@ const LibrarianDashboard = () => {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', background: theme.palette.grey[50] }}>
-      {/* Header */}
-      <Box sx={{ 
-        background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-        color: 'white',
-        p: 3,
-        mb: 3
-      }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <Typography variant="h4" sx={{ fontWeight: 700 }}>
-              Library Management System
-            </Typography>
-            <Typography variant="body1" sx={{ opacity: 0.9 }}>
-              Comprehensive Library Resource Management
-            </Typography>
-          </motion.div>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Tooltip title="Profile">
-              <IconButton onClick={() => navigate('/librarian/profile')} sx={{ color: 'white' }}>
-                <AccountCircle />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Logout">
-              <IconButton onClick={async () => { await logout(); navigate('/librarian-login'); }} sx={{ color: 'white' }}>
-                <LogoutIcon />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        </Box>
-      </Box>
+    <Box sx={{ minHeight: '20vh', background: theme.palette.grey[50] }}>
 
       <Box sx={{ p: { xs: 2, md: 4 } }}>
         {/* Statistics Cards */}
@@ -363,7 +329,7 @@ const LibrarianDashboard = () => {
         </Grid>
 
         {/* Feature Cards with Permissions */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
+        {/* <Grid container spacing={3} sx={{ mb: 4 }}>
           <Grid item xs={12} sm={6} md={4}>
             <PermissionFeatureCard
               title="Inventory Management"
@@ -471,20 +437,20 @@ const LibrarianDashboard = () => {
               </Box>
             </PermissionFeatureCard>
           </Grid>
-        </Grid>
+        </Grid> */}
 
         {/* Main Content Tabs */}
-        <Paper sx={{ mb: 3 }}>
+        {/* <Paper sx={{ mb: 3 }}>
           <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
             <Tab label="Overview" icon={<TimelineIcon />} />
             <Tab label="Books" icon={<BookIcon />} />
             <Tab label="Members" icon={<PersonIcon />} />
             <Tab label="Reports" icon={<AssessmentIcon />} />
           </Tabs>
-        </Paper>
+        </Paper> */}
 
         {/* Tab Content */}
-        <AnimatePresence mode="wait">
+        {/* <AnimatePresence mode="wait">
           {activeTab === 0 && (
             <motion.div
               key="overview"
@@ -680,10 +646,10 @@ const LibrarianDashboard = () => {
               </PermissionGate>
             </motion.div>
           )}
-        </AnimatePresence>
+        </AnimatePresence> */}
 
         {/* Book Dialog */}
-        <Dialog open={bookDialog} onClose={() => setBookDialog(false)} maxWidth="md" fullWidth>
+        {/* <Dialog open={bookDialog} onClose={() => setBookDialog(false)} maxWidth="md" fullWidth>
           <DialogTitle>{selectedBook ? 'Edit Book' : 'Add New Book'}</DialogTitle>
           <DialogContent dividers>
             <Grid container spacing={2}>
@@ -756,7 +722,7 @@ const LibrarianDashboard = () => {
               {selectedBook ? 'Update Book' : 'Add Book'}
             </Button>
           </DialogActions>
-        </Dialog>
+        </Dialog> */}
       </Box>
     </Box>
   );

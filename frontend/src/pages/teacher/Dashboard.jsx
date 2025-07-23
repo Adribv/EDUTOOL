@@ -21,10 +21,13 @@ import {
   Favorite, FavoriteBorder, ThumbUp, ThumbDown, VisibilityOff, Archive, Unarchive,
   Block, Report, Flag, Bookmark, BookmarkBorder, PlayArrow, Pause, Stop, SkipNext,
   VolumeUp, VolumeOff, Fullscreen, FullscreenExit, ZoomIn, ZoomOut, RotateLeft, RotateRight,
-  SupervisorAccount, People, Cancel, Approval, RateReview, Computer
+  SupervisorAccount, People, Cancel, Approval, RateReview, Computer, LibraryBooks, 
+  DirectionsBus, EmojiEvents, SportsSoccer, LocalLibrary, AccountBalance, Support,
+  HealthAndSafety, EventAvailable, PsychologyAlt, School as SchoolIcon, 
+  BusinessCenter, Engineering, Science, ArtTrack, MusicNote, TheaterComedy
 } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
-import { teacherAPI, staffAPI } from '../../services/api';
+import { teacherAPI, staffAPI, api } from '../../services/api';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -41,9 +44,24 @@ import LessonPlans from './LessonPlans';
 import SubstituteTeacherRequest from './SubstituteTeacherRequest';
 import TeacherRemarks from './TeacherRemarks';
 import { teacherRemarksAPI } from '../../services/api';
-import { api } from '../../services/api';
+// import { api } from '../../services/api';
 import CounsellingRequestForm from '../../components/CounsellingRequestForm';
 import ITSupportRequest from '../student/ITSupportRequest';
+
+// Import all available dashboard components
+import MentalWellnessDashboard from '../counselor/MentalWellnessDashboard';
+import EventHandlerDashboard from '../eventhandler/EventHandlerDashboard';
+import ITDashboard from '../it/Dashboard';
+import LibrarianDashboard from '../librarian/LibrarianDashboard';
+import LibraryDashboard from '../library/Dashboard';
+import ParentDashboard from '../parent/ParentDashboard';
+import PTTeacherDashboard from '../ptteacher/PTTeacherDashboard';
+import SoftSkillsManagerDashboard from '../softskillsmanager/SoftSkillsManagerDashboard';
+import TransportManagerDashboard from '../transportmanager/TransportManagerDashboard';
+import WellnessDashboard from '../wellness/Dashboard';
+import ExaminerDashboard from './ExaminerDashboard';
+import SupportStaffManagerDashboard from './SupportStaffManagerDashboard';
+import LibrarianCombinedDashboard from './LibrarianCombinedDashboard';
 
 // Service Request Component
 function ServiceRequest() {
@@ -123,6 +141,7 @@ function ServiceRequest() {
 
 // Feature tabs configuration
 const allFeatureTabs = [
+  // Original Teacher Features
   { label: 'Dashboard', icon: <Dashboard />, key: 'dashboard', module: 'dashboard' },
   { label: 'Profile', icon: <Person />, key: 'profile', module: 'profile' },
   { label: 'Classes', icon: <Class />, key: 'classes', module: 'classes' },
@@ -138,6 +157,19 @@ const allFeatureTabs = [
   { label: 'Communication', icon: <Message />, key: 'communication', module: 'communications' },
   { label: 'Syllabus Completion', icon: <RateReview />, key: 'remarks', module: 'remarks' },
   { label: 'Service Request', icon: <Psychology />, key: 'serviceRequest', module: 'serviceRequest' },
+  
+  // Additional Dashboard Access Tabs (All Roles)
+  { label: 'Mental Wellness', icon: <HealthAndSafety />, key: 'mentalWellness', module: 'mentalWellness' },
+  { label: 'Event Handler', icon: <EventAvailable />, key: 'eventHandler', module: 'eventHandler' },
+  { label: 'IT Support', icon: <Support />, key: 'itSupport', module: 'itSupport' },
+  { label: 'Library', icon: <LocalLibrary />, key: 'library', module: 'library' },
+  { label: 'Parent', icon: <People />, key: 'parent', module: 'parent' },
+  { label: 'PT Teacher', icon: <SportsSoccer />, key: 'ptTeacher', module: 'ptTeacher' },
+  { label: 'Soft Skills Manager', icon: <EmojiEvents />, key: 'softSkillsManager', module: 'softSkillsManager' },
+  { label: 'Transport Manager', icon: <DirectionsBus />, key: 'transportManager', module: 'transportManager' },
+  { label: 'Wellness', icon: <HealthAndSafety />, key: 'wellness', module: 'wellness' },
+  { label: 'Examiner', icon: <Assessment />, key: 'examiner', module: 'examiner' },
+  { label: 'Support Staff Manager', icon: <People />, key: 'supportStaffManager', module: 'supportStaffManager' },
 ];
 
 // Dashboard Overview Component
@@ -1475,14 +1507,16 @@ export default function TeacherDashboard() {
   const [permissions, setPermissions] = useState(null);
   const [loadingPermissions, setLoadingPermissions] = useState(true);
 
+  // Fetch permissions (Permission modal) for the logged-in staff
   useEffect(() => {
     const fetchPermissions = async () => {
       try {
         if (!_staffId) return;
         const res = await api.get(`/admin/permissions/${_staffId}`);
-        setPermissions(res.data.data?.permissions || {});
+        setPermissions(res.data?.data || null);
+        console.log(res.data?.data);
       } catch (err) {
-        setPermissions({});
+        setPermissions(null);
       } finally {
         setLoadingPermissions(false);
       }
@@ -1490,8 +1524,38 @@ export default function TeacherDashboard() {
     fetchPermissions();
   }, [_staffId]);
 
-  // Show all features, none disabled
-  const featureTabs = useMemo(() => allFeatureTabs, []);
+  // Map additional dashboard tabs to role keys
+  const additionalRoleTabs = [
+    { key: 'mentalWellness', role: 'wellnessCounsellor' },
+    { key: 'eventHandler', role: 'eventHandler' },
+    { key: 'itSupport', role: 'itAdmin' },
+    { key: 'library', role: 'librarian' },
+    { key: 'parent', role: 'parent' },
+    { key: 'ptTeacher', role: 'ptTeacher' },
+    { key: 'softSkillsManager', role: 'skillsCoordinator' },
+    { key: 'transportManager', role: 'transportManager' },
+    { key: 'wellness', role: 'wellness' },
+    { key: 'examiner', role: 'examinationController' },
+    { key: 'supportStaffManager', role: 'supportStaffsManager' },
+  ];
+
+  // Always show teacher tabs (first 15)
+  let featureTabs = allFeatureTabs.slice(0, 15);
+
+  // If permissions exist, filter additional tabs by assigned roles and access
+  if (permissions && Array.isArray(permissions.roleAssignments)) {
+    // Only include roles with access !== 'Unauthorized'
+    const assignedRoles = permissions.roleAssignments
+      .filter(r => r.access && r.access !== 'Unauthorized')
+      .map(r => r.role);
+    const allowedTabs = additionalRoleTabs.filter(tab => assignedRoles.includes(tab.role));
+    console.log(additionalRoleTabs);
+    // Only add allowed additional tabs (not allFeatureTabs.slice(15), but only those matching allowedTabs)
+    featureTabs = featureTabs.concat(
+      allowedTabs.map(tab => allFeatureTabs.find(f => f.key === tab.key)).filter(Boolean)
+    );
+  }
+  // If no permissions, show only teacher tabs
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -1511,37 +1575,81 @@ export default function TeacherDashboard() {
   };
 
   const renderTabContent = () => {
-    switch (activeTab) {
-      case 0:
+    const renderDashboardComponent = (Component, fallbackMessage) => {
+      try {
+        return <Component />;
+      } catch (error) {
+        console.error(`Error rendering dashboard component:`, error);
+        return (
+          <Box sx={{ p: 3, textAlign: 'center' }}>
+            <Alert severity="error">
+              <AlertTitle>Dashboard Loading Error</AlertTitle>
+              {fallbackMessage || 'Unable to load this dashboard. Please try again later.'}
+            </Alert>
+          </Box>
+        );
+      }
+    };
+
+    // Use the tab key for mapping instead of relying on index
+    const currentTab = featureTabs[activeTab];
+    switch (currentTab?.key) {
+      case 'dashboard':
         return <DashboardOverview />;
-      case 1:
+      case 'profile':
         return <ProfileManagement />;
-      case 2:
+      case 'classes':
         return <ClassesManagement />;
-      case 3:
+      case 'timetable':
         return <Timetable />;
-      case 4:
+      case 'attendance':
         return <Attendance />;
-      case 5:
+      case 'assignments':
         return <Assignments />;
-      case 6:
+      case 'exams':
         return <Exams />;
-      case 7:
+      case 'students':
         return <StudentsManagement />;
-      case 8:
+      case 'leaveRequests':
         return <LeaveRequests />;
-      case 9:
+      case 'teacherLeaveRequests':
         return <TeacherLeaveRequests />;
-      case 10:
+      case 'resources':
         return <LearningResources />;
-      case 11:
+      case 'lessonPlans':
         return <LessonPlans />;
-      case 12:
+      case 'communication':
         return <Communication />;
-      case 13:
+      case 'remarks':
         return <TeacherRemarks />;
-      case 14:
+      case 'serviceRequest':
         return <ServiceRequest />;
+      case 'mentalWellness':
+        return renderDashboardComponent(MentalWellnessDashboard, 'Mental wellness dashboard is currently unavailable.');
+      case 'eventHandler':
+        return renderDashboardComponent(EventHandlerDashboard, 'Event handler dashboard is currently unavailable.');
+      case 'itSupport':
+        return renderDashboardComponent(ITDashboard, 'IT support dashboard is currently unavailable.');
+      case 'library':
+        return (
+          <Box>
+            <LibraryDashboard />
+            <LibrarianDashboard />
+            <LibrarianCombinedDashboard />
+          </Box>
+        );
+      case 'ptTeacher':
+        return renderDashboardComponent(PTTeacherDashboard, 'PT teacher dashboard is currently unavailable.');
+      case 'softSkillsManager':
+        return renderDashboardComponent(SoftSkillsManagerDashboard, 'Soft skills manager dashboard is currently unavailable.');
+      case 'transportManager':
+        return renderDashboardComponent(TransportManagerDashboard, 'Transport manager dashboard is currently unavailable.');
+      case 'wellness':
+        return renderDashboardComponent(WellnessDashboard, 'Wellness dashboard is currently unavailable.');
+      case 'examiner':
+        return renderDashboardComponent(ExaminerDashboard, 'Examiner dashboard is currently unavailable.');
+      case 'supportStaffManager':
+        return renderDashboardComponent(SupportStaffManagerDashboard, 'Support Staff Manager dashboard is currently unavailable.');
       default:
         return <DashboardOverview />;
     }
@@ -1561,7 +1669,7 @@ export default function TeacherDashboard() {
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Teacher Dashboard
+            Comprehensive Dashboard - All Roles Access
           </Typography>
           <Box display="flex" alignItems="center" gap={2}>
             <IconButton color="inherit">

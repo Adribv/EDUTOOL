@@ -43,8 +43,16 @@ import {
 import { adminAPI, api } from '../../services/api';
 import { toast } from 'react-toastify';
 
-// Access level options
-const accessLevels = ['No Access', 'View Access', 'Edit Access'];
+// Define the assignable roles
+const assignableRoles = [
+  { key: 'itAdmin', label: 'IT Admin' },
+  { key: 'librarian', label: 'Librarian' },
+  { key: 'wellnessCounsellor', label: 'Wellness Counsellor' },
+  { key: 'examinationController', label: 'Examination Controller' },
+  { key: 'skillsCoordinator', label: 'Skills/Co-curricular Coordinator' },
+  { key: 'supportStaffsManager', label: 'Support Staffs Manager' },
+];
+const accessLevels = ['Unauthorized', 'View Access', 'Edit Access'];
 
 // Available roles
 const availableRoles = [
@@ -166,44 +174,12 @@ export default function PermissionsManagement() {
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [formData, setFormData] = useState({
-    role: '',
     department: '',
-    accessLevel: 'View Access',
-    reportingTo: '',
     remarks: ''
   });
 
-  // Permissions structure
-  const [permissions, setPermissions] = useState({
-    students: 'No Access',
-    teachers: 'No Access',
-    classes: 'No Access',
-    subjects: 'No Access',
-    timetable: 'No Access',
-    attendance: 'No Access',
-    assignments: 'No Access',
-    exams: 'No Access',
-    fees: 'No Access',
-    payments: 'No Access',
-    salaries: 'No Access',
-    expenses: 'No Access',
-    staff: 'No Access',
-    parents: 'No Access',
-    communications: 'No Access',
-    events: 'No Access',
-    reports: 'No Access',
-    analytics: 'No Access',
-    settings: 'No Access',
-    users: 'No Access',
-    permissions: 'No Access',
-    library: 'No Access',
-    wellness: 'No Access',
-    counselling: 'No Access',
-    itSupport: 'No Access',
-    inventory: 'No Access',
-    transport: 'No Access',
-    disciplinary: 'No Access'
-  });
+  // Replace permissions state with roleAssignments
+  const [roleAssignments, setRoleAssignments] = useState([]); // [{role: 'itAdmin', access: 'View Access'}]
 
   const [saveError, setSaveError] = useState(null);
 
@@ -213,31 +189,38 @@ export default function PermissionsManagement() {
 
   const fetchStaffList = async () => {
     try {
-    setLoading(true);
-      console.log('🔍 Fetching staff list...');
-      const staffList = await adminAPI.getAllStaffPermissions();
-      console.log('📋 Staff list response:', staffList);
-      console.log('📋 Type of staffList:', typeof staffList);
-      console.log('📋 Is array:', Array.isArray(staffList));
-      
-      // Ensure we always have an array
-      const validStaffList = Array.isArray(staffList) ? staffList : [];
+      setLoading(true);
+      // Use the new /admin/permissions endpoint
+      const response = await api.get('/admin/permissions');
+      const staffList = response.data?.data || [];
+      // Normalize department, designation, roles, and remarks
+      const validStaffList = staffList.map(staff => ({
+        ...staff,
+        department: typeof staff.department === 'object' && staff.department !== null
+          ? staff.department.name
+          : staff.department || '',
+        designation: typeof staff.designation === 'object' && staff.designation !== null
+          ? staff.designation.name
+          : staff.designation || '',
+        roles: staff.permissions?.roleAssignments?.map(r => r.role) || [],
+        remarks: staff.permissions?.remarks || '',
+        roleAssignments: staff.permissions?.roleAssignments || [],
+      }));
       setStaffList(validStaffList);
-      console.log('✅ Set staff list with', validStaffList.length, 'items');
     } catch (error) {
       console.error('❌ Error fetching staff list:', error);
-      
       // Try fallback to test data
       try {
         console.log('🔄 Trying fallback test data...');
-        const testResponse = await adminAPI.get('/admin/test-staff');
+        const testResponse = await api.get('/admin/test-staff');
+        console.log('Fallback /admin/test-staff response:', testResponse);
         const testStaffList = testResponse.data.data || [];
         setStaffList(testStaffList);
         console.log('✅ Loaded test data with', testStaffList.length, 'items');
         toast.success('Loaded test staff data for demo');
       } catch (testError) {
         console.error('❌ Test data also failed:', testError);
-        toast.error('Failed to fetch staff list');
+        toast.error('Failed to fetch staff list (main and fallback). Please check your backend API endpoints.');
         setStaffList([]); // Ensure we always set an array
       }
     } finally {
@@ -245,207 +228,22 @@ export default function PermissionsManagement() {
     }
   };
 
-  const handleRoleChange = (role) => {
-    setFormData({ ...formData, role });
-    
-    // Auto-set reporting hierarchy
-    const reportingTo = reportingHierarchy[role] || '';
-    setFormData(prev => ({ ...prev, reportingTo }));
-
-    // Set default permissions based on role
-    if (role) {
-      const defaultPerms = getDefaultPermissions(role);
-      setPermissions(defaultPerms);
-    }
-  };
-
-  const getDefaultPermissions = (role) => {
-    const defaults = {
-      'Admin': {
-        students: 'Edit Access',
-        teachers: 'Edit Access',
-        classes: 'Edit Access',
-        subjects: 'Edit Access',
-        timetable: 'Edit Access',
-        attendance: 'Edit Access',
-        assignments: 'Edit Access',
-        exams: 'Edit Access',
-        fees: 'Edit Access',
-        payments: 'Edit Access',
-        salaries: 'Edit Access',
-        expenses: 'Edit Access',
-        staff: 'Edit Access',
-        parents: 'Edit Access',
-        communications: 'Edit Access',
-        events: 'Edit Access',
-        reports: 'Edit Access',
-        analytics: 'Edit Access',
-        settings: 'Edit Access',
-        users: 'Edit Access',
-        permissions: 'Edit Access',
-        library: 'Edit Access',
-        wellness: 'Edit Access',
-        counselling: 'Edit Access',
-        itSupport: 'Edit Access',
-        inventory: 'Edit Access',
-        transport: 'Edit Access',
-        disciplinary: 'Edit Access'
-      },
-      'Principal': {
-        students: 'Edit Access',
-        teachers: 'Edit Access',
-        classes: 'Edit Access',
-        subjects: 'Edit Access',
-        timetable: 'Edit Access',
-        attendance: 'View Access',
-        assignments: 'View Access',
-        exams: 'Edit Access',
-        fees: 'Edit Access',
-        payments: 'Edit Access',
-        salaries: 'Edit Access',
-        expenses: 'Edit Access',
-        staff: 'Edit Access',
-        parents: 'View Access',
-        communications: 'Edit Access',
-        events: 'Edit Access',
-        reports: 'Edit Access',
-        analytics: 'Edit Access',
-        settings: 'Edit Access',
-        users: 'View Access',
-        permissions: 'View Access',
-        library: 'View Access',
-        wellness: 'View Access',
-        counselling: 'View Access',
-        itSupport: 'View Access',
-        inventory: 'View Access',
-        transport: 'View Access',
-        disciplinary: 'Edit Access'
-      },
-      'Teacher': {
-        students: 'View Access',
-        teachers: 'View Access',
-        classes: 'View Access',
-        subjects: 'View Access',
-        timetable: 'View Access',
-        attendance: 'Edit Access',
-        assignments: 'Edit Access',
-        exams: 'Edit Access',
-        fees: 'No Access',
-        payments: 'No Access',
-        salaries: 'No Access',
-        expenses: 'No Access',
-        staff: 'View Access',
-        parents: 'View Access',
-        communications: 'Edit Access',
-        events: 'View Access',
-        reports: 'View Access',
-        analytics: 'View Access',
-        settings: 'No Access',
-        users: 'No Access',
-        permissions: 'No Access',
-        library: 'View Access',
-        wellness: 'View Access',
-        counselling: 'View Access',
-        itSupport: 'No Access',
-        inventory: 'No Access',
-        transport: 'No Access',
-        disciplinary: 'Edit Access'
-      },
-      'Librarian': {
-        students: 'View Access',
-        teachers: 'View Access',
-        classes: 'No Access',
-        subjects: 'No Access',
-        timetable: 'No Access',
-        attendance: 'No Access',
-        assignments: 'No Access',
-        exams: 'No Access',
-        fees: 'No Access',
-        payments: 'No Access',
-        salaries: 'No Access',
-        expenses: 'No Access',
-        staff: 'View Access',
-        parents: 'No Access',
-        communications: 'View Access',
-        events: 'View Access',
-        reports: 'View Access',
-        analytics: 'View Access',
-        settings: 'No Access',
-        users: 'No Access',
-        permissions: 'No Access',
-        library: 'Edit Access',
-        wellness: 'No Access',
-        counselling: 'No Access',
-        itSupport: 'No Access',
-        inventory: 'Edit Access',
-        transport: 'No Access',
-        disciplinary: 'No Access'
+  const handleRoleAssignmentChange = (roleKey, access) => {
+    setRoleAssignments(prev => {
+      const idx = prev.findIndex(r => r.role === roleKey);
+      if (idx >= 0) {
+        // Update access
+        const updated = [...prev];
+        updated[idx] = { ...updated[idx], access };
+        return updated;
+      } else {
+        // Add new
+        return [...prev, { role: roleKey, access }];
       }
-    };
-
-    return defaults[role] || permissions;
+    });
   };
-
-  const handleOpenDialog = (staff = null) => {
-    if (staff) {
-      setSelectedStaff(staff);
-      setFormData({
-        role: staff.permissions?.role || staff.role || '',
-        department: staff.department || '',
-        accessLevel: 'View Access',
-        reportingTo: staff.permissions?.reportingTo || reportingHierarchy[staff.role] || '',
-        remarks: staff.permissions?.remarks || ''
-      });
-      
-      if (staff.permissions?.permissions) {
-        setPermissions(staff.permissions.permissions);
-      }
-    } else {
-      setSelectedStaff(null);
-      setFormData({
-        role: '',
-        department: '',
-        accessLevel: 'View Access',
-        reportingTo: '',
-        remarks: ''
-      });
-      setPermissions({
-        students: 'No Access',
-        teachers: 'No Access',
-        classes: 'No Access',
-        subjects: 'No Access',
-        timetable: 'No Access',
-        attendance: 'No Access',
-        assignments: 'No Access',
-        exams: 'No Access',
-        fees: 'No Access',
-        payments: 'No Access',
-        salaries: 'No Access',
-        expenses: 'No Access',
-        staff: 'No Access',
-        parents: 'No Access',
-        communications: 'No Access',
-        events: 'No Access',
-        reports: 'No Access',
-        analytics: 'No Access',
-        settings: 'No Access',
-        users: 'No Access',
-        permissions: 'No Access',
-        library: 'No Access',
-        wellness: 'No Access',
-        counselling: 'No Access',
-        itSupport: 'No Access',
-        inventory: 'No Access',
-        transport: 'No Access',
-        disciplinary: 'No Access'
-      });
-    }
-    setOpenDialog(true);
-  };
-
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-    setSelectedStaff(null);
+  const handleRemoveRoleAssignment = (roleKey) => {
+    setRoleAssignments(prev => prev.filter(r => r.role !== roleKey));
   };
 
   const handleSavePermissions = async () => {
@@ -455,52 +253,55 @@ export default function PermissionsManagement() {
       handleCloseDialog();
       return;
     }
-
     try {
       setSaving(true);
-      
+      // Send full roleAssignments, department, and remarks
       const payload = {
-        role: formData.role,
+        roleAssignments,
         department: formData.department,
-        permissions: permissions,
-        reportingTo: formData.reportingTo,
-        remarks: formData.remarks
+        remarks: formData.remarks,
       };
-
-      // Update existing staff permissions
-      await adminAPI.updateStaffPermissions(selectedStaff._id, payload);
-      toast.success('Permissions updated successfully');
-
+      await adminAPI.saveStaffRolesAndAccess(selectedStaff._id, payload);
+      toast.success('Roles and access saved successfully');
       handleCloseDialog();
       fetchStaffList();
     } catch (error) {
       setSaveError(error?.response?.data?.message || error.message || 'Unknown error');
-      console.error('Error saving permissions:', error);
-      toast.error('Failed to save permissions');
+      console.error('Error saving roles and access:', error);
+      toast.error('Failed to save roles and access');
     } finally {
       setSaving(false);
     }
   };
 
-  const handlePermissionChange = (module, access) => {
-    setPermissions(prev => ({
-      ...prev,
-      [module]: access
-    }));
+  const handleOpenDialog = (staff) => {
+    setSelectedStaff(staff);
+    setFormData({
+      department: staff?.department || '',
+      remarks: staff?.remarks || '',
+    });
+    setRoleAssignments(staff?.roleAssignments || []);
+    setOpenDialog(true);
   };
 
-  const getAccessColor = (access) => {
-    switch (access) {
-      case 'No Access':
-        return 'error';
-      case 'View Access':
-        return 'warning';
-      case 'Edit Access':
-        return 'success';
-      default:
-        return 'default';
-    }
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setSelectedStaff(null);
   };
+
+  // getAccessColor function is no longer needed as accessLevels is simplified
+  // const getAccessColor = (access) => {
+  //   switch (access) {
+  //     case 'No Access':
+  //       return 'error';
+  //     case 'View Access':
+  //       return 'warning';
+  //     case 'Edit Access':
+  //       return 'success';
+  //     default:
+  //       return 'default';
+  //   }
+  // };
 
   const filteredStaff = (Array.isArray(staffList) ? staffList : []).filter(staff =>
     staff.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -567,12 +368,10 @@ export default function PermissionsManagement() {
               <TableRow>
                 <TableCell>S.no</TableCell>
                 <TableCell>Staff Name</TableCell>
+                <TableCell>Email</TableCell>
                 <TableCell>Designation</TableCell>
                 <TableCell>Department</TableCell>
-                <TableCell>Assigned Role(s)</TableCell>
-                <TableCell>Key Responsibilities</TableCell>
-                <TableCell>Access Level</TableCell>
-                <TableCell>Reporting To</TableCell>
+                <TableCell>Assigned Roles</TableCell>
                 <TableCell>Remarks/Notes</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
@@ -581,62 +380,35 @@ export default function PermissionsManagement() {
               {paginatedStaff.map((staff, index) => (
                 <TableRow key={staff._id}>
                   <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                  <TableCell>
-                    <Box>
-                      <Typography variant="subtitle2" fontWeight={600}>
-                        {staff.name}
-                      </Typography>
-                      <Typography variant="caption" color="textSecondary">
-                        {staff.email}
-                      </Typography>
-                    </Box>
-                  </TableCell>
+                  <TableCell>{staff.name}</TableCell>
+                  <TableCell>{staff.email}</TableCell>
                   <TableCell>{staff.designation || staff.role}</TableCell>
+                  <TableCell>{staff.department || 'Not Assigned'}</TableCell>
                   <TableCell>
-                    <Chip 
-                      label={staff.department || 'Not Assigned'} 
-                      color={staff.department ? 'primary' : 'default'}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Chip 
-                      label={staff.permissions?.role || staff.role || 'No Role'} 
-                      color={staff.permissions?.role ? 'success' : 'warning'}
-                      size="small"
-                      />
-                    </TableCell>
-                  <TableCell>
-                    <Box sx={{ maxWidth: 200 }}>
-                      {keyResponsibilities[staff.permissions?.role || staff.role]?.slice(0, 2).map((resp, idx) => (
-                        <Typography key={idx} variant="caption" display="block">
-                          • {resp}
-                        </Typography>
-                      )) || <Typography variant="caption" color="textSecondary">Not defined</Typography>}
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Chip 
-                      label={staff.permissions?.accessLevel || 'View Access'} 
-                      color={getAccessColor(staff.permissions?.accessLevel || 'View Access')}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    {staff.permissions?.reportingTo || reportingHierarchy[staff.role] || 'Not Set'}
+                    {Array.isArray(staff.roleAssignments) && staff.roleAssignments.filter(r => r.access && r.access !== 'Unauthorized').length > 0 ? (
+                      staff.roleAssignments
+                        .filter(r => r.access && r.access !== 'Unauthorized')
+                        .map((role, idx) => (
+                          <Chip
+                            key={role.role + idx}
+                            label={assignableRoles.find(ar => ar.key === role.role)?.label || role.role}
+                            color="primary"
+                            size="small"
+                            sx={{ mr: 0.5, mb: 0.5 }}
+                          />
+                        ))
+                    ) : (
+                      <Typography variant="caption" color="textSecondary">No roles assigned</Typography>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Typography variant="caption" sx={{ maxWidth: 150, display: 'block' }}>
-                      {staff.permissions?.remarks || 'No remarks'}
+                      {staff.remarks || 'No remarks'}
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <Tooltip title="Edit Permissions">
-                      <IconButton 
-                        size="small" 
-                        onClick={() => handleOpenDialog(staff)}
-                        color="primary"
-                      >
+                    <Tooltip title="Edit Roles">
+                      <IconButton size="small" onClick={() => handleOpenDialog(staff)} color="primary">
                         <EditIcon />
                       </IconButton>
                     </Tooltip>
@@ -645,7 +417,6 @@ export default function PermissionsManagement() {
               ))}
             </TableBody>
           </Table>
-          
           <TablePagination
             rowsPerPageOptions={[10, 25, 50]}
             component="div"
@@ -682,12 +453,12 @@ export default function PermissionsManagement() {
         <DialogContent dividers>
           {saveError && (
             <Alert severity="error" sx={{ mb: 2 }}>
-              <strong>Error saving permissions:</strong> {saveError}
+              <strong>Error saving roles:</strong> {saveError}
             </Alert>
           )}
           {selectedStaff && (
             <Alert severity="info" sx={{ mb: 3 }}>
-              Editing permissions for: <strong>{selectedStaff.name}</strong> ({selectedStaff.email})
+              Editing roles for: <strong>{selectedStaff.name}</strong> ({selectedStaff.email})
             </Alert>
           )}
           
@@ -706,21 +477,6 @@ export default function PermissionsManagement() {
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
               <FormControl fullWidth>
-                <InputLabel>Role</InputLabel>
-                <Select
-                  value={formData.role}
-                  onChange={(e) => handleRoleChange(e.target.value)}
-                  label="Role"
-                >
-                  {availableRoles.map(role => (
-                    <MenuItem key={role} value={role}>{role}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
                 <InputLabel>Department</InputLabel>
                 <Select
                   value={formData.department}
@@ -733,32 +489,7 @@ export default function PermissionsManagement() {
                 </Select>
               </FormControl>
             </Grid>
-            
             <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Reporting To"
-                value={formData.reportingTo}
-                onChange={(e) => setFormData({ ...formData, reportingTo: e.target.value })}
-              />
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel>Overall Access Level</InputLabel>
-                <Select
-                  value={formData.accessLevel}
-                  onChange={(e) => setFormData({ ...formData, accessLevel: e.target.value })}
-                  label="Overall Access Level"
-                >
-                  {accessLevels.map(level => (
-                    <MenuItem key={level} value={level}>{level}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            <Grid item xs={12}>
               <TextField
                 fullWidth
                 multiline
@@ -769,72 +500,37 @@ export default function PermissionsManagement() {
                 placeholder="Additional notes about this role assignment..."
               />
             </Grid>
-
-            {/* Key Responsibilities */}
-            {formData.role && keyResponsibilities[formData.role] && (
-              <Grid item xs={12}>
-                <Card variant="outlined">
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Key Responsibilities - {formData.role}
-                    </Typography>
-                    <Stack spacing={1}>
-                      {keyResponsibilities[formData.role].map((responsibility, index) => (
-                        <Typography key={index} variant="body2">
-                          • {responsibility}
-                        </Typography>
-                      ))}
-                    </Stack>
-                  </CardContent>
-                </Card>
-              </Grid>
-            )}
-
-            {/* Module Permissions */}
             <Grid item xs={12}>
               <Typography variant="h6" gutterBottom>
-                Module Permissions
+                Assign Roles & Access
               </Typography>
-              
-              <TableContainer component={Paper} variant="outlined">
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Module</TableCell>
-                      <TableCell align="center">Access Level</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {Object.entries(permissions).map(([module, access]) => (
-                      <TableRow key={module}>
-                        <TableCell>
-                          <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
-                            {module.replace(/([A-Z])/g, ' $1').trim()}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="center">
+              <Grid container spacing={2}>
+                {assignableRoles.map(role => {
+                  const assigned = roleAssignments.find(r => r.role === role.key);
+                  return (
+                    <Grid item xs={12} md={6} key={role.key}>
+                      <Box display="flex" alignItems="center" gap={2}>
+                        <Typography variant="body1" sx={{ minWidth: 180 }}>{role.label}</Typography>
                           <FormControl size="small" sx={{ minWidth: 120 }}>
                             <Select
-                              value={access}
-                              onChange={(e) => handlePermissionChange(module, e.target.value)}
+                            value={assigned ? assigned.access : 'Unauthorized'}
+                            onChange={e => handleRoleAssignmentChange(role.key, e.target.value)}
                             >
                               {accessLevels.map(level => (
-                                <MenuItem key={level} value={level}>
-                                  <Chip 
-                                    label={level} 
-                                    color={getAccessColor(level)}
-                                    size="small"
-                                  />
-                                </MenuItem>
+                              <MenuItem key={level} value={level}>{level}</MenuItem>
                               ))}
                             </Select>
                           </FormControl>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                        {assigned && assigned.access !== 'Unauthorized' && (
+                          <IconButton size="small" onClick={() => handleRemoveRoleAssignment(role.key)}>
+                            <CloseIcon fontSize="small" />
+                          </IconButton>
+                        )}
+                      </Box>
+                    </Grid>
+                  );
+                })}
+              </Grid>
             </Grid>
           </Grid>
         </DialogContent>
@@ -846,7 +542,7 @@ export default function PermissionsManagement() {
           <Button 
             variant="contained"
             onClick={handleSavePermissions}
-            disabled={saving || !formData.role || !selectedStaff}
+            disabled={saving || !selectedStaff}
             startIcon={saving ? <CircularProgress size={16} /> : <SaveIcon />}
           >
             {saving ? 'Saving...' : 'Save Permissions'}
