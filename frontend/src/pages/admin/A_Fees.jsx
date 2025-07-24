@@ -63,7 +63,7 @@ const A_Fees = () => {
       try {
         const [feeRes, approvalRes, classRes] = await Promise.all([
           axios.get('https://api.edulives.com/api/admin-staff/fee-structure/public'),
-          axios.get('https://api.edulives.com/api/admin-staff/approvals?requestType=Fee')
+axios.get('https://api.edulives.com/api/admin-staff/approvals?requestType=Fee')
         ]);
         
         setFeeStructures(feeRes.data);

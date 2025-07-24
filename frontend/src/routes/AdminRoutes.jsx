@@ -47,6 +47,7 @@ import TeacherRemarks from '../pages/admin/TeacherRemarks';
 import SyllabusCompletion from '../pages/admin/SyllabusCompletion';
 import CurriculumTemplateDemo from '../pages/admin/CurriculumTemplateDemo';
 import PermissionsManagement from '../pages/admin/PermissionsManagement';
+import AdminSalaryPayroll from '../pages/admin/SalaryPayroll';
 
 const AdminRoutes = () => {
   return (
@@ -110,6 +111,8 @@ const AdminRoutes = () => {
         <Route path="disciplinary-forms/template/:templateId/edit" element={<DisciplinaryFormTemplateEditor />} />
         <Route path="disciplinary-forms/template/:templateId" element={<DisciplinaryFormTemplateEditor />} />
         <Route path="permissions" element={<PermissionsManagement />} />
+        {/* Salary Payroll Route */}
+        <Route path="salary-payroll" element={<AdminSalaryPayroll />} />
       </Route>
     </Routes>
   );

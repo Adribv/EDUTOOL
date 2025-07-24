@@ -354,9 +354,16 @@ const SalaryTemplateManager = () => {
   };
 
   const calculateNetSalary = () => {
-    const totalAllowances = Object.values(templateForm.allowances).reduce((sum, val) => sum + (val || 0), 0);
-    const totalDeductions = Object.values(templateForm.deductions).reduce((sum, val) => sum + (val || 0), 0);
-    const grossSalary = (templateForm.basicSalary || 0) + totalAllowances;
+    const basicSalary = parseFloat(templateForm.basicSalary) || 0;
+    const totalAllowances = Object.values(templateForm.allowances).reduce((sum, val) => {
+      const numVal = parseFloat(val) || 0;
+      return sum + numVal;
+    }, 0);
+    const totalDeductions = Object.values(templateForm.deductions).reduce((sum, val) => {
+      const numVal = parseFloat(val) || 0;
+      return sum + numVal;
+    }, 0);
+    const grossSalary = basicSalary + totalAllowances;
     return grossSalary - totalDeductions;
   };
 

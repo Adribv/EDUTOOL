@@ -351,4 +351,30 @@ router3.get('/:staffId/students/:studentId/attendance', verifyToken, newStaffCon
 // Exam Management - Add new route for fetching published exams
 router3.get('/:staffId/published-exams', verifyToken, newStaffController.getPublishedExams);
 
+// Salary Records Route
+router3.get('/salary-records/:staffId', verifyToken, async (req, res) => {
+  try {
+    const { staffId } = req.params;
+    
+    // Check if the user is requesting their own salary records or has admin privileges
+    if (req.user.id !== staffId && req.user.role !== 'AdminStaff' && req.user.role !== 'Accountant') {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    // Import the StaffSalaryRecord model
+    const StaffSalaryRecord = require('../../models/Finance/staffSalaryRecordModel');
+    
+    // Find salary records for the staff member
+    const salaryRecords = await StaffSalaryRecord.find({ staffId })
+      .sort({ year: -1, month: -1 }) // Sort by year and month descending
+      .limit(24); // Limit to last 24 months
+    
+    // Return the records directly as an array
+    res.json(salaryRecords);
+  } catch (error) {
+    console.error('Error fetching salary records:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 module.exports = router3;

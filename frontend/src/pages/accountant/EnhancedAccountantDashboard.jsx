@@ -756,9 +756,16 @@ const EnhancedAccountantDashboard = () => {
   };
 
   const calculateNetSalary = () => {
-    const totalAllowances = Object.values(salaryForm.allowances).reduce((sum, val) => sum + (val || 0), 0);
-    const totalDeductions = Object.values(salaryForm.deductions).reduce((sum, val) => sum + (val || 0), 0);
-    const grossSalary = (salaryForm.basicSalary || 0) + totalAllowances;
+    const basicSalary = parseFloat(salaryForm.basicSalary) || 0;
+    const totalAllowances = Object.values(salaryForm.allowances).reduce((sum, val) => {
+      const numVal = parseFloat(val) || 0;
+      return sum + numVal;
+    }, 0);
+    const totalDeductions = Object.values(salaryForm.deductions).reduce((sum, val) => {
+      const numVal = parseFloat(val) || 0;
+      return sum + numVal;
+    }, 0);
+    const grossSalary = basicSalary + totalAllowances;
     return grossSalary - totalDeductions;
   };
 

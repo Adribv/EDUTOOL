@@ -549,17 +549,40 @@ exports.createSalaryRecord = async (req, res) => {
       return res.status(404).json({ message: 'Staff not found' });
     }
 
-    // Calculate gross and net salary
-    const totalAllowances = Object.values(allowances || {}).reduce((sum, val) => sum + (val || 0), 0);
-    const totalDeductions = Object.values(deductions || {}).reduce((sum, val) => sum + (val || 0), 0);
-    const grossSalary = basicSalary + totalAllowances;
+    // Validate required fields
+    if (!basicSalary || !month || !year) {
+      return res.status(400).json({ message: 'Basic salary, month, and year are required' });
+    }
+
+    // Ensure proper type conversion and validation
+    const basicSalaryNum = parseFloat(basicSalary) || 0;
+    const allowancesObj = allowances || {};
+    const deductionsObj = deductions || {};
+
+    // Calculate gross and net salary with proper validation
+    const totalAllowances = Object.values(allowancesObj).reduce((sum, val) => {
+      const numVal = parseFloat(val) || 0;
+      return sum + numVal;
+    }, 0);
+    
+    const totalDeductions = Object.values(deductionsObj).reduce((sum, val) => {
+      const numVal = parseFloat(val) || 0;
+      return sum + numVal;
+    }, 0);
+    
+    const grossSalary = basicSalaryNum + totalAllowances;
     const netSalary = grossSalary - totalDeductions;
+
+    // Validate calculations
+    if (grossSalary < 0 || netSalary < 0) {
+      return res.status(400).json({ message: 'Invalid salary calculations' });
+    }
 
     // Check if salary record already exists for this month/year
     const existingRecord = await StaffSalaryRecord.findOne({
       staffId,
       month,
-      year
+      year: parseInt(year)
     });
 
     if (existingRecord) {
@@ -574,13 +597,13 @@ exports.createSalaryRecord = async (req, res) => {
       department: staff.department?.name || '',
       month,
       year: parseInt(year),
-      basicSalary: parseFloat(basicSalary),
-      allowances,
-      deductions,
-      grossSalary,
-      netSalary,
+      basicSalary: basicSalaryNum,
+      allowances: allowancesObj,
+      deductions: deductionsObj,
+      grossSalary: grossSalary,
+      netSalary: netSalary,
       paymentDate: paymentDate ? new Date(paymentDate) : undefined,
-      paymentMethod,
+      paymentMethod: paymentMethod || 'Bank Transfer',
       remarks,
       attendance,
       performance,
@@ -592,13 +615,23 @@ exports.createSalaryRecord = async (req, res) => {
 
     await salaryRecord.save();
 
+    // Log the calculation for debugging
+    console.log('Salary calculation:', {
+      staffName: staff.name,
+      basicSalary: basicSalaryNum,
+      totalAllowances,
+      totalDeductions,
+      grossSalary,
+      netSalary
+    });
+
     res.status(201).json({
       message: 'Salary record created successfully',
       salaryRecord
     });
   } catch (error) {
     console.error('Error creating salary record:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
@@ -608,22 +641,51 @@ exports.updateSalaryRecord = async (req, res) => {
     const { id } = req.params;
     const updateData = req.body;
 
+    // Find the existing record first
+    const existingRecord = await StaffSalaryRecord.findById(id);
+    if (!existingRecord) {
+      return res.status(404).json({ message: 'Salary record not found' });
+    }
+
     // Recalculate salary if basic salary, allowances, or deductions changed
     if (updateData.basicSalary || updateData.allowances || updateData.deductions) {
-      const record = await StaffSalaryRecord.findById(id);
-      if (!record) {
-        return res.status(404).json({ message: 'Salary record not found' });
+      // Ensure proper type conversion
+      const basicSalary = parseFloat(updateData.basicSalary) || existingRecord.basicSalary;
+      const allowances = updateData.allowances || existingRecord.allowances;
+      const deductions = updateData.deductions || existingRecord.deductions;
+
+      // Calculate with proper validation
+      const totalAllowances = Object.values(allowances).reduce((sum, val) => {
+        const numVal = parseFloat(val) || 0;
+        return sum + numVal;
+      }, 0);
+      
+      const totalDeductions = Object.values(deductions).reduce((sum, val) => {
+        const numVal = parseFloat(val) || 0;
+        return sum + numVal;
+      }, 0);
+      
+      const grossSalary = basicSalary + totalAllowances;
+      const netSalary = grossSalary - totalDeductions;
+
+      // Validate calculations
+      if (grossSalary < 0 || netSalary < 0) {
+        return res.status(400).json({ message: 'Invalid salary calculations' });
       }
 
-      const basicSalary = updateData.basicSalary || record.basicSalary;
-      const allowances = updateData.allowances || record.allowances;
-      const deductions = updateData.deductions || record.deductions;
+      updateData.grossSalary = grossSalary;
+      updateData.netSalary = netSalary;
+      updateData.basicSalary = basicSalary;
 
-      const totalAllowances = Object.values(allowances).reduce((sum, val) => sum + (val || 0), 0);
-      const totalDeductions = Object.values(deductions).reduce((sum, val) => sum + (val || 0), 0);
-      
-      updateData.grossSalary = basicSalary + totalAllowances;
-      updateData.netSalary = updateData.grossSalary - totalDeductions;
+      // Log the calculation for debugging
+      console.log('Updated salary calculation:', {
+        staffName: existingRecord.staffName,
+        basicSalary,
+        totalAllowances,
+        totalDeductions,
+        grossSalary,
+        netSalary
+      });
     }
 
     const updatedRecord = await StaffSalaryRecord.findByIdAndUpdate(
@@ -642,7 +704,7 @@ exports.updateSalaryRecord = async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating salary record:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
@@ -709,11 +771,32 @@ exports.bulkSalaryCreation = async (req, res) => {
           continue;
         }
 
-        // Calculate salary
-        const totalAllowances = Object.values(allowances || {}).reduce((sum, val) => sum + (val || 0), 0);
-        const totalDeductions = Object.values(deductions || {}).reduce((sum, val) => sum + (val || 0), 0);
-        const grossSalary = basicSalary + totalAllowances;
+        // Calculate salary with proper validation
+        const basicSalaryNum = parseFloat(basicSalary) || 0;
+        const allowancesObj = allowances || {};
+        const deductionsObj = deductions || {};
+
+        const totalAllowances = Object.values(allowancesObj).reduce((sum, val) => {
+          const numVal = parseFloat(val) || 0;
+          return sum + numVal;
+        }, 0);
+        
+        const totalDeductions = Object.values(deductionsObj).reduce((sum, val) => {
+          const numVal = parseFloat(val) || 0;
+          return sum + numVal;
+        }, 0);
+        
+        const grossSalary = basicSalaryNum + totalAllowances;
         const netSalary = grossSalary - totalDeductions;
+
+        // Validate calculations
+        if (grossSalary < 0 || netSalary < 0) {
+          results.failed.push({
+            ...recordData,
+            error: 'Invalid salary calculations'
+          });
+          continue;
+        }
 
         const salaryRecord = new StaffSalaryRecord({
           staffId,
@@ -723,13 +806,13 @@ exports.bulkSalaryCreation = async (req, res) => {
           department: staff.department?.name || '',
           month,
           year: parseInt(year),
-          basicSalary: parseFloat(basicSalary),
-          allowances,
-          deductions,
+          basicSalary: basicSalaryNum,
+          allowances: allowancesObj,
+          deductions: deductionsObj,
           grossSalary,
           netSalary,
           paymentDate: paymentDate ? new Date(paymentDate) : undefined,
-          paymentMethod,
+          paymentMethod: paymentMethod || 'Bank Transfer',
           remarks,
           createdBy: req.user.id,
           status: 'Approved',
@@ -847,6 +930,41 @@ exports.applyTemplateToStaff = async (req, res) => {
         // Apply template with custom adjustments
         const adjustments = customAdjustments?.[staffMember._id] || {};
         
+        // Calculate adjusted values
+        const adjustedBasicSalary = template.basicSalary + (adjustments.basicSalary || 0);
+        const adjustedAllowances = {
+          ...template.allowances,
+          ...adjustments.allowances
+        };
+        const adjustedDeductions = {
+          ...template.deductions,
+          ...adjustments.deductions
+        };
+
+        // Calculate totals with proper validation
+        const totalAllowances = Object.values(adjustedAllowances).reduce((sum, val) => {
+          const numVal = parseFloat(val) || 0;
+          return sum + numVal;
+        }, 0);
+        
+        const totalDeductions = Object.values(adjustedDeductions).reduce((sum, val) => {
+          const numVal = parseFloat(val) || 0;
+          return sum + numVal;
+        }, 0);
+        
+        const grossSalary = adjustedBasicSalary + totalAllowances;
+        const netSalary = grossSalary - totalDeductions;
+
+        // Validate calculations
+        if (grossSalary < 0 || netSalary < 0) {
+          results.failed.push({
+            staffId: staffMember._id,
+            staffName: staffMember.name,
+            error: 'Invalid salary calculations'
+          });
+          continue;
+        }
+        
         const salaryRecord = new StaffSalaryRecord({
           staffId: staffMember._id,
           staffName: staffMember.name,
@@ -855,20 +973,11 @@ exports.applyTemplateToStaff = async (req, res) => {
           department: staffMember.department?.name || '',
           month,
           year: parseInt(year),
-          basicSalary: template.basicSalary + (adjustments.basicSalary || 0),
-          allowances: {
-            ...template.allowances,
-            ...adjustments.allowances
-          },
-          deductions: {
-            ...template.deductions,
-            ...adjustments.deductions
-          },
-          grossSalary: template.grossSalary + (adjustments.basicSalary || 0) + 
-            Object.values(adjustments.allowances || {}).reduce((sum, val) => sum + (val || 0), 0),
-          netSalary: template.netSalary + (adjustments.basicSalary || 0) + 
-            Object.values(adjustments.allowances || {}).reduce((sum, val) => sum + (val || 0), 0) -
-            Object.values(adjustments.deductions || {}).reduce((sum, val) => sum + (val || 0), 0),
+          basicSalary: adjustedBasicSalary,
+          allowances: adjustedAllowances,
+          deductions: adjustedDeductions,
+          grossSalary: grossSalary,
+          netSalary: netSalary,
           templateId: template._id,
           templateVersion: template.version,
           customAdjustments: adjustments,

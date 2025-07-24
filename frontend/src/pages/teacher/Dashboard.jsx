@@ -43,6 +43,7 @@ import TeacherLeaveRequests from './TeacherLeaveRequests';
 import LessonPlans from './LessonPlans';
 import SubstituteTeacherRequest from './SubstituteTeacherRequest';
 import TeacherRemarks from './TeacherRemarks';
+import SalaryPayroll from './SalaryPayroll';
 import { teacherRemarksAPI } from '../../services/api';
 // import { api } from '../../services/api';
 import CounsellingRequestForm from '../../components/CounsellingRequestForm';
@@ -156,6 +157,7 @@ const allFeatureTabs = [
   { label: 'Lesson Plans', icon: <Work />, key: 'lessonPlans', module: 'lessonPlans' },
   { label: 'Communication', icon: <Message />, key: 'communication', module: 'communications' },
   { label: 'Syllabus Completion', icon: <RateReview />, key: 'remarks', module: 'remarks' },
+  { label: 'Salary Payroll', icon: <AccountBalance />, key: 'salaryPayroll', module: 'salaryPayroll' },
   { label: 'Service Request', icon: <Psychology />, key: 'serviceRequest', module: 'serviceRequest' },
   
   // Additional Dashboard Access Tabs (All Roles)
@@ -1622,6 +1624,8 @@ export default function TeacherDashboard() {
         return <Communication />;
       case 'remarks':
         return <TeacherRemarks />;
+      case 'salaryPayroll':
+        return <SalaryPayroll />;
       case 'serviceRequest':
         return <ServiceRequest />;
       case 'mentalWellness':

@@ -121,7 +121,7 @@ const FeeRecords = () => {
       
       const [studentsRes, statsRes] = await Promise.all([
         axios.get('https://api.edulives.com/api/admin-staff/students/public'),
-        axios.get('https://api.edulives.com/api/admin-staff/fee-records/stats/public')
+axios.get('https://api.edulives.com/api/admin-staff/fee-records/stats/public')
       ]);
       
       setStudents(studentsRes.data);
