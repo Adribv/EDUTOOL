@@ -56,7 +56,7 @@ import TeacherAttendance from '../pages/teacher/Attendance';
 import TeacherAssignments from '../pages/teacher/Assignments';
 import TeacherExams from '../pages/teacher/Exams';
 import TeacherLessonPlans from '../pages/teacher/LessonPlans';
-import TeacherReportsPage from '../pages/teacher/Reports';
+// import TeacherReportsPage from '../pages/teacher/Reports';
 
 // Librarian pages (create these if needed)
 import LibraryDashboard from '../pages/library/Dashboard';
@@ -185,7 +185,7 @@ const ManagementRoutes = () => {
         <Route path="teacher/assignments" element={<TeacherAssignments />} />
         <Route path="teacher/exams" element={<TeacherExams />} />
         <Route path="teacher/lesson-plans" element={<TeacherLessonPlans />} />
-        <Route path="teacher/reports" element={<TeacherReportsPage />} />
+        {/* <Route path="teacher/reports" element={<TeacherReportsPage />} /> */}
         
         {/* HOD specific */}
         <Route path="hod/dashboard" element={<HODDashboard />} />
