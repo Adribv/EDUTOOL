@@ -11,8 +11,7 @@ const counsellingRequestRoutes = require('./routes/counsellingRequestRoutes');
 dotenv.config();
 const app = express();
 
-// const allowedOrigins = ['https://edulives.com', 'https://www.edulives.com', 'https://api.edulives.com'];
-const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001', 'https://edulives.com', 'https://www.edulives.com', 'https://api.edulives.com'];
+const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001', 'https://edulives.com', 'https://www.edulives.com', 'https://api.edulives.com' , 'https://tool.edulives.com'];
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -37,6 +36,11 @@ app.get('/health', (req, res) => {
     environment: process.env.NODE_ENV || 'development'
   });
 });
+
+app.get('/', (req, res) => {
+  res.send('Backend is running');
+});
+
 
 // Create upload directories if they don't exist
 const uploadDirs = [
