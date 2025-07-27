@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Box,
@@ -104,8 +104,14 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
-import { useStaffPermissions } from '../../context/StaffPermissionContext';
-import { accountantAPI } from '../../services/api';
+import { useStaffPermissions } from '../../hooks/useStaffPermissions';
+import { 
+  getUserActivitiesControl, 
+  hasAnyActivityAccess, 
+  getActivityAccessLevel,
+  getAccessLevelInfo 
+} from '../../utils/activitiesControl';
+import { api, staffActivitiesControlAPI } from '../../services/api';
 import A_ServiceRequests from './A_ServiceRequests';
 
 // Role Icons and Colors Mapping
@@ -179,7 +185,7 @@ const AnimatedStatCard = ({ icon: Icon, label, value, color, subtitle, trend, de
 );
 
 // Staff Card Component
-const StaffCard = ({ staff, onEdit, onDelete, onView, onToggleRole, onTogglePermission }) => {
+const StaffCard = ({ staff, onEdit, onDelete, onView, onToggleRole, onTogglePermission, accessInfo }) => {
   const theme = useTheme();
   const RoleIcon = roleIcons[staff.primaryRole] || PersonIcon;
   const roleColor = roleColors[staff.primaryRole] || theme.palette.grey[500];
@@ -253,21 +259,64 @@ const StaffCard = ({ staff, onEdit, onDelete, onView, onToggleRole, onTogglePerm
           </Box>
 
           <Box sx={{ display: 'flex', gap: 1, mt: 'auto' }}>
-            <IconButton size="small" onClick={() => onView(staff)}>
-              <ViewIcon />
-            </IconButton>
-            <IconButton size="small" onClick={() => onEdit(staff)}>
-              <EditIcon />
-            </IconButton>
-            <IconButton size="small" onClick={() => onToggleRole(staff)}>
-              <SwapIcon />
-            </IconButton>
-            <IconButton size="small" onClick={() => onTogglePermission(staff)}>
-              <SecurityIcon />
-            </IconButton>
-            <IconButton size="small" onClick={() => onDelete(staff._id)}>
-              <DeleteIcon />
-            </IconButton>
+            {accessInfo?.canRead && (
+              <IconButton 
+                size="small" 
+                onClick={() => onView(staff)}
+                title="View staff details"
+              >
+                <ViewIcon />
+              </IconButton>
+            )}
+            {accessInfo?.canUpdate && (
+              <IconButton 
+                size="small" 
+                onClick={() => onEdit(staff)}
+                title="Edit staff information"
+              >
+                <EditIcon />
+              </IconButton>
+            )}
+            {accessInfo?.canUpdate && (
+              <IconButton 
+                size="small" 
+                onClick={() => onToggleRole(staff)}
+                title="Manage staff roles"
+              >
+                <SwapIcon />
+              </IconButton>
+            )}
+            {accessInfo?.canManage && (
+              <IconButton 
+                size="small" 
+                onClick={() => onTogglePermission(staff)}
+                title="Manage staff permissions"
+              >
+                <SecurityIcon />
+              </IconButton>
+            )}
+            {accessInfo?.canDelete && (
+              <IconButton 
+                size="small" 
+                onClick={() => onDelete(staff._id)}
+                title="Delete staff member"
+                sx={{ color: 'error.main' }}
+              >
+                <DeleteIcon />
+              </IconButton>
+            )}
+            
+            {/* Show message if no actions are available or if read-only */}
+            {(!accessInfo?.canRead && !accessInfo?.canUpdate && !accessInfo?.canManage && !accessInfo?.canDelete) && (
+              <Typography variant="caption" color="text.secondary" sx={{ alignSelf: 'center', ml: 1 }}>
+                No access
+              </Typography>
+            )}
+            {accessInfo?.isReadOnly && accessInfo?.canRead && (
+              <Typography variant="caption" color="warning.main" sx={{ alignSelf: 'center', ml: 1, fontWeight: 'bold' }}>
+                READ ONLY
+              </Typography>
+            )}
           </Box>
         </CardContent>
       </Card>
@@ -631,7 +680,7 @@ const PermissionManager = ({ staff, open, onClose, onSave }) => {
 };
 
 // Quick Actions Panel Component
-const QuickActionsPanel = ({ onAction }) => {
+const QuickActionsPanel = ({ onAction, accessInfo }) => {
   const theme = useTheme();
   
   const quickActions = [
@@ -640,77 +689,130 @@ const QuickActionsPanel = ({ onAction }) => {
       icon: AddIcon,
       color: 'primary',
       action: 'add_staff',
-      description: 'Register new staff member'
+      description: 'Register new staff member',
+      requiredPermission: accessInfo?.canAddStaff,
+      viewOnly: false
     },
     {
       title: 'Bulk Permissions',
       icon: SecurityIcon,
       color: 'warning',
       action: 'bulk_permissions',
-      description: 'Manage permissions for multiple staff'
+      description: 'Manage permissions for multiple staff',
+      requiredPermission: accessInfo?.canManagePermissions,
+      viewOnly: false
     },
     {
       title: 'System Settings',
       icon: SettingsIcon,
       color: 'info',
       action: 'system_settings',
-      description: 'Configure system parameters'
+      description: 'Configure system parameters',
+      requiredPermission: accessInfo?.canManageSystem,
+      viewOnly: false
     },
     {
       title: 'Generate Reports',
       icon: AssessmentIcon,
       color: 'success',
       action: 'generate_reports',
-      description: 'Create comprehensive reports'
+      description: 'Create comprehensive reports',
+      requiredPermission: accessInfo?.canGenerateReports,
+      viewOnly: true // Reports can be viewed even in view-only mode
+    },
+    {
+      title: 'View Staff Directory',
+      icon: PeopleIcon,
+      color: 'secondary',
+      action: 'view_staff_directory',
+      description: 'Browse staff information',
+      requiredPermission: true, // Always available for viewing
+      viewOnly: true
+    },
+    {
+      title: 'View Permissions',
+      icon: SecurityIcon,
+      color: 'info',
+      action: 'view_permissions',
+      description: 'Review current permissions',
+      requiredPermission: true, // Always available for viewing
+      viewOnly: true
     }
   ];
+
+  // Filter actions based on permissions and view-only mode
+  const availableActions = quickActions.filter(action => {
+    if (!action.requiredPermission) return false;
+    
+    // If user has edit access, show all available actions
+    if (accessInfo?.canEdit) return true;
+    
+    // If user has only view access, show only view-only actions
+    return action.viewOnly;
+  });
 
   return (
     <Paper sx={{ p: 3, mb: 3 }}>
       <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
         Quick Actions
       </Typography>
-      <Grid container spacing={2}>
-        {quickActions.map((action) => {
-          const ActionIcon = action.icon;
-          return (
-            <Grid item xs={12} sm={6} md={3} key={action.action}>
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Card 
-                  sx={{ 
-                    cursor: 'pointer',
-                    border: `2px solid ${theme.palette[action.color].main}20`,
-                    '&:hover': {
-                      borderColor: theme.palette[action.color].main,
-                      boxShadow: theme.shadows[4]
-                    }
-                  }}
-                  onClick={() => onAction(action.action)}
+      {availableActions.length > 0 ? (
+        <Grid container spacing={2}>
+          {availableActions.map((action) => {
+            const ActionIcon = action.icon;
+            return (
+              <Grid item xs={12} sm={6} md={3} key={action.action}>
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  <CardContent sx={{ textAlign: 'center', p: 2 }}>
-                    <ActionIcon 
-                      sx={{ 
-                        fontSize: 32, 
-                        color: theme.palette[action.color].main,
-                        mb: 1
-                      }} 
-                    />
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                      {action.title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {action.description}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-          );
-        })}
-      </Grid>
+                  <Card 
+                    sx={{ 
+                      cursor: 'pointer',
+                      border: `2px solid ${theme.palette[action.color].main}20`,
+                      bgcolor: action.viewOnly && !accessInfo?.canEdit ? '#fafafa' : 'white',
+                      '&:hover': {
+                        borderColor: theme.palette[action.color].main,
+                        boxShadow: theme.shadows[4]
+                      }
+                    }}
+                    onClick={() => onAction(action.action)}
+                  >
+                    <CardContent sx={{ textAlign: 'center', p: 2 }}>
+                      <ActionIcon 
+                        sx={{ 
+                          fontSize: 32, 
+                          color: theme.palette[action.color].main,
+                          mb: 1
+                        }} 
+                      />
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                        {action.title}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {action.description}
+                      </Typography>
+                      {action.viewOnly && !accessInfo?.canEdit && (
+                        <Chip
+                          label="View Only"
+                          size="small"
+                          color="warning"
+                          sx={{ mt: 1, fontSize: '0.7rem' }}
+                        />
+                      )}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </Grid>
+            );
+          })}
+        </Grid>
+      ) : (
+        <Alert severity="info">
+          <AlertTitle>No Quick Actions Available</AlertTitle>
+          You don't have permission to perform any quick actions. Contact your Vice Principal to request additional permissions.
+        </Alert>
+      )}
     </Paper>
   );
 };
@@ -994,11 +1096,108 @@ const RecentActivityFeed = () => {
   );
 };
 
+// View Only Staff Card Component
+const ViewOnlyStaffCard = ({ staff }) => {
+  const theme = useTheme();
+  const RoleIcon = roleIcons[staff.primaryRole] || PersonIcon;
+  const roleColor = roleColors[staff.primaryRole] || theme.palette.grey[500];
+
+  return (
+    <motion.div
+      whileHover={{ scale: 1.01 }}
+      whileTap={{ scale: 0.99 }}
+    >
+      <Card sx={{ 
+        height: '100%', 
+        display: 'flex', 
+        flexDirection: 'column',
+        border: '2px solid #e0e0e0',
+        bgcolor: '#fafafa'
+      }}>
+        <CardContent sx={{ flexGrow: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <Avatar 
+              sx={{ 
+                bgcolor: roleColor, 
+                mr: 2,
+                width: 56,
+                height: 56
+              }}
+            >
+              <RoleIcon />
+            </Avatar>
+            <Box sx={{ flexGrow: 1 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                {staff.name}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {staff.email}
+              </Typography>
+            </Box>
+            <Chip 
+              label={staff.primaryRole} 
+              size="small" 
+              sx={{ 
+                bgcolor: `${roleColor}20`, 
+                color: roleColor,
+                fontWeight: 600
+              }} 
+            />
+          </Box>
+          
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              Department: {staff.department}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Joined: {new Date(staff.joinDate).toLocaleDateString()}
+            </Typography>
+          </Box>
+
+          <Divider sx={{ my: 2 }} />
+
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+              Assigned Roles:
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+              {staff.assignedRoles.map((role) => (
+                <Chip
+                  key={role}
+                  label={role}
+                  size="small"
+                  variant="outlined"
+                  sx={{ 
+                    borderColor: roleColors[role] || theme.palette.grey[400],
+                    color: roleColors[role] || theme.palette.grey[600]
+                  }}
+                />
+              ))}
+            </Box>
+          </Box>
+
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 'auto' }}>
+            <Chip
+              label="VIEW ONLY"
+              size="small"
+              color="warning"
+              sx={{ 
+                fontWeight: 'bold',
+                fontSize: '0.7rem'
+              }}
+            />
+          </Box>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+};
+
 // Admin Dashboard Component
 const AdminDashboard = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const { 
     staffMembers, 
     loading, 
@@ -1017,6 +1216,181 @@ const AdminDashboard = () => {
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('');
+  const [userActivitiesControl, setUserActivitiesControl] = useState(null);
+
+  // Fetch user's activities control on component mount
+  useEffect(() => {
+    const fetchUserActivitiesControl = async () => {
+      try {
+        if (user?._id || user?.id) {
+          const staffId = user._id || user.id;
+          
+          // Use the staff endpoint instead of VP endpoint for getting own activities control
+          const response = await staffActivitiesControlAPI.getMyActivities();
+          const activitiesControl = response?.data;
+          
+          if (activitiesControl) {
+            setUserActivitiesControl(activitiesControl);
+          }
+        }
+      } catch (error) {
+        console.log('No activities control found for user, using default permissions');
+        setUserActivitiesControl(null);
+      }
+    };
+
+    fetchUserActivitiesControl();
+  }, [user]);
+
+  // Define all available tabs with their activity mappings
+  const allTabs = [
+    { label: 'Overview', icon: <DashboardIcon />, activity: null }, // Always accessible
+    { label: 'Staff Management', icon: <PeopleIcon />, activity: 'Staff Management' },
+    { label: 'Role Permissions', icon: <SecurityIcon />, activity: 'User Management' },
+    { label: 'Feature Permissions', icon: <SecurityIcon />, activity: 'Permissions' },
+    { label: 'Permission', icon: <SecurityIcon />, activity: 'Permissions' },
+    { label: 'Service Requests', icon: <AssignmentIcon />, activity: 'Service Requests' },
+  ];
+
+  // Filter tabs based on activities control
+  const filteredTabs = allTabs.filter(tab => {
+    // Always allow Overview tab
+    if (tab.label === 'Overview') {
+      return true;
+    }
+    
+    // If no activities control, show all tabs (default permissions)
+    if (!userActivitiesControl || !userActivitiesControl.activityAssignments) {
+      console.log('No activities control found, showing all tabs (default permissions)');
+      return true;
+    }
+    
+    // Check if user has access to this activity
+    if (tab.activity) {
+      const activityAssignment = userActivitiesControl.activityAssignments.find(
+        a => a.activity === tab.activity
+      );
+      
+      if (!activityAssignment) {
+        console.log(`❌ No activity assignment found for tab: ${tab.label} (${tab.activity}) - HIDDEN`);
+        return false; // Hide tab if no assignment found
+      }
+      
+      const hasAccess = activityAssignment.accessLevel !== 'Unauthorized';
+      console.log(`${hasAccess ? '✅' : '❌'} Tab: ${tab.label} (${tab.activity}) - Access Level: ${activityAssignment.accessLevel} - ${hasAccess ? 'SHOWN' : 'HIDDEN'}`);
+      return hasAccess; // Only show if not unauthorized
+    }
+    
+    return true;
+  });
+
+  // Reset active tab if current tab is not in filtered tabs
+  useEffect(() => {
+    if (filteredTabs.length > 0 && activeTab >= filteredTabs.length) {
+      setActiveTab(0);
+    }
+  }, [filteredTabs, activeTab]);
+
+  // Secure tab change handler - prevents navigation to unauthorized tabs
+  const handleSecureTabChange = (event, newValue) => {
+    // Check if the new tab is in the filtered (authorized) tabs
+    if (newValue >= 0 && newValue < filteredTabs.length) {
+      const targetTab = filteredTabs[newValue];
+      
+      // Additional security check - verify the tab is actually accessible
+      if (targetTab.label === 'Overview') {
+        // Overview is always accessible
+        setActiveTab(newValue);
+        return;
+      }
+      
+      if (userActivitiesControl && userActivitiesControl.activityAssignments) {
+        const activityAssignment = userActivitiesControl.activityAssignments.find(
+          a => a.activity === targetTab.activity
+        );
+        
+        if (activityAssignment && activityAssignment.accessLevel !== 'Unauthorized') {
+          console.log(`✅ Navigation allowed to tab: ${targetTab.label} (${targetTab.activity}) - Access Level: ${activityAssignment.accessLevel}`);
+          setActiveTab(newValue);
+        } else {
+          console.log(`❌ Navigation blocked to unauthorized tab: ${targetTab.label} (${targetTab.activity})`);
+          toast.error(`Access denied: You don't have permission to access ${targetTab.label}`);
+        }
+      } else {
+        // If no activities control, allow navigation (default permissions)
+        setActiveTab(newValue);
+      }
+    } else {
+      console.log(`❌ Navigation blocked: Invalid tab index ${newValue}`);
+      toast.error('Invalid tab selection');
+    }
+  };
+
+  // Navigation guard - redirect to first authorized tab if current tab is unauthorized
+  useEffect(() => {
+    if (filteredTabs.length > 0) {
+      const currentTab = filteredTabs[activeTab];
+      
+      if (currentTab && currentTab.label !== 'Overview') {
+        if (userActivitiesControl && userActivitiesControl.activityAssignments) {
+          const activityAssignment = userActivitiesControl.activityAssignments.find(
+            a => a.activity === currentTab.activity
+          );
+          
+          if (!activityAssignment || activityAssignment.accessLevel === 'Unauthorized') {
+            console.log(`🚫 Redirecting from unauthorized tab: ${currentTab.label}`);
+            toast.warning(`Access denied to ${currentTab.label}. Redirecting to Overview.`);
+            setActiveTab(0); // Redirect to Overview tab
+          }
+        }
+      }
+    }
+  }, [activeTab, filteredTabs, userActivitiesControl]);
+
+  // Keyboard navigation protection - prevent arrow key navigation to unauthorized tabs
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        const currentIndex = activeTab;
+        const newIndex = event.key === 'ArrowLeft' ? currentIndex - 1 : currentIndex + 1;
+        
+        // Check if the new tab would be unauthorized
+        if (newIndex >= 0 && newIndex < filteredTabs.length) {
+          const targetTab = filteredTabs[newIndex];
+          
+          if (targetTab.label !== 'Overview') {
+            if (userActivitiesControl && userActivitiesControl.activityAssignments) {
+              const activityAssignment = userActivitiesControl.activityAssignments.find(
+                a => a.activity === targetTab.activity
+              );
+              
+              if (!activityAssignment || activityAssignment.accessLevel === 'Unauthorized') {
+                event.preventDefault();
+                console.log(`🚫 Keyboard navigation blocked to unauthorized tab: ${targetTab.label}`);
+                toast.error(`Cannot navigate to ${targetTab.label} - Access denied`);
+                return;
+              }
+            }
+          }
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [activeTab, filteredTabs, userActivitiesControl]);
+
+  console.log('🔍 Admin Dashboard Tabs Summary:', {
+    totalTabs: allTabs.length,
+    filteredTabs: filteredTabs.length,
+    availableTabs: filteredTabs.map(tab => tab.label),
+    hiddenTabs: allTabs.filter(tab => !filteredTabs.includes(tab)).map(tab => tab.label),
+    userActivitiesControl: userActivitiesControl?.activityAssignments
+  });
+
+  // Show message if no tabs are accessible (except Overview)
+  const accessibleTabs = filteredTabs.filter(tab => tab.label !== 'Overview');
+  const hasNoAccess = userActivitiesControl && accessibleTabs.length === 0;
 
   // Mock data - replace with actual API calls
   const adminStats = {
@@ -1040,16 +1414,49 @@ const AdminDashboard = () => {
   const handleQuickAction = (action) => {
     switch (action) {
       case 'add_staff':
-        console.log('Add staff member');
+        if (hasEditAccess('Staff Management')) {
+          console.log('Add staff member');
+        } else {
+          toast.error('You do not have permission to add staff members. Contact your VP for Edit or Approve access.');
+        }
         break;
       case 'bulk_permissions':
-        console.log('Bulk permissions management');
+        if (hasEditAccess('Permissions')) {
+          console.log('Bulk permissions management');
+        } else {
+          toast.error('You do not have permission to manage permissions. Contact your VP for Edit or Approve access.');
+        }
         break;
       case 'system_settings':
-        console.log('System settings');
+        if (hasEditAccess('User Management')) {
+          console.log('System settings');
+        } else {
+          toast.error('You do not have permission to access system settings. Contact your VP for Edit or Approve access.');
+        }
         break;
       case 'generate_reports':
-        console.log('Generate reports');
+        if (hasViewAccess('Staff Management')) {
+          console.log('Generate reports');
+          toast.info('Report generation feature coming soon');
+        } else {
+          toast.error('You do not have permission to generate reports.');
+        }
+        break;
+      case 'view_staff_directory':
+        if (hasViewAccess('Staff Management')) {
+          console.log('View staff directory');
+          toast.info('Staff directory view feature coming soon');
+        } else {
+          toast.error('You do not have permission to view staff directory.');
+        }
+        break;
+      case 'view_permissions':
+        if (hasViewAccess('Permissions')) {
+          console.log('View permissions');
+          toast.info('Permission review feature coming soon');
+        } else {
+          toast.error('You do not have permission to view permissions.');
+        }
         break;
       default:
         break;
@@ -1090,6 +1497,99 @@ const AdminDashboard = () => {
     
     return matchesSearch && matchesRole;
   });
+
+  // Helper function to check user's access level for a specific activity
+  const getUserAccessLevel = (activity) => {
+    if (!userActivitiesControl || !userActivitiesControl.activityAssignments) {
+      return 'Full'; // Default to full access if no activities control
+    }
+    
+    const activityAssignment = userActivitiesControl.activityAssignments.find(
+      a => a.activity === activity
+    );
+    
+    return activityAssignment ? activityAssignment.accessLevel : 'Unauthorized';
+  };
+
+  // Helper function to check if user can perform an action
+  const canPerformAction = (activity, requiredLevel = 'View') => {
+    const userLevel = getUserAccessLevel(activity);
+    
+    const levelHierarchy = {
+      'Unauthorized': 0,
+      'View': 1,
+      'Edit': 2,
+      'Approve': 3,
+      'Full': 4
+    };
+    
+    return levelHierarchy[userLevel] >= levelHierarchy[requiredLevel];
+  };
+
+  // Helper function to check if user can perform CRUD operations
+  const canPerformCRUD = (activity, operation = 'read') => {
+    const userLevel = getUserAccessLevel(activity);
+    
+    // Define what operations each access level can perform
+    const operationPermissions = {
+      'Unauthorized': { read: false, create: false, update: false, delete: false },
+      'View': { read: true, create: false, update: false, delete: false },
+      'Edit': { read: true, create: true, update: true, delete: false },
+      'Approve': { read: true, create: true, update: true, delete: true },
+      'Full': { read: true, create: true, update: true, delete: true }
+    };
+    
+    return operationPermissions[userLevel]?.[operation] || false;
+  };
+
+  // Enhanced access level info with CRUD permissions
+  const getAccessLevelInfo = (activity) => {
+    const level = getUserAccessLevel(activity);
+    const info = {
+      level,
+      canView: canPerformAction(activity, 'View'),
+      canEdit: canPerformAction(activity, 'Edit'),
+      canApprove: canPerformAction(activity, 'Approve'),
+      canDelete: canPerformAction(activity, 'Approve'),
+      canCreate: canPerformAction(activity, 'Edit'),
+      canUpdate: canPerformAction(activity, 'Edit'),
+      canManage: canPerformAction(activity, 'Approve'),
+      // CRUD specific permissions
+      canRead: canPerformCRUD(activity, 'read'),
+      canCreate: canPerformCRUD(activity, 'create'),
+      canUpdate: canPerformCRUD(activity, 'update'),
+      canDelete: canPerformCRUD(activity, 'delete'),
+      // Helper for UI
+      isReadOnly: level === 'View',
+      canModify: level === 'Edit' || level === 'Approve' || level === 'Full',
+      canDelete: level === 'Approve' || level === 'Full'
+    };
+    
+    console.log(`🔐 Access Level for ${activity}:`, info);
+    return info;
+  };
+
+  // Helper function to check if user has edit access for a specific activity
+  const hasEditAccess = (activity) => {
+    const userLevel = getUserAccessLevel(activity);
+    return userLevel === 'Edit' || userLevel === 'Approve' || userLevel === 'Full';
+  };
+
+  // Helper function to check if user has view access for a specific activity
+  const hasViewAccess = (activity) => {
+    const userLevel = getUserAccessLevel(activity);
+    return userLevel === 'View' || userLevel === 'Edit' || userLevel === 'Approve' || userLevel === 'Full';
+  };
+
+  // Helper function to get access type for display
+  const getAccessType = (activity) => {
+    const userLevel = getUserAccessLevel(activity);
+    if (userLevel === 'View') return 'View Only';
+    if (userLevel === 'Edit') return 'Edit Access';
+    if (userLevel === 'Approve') return 'Full Access';
+    if (userLevel === 'Full') return 'Full Access';
+    return 'No Access';
+  };
 
   // Loading state
   if (loading) {
@@ -1136,6 +1636,24 @@ const AdminDashboard = () => {
             <Typography variant="body2" sx={{ opacity: 0.8 }}>
               Staff Management & System Administration
             </Typography>
+            {userActivitiesControl && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+                <Chip
+                  label={`VP Controlled - ${filteredTabs.length}/${allTabs.length} tabs accessible`}
+                  size="small"
+                  color="success"
+                  sx={{ fontSize: '0.7rem' }}
+                />
+                {!hasEditAccess('Staff Management') && !hasEditAccess('Permissions') && !hasEditAccess('User Management') && (
+                  <Chip
+                    label="VIEW ONLY MODE"
+                    size="small"
+                    color="warning"
+                    sx={{ fontSize: '0.7rem', fontWeight: 'bold' }}
+                  />
+                )}
+              </Box>
+            )}
           </Box>
 
           <Box sx={{ display: 'flex', gap: 1 }}>
@@ -1168,8 +1686,59 @@ const AdminDashboard = () => {
       </Box>
 
       <Box sx={{ p: { xs: 2, md: 4 } }}>
+        {/* Access Mode Indicator */}
+        {userActivitiesControl && (
+          <Paper sx={{ 
+            p: 2, 
+            mb: 3, 
+            bgcolor: !hasEditAccess('Staff Management') && !hasEditAccess('Permissions') && !hasEditAccess('User Management') 
+              ? '#fff3cd' 
+              : '#e8f5e8',
+            border: !hasEditAccess('Staff Management') && !hasEditAccess('Permissions') && !hasEditAccess('User Management')
+              ? '1px solid #ffeaa7'
+              : '1px solid #c8e6c9'
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              {!hasEditAccess('Staff Management') && !hasEditAccess('Permissions') && !hasEditAccess('User Management') ? (
+                <>
+                  <WarningIcon sx={{ color: '#856404', fontSize: 28 }} />
+                  <Box>
+                    <Typography variant="h6" sx={{ color: '#856404', fontWeight: 'bold' }}>
+                      View Only Mode
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#856404' }}>
+                      You have read-only access to all admin functions. Contact your Vice Principal for edit permissions.
+                    </Typography>
+                  </Box>
+                </>
+              ) : (
+                <>
+                  <CheckCircleIcon sx={{ color: '#2e7d32', fontSize: 28 }} />
+                  <Box>
+                    <Typography variant="h6" sx={{ color: '#2e7d32', fontWeight: 'bold' }}>
+                      Edit Mode Available
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#2e7d32' }}>
+                      You have edit access to some or all admin functions.
+                    </Typography>
+                  </Box>
+                </>
+              )}
+            </Box>
+          </Paper>
+        )}
+
         {/* Quick Actions Panel */}
-        <QuickActionsPanel onAction={handleQuickAction} />
+        <QuickActionsPanel 
+          onAction={handleQuickAction} 
+          accessInfo={{
+            canAddStaff: canPerformCRUD('Staff Management', 'create'),
+            canManagePermissions: canPerformCRUD('Permissions', 'update'),
+            canManageSystem: canPerformCRUD('User Management', 'update'),
+            canGenerateReports: canPerformCRUD('Staff Management', 'read'),
+            canEdit: hasEditAccess('Staff Management') || hasEditAccess('Permissions') || hasEditAccess('User Management')
+          }}
+        />
 
         {/* System Health Monitor */}
         <SystemHealthMonitor />
@@ -1228,418 +1797,944 @@ const AdminDashboard = () => {
           <Grid item xs={12} lg={8}>
             {/* Main Content Tabs */}
             <Paper sx={{ mb: 3 }}>
-              <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
-                <Tab label="Overview" icon={<DashboardIcon />} />
-                <Tab label="Staff Management" icon={<PeopleIcon />} />
-                <Tab label="Role Permissions" icon={<SecurityIcon />} />
-                <Tab label="Feature Permissions" icon={<SecurityIcon />} />
-                <Tab label="Permission" icon={<SecurityIcon />} />
-                <Tab label="Service Requests" icon={<AssignmentIcon />} />
-              </Tabs>
+              {hasNoAccess ? (
+                <Box sx={{ p: 3, textAlign: 'center' }}>
+                  <Alert severity="warning" sx={{ mb: 2 }}>
+                    <AlertTitle>No Access Granted</AlertTitle>
+                    You don't have access to any admin features. Please contact your Vice Principal to request access to specific features.
+                  </Alert>
+                  <Typography variant="body2" color="text.secondary">
+                    Available tabs: {filteredTabs.length} of {allTabs.length}
+                  </Typography>
+                </Box>
+              ) : (
+                <Tabs value={activeTab} onChange={handleSecureTabChange}>
+                  {filteredTabs.map((tab, index) => {
+                    // Get access level for this tab
+                    let accessLevel = null;
+                    let accessLevelColor = 'default';
+                    
+                    if (tab.activity && userActivitiesControl?.activityAssignments) {
+                      const activityAssignment = userActivitiesControl.activityAssignments.find(
+                        a => a.activity === tab.activity
+                      );
+                      if (activityAssignment) {
+                        accessLevel = activityAssignment.accessLevel;
+                        switch (accessLevel) {
+                          case 'View':
+                            accessLevelColor = 'info';
+                            break;
+                          case 'Edit':
+                            accessLevelColor = 'warning';
+                            break;
+                          case 'Approve':
+                            accessLevelColor = 'success';
+                            break;
+                          case 'Unauthorized':
+                            accessLevelColor = 'error';
+                            break;
+                          default:
+                            accessLevelColor = 'default';
+                        }
+                      }
+                    }
+
+                    // Check if this tab is currently accessible
+                    const isAccessible = tab.label === 'Overview' || 
+                      (userActivitiesControl && userActivitiesControl.activityAssignments) ? 
+                      userActivitiesControl.activityAssignments.find(a => a.activity === tab.activity)?.accessLevel !== 'Unauthorized' : 
+                      true;
+
+                    return (
+                      <Tab 
+                        key={tab.label} 
+                        label={
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            {tab.label}
+                            {accessLevel && accessLevel !== 'Unauthorized' && (
+                              <Chip
+                                label={accessLevel}
+                                size="small"
+                                color={accessLevelColor}
+                                sx={{
+                                  height: 16,
+                                  fontSize: '0.6rem',
+                                  '& .MuiChip-label': {
+                                    px: 0.5,
+                                  },
+                                }}
+                              />
+                            )}
+                            {!isAccessible && (
+                              <Chip
+                                label="Blocked"
+                                size="small"
+                                color="error"
+                                sx={{
+                                  height: 16,
+                                  fontSize: '0.6rem',
+                                  '& .MuiChip-label': {
+                                    px: 0.5,
+                                  },
+                                }}
+                              />
+                            )}
+                          </Box>
+                        }
+                        icon={tab.icon} 
+                        disabled={!isAccessible}
+                        sx={{
+                          opacity: isAccessible ? 1 : 0.5,
+                          '&.Mui-disabled': {
+                            opacity: 0.5,
+                          }
+                        }}
+                      />
+                    );
+                  })}
+                </Tabs>
+              )}
             </Paper>
 
             {/* Tab Content */}
             <AnimatePresence mode="wait">
-              {activeTab === 0 && (
+              {hasNoAccess ? (
                 <motion.div
-                  key="overview"
+                  key="no-access"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <Grid container spacing={3}>
-                    <Grid item xs={12} md={8}>
-                      <Paper sx={{ p: 3, height: 400 }}>
-                        <Typography variant="h6" sx={{ mb: 2 }}>Staff Distribution by Role</Typography>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={[
-                            { role: 'Librarian', count: staffMembers.filter(s => s.assignedRoles.includes('librarian')).length, color: roleColors.librarian },
-                            { role: 'Counselor', count: staffMembers.filter(s => s.assignedRoles.includes('counselor')).length, color: roleColors.counselor },
-                            { role: 'PT Teacher', count: staffMembers.filter(s => s.assignedRoles.includes('ptteacher')).length, color: roleColors.ptteacher },
-                            { role: 'Event Handler', count: staffMembers.filter(s => s.assignedRoles.includes('eventhandler')).length, color: roleColors.eventhandler },
-                            { role: 'Transport Manager', count: staffMembers.filter(s => s.assignedRoles.includes('transportmanager')).length, color: roleColors.transportmanager },
-                            { role: 'Soft Skills Manager', count: staffMembers.filter(s => s.assignedRoles.includes('softskillsmanager')).length, color: roleColors.softskillsmanager }
-                          ]}>
-                            <XAxis dataKey="role" />
-                            <YAxis />
-                            <RechartsTooltip />
-                            <Bar dataKey="count" fill={theme.palette.primary.main} />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </Paper>
-                    </Grid>
-                    <Grid item xs={12} md={4}>
-                      <Paper sx={{ p: 3, height: 400 }}>
-                        <Typography variant="h6" sx={{ mb: 2 }}>Role Distribution</Typography>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={[
-                                { name: 'Librarian', value: staffMembers.filter(s => s.assignedRoles.includes('librarian')).length, color: roleColors.librarian },
-                                { name: 'Counselor', value: staffMembers.filter(s => s.assignedRoles.includes('counselor')).length, color: roleColors.counselor },
-                                { name: 'PT Teacher', value: staffMembers.filter(s => s.assignedRoles.includes('ptteacher')).length, color: roleColors.ptteacher },
-                                { name: 'Event Handler', value: staffMembers.filter(s => s.assignedRoles.includes('eventhandler')).length, color: roleColors.eventhandler },
-                                { name: 'Transport Manager', value: staffMembers.filter(s => s.assignedRoles.includes('transportmanager')).length, color: roleColors.transportmanager },
-                                { name: 'Soft Skills Manager', value: staffMembers.filter(s => s.assignedRoles.includes('softskillsmanager')).length, color: roleColors.softskillsmanager }
-                              ]}
-                              cx="50%"
-                              cy="50%"
-                              outerRadius={80}
-                              dataKey="value"
-                            >
-                              {[
-                                { name: 'Librarian', value: staffMembers.filter(s => s.assignedRoles.includes('librarian')).length, color: roleColors.librarian },
-                                { name: 'Counselor', value: staffMembers.filter(s => s.assignedRoles.includes('counselor')).length, color: roleColors.counselor },
-                                { name: 'PT Teacher', value: staffMembers.filter(s => s.assignedRoles.includes('ptteacher')).length, color: roleColors.ptteacher },
-                                { name: 'Event Handler', value: staffMembers.filter(s => s.assignedRoles.includes('eventhandler')).length, color: roleColors.eventhandler },
-                                { name: 'Transport Manager', value: staffMembers.filter(s => s.assignedRoles.includes('transportmanager')).length, color: roleColors.transportmanager },
-                                { name: 'Soft Skills Manager', value: staffMembers.filter(s => s.assignedRoles.includes('softskillsmanager')).length, color: roleColors.softskillsmanager }
-                              ].map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
-                              ))}
-                            </Pie>
-                            <RechartsTooltip />
-                            <Legend />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </Paper>
-                    </Grid>
-                  </Grid>
-                </motion.div>
-              )}
-
-              {activeTab === 1 && (
-                <motion.div
-                  key="staff"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {/* Search and Filter Bar */}
-                  <Paper sx={{ p: 3, mb: 3 }}>
-                    <Grid container spacing={2} alignItems="center">
-                      <Grid item xs={12} md={6}>
-                        <TextField
-                          fullWidth
-                          placeholder="Search staff by name or email..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          InputProps={{
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <SearchIcon />
-                              </InputAdornment>
-                            )
-                          }}
-                        />
-                      </Grid>
-                      <Grid item xs={12} md={4}>
-                        <FormControl fullWidth>
-                          <InputLabel>Filter by Role</InputLabel>
-                          <Select
-                            value={filterRole}
-                            onChange={(e) => setFilterRole(e.target.value)}
-                          >
-                            <MenuItem value="">All Roles</MenuItem>
-                            <MenuItem value="librarian">Librarian</MenuItem>
-                            <MenuItem value="counselor">Counselor</MenuItem>
-                            <MenuItem value="ptteacher">PT Teacher</MenuItem>
-                            <MenuItem value="eventhandler">Event Handler</MenuItem>
-                            <MenuItem value="transportmanager">Transport Manager</MenuItem>
-                            <MenuItem value="softskillsmanager">Soft Skills Manager</MenuItem>
-                          </Select>
-                        </FormControl>
-                      </Grid>
-                      <Grid item xs={12} md={2}>
-                        <Button
-                          variant="contained"
-                          startIcon={<AddIcon />}
-                          fullWidth
-                          onClick={() => handleQuickAction('add_staff')}
-                        >
-                          Add Staff
-                        </Button>
-                      </Grid>
-                    </Grid>
-                  </Paper>
-
-                  {/* Staff Grid */}
-                  <Grid container spacing={3}>
-                    {filteredStaff.map((staff) => (
-                      <Grid item xs={12} sm={6} md={4} key={staff._id}>
-                        <StaffCard
-                          staff={staff}
-                          onEdit={(staff) => {
-                            console.log('Edit staff:', staff);
-                          }}
-                          onDelete={handleStaffDelete}
-                          onView={(staff) => {
-                            console.log('View staff:', staff);
-                          }}
-                          onToggleRole={handleRoleToggle}
-                          onTogglePermission={handlePermissionToggle}
-                        />
-                      </Grid>
-                    ))}
-                  </Grid>
-                </motion.div>
-              )}
-
-              {activeTab === 2 && (
-                <motion.div
-                  key="permissions"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Paper sx={{ p: 3 }}>
-                    <Typography variant="h6" sx={{ mb: 2 }}>Role Permission Matrix</Typography>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Role</TableCell>
-                          <TableCell>Dashboard Access</TableCell>
-                          <TableCell>Record Management</TableCell>
-                          <TableCell>Report Generation</TableCell>
-                          <TableCell>Admin Access</TableCell>
-                          <TableCell>Actions</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {Object.entries(roleColors).map(([role, color]) => {
-                          const RoleIcon = roleIcons[role];
-                          
-                          return (
-                            <TableRow key={role}>
-                              <TableCell>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                  <RoleIcon sx={{ color }} />
-                                  <Typography sx={{ textTransform: 'capitalize', fontWeight: 600 }}>
-                                    {role}
-                                  </Typography>
-                                </Box>
-                              </TableCell>
-                              <TableCell>
-                                <Chip label="Yes" size="small" color="success" />
-                              </TableCell>
-                              <TableCell>
-                                <Chip label="Yes" size="small" color="success" />
-                              </TableCell>
-                              <TableCell>
-                                <Chip label="Yes" size="small" color="success" />
-                              </TableCell>
-                              <TableCell>
-                                <Chip 
-                                  label={role === 'admin' ? 'Yes' : 'No'} 
-                                  size="small" 
-                                  color={role === 'admin' ? 'success' : 'default'} 
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <IconButton size="small">
-                                  <EditIcon />
-                                </IconButton>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  </Paper>
-                </motion.div>
-              )}
-
-              {activeTab === 3 && (
-                <motion.div
-                  key="feature-permissions"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Paper sx={{ p: 3 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                      <Typography variant="h6">Feature Permission Management</Typography>
-                      <Button
-                        variant="contained"
-                        startIcon={<SecurityIcon />}
-                        onClick={() => handleQuickAction('bulk_permissions')}
-                      >
-                        Bulk Permissions
-                      </Button>
+                  <Paper sx={{ p: 4, textAlign: 'center' }}>
+                    <Box sx={{ mb: 3 }}>
+                      <SecurityIcon sx={{ fontSize: 64, color: 'warning.main', mb: 2 }} />
+                      <Typography variant="h5" gutterBottom>
+                        Access Restricted
+                      </Typography>
+                      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                        You don't have permission to access any admin features. 
+                        Only the Overview tab is available to you.
+                      </Typography>
                     </Box>
                     
-                    <Alert severity="info" sx={{ mb: 3 }}>
-                      <AlertTitle>Feature Permissions</AlertTitle>
-                      Manage granular permissions for each staff member. Control access to specific features like inventory, student records, teacher remarks, feedbacks, events, and communication.
+                    <Alert severity="info" sx={{ maxWidth: 600, mx: 'auto' }}>
+                      <Typography variant="body2">
+                        <strong>To request access:</strong>
+                      </Typography>
+                      <Typography variant="body2" sx={{ mt: 1 }}>
+                        1. Contact your Vice Principal<br/>
+                        2. Request specific feature access<br/>
+                        3. Wait for approval and assignment
+                      </Typography>
                     </Alert>
-
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Staff Member</TableCell>
-                          <TableCell>Role</TableCell>
-                          <TableCell>Inventory</TableCell>
-                          <TableCell>Student Records</TableCell>
-                          <TableCell>Teacher Remarks</TableCell>
-                          <TableCell>Feedbacks</TableCell>
-                          <TableCell>Events</TableCell>
-                          <TableCell>Communication</TableCell>
-                          <TableCell>Actions</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {staffMembers.map((staff) => (
-                          <TableRow key={staff._id}>
-                            <TableCell>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Avatar sx={{ width: 32, height: 32, bgcolor: roleColors[staff.primaryRole] }}>
-                                  <PersonIcon />
-                                </Avatar>
-                                <Box>
-                                  <Typography variant="subtitle2">{staff.name}</Typography>
-                                  <Typography variant="body2" color="text.secondary">{staff.email}</Typography>
-                                </Box>
-                              </Box>
-                            </TableCell>
-                            <TableCell>
-                              <Chip 
-                                label={staff.primaryRole} 
-                                size="small" 
-                                sx={{ 
-                                  bgcolor: `${roleColors[staff.primaryRole]}20`,
-                                  color: roleColors[staff.primaryRole]
-                                }} 
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Chip 
-                                label={staff.permissions?.inventory?.view_inventory ? "Enabled" : "Disabled"} 
-                                size="small" 
-                                color={staff.permissions?.inventory?.view_inventory ? "success" : "default"} 
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Chip 
-                                label={staff.permissions?.student_records?.view_students ? "Enabled" : "Disabled"} 
-                                size="small" 
-                                color={staff.permissions?.student_records?.view_students ? "success" : "default"} 
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Chip 
-                                label={staff.permissions?.teacher_remarks?.view_remarks ? "Enabled" : "Disabled"} 
-                                size="small" 
-                                color={staff.permissions?.teacher_remarks?.view_remarks ? "success" : "default"} 
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Chip 
-                                label={staff.permissions?.feedbacks?.view_feedback ? "Enabled" : "Disabled"} 
-                                size="small" 
-                                color={staff.permissions?.feedbacks?.view_feedback ? "success" : "default"} 
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Chip 
-                                label={staff.permissions?.events?.view_events ? "Enabled" : "Disabled"} 
-                                size="small" 
-                                color={staff.permissions?.events?.view_events ? "success" : "default"} 
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Chip 
-                                label={staff.permissions?.communication?.send_messages ? "Enabled" : "Disabled"} 
-                                size="small" 
-                                color={staff.permissions?.communication?.send_messages ? "success" : "default"} 
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <IconButton 
-                                size="small" 
-                                onClick={() => handlePermissionToggle(staff)}
-                                sx={{ color: theme.palette.primary.main }}
-                              >
-                                <SecurityIcon />
-                              </IconButton>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
                   </Paper>
                 </motion.div>
-              )}
+              ) : (
+                filteredTabs.map((tab, index) => {
+                  // Security check - verify tab access before rendering
+                  const hasTabAccess = (() => {
+                    if (tab.label === 'Overview') return true;
+                    if (!userActivitiesControl || !userActivitiesControl.activityAssignments) return true;
+                    
+                    const activityAssignment = userActivitiesControl.activityAssignments.find(
+                      a => a.activity === tab.activity
+                    );
+                    
+                    return activityAssignment && activityAssignment.accessLevel !== 'Unauthorized';
+                  })();
 
-              {activeTab === 4 && (
-                <motion.div
-                  key="permission-tab"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Paper sx={{ p: 3 }}>
-                    <Typography variant="h6" sx={{ mb: 2 }}>Staff Permission Management</Typography>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Staff Member</TableCell>
-                          <TableCell>Role(s)</TableCell>
-                          <TableCell>Email</TableCell>
-                          <TableCell>Actions</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {staffMembers.map((staff) => (
-                          <TableRow key={staff._id}>
-                            <TableCell>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Avatar sx={{ width: 32, height: 32, bgcolor: roleColors[staff.primaryRole] }}>
-                                  <PersonIcon />
-                                </Avatar>
-                                <Typography variant="subtitle2">{staff.name}</Typography>
-                              </Box>
-                            </TableCell>
-                            <TableCell>
-                              {staff.assignedRoles && staff.assignedRoles.length > 0
-                                ? staff.assignedRoles.map(role => (
-                                    <Chip key={role} label={role} size="small" sx={{ mr: 0.5, bgcolor: roleColors[role], color: '#fff' }} />
-                                  ))
-                                : <Chip label="No Roles" size="small" color="default" />}
-                            </TableCell>
-                            <TableCell>{staff.email}</TableCell>
-                            <TableCell>
-                              <Button
-                                variant="outlined"
-                                size="small"
-                                startIcon={<SecurityIcon />}
-                                onClick={() => handlePermissionToggle(staff)}
-                              >
-                                Edit Permissions
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </Paper>
-                </motion.div>
-              )}
+                  // If no access to this tab, don't render it
+                  if (!hasTabAccess) {
+                    console.log(`🚫 Blocking render of unauthorized tab: ${tab.label}`);
+                    return null;
+                  }
 
-              {activeTab === 5 && (
-                <motion.div
-                  key="service-requests"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <A_ServiceRequests />
-                </motion.div>
+                  return (
+                    <motion.div
+                      key={tab.label}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {activeTab === index && (
+                        <Box sx={{ mt: 3 }}>
+                          {tab.label === 'Overview' && (
+                            <motion.div
+                              key="overview"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -20 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <Grid container spacing={3}>
+                                <Grid item xs={12} md={8}>
+                                  <Paper sx={{ p: 3, height: 400 }}>
+                                    <Typography variant="h6" sx={{ mb: 2 }}>Staff Distribution by Role</Typography>
+                                    <ResponsiveContainer width="100%" height="100%">
+                                      <BarChart data={[
+                                        { role: 'Librarian', count: staffMembers.filter(s => s.assignedRoles.includes('librarian')).length, color: roleColors.librarian },
+                                        { role: 'Counselor', count: staffMembers.filter(s => s.assignedRoles.includes('counselor')).length, color: roleColors.counselor },
+                                        { role: 'PT Teacher', count: staffMembers.filter(s => s.assignedRoles.includes('ptteacher')).length, color: roleColors.ptteacher },
+                                        { role: 'Event Handler', count: staffMembers.filter(s => s.assignedRoles.includes('eventhandler')).length, color: roleColors.eventhandler },
+                                        { role: 'Transport Manager', count: staffMembers.filter(s => s.assignedRoles.includes('transportmanager')).length, color: roleColors.transportmanager },
+                                        { role: 'Soft Skills Manager', count: staffMembers.filter(s => s.assignedRoles.includes('softskillsmanager')).length, color: roleColors.softskillsmanager }
+                                      ]}>
+                                        <XAxis dataKey="role" />
+                                        <YAxis />
+                                        <RechartsTooltip />
+                                        <Bar dataKey="count" fill={theme.palette.primary.main} />
+                                      </BarChart>
+                                    </ResponsiveContainer>
+                                  </Paper>
+                                </Grid>
+                                <Grid item xs={12} md={4}>
+                                  <Paper sx={{ p: 3, height: 400 }}>
+                                    <Typography variant="h6" sx={{ mb: 2 }}>Role Distribution</Typography>
+                                    <ResponsiveContainer width="100%" height="100%">
+                                      <PieChart>
+                                        <Pie
+                                          data={[
+                                            { name: 'Librarian', value: staffMembers.filter(s => s.assignedRoles.includes('librarian')).length, color: roleColors.librarian },
+                                            { name: 'Counselor', value: staffMembers.filter(s => s.assignedRoles.includes('counselor')).length, color: roleColors.counselor },
+                                            { name: 'PT Teacher', value: staffMembers.filter(s => s.assignedRoles.includes('ptteacher')).length, color: roleColors.ptteacher },
+                                            { name: 'Event Handler', value: staffMembers.filter(s => s.assignedRoles.includes('eventhandler')).length, color: roleColors.eventhandler },
+                                            { name: 'Transport Manager', value: staffMembers.filter(s => s.assignedRoles.includes('transportmanager')).length, color: roleColors.transportmanager },
+                                            { name: 'Soft Skills Manager', value: staffMembers.filter(s => s.assignedRoles.includes('softskillsmanager')).length, color: roleColors.softskillsmanager }
+                                          ]}
+                                          cx="50%"
+                                          cy="50%"
+                                          outerRadius={80}
+                                          dataKey="value"
+                                        >
+                                          {[
+                                            { name: 'Librarian', value: staffMembers.filter(s => s.assignedRoles.includes('librarian')).length, color: roleColors.librarian },
+                                            { name: 'Counselor', value: staffMembers.filter(s => s.assignedRoles.includes('counselor')).length, color: roleColors.counselor },
+                                            { name: 'PT Teacher', value: staffMembers.filter(s => s.assignedRoles.includes('ptteacher')).length, color: roleColors.ptteacher },
+                                            { name: 'Event Handler', value: staffMembers.filter(s => s.assignedRoles.includes('eventhandler')).length, color: roleColors.eventhandler },
+                                            { name: 'Transport Manager', value: staffMembers.filter(s => s.assignedRoles.includes('transportmanager')).length, color: roleColors.transportmanager },
+                                            { name: 'Soft Skills Manager', value: staffMembers.filter(s => s.assignedRoles.includes('softskillsmanager')).length, color: roleColors.softskillsmanager }
+                                          ].map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                          ))}
+                                        </Pie>
+                                        <RechartsTooltip />
+                                        <Legend />
+                                      </PieChart>
+                                    </ResponsiveContainer>
+                                  </Paper>
+                                </Grid>
+                              </Grid>
+                            </motion.div>
+                          )}
+
+                          {tab.label === 'Staff Management' && (
+                            <motion.div
+                              key="staff"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -20 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              {(() => {
+                                const accessInfo = getAccessLevelInfo('Staff Management');
+                                const isViewOnly = !hasEditAccess('Staff Management');
+                                
+                                return (
+                                  <>
+                                    {/* Access Level Banner */}
+                                    <Alert 
+                                      severity={accessInfo.level === 'Unauthorized' ? 'error' : isViewOnly ? 'warning' : 'info'} 
+                                      sx={{ mb: 3 }}
+                                    >
+                                      <AlertTitle>Access Level: {getAccessType('Staff Management')}</AlertTitle>
+                                      {isViewOnly && 'You have VIEW-ONLY access. You can view staff information but cannot create, edit, or delete any records.'}
+                                      {accessInfo.level === 'Edit' && 'You can view and edit staff information. Approval and deletion actions are not allowed.'}
+                                      {accessInfo.level === 'Approve' && 'You have full access to manage staff including approvals and deletions.'}
+                                      {accessInfo.level === 'Unauthorized' && 'You do not have access to staff management features.'}
+                                    </Alert>
+
+                                    {isViewOnly ? (
+                                      // View Only Mode
+                                      <>
+                                        {/* Search and Filter Bar - Read Only */}
+                                        <Paper sx={{ p: 3, mb: 3, bgcolor: '#fafafa' }}>
+                                          <Grid container spacing={2} alignItems="center">
+                                            <Grid item xs={12} md={6}>
+                                              <TextField
+                                                fullWidth
+                                                placeholder="Search staff by name or email..."
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                                InputProps={{
+                                                  startAdornment: (
+                                                    <InputAdornment position="start">
+                                                      <SearchIcon />
+                                                    </InputAdornment>
+                                                  )
+                                                }}
+                                              />
+                                            </Grid>
+                                            <Grid item xs={12} md={4}>
+                                              <FormControl fullWidth>
+                                                <InputLabel>Filter by Role</InputLabel>
+                                                <Select
+                                                  value={filterRole}
+                                                  onChange={(e) => setFilterRole(e.target.value)}
+                                                >
+                                                  <MenuItem value="">All Roles</MenuItem>
+                                                  <MenuItem value="librarian">Librarian</MenuItem>
+                                                  <MenuItem value="counselor">Counselor</MenuItem>
+                                                  <MenuItem value="ptteacher">PT Teacher</MenuItem>
+                                                  <MenuItem value="eventhandler">Event Handler</MenuItem>
+                                                  <MenuItem value="transportmanager">Transport Manager</MenuItem>
+                                                  <MenuItem value="softskillsmanager">Soft Skills Manager</MenuItem>
+                                                </Select>
+                                              </FormControl>
+                                            </Grid>
+                                            <Grid item xs={12} md={2}>
+                                              <Button
+                                                variant="outlined"
+                                                startIcon={<AddIcon />}
+                                                fullWidth
+                                                disabled
+                                                sx={{ 
+                                                  bgcolor: '#f5f5f5',
+                                                  color: '#999',
+                                                  borderColor: '#ddd'
+                                                }}
+                                              >
+                                                Add Staff
+                                              </Button>
+                                            </Grid>
+                                          </Grid>
+                                        </Paper>
+
+                                        {/* View Only Staff Grid */}
+                                        <Grid container spacing={3}>
+                                          {filteredStaff.map((staff) => (
+                                            <Grid item xs={12} sm={6} md={4} key={staff._id}>
+                                              <ViewOnlyStaffCard staff={staff} />
+                                            </Grid>
+                                          ))}
+                                        </Grid>
+
+                                        {/* View Only Summary */}
+                                        <Paper sx={{ p: 3, mt: 3, bgcolor: '#fff3cd', border: '1px solid #ffeaa7' }}>
+                                          <Typography variant="h6" sx={{ mb: 2, color: '#856404' }}>
+                                            📊 Staff Management Summary (View Only)
+                                          </Typography>
+                                          <Grid container spacing={2}>
+                                            <Grid item xs={12} sm={6} md={3}>
+                                              <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'white', borderRadius: 1 }}>
+                                                <Typography variant="h4" color="primary" sx={{ fontWeight: 'bold' }}>
+                                                  {filteredStaff.length}
+                                                </Typography>
+                                                <Typography variant="body2" color="text.secondary">
+                                                  Total Staff
+                                                </Typography>
+                                              </Box>
+                                            </Grid>
+                                            <Grid item xs={12} sm={6} md={3}>
+                                              <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'white', borderRadius: 1 }}>
+                                                <Typography variant="h4" color="success.main" sx={{ fontWeight: 'bold' }}>
+                                                  {filteredStaff.filter(s => s.status === 'Active').length}
+                                                </Typography>
+                                                <Typography variant="body2" color="text.secondary">
+                                                  Active Staff
+                                                </Typography>
+                                              </Box>
+                                            </Grid>
+                                            <Grid item xs={12} sm={6} md={3}>
+                                              <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'white', borderRadius: 1 }}>
+                                                <Typography variant="h4" color="warning.main" sx={{ fontWeight: 'bold' }}>
+                                                  {filteredStaff.filter(s => s.status === 'Pending').length}
+                                                </Typography>
+                                                <Typography variant="body2" color="text.secondary">
+                                                  Pending Approval
+                                                </Typography>
+                                              </Box>
+                                            </Grid>
+                                            <Grid item xs={12} sm={6} md={3}>
+                                              <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'white', borderRadius: 1 }}>
+                                                <Typography variant="h4" color="info.main" sx={{ fontWeight: 'bold' }}>
+                                                  {new Set(filteredStaff.map(s => s.department)).size}
+                                                </Typography>
+                                                <Typography variant="body2" color="text.secondary">
+                                                  Departments
+                                                </Typography>
+                                              </Box>
+                                            </Grid>
+                                          </Grid>
+                                        </Paper>
+                                      </>
+                                    ) : (
+                                      // Edit Mode
+                                      <>
+                                        {/* Search and Filter Bar */}
+                                        <Paper sx={{ p: 3, mb: 3 }}>
+                                          <Grid container spacing={2} alignItems="center">
+                                            <Grid item xs={12} md={6}>
+                                              <TextField
+                                                fullWidth
+                                                placeholder="Search staff by name or email..."
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                                InputProps={{
+                                                  startAdornment: (
+                                                    <InputAdornment position="start">
+                                                      <SearchIcon />
+                                                    </InputAdornment>
+                                                  )
+                                                }}
+                                              />
+                                            </Grid>
+                                            <Grid item xs={12} md={4}>
+                                              <FormControl fullWidth>
+                                                <InputLabel>Filter by Role</InputLabel>
+                                                <Select
+                                                  value={filterRole}
+                                                  onChange={(e) => setFilterRole(e.target.value)}
+                                                >
+                                                  <MenuItem value="">All Roles</MenuItem>
+                                                  <MenuItem value="librarian">Librarian</MenuItem>
+                                                  <MenuItem value="counselor">Counselor</MenuItem>
+                                                  <MenuItem value="ptteacher">PT Teacher</MenuItem>
+                                                  <MenuItem value="eventhandler">Event Handler</MenuItem>
+                                                  <MenuItem value="transportmanager">Transport Manager</MenuItem>
+                                                  <MenuItem value="softskillsmanager">Soft Skills Manager</MenuItem>
+                                                </Select>
+                                              </FormControl>
+                                            </Grid>
+                                            <Grid item xs={12} md={2}>
+                                              <Button
+                                                variant="contained"
+                                                startIcon={<AddIcon />}
+                                                fullWidth
+                                                disabled={!accessInfo.canCreate}
+                                                onClick={() => {
+                                                  if (accessInfo.canCreate) {
+                                                    handleQuickAction('add_staff');
+                                                  } else {
+                                                    toast.error('You do not have permission to add staff members. Contact your VP for Edit or Approve access.');
+                                                  }
+                                                }}
+                                                title={!accessInfo.canCreate ? 'Insufficient permissions to add staff' : 'Add new staff member'}
+                                              >
+                                                Add Staff
+                                              </Button>
+                                            </Grid>
+                                          </Grid>
+                                        </Paper>
+
+                                        {/* Staff Grid */}
+                                        <Grid container spacing={3}>
+                                          {filteredStaff.map((staff) => (
+                                            <Grid item xs={12} sm={6} md={4} key={staff._id}>
+                                              <StaffCard
+                                                staff={staff}
+                                                onEdit={(staff) => {
+                                                  if (accessInfo.canUpdate) {
+                                                    console.log('Edit staff:', staff);
+                                                  } else {
+                                                    toast.error('You do not have permission to edit staff information. Contact your VP for Edit or Approve access.');
+                                                  }
+                                                }}
+                                                onDelete={(staffId) => {
+                                                  if (accessInfo.canDelete) {
+                                                    handleStaffDelete(staffId);
+                                                  } else {
+                                                    toast.error('You do not have permission to delete staff members. Contact your VP for Approve access.');
+                                                  }
+                                                }}
+                                                onView={(staff) => {
+                                                  if (accessInfo.canRead) {
+                                                    console.log('View staff:', staff);
+                                                  } else {
+                                                    toast.error('You do not have permission to view staff details.');
+                                                  }
+                                                }}
+                                                onToggleRole={(staff) => {
+                                                  if (accessInfo.canUpdate) {
+                                                    handleRoleToggle(staff);
+                                                  } else {
+                                                    toast.error('You do not have permission to modify staff roles. Contact your VP for Edit or Approve access.');
+                                                  }
+                                                }}
+                                                onTogglePermission={(staff) => {
+                                                  if (accessInfo.canManage) {
+                                                    handlePermissionToggle(staff);
+                                                  } else {
+                                                    toast.error('You do not have permission to manage staff permissions. Contact your VP for Approve access.');
+                                                  }
+                                                }}
+                                                accessInfo={accessInfo}
+                                              />
+                                            </Grid>
+                                          ))}
+                                        </Grid>
+                                      </>
+                                    )}
+                                  </>
+                                );
+                              })()}
+                            </motion.div>
+                          )}
+
+                          {tab.label === 'Role Permissions' && (
+                            <motion.div
+                              key="permissions"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -20 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              {(() => {
+                                const accessInfo = getAccessLevelInfo('User Management');
+                                const isViewOnly = !hasEditAccess('User Management');
+                                
+                                return (
+                                  <>
+                                    {/* Access Level Banner */}
+                                    <Alert 
+                                      severity={accessInfo.level === 'Unauthorized' ? 'error' : isViewOnly ? 'warning' : 'info'} 
+                                      sx={{ mb: 3 }}
+                                    >
+                                      <AlertTitle>Access Level: {getAccessType('User Management')}</AlertTitle>
+                                      {isViewOnly && 'You have VIEW-ONLY access. You can view role permissions but cannot modify any settings.'}
+                                      {accessInfo.level === 'Edit' && 'You can view and modify role permissions. Approval actions are not allowed.'}
+                                      {accessInfo.level === 'Approve' && 'You have full access to manage role permissions including approvals.'}
+                                      {accessInfo.level === 'Unauthorized' && 'You do not have access to role permission management.'}
+                                    </Alert>
+
+                                    <Paper sx={{ p: 3, bgcolor: isViewOnly ? '#fafafa' : 'white' }}>
+                                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                        <Typography variant="h6">Role Permission Matrix</Typography>
+                                        {!isViewOnly && accessInfo.canUpdate && (
+                                          <Button
+                                            variant="outlined"
+                                            startIcon={<EditIcon />}
+                                            size="small"
+                                            onClick={() => {
+                                              if (accessInfo.canUpdate) {
+                                                toast.info('Role permission editing feature coming soon');
+                                              } else {
+                                                toast.error('You do not have permission to edit role permissions. Contact your VP for Edit or Approve access.');
+                                              }
+                                            }}
+                                            disabled={!accessInfo.canUpdate}
+                                          >
+                                            Edit Permissions
+                                          </Button>
+                                        )}
+                                      </Box>
+                                      <Table>
+                                        <TableHead>
+                                          <TableRow>
+                                            <TableCell>Role</TableCell>
+                                            <TableCell>Dashboard Access</TableCell>
+                                            <TableCell>Record Management</TableCell>
+                                            <TableCell>Report Generation</TableCell>
+                                            <TableCell>Admin Access</TableCell>
+                                            {!isViewOnly && accessInfo.canUpdate && <TableCell>Actions</TableCell>}
+                                          </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                          {Object.entries(roleColors).map(([role, color]) => {
+                                            const RoleIcon = roleIcons[role];
+                                            
+                                            return (
+                                              <TableRow key={role}>
+                                                <TableCell>
+                                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                    <RoleIcon sx={{ color }} />
+                                                    <Typography sx={{ textTransform: 'capitalize', fontWeight: 600 }}>
+                                                      {role}
+                                                    </Typography>
+                                                  </Box>
+                                                </TableCell>
+                                                <TableCell>
+                                                  <Chip label="Yes" size="small" color="success" />
+                                                </TableCell>
+                                                <TableCell>
+                                                  <Chip label="Yes" size="small" color="success" />
+                                                </TableCell>
+                                                <TableCell>
+                                                  <Chip label="Yes" size="small" color="success" />
+                                                </TableCell>
+                                                <TableCell>
+                                                  <Chip 
+                                                    label={role === 'admin' ? 'Yes' : 'No'} 
+                                                    size="small" 
+                                                    color={role === 'admin' ? 'success' : 'default'} 
+                                                  />
+                                                </TableCell>
+                                                {!isViewOnly && accessInfo.canUpdate && (
+                                                  <TableCell>
+                                                    <IconButton 
+                                                      size="small"
+                                                      onClick={() => {
+                                                        if (accessInfo.canUpdate) {
+                                                          toast.info(`Edit permissions for ${role} role`);
+                                                        } else {
+                                                          toast.error('You do not have permission to edit role permissions. Contact your VP for Edit or Approve access.');
+                                                        }
+                                                      }}
+                                                      title={`Edit ${role} role permissions`}
+                                                      disabled={!accessInfo.canUpdate}
+                                                    >
+                                                      <EditIcon />
+                                                    </IconButton>
+                                                  </TableCell>
+                                                )}
+                                              </TableRow>
+                                            );
+                                          })}
+                                        </TableBody>
+                                      </Table>
+                                      
+                                      {isViewOnly && (
+                                        <Box sx={{ mt: 2, textAlign: 'center' }}>
+                                          <Alert severity="warning" sx={{ maxWidth: 600, mx: 'auto' }}>
+                                            <AlertTitle>View Only Access</AlertTitle>
+                                            You can only view role permissions. To modify settings, contact your Vice Principal for Edit or Approve access.
+                                          </Alert>
+                                        </Box>
+                                      )}
+                                    </Paper>
+                                  </>
+                                );
+                              })()}
+                            </motion.div>
+                          )}
+
+                          {tab.label === 'Feature Permissions' && (
+                            <motion.div
+                              key="feature-permissions"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -20 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              {(() => {
+                                const accessInfo = getAccessLevelInfo('Permissions');
+                                const isViewOnly = !hasEditAccess('Permissions');
+                                
+                                return (
+                                  <>
+                                    {/* Access Level Banner */}
+                                    <Alert 
+                                      severity={accessInfo.level === 'Unauthorized' ? 'error' : isViewOnly ? 'warning' : 'info'} 
+                                      sx={{ mb: 3 }}
+                                    >
+                                      <AlertTitle>Access Level: {getAccessType('Permissions')}</AlertTitle>
+                                      {isViewOnly && 'You have VIEW-ONLY access. You can view feature permissions but cannot modify any settings.'}
+                                      {accessInfo.level === 'Edit' && 'You can view and modify feature permissions. Approval actions are not allowed.'}
+                                      {accessInfo.level === 'Approve' && 'You have full access to manage feature permissions including approvals.'}
+                                      {accessInfo.level === 'Unauthorized' && 'You do not have access to feature permission management.'}
+                                    </Alert>
+
+                                    <Paper sx={{ p: 3, bgcolor: isViewOnly ? '#fafafa' : 'white' }}>
+                                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                                        <Typography variant="h6">Feature Permission Management</Typography>
+                                        {!isViewOnly && accessInfo.canManage && (
+                                          <Button
+                                            variant="contained"
+                                            startIcon={<SecurityIcon />}
+                                            onClick={() => {
+                                              if (accessInfo.canManage) {
+                                                handleQuickAction('bulk_permissions');
+                                              } else {
+                                                toast.error('You do not have permission to perform bulk operations. Contact your VP for Approve access.');
+                                              }
+                                            }}
+                                            disabled={!accessInfo.canManage}
+                                          >
+                                            Bulk Permissions
+                                          </Button>
+                                        )}
+                                      </Box>
+                                      
+                                      <Alert severity="info" sx={{ mb: 3 }}>
+                                        <AlertTitle>Feature Permissions</AlertTitle>
+                                        Manage granular permissions for each staff member. Control access to specific features like inventory, student records, teacher remarks, feedbacks, events, and communication.
+                                      </Alert>
+
+                                      <Table>
+                                        <TableHead>
+                                          <TableRow>
+                                            <TableCell>Staff Member</TableCell>
+                                            <TableCell>Role</TableCell>
+                                            <TableCell>Inventory</TableCell>
+                                            <TableCell>Student Records</TableCell>
+                                            <TableCell>Teacher Remarks</TableCell>
+                                            <TableCell>Feedbacks</TableCell>
+                                            <TableCell>Events</TableCell>
+                                            <TableCell>Communication</TableCell>
+                                            {!isViewOnly && accessInfo.canUpdate && <TableCell>Actions</TableCell>}
+                                          </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                          {staffMembers.map((staff) => (
+                                            <TableRow key={staff._id}>
+                                              <TableCell>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                  <Avatar sx={{ width: 32, height: 32, bgcolor: roleColors[staff.primaryRole] }}>
+                                                    <PersonIcon />
+                                                  </Avatar>
+                                                  <Box>
+                                                    <Typography variant="subtitle2">{staff.name}</Typography>
+                                                    <Typography variant="body2" color="text.secondary">{staff.email}</Typography>
+                                                  </Box>
+                                                </Box>
+                                              </TableCell>
+                                              <TableCell>
+                                                <Chip 
+                                                  label={staff.primaryRole} 
+                                                  size="small" 
+                                                  sx={{ 
+                                                    bgcolor: `${roleColors[staff.primaryRole]}20`,
+                                                    color: roleColors[staff.primaryRole]
+                                                  }} 
+                                                />
+                                              </TableCell>
+                                              <TableCell>
+                                                <Chip 
+                                                  label={staff.permissions?.inventory?.view_inventory ? "Enabled" : "Disabled"} 
+                                                  size="small" 
+                                                  color={staff.permissions?.inventory?.view_inventory ? "success" : "default"} 
+                                                />
+                                              </TableCell>
+                                              <TableCell>
+                                                <Chip 
+                                                  label={staff.permissions?.student_records?.view_students ? "Enabled" : "Disabled"} 
+                                                  size="small" 
+                                                  color={staff.permissions?.student_records?.view_students ? "success" : "default"} 
+                                                />
+                                              </TableCell>
+                                              <TableCell>
+                                                <Chip 
+                                                  label={staff.permissions?.teacher_remarks?.view_remarks ? "Enabled" : "Disabled"} 
+                                                  size="small" 
+                                                  color={staff.permissions?.teacher_remarks?.view_remarks ? "success" : "default"} 
+                                                />
+                                              </TableCell>
+                                              <TableCell>
+                                                <Chip 
+                                                  label={staff.permissions?.feedbacks?.view_feedback ? "Enabled" : "Disabled"} 
+                                                  size="small" 
+                                                  color={staff.permissions?.feedbacks?.view_feedback ? "success" : "default"} 
+                                                />
+                                              </TableCell>
+                                              <TableCell>
+                                                <Chip 
+                                                  label={staff.permissions?.events?.view_events ? "Enabled" : "Disabled"} 
+                                                  size="small" 
+                                                  color={staff.permissions?.events?.view_events ? "success" : "default"} 
+                                                />
+                                              </TableCell>
+                                              <TableCell>
+                                                <Chip 
+                                                  label={staff.permissions?.communication?.send_messages ? "Enabled" : "Disabled"} 
+                                                  size="small" 
+                                                  color={staff.permissions?.communication?.send_messages ? "success" : "default"} 
+                                                />
+                                              </TableCell>
+                                              {!isViewOnly && accessInfo.canUpdate && (
+                                                <TableCell>
+                                                  <IconButton 
+                                                    size="small" 
+                                                    onClick={() => {
+                                                      if (accessInfo.canUpdate) {
+                                                        handlePermissionToggle(staff);
+                                                      } else {
+                                                        toast.error('You do not have permission to edit permissions. Contact your VP for Edit or Approve access.');
+                                                      }
+                                                    }}
+                                                    sx={{ color: theme.palette.primary.main }}
+                                                    title="Edit staff permissions"
+                                                    disabled={!accessInfo.canUpdate}
+                                                  >
+                                                    <SecurityIcon />
+                                                  </IconButton>
+                                                </TableCell>
+                                              )}
+                                            </TableRow>
+                                          ))}
+                                        </TableBody>
+                                      </Table>
+                                      
+                                      {isViewOnly && (
+                                        <Box sx={{ mt: 2, textAlign: 'center' }}>
+                                          <Alert severity="warning" sx={{ maxWidth: 600, mx: 'auto' }}>
+                                            <AlertTitle>View Only Access</AlertTitle>
+                                            You can only view feature permissions. To modify settings, contact your Vice Principal for Edit or Approve access.
+                                          </Alert>
+                                        </Box>
+                                      )}
+                                    </Paper>
+                                  </>
+                                );
+                              })()}
+                            </motion.div>
+                          )}
+
+                          {tab.label === 'Permission' && (
+                            <motion.div
+                              key="permission-tab"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -20 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              {(() => {
+                                const accessInfo = getAccessLevelInfo('Permissions');
+                                const isViewOnly = !hasEditAccess('Permissions');
+                                
+                                return (
+                                  <>
+                                    {/* Access Level Banner */}
+                                    <Alert 
+                                      severity={accessInfo.level === 'Unauthorized' ? 'error' : isViewOnly ? 'warning' : 'info'} 
+                                      sx={{ mb: 3 }}
+                                    >
+                                      <AlertTitle>Access Level: {getAccessType('Permissions')}</AlertTitle>
+                                      {isViewOnly && 'You have VIEW-ONLY access. You can view staff permissions but cannot modify any settings.'}
+                                      {accessInfo.level === 'Edit' && 'You can view and modify staff permissions. Approval actions are not allowed.'}
+                                      {accessInfo.level === 'Approve' && 'You have full access to manage staff permissions including approvals.'}
+                                      {accessInfo.level === 'Unauthorized' && 'You do not have access to permission management.'}
+                                    </Alert>
+
+                                    <Paper sx={{ p: 3, bgcolor: isViewOnly ? '#fafafa' : 'white' }}>
+                                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                        <Typography variant="h6">Staff Permission Management</Typography>
+                                        {!isViewOnly && accessInfo.canManage && (
+                                          <Button
+                                            variant="outlined"
+                                            startIcon={<SecurityIcon />}
+                                            size="small"
+                                            onClick={() => {
+                                              if (accessInfo.canManage) {
+                                                toast.info('Bulk permission management feature coming soon');
+                                              } else {
+                                                toast.error('You do not have permission to perform bulk operations. Contact your VP for Approve access.');
+                                              }
+                                            }}
+                                          >
+                                            Bulk Manage
+                                          </Button>
+                                        )}
+                                      </Box>
+                                      <Table>
+                                        <TableHead>
+                                          <TableRow>
+                                            <TableCell>Staff Member</TableCell>
+                                            <TableCell>Role(s)</TableCell>
+                                            <TableCell>Email</TableCell>
+                                            {!isViewOnly && accessInfo.canUpdate && <TableCell>Actions</TableCell>}
+                                          </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                          {staffMembers.map((staff) => (
+                                            <TableRow key={staff._id}>
+                                              <TableCell>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                  <Avatar sx={{ width: 32, height: 32, bgcolor: roleColors[staff.primaryRole] }}>
+                                                    <PersonIcon />
+                                                  </Avatar>
+                                                  <Box>
+                                                    <Typography variant="subtitle2">{staff.name}</Typography>
+                                                    <Typography variant="body2" color="text.secondary">{staff.email}</Typography>
+                                                  </Box>
+                                                </Box>
+                                              </TableCell>
+                                              <TableCell>
+                                                {staff.assignedRoles && staff.assignedRoles.length > 0
+                                                  ? staff.assignedRoles.map(role => (
+                                                      <Chip key={role} label={role} size="small" sx={{ mr: 0.5, bgcolor: roleColors[role], color: '#fff' }} />
+                                                    ))
+                                                  : <Chip label="No Roles" size="small" color="default" />}
+                                              </TableCell>
+                                              <TableCell>{staff.email}</TableCell>
+                                              {!isViewOnly && accessInfo.canUpdate && (
+                                                <TableCell>
+                                                  <Button
+                                                    variant="outlined"
+                                                    size="small"
+                                                    startIcon={<SecurityIcon />}
+                                                    onClick={() => {
+                                                      if (accessInfo.canUpdate) {
+                                                        handlePermissionToggle(staff);
+                                                      } else {
+                                                        toast.error('You do not have permission to edit permissions. Contact your VP for Edit or Approve access.');
+                                                      }
+                                                    }}
+                                                    title="Edit staff permissions"
+                                                    disabled={!accessInfo.canUpdate}
+                                                  >
+                                                    Edit Permissions
+                                                  </Button>
+                                                </TableCell>
+                                              )}
+                                            </TableRow>
+                                          ))}
+                                        </TableBody>
+                                      </Table>
+                                      
+                                      {isViewOnly && (
+                                        <Box sx={{ mt: 2, textAlign: 'center' }}>
+                                          <Alert severity="warning" sx={{ maxWidth: 600, mx: 'auto' }}>
+                                            <AlertTitle>View Only Access</AlertTitle>
+                                            You can only view staff permissions. To modify settings, contact your Vice Principal for Edit or Approve access.
+                                          </Alert>
+                                        </Box>
+                                      )}
+                                    </Paper>
+                                  </>
+                                );
+                              })()}
+                            </motion.div>
+                          )}
+
+                          {tab.label === 'Service Requests' && (
+                            <motion.div
+                              key="service-requests"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -20 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              {(() => {
+                                const accessInfo = getAccessLevelInfo('Service Requests');
+                                const isViewOnly = !hasEditAccess('Service Requests');
+                                
+                                return (
+                                  <>
+                                    {/* Access Level Banner */}
+                                    <Alert 
+                                      severity={accessInfo.level === 'Unauthorized' ? 'error' : isViewOnly ? 'warning' : 'info'} 
+                                      sx={{ mb: 3 }}
+                                    >
+                                      <AlertTitle>Access Level: {getAccessType('Service Requests')}</AlertTitle>
+                                      {isViewOnly && 'You have VIEW-ONLY access. You can view service requests but cannot process or approve them.'}
+                                      {accessInfo.level === 'Edit' && 'You can view and process service requests. Approval actions are not allowed.'}
+                                      {accessInfo.level === 'Approve' && 'You have full access to manage service requests including approvals.'}
+                                      {accessInfo.level === 'Unauthorized' && 'You do not have access to service request management.'}
+                                    </Alert>
+
+                                    {/* Pass access info to the service requests component */}
+                                    <A_ServiceRequests accessInfo={accessInfo} isViewOnly={isViewOnly} />
+                                  </>
+                                );
+                              })()}
+                            </motion.div>
+                          )}
+                        </Box>
+                      )}
+                    </motion.div>
+                  );
+                })
               )}
             </AnimatePresence>
           </Grid>

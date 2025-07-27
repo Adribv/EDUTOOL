@@ -1565,7 +1565,7 @@ export default function TeacherDashboard() {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate('/management-login');
   };
 
   const handleMenuOpen = (event) => {

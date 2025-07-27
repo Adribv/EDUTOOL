@@ -23,6 +23,7 @@ import { api } from '../../services/api';
 import { useNavigate } from 'react-router-dom';
 import React from 'react';
 import CommentIcon from '@mui/icons-material/Comment';
+import ActivitiesControl from './ActivitiesControl';
 
 // API service for Vice Principal using axios instance (token auto-attached)
 const vpAPI = {
@@ -225,6 +226,11 @@ export default function VicePrincipalDashboard() {
         "IT Support Request",
         "General Service Request"
       ]
+    },
+    {
+      name: "Activities Control",
+      icon: <SecurityIcon />,
+      subTabs: []
     }
   ];
 
@@ -1893,6 +1899,11 @@ export default function VicePrincipalDashboard() {
         </Card>
           )}
         </Box>
+      )}
+
+      {/* Activities Control Tab */}
+      {mainTab === 6 && (
+        <ActivitiesControl />
       )}
 
       {/* Dialogs */}

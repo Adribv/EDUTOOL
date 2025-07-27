@@ -18,7 +18,6 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
 
 // Lazy load all pages for better performance
-const Login = lazy(() => import('./pages/auth/Login'));
 const Register = lazy(() => import('./pages/auth/Register'));
 const StudentLogin = lazy(() => import('./pages/auth/StudentLogin'));
 const StudentRegister = lazy(() => import('./pages/auth/StudentRegister'));
@@ -100,7 +99,6 @@ function App() {
                     {/* Public Routes */}
                     <Route path="/" element={<Home />} />
                     {/* Public Auth Routes */}
-                    <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
                     <Route path="/student-login" element={<StudentLogin />} />
                     <Route path="/student-register" element={<StudentRegister />} />

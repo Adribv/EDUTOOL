@@ -52,9 +52,11 @@ const PermissionGuard = ({
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Please log in to access this dashboard.
           </Typography>
-          <Button 
-            variant="contained" 
-            onClick={() => navigate('/login')}
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => navigate('/management-login')}
+            sx={{ mt: 2 }}
           >
             Go to Login
           </Button>

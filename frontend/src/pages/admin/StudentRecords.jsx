@@ -29,6 +29,7 @@ import {
   TableCell,
   Paper,
   Divider,
+  AlertTitle,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -38,6 +39,7 @@ import {
   FilterList as FilterListIcon,
   Mail as MailIcon,
   Phone as PhoneIcon,
+  Visibility as ViewIcon,
 } from '@mui/icons-material';
 import { DataGrid, GridToolbar } from '@mui/x-data-grid';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -47,6 +49,8 @@ import * as yup from 'yup';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Papa from 'papaparse';
+import ViewOnlyWrapper from './ViewOnlyWrapper';
+import { useAccessControl, canPerformAction, getAccessTypeDisplay } from './accessControlUtils';
 
 const genders = ['male', 'female', 'other'];
 
@@ -84,6 +88,9 @@ const validationSchema = yup.object({
 });
 
 function StudentRecords() {
+  // Access control
+  const { accessLevel, isViewOnly, hasEditAccess, hasViewAccess, loading: accessLoading } = useAccessControl('StudentRecords');
+  
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -96,6 +103,23 @@ function StudentRecords() {
   const [sheetUrl, setSheetUrl] = useState('');
   const [sheetData, setSheetData] = useState([]);
   const [previewOpen, setPreviewOpen] = useState(false);
+
+  // If no view access, show access denied
+  if (!accessLoading && !hasViewAccess) {
+    return (
+      <ViewOnlyWrapper
+        title="Student Records"
+        description="Manage student information and records"
+        accessLevel={accessLevel}
+        activity="Student Records"
+      >
+        <Alert severity="error" sx={{ m: 3 }}>
+          <AlertTitle>Access Denied</AlertTitle>
+          You do not have permission to access Student Records. Contact your Vice Principal for access.
+        </Alert>
+      </ViewOnlyWrapper>
+    );
+  }
 
   const handleFilterChange = (event) => {
     const { name, value } = event.target;
@@ -344,30 +368,41 @@ function StudentRecords() {
     }
   });
 
-  const columns = [
+  const baseColumns = [
     { field: 'name', headerName: 'Name', flex: 1 },
     { field: 'email', headerName: 'Email', flex: 1 },
     { field: 'class', headerName: 'Class', width: 100 },
     { field: 'section', headerName: 'Section', width: 100 },
     { field: 'rollNumber', headerName: 'Roll No', width: 100 },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      sortable: false,
-      filterable: false,
-      width: 150,
-      renderCell: (params) => (
-        <Box>
-          <IconButton onClick={() => handleEdit(params.row)} size="small">
-            <EditIcon />
-          </IconButton>
-          <IconButton onClick={() => handleDelete(params.row._id)} size="small">
-            <DeleteIcon />
-          </IconButton>
-        </Box>
-      ),
-    },
   ];
+
+  const actionColumn = {
+    field: 'actions',
+    headerName: 'Actions',
+    sortable: false,
+    filterable: false,
+    width: 150,
+    renderCell: (params) => (
+      <Box>
+        <IconButton 
+          onClick={() => handleEdit(params.row)} 
+          size="small"
+          disabled={!canPerformAction(accessLevel, 'update')}
+        >
+          <EditIcon />
+        </IconButton>
+        <IconButton 
+          onClick={() => handleDelete(params.row._id)} 
+          size="small"
+          disabled={!canPerformAction(accessLevel, 'delete')}
+        >
+          <DeleteIcon />
+        </IconButton>
+      </Box>
+    ),
+  };
+
+  const columns = hasEditAccess ? [...baseColumns, actionColumn] : baseColumns;
 
   const filteredStudents = students?.filter(student => {
     return (
@@ -393,7 +428,13 @@ function StudentRecords() {
   }
 
   return (
-    <Container maxWidth="xl">
+    <ViewOnlyWrapper
+      title="Student Records"
+      description="Manage student information and records"
+      accessLevel={accessLevel}
+      activity="Student Records"
+    >
+      <Container maxWidth="xl">
         <Box sx={{ py: 4 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
             <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
@@ -405,6 +446,7 @@ function StudentRecords() {
                 startIcon={<DownloadIcon />}
                 sx={{ mr: 2 }}
                 onClick={handleDownloadReport}
+                disabled={!canPerformAction(accessLevel, 'read')}
               >
                 Export Records
               </Button>
@@ -413,12 +455,14 @@ function StudentRecords() {
                 startIcon={<AddIcon />}
                 onClick={handleClickOpen}
                 sx={{ mr: 2 }}
+                disabled={!canPerformAction(accessLevel, 'create')}
               >
                 Add Record
               </Button>
               <Button
                 variant="outlined"
                 onClick={() => setImportDialog(true)}
+                disabled={!canPerformAction(accessLevel, 'create')}
               >
                 Import from Google Sheet
               </Button>
@@ -1057,6 +1101,7 @@ function StudentRecords() {
         </DialogActions>
       </Dialog>
     </Container>
+    </ViewOnlyWrapper>
   );
 }
 

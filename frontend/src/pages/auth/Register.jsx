@@ -84,8 +84,8 @@ function Register() {
       return response.data;
     },
     onSuccess: (data) => {
-      toast.success('Registration successful! Please login.');
-      navigate('/login');
+      toast.success('Registration successful! Please log in.');
+      navigate('/management-login');
     },
     onError: (error) => {
       setError(error.response?.data?.message || 'An error occurred during registration');
@@ -429,19 +429,8 @@ function Register() {
                     }}
                   >
                     Already have an account?{' '}
-                    <Link
-                      component={RouterLink}
-                      to="/login"
-                      sx={{
-                        color: '#1a237e',
-                        fontWeight: 600,
-                        textDecoration: 'none',
-                        '&:hover': {
-                          textDecoration: 'underline',
-                        },
-                      }}
-                    >
-                      Sign In
+                    <Link to="/management-login" style={{ color: '#3b82f6', textDecoration: 'none' }}>
+                      Sign in here
                     </Link>
                   </Typography>
                 </Box>

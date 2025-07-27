@@ -1,22 +1,29 @@
-import { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
-  Grid,
-  Paper,
   Typography,
+  Paper,
+  Tabs,
+  Tab,
+  CircularProgress,
+  Alert,
+  Button,
+  Chip,
+  Grid,
   Card,
   CardContent,
+  Avatar,
   List,
   ListItem,
   ListItemText,
-  Button,
+  ListItemIcon,
   Divider,
-  CircularProgress,
   IconButton,
-  Tooltip,
-  Chip,
-  Tabs,
-  Tab,
+  Menu,
+  MenuItem,
+  useTheme,
+  useMediaQuery,
+  LinearProgress,
   Table,
   TableBody,
   TableCell,
@@ -31,62 +38,43 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem,
-  Alert,
-  Badge,
-  Avatar,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Rating,
-  LinearProgress,
-  CardActions,
-  Fab,
-  useTheme,
-  useMediaQuery,
+  Badge
 } from '@mui/material';
 import {
+  Dashboard as DashboardIcon,
   People,
   School,
   Assignment,
   Assessment,
-  Event,
-  Message,
-  Refresh,
-  Download,
-  Settings,
-  SupervisorAccount,
-  TrendingUp,
-  Approval,
   Schedule,
-  Book,
-  Psychology,
-  Security,
+  Class,
+  Analytics,
+  AccountBalance,
   Add,
   Edit,
   Delete,
-  Visibility,
+  MoreVert,
   CheckCircle,
-  Cancel,
-  ExpandMore,
-  Person,
-  CalendarToday,
-  Grade,
-  Subject,
-  Class,
-  Timeline,
-  Analytics,
-  FileUpload,
-  Description,
-  RateReview,
-  Work,
-  Notifications,
-  Dashboard as DashboardIcon,
-  AccountBalance,
+  Warning,
+  Error,
+  TrendingUp,
+  TrendingDown,
+  Star,
+  StarBorder,
+  Visibility,
+  VisibilityOff,
+  Security
 } from '@mui/icons-material';
-import { useAuth } from '../../context/AuthContext';
-import { toast } from 'react-toastify';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'react-toastify';
+import { useAuth } from '../../context/AuthContext';
+import { 
+  filterDashboardTabsByActivitiesControl, 
+  useUserActivitiesControl,
+  canPerformAction,
+  getAccessLevelInfo
+} from '../../utils/activitiesControl';
 import { api } from '../../services/api';
 import SalaryPayroll from '../teacher/SalaryPayroll';
 
@@ -139,17 +127,38 @@ function TabPanel({ children, value, index, ...other }) {
   );
 }
 
+// Tab configuration for HOD Dashboard
+const allHODTabs = [
+  { label: 'Overview', icon: <DashboardIcon />, key: 'overview' },
+  { label: 'Staff Management', icon: <People />, key: 'staffManagement' },
+  { label: 'Teacher Attendance', icon: <Schedule />, key: 'teacherAttendance' },
+  { label: 'Teacher Evaluation', icon: <Assessment />, key: 'teacherEvaluation' },
+  { label: 'Class Allocation', icon: <Class />, key: 'classAllocation' },
+  { label: 'Department Reports', icon: <Assignment />, key: 'departmentReports' },
+  { label: 'Lesson Plan Approvals', icon: <Analytics />, key: 'lessonPlanApprovals' },
+  { label: 'Salary Payroll', icon: <AccountBalance />, key: 'salaryPayroll' },
+];
+
 const Dashboard = () => {
   const { user } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const queryClient = useQueryClient();
   
+  // Activities control hook
+  const { hasAccess, canEdit, canApprove, getAccessLevel, getAccessLevelInfo } = useUserActivitiesControl();
+  
   const [tabValue, setTabValue] = useState(0);
   const [evaluationDialog, setEvaluationDialog] = useState(false);
   const [allocationDialog, setAllocationDialog] = useState(false);
-  const [_selectedTeacher, setSelectedTeacher] = useState(null);
+  const [selectedTeacher, setSelectedTeacher] = useState(null);
+  const [reviewDialog, setReviewDialog] = useState(false);
   
+  // Filter tabs based on activities control
+  const hodTabs = useMemo(() => {
+    return filterDashboardTabsByActivitiesControl(allHODTabs, 'HOD');
+  }, [hasAccess]);
+
   // Teacher Management States
   const [teacherDialog, setTeacherDialog] = useState(false);
   const [teacherForm, setTeacherForm] = useState({
@@ -201,7 +210,7 @@ const Dashboard = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: teachers, isLoading: teachersLoading } = useQuery({
+  const { data: teachers, isLoading: loadingTeachers } = useQuery({
     queryKey: ['hodTeachers'],
     queryFn: async () => {
       const response = await hodAPI.getAllStaff();
@@ -400,176 +409,367 @@ const Dashboard = () => {
     markAttendanceMutation.mutate(attendanceForm);
   };
 
-  if (statsLoading || teachersLoading || attendanceLoading || evaluationsLoading || allocationsLoading || metricsLoading) {
+  // Helper to get activity name from tab label
+  const getActivityNameFromTabLabel = (label, role) => {
+    const tab = hodTabs.find(t => t.label === label);
+    if (!tab) return null;
+
+    switch (tab.key) {
+      case 'staffManagement': return 'Manage Staff';
+      case 'teacherAttendance': return 'Mark Attendance';
+      case 'teacherEvaluation': return 'Evaluate Teacher';
+      case 'classAllocation': return 'Allocate Class';
+      case 'departmentReports': return 'View Department Reports';
+      case 'lessonPlanApprovals': return 'Approve Lesson Plans';
+      case 'salaryPayroll': return 'Manage Salary & Payroll';
+      default: return null;
+    }
+  };
+
+  // Render tab content with access control
+  const renderTabContent = () => {
+    const currentTab = hodTabs[tabValue];
+    if (!currentTab) {
+      return (
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+          <Typography variant="h6" color="text.secondary">
+            No access to this feature
+          </Typography>
+        </Box>
+      );
+    }
+
+    // Check access level for the current activity
+    const activityName = getActivityNameFromTabLabel(currentTab.label, 'HOD');
+    const accessLevelInfo = getAccessLevelInfo(activityName);
+
+    if (!hasAccess(activityName, 'View')) {
+      return (
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+          <Alert severity="warning" sx={{ maxWidth: 600 }}>
+            <Typography variant="h6" gutterBottom>
+              Access Restricted
+            </Typography>
+            <Typography>
+              You don't have permission to access {currentTab.label}. 
+              Please contact your Vice Principal for access.
+            </Typography>
+          </Alert>
+        </Box>
+      );
+    }
+
+    const renderContent = () => {
+      switch (currentTab.key) {
+        case 'overview':
+          return (
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Department Performance
+                    </Typography>
+                    {performanceMetrics ? (
+                      <Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                          <Typography variant="body2">Academic Performance</Typography>
+                          <Typography variant="body2">{performanceMetrics.academicScore || 85}%</Typography>
+                        </Box>
+                        <LinearProgress 
+                          variant="determinate" 
+                          value={performanceMetrics.academicScore || 85} 
+                          sx={{ mb: 2 }}
+                        />
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                          <Typography variant="body2">Attendance Rate</Typography>
+                          <Typography variant="body2">{performanceMetrics.attendanceRate || 92}%</Typography>
+                        </Box>
+                        <LinearProgress 
+                          variant="determinate" 
+                          value={performanceMetrics.attendanceRate || 92} 
+                          sx={{ mb: 2 }}
+                        />
+                      </Box>
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        No performance data available
+                      </Typography>
+                    )}
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Recent Activities
+                    </Typography>
+                    <List dense>
+                      {getFlattenedAttendance().slice(0, 3).map((attendance, index) => (
+                        <ListItem key={index}>
+                          <ListItemText
+                            primary={`${attendance.teacherName} - ${attendance.status}`}
+                            secondary={new Date(attendance.date).toLocaleDateString()}
+                          />
+                          <Chip 
+                            label={attendance.status} 
+                            color={
+                              attendance.status === 'present' ? 'success' : 
+                              attendance.status === 'absent' ? 'error' : 
+                              attendance.status === 'late' ? 'warning' : 'default'
+                            } 
+                            size="small"
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
+          );
+        case 'staffManagement':
+          return (
+            <Box>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography variant="h6">Staff Management</Typography>
+                {canEdit(activityName) && (
+                  <Button
+                    variant="contained"
+                    startIcon={<Add />}
+                    onClick={handleAddTeacher}
+                  >
+                    Add Teacher
+                  </Button>
+                )}
+              </Box>
+              <TableContainer component={Paper}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Name</TableCell>
+                      <TableCell>Email</TableCell>
+                      <TableCell>Role</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {teachers?.map((teacher) => (
+                      <TableRow key={teacher._id}>
+                        <TableCell>{teacher.name}</TableCell>
+                        <TableCell>{teacher.email}</TableCell>
+                        <TableCell>{teacher.role}</TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={teacher.status} 
+                            color={teacher.status === 'active' ? 'success' : 'error'}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {canEdit(activityName) && (
+                            <IconButton size="small" color="primary">
+                              <Edit />
+                            </IconButton>
+                          )}
+                          {canApprove(activityName) && (
+                            <IconButton size="small" color="error">
+                              <Delete />
+                            </IconButton>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          );
+        case 'teacherAttendance':
+          return (
+            <Box>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography variant="h6">Teacher Attendance</Typography>
+                {canEdit(activityName) && (
+                  <Button
+                    variant="contained"
+                    startIcon={<Add />}
+                    onClick={handleMarkAttendance}
+                  >
+                    Mark Attendance
+                  </Button>
+                )}
+              </Box>
+              {/* Attendance content */}
+            </Box>
+          );
+        case 'teacherEvaluation':
+          return (
+            <Box>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography variant="h6">Teacher Evaluation</Typography>
+                {canEdit(activityName) && (
+                  <Button
+                    variant="contained"
+                    startIcon={<Add />}
+                    onClick={handleCreateEvaluation}
+                  >
+                    Create Evaluation
+                  </Button>
+                )}
+              </Box>
+              {/* Evaluation content */}
+            </Box>
+          );
+        case 'classAllocation':
+          return (
+            <Box>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography variant="h6">Class Allocation</Typography>
+                {canEdit(activityName) && (
+                  <Button
+                    variant="contained"
+                    startIcon={<Add />}
+                    onClick={handleAllocateSubject}
+                  >
+                    Allocate Class
+                  </Button>
+                )}
+              </Box>
+              {/* Class allocation content */}
+            </Box>
+          );
+        case 'departmentReports':
+          return (
+            <Box>
+              <Typography variant="h6" gutterBottom>Department Reports</Typography>
+              {/* Reports content */}
+            </Box>
+          );
+        case 'lessonPlanApprovals':
+          return (
+            <Box>
+              <Typography variant="h6" gutterBottom>Lesson Plan Approvals</Typography>
+              {/* Lesson plan approvals content */}
+            </Box>
+          );
+        case 'salaryPayroll':
+          return (
+            <Box>
+              <Typography variant="h6" gutterBottom>Salary Payroll</Typography>
+              {/* Salary payroll content */}
+            </Box>
+          );
+        default:
+          return (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+              <Typography variant="h6" color="text.secondary">
+                Feature not implemented yet
+              </Typography>
+            </Box>
+          );
+      }
+    };
+
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+      <Box>
+        {/* Access Level Indicator */}
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <Typography variant="h6">{currentTab.label}</Typography>
+          <Chip 
+            label={accessLevelInfo.label}
+            color={accessLevelInfo.color}
+            size="small"
+            icon={currentTab.icon}
+          />
+        </Box>
+        
+        {/* Render the content */}
+        {renderContent()}
+      </Box>
+    );
+  };
+
+  if (loadingTeachers || evaluationsLoading || attendanceLoading || metricsLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
         <CircularProgress />
       </Box>
     );
   }
 
   return (
-    <Box sx={{ flexGrow: 1, p: { xs: 1, md: 3 }, backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
+    <Box sx={{ p: { xs: 1, md: 3 }, width: '100%', maxWidth: '1400px', mx: 'auto' }}>
       {/* Header */}
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        mb: 3, 
-        p: 2,
-        backgroundColor: 'white',
-        borderRadius: 2,
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-      }}>
-        
-
-      {/* Welcome Section */}
-      
-        <Box>
-          <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
-            Welcome, HOD
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Chip 
-              label="HOD" 
-              color="primary" 
-              size="small"
-              sx={{ fontWeight: 600 }}
-            />
-            <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
-              6860f8e526d2b99ee270a590
-            </Typography>
-          </Box>
-        </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Tooltip title="Refresh Dashboard">
-            <IconButton onClick={() => queryClient.invalidateQueries()}>
-              <Refresh />
-            </IconButton>
-          </Tooltip>
-          <Button
-            variant="contained"
-            startIcon={<Download />}
-            onClick={() => hodAPI.generateDepartmentReport().then(() => toast.success('Report downloaded'))}
-            sx={{ 
-              backgroundColor: '#1976d2',
-              '&:hover': { backgroundColor: '#1565c0' }
-            }}
-          >
-            Download Report
-          </Button>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Box display="flex" alignItems="center">
+          <Security color="primary" sx={{ fontSize: 40, mr: 2 }} />
+          <Typography variant="h4" fontWeight={700}>HOD Dashboard</Typography>
+          <Chip label="Activities Controlled" color="success" sx={{ ml: 2 }} />
         </Box>
       </Box>
 
+      {/* Activities Control Summary */}
+      <Box mb={3}>
+        <Alert severity="info" sx={{ mb: 2 }}>
+          <Typography variant="body2">
+            Your dashboard access is controlled by the Vice Principal. 
+            Only authorized features are visible based on your assigned activities.
+          </Typography>
+        </Alert>
+      </Box>
+
       {/* Statistics Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
+      <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={6} sm={3}>
-          <Card sx={{ 
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            borderRadius: 2,
-            '&:hover': { transform: 'translateY(-2px)', transition: 'transform 0.2s' }
-          }}>
-            <CardContent sx={{ textAlign: 'center', p: 3 }}>
-              <People sx={{ 
-                fontSize: 48, 
-                mb: 2, 
-                color: '#1976d2' 
-              }} />
-              <Typography variant="h3" sx={{ 
-                fontWeight: 700,
-                color: '#1976d2',
-                mb: 1
-              }}>
-                {teachers?.length || 1}
+          <Card>
+            <CardContent sx={{ textAlign: 'center' }}>
+              <People color="primary" sx={{ fontSize: 40, mb: 1 }} />
+              <Typography variant="h4" color="primary">
+                {teachers?.length || 0}
               </Typography>
-              <Typography variant="body1" sx={{ 
-                color: '#666',
-                fontWeight: 500
-              }}>
+              <Typography variant="body2" color="text.secondary">
                 Total Staff
               </Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid item xs={6} sm={3}>
-          <Card sx={{ 
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            borderRadius: 2,
-            '&:hover': { transform: 'translateY(-2px)', transition: 'transform 0.2s' }
-          }}>
-            <CardContent sx={{ textAlign: 'center', p: 3 }}>
-              <School sx={{ 
-                fontSize: 48, 
-                mb: 2, 
-                color: '#ff9800' 
-              }} />
-              <Typography variant="h3" sx={{ 
-                fontWeight: 700,
-                color: '#ff9800',
-                mb: 1
-              }}>
-                {teachers?.filter(staff => staff.role === 'Teacher').length || 1}
+          <Card>
+            <CardContent sx={{ textAlign: 'center' }}>
+              <School color="secondary" sx={{ fontSize: 40, mb: 1 }} />
+              <Typography variant="h4" color="secondary">
+                {teachers?.filter(staff => staff.role === 'Teacher').length || 0}
               </Typography>
-              <Typography variant="body1" sx={{ 
-                color: '#666',
-                fontWeight: 500
-              }}>
+              <Typography variant="body2" color="text.secondary">
                 Teachers
               </Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid item xs={6} sm={3}>
-          <Card sx={{ 
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            borderRadius: 2,
-            '&:hover': { transform: 'translateY(-2px)', transition: 'transform 0.2s' }
-          }}>
-            <CardContent sx={{ textAlign: 'center', p: 3 }}>
-              <Assignment sx={{ 
-                fontSize: 48, 
-                mb: 2, 
-                color: '#4caf50' 
-              }} />
-              <Typography variant="h3" sx={{ 
-                fontWeight: 700,
-                color: '#4caf50',
-                mb: 1
-              }}>
-                {departmentStats?.activeCourses || 2}
+          <Card>
+            <CardContent sx={{ textAlign: 'center' }}>
+              <Assignment color="success" sx={{ fontSize: 40, mb: 1 }} />
+              <Typography variant="h4" color="success.main">
+                {departmentStats?.activeCourses || 0}
               </Typography>
-              <Typography variant="body1" sx={{ 
-                color: '#666',
-                fontWeight: 500
-              }}>
+              <Typography variant="body2" color="text.secondary">
                 Active Courses
               </Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid item xs={6} sm={3}>
-          <Card sx={{ 
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            borderRadius: 2,
-            '&:hover': { transform: 'translateY(-2px)', transition: 'transform 0.2s' }
-          }}>
-            <CardContent sx={{ textAlign: 'center', p: 3 }}>
-              <Assessment sx={{ 
-                fontSize: 48, 
-                mb: 2, 
-                color: '#ffc107' 
-              }} />
-              <Typography variant="h3" sx={{ 
-                fontWeight: 700,
-                color: '#ffc107',
-                mb: 1
-              }}>
+          <Card>
+            <CardContent sx={{ textAlign: 'center' }}>
+              <Assessment color="warning" sx={{ fontSize: 40, mb: 1 }} />
+              <Typography variant="h4" color="warning.main">
                 {evaluations?.length || 0}
               </Typography>
-              <Typography variant="body1" sx={{ 
-                color: '#666',
-                fontWeight: 500
-              }}>
+              <Typography variant="body2" color="text.secondary">
                 Total Evaluations
               </Typography>
             </CardContent>
@@ -609,542 +809,24 @@ const Dashboard = () => {
             }
           }}
         >
-          <Tab label="Overview" icon={<DashboardIcon />} />
-          <Tab label="Staff Management" icon={<People />} />
-          <Tab label="Teacher Attendance" icon={<Schedule />} />
-          <Tab label="Teacher Evaluation" icon={<Assessment />} />
-          <Tab label="Class Allocation" icon={<Class />} />
-          <Tab label="Department Reports" icon={<Assignment />} />
-          <Tab label="Lesson Plan Approvals" icon={<Analytics />} />
-          <Tab label="Salary Payroll" icon={<AccountBalance />} />
+          {hodTabs.map((tab, index) => (
+            <Tab 
+              key={tab.key}
+              label={tab.label} 
+              icon={tab.icon}
+              sx={{
+                '& .MuiTab-iconWrapper': {
+                  marginRight: 1
+                }
+              }}
+            />
+          ))}
         </Tabs>
 
-        {/* Overview Tab */}
-        <TabPanel value={tabValue} index={0}>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Department Performance
-                  </Typography>
-                  {performanceMetrics ? (
-                    <Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography variant="body2">Academic Performance</Typography>
-                        <Typography variant="body2">{performanceMetrics.academicScore || 85}%</Typography>
-                      </Box>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={performanceMetrics.academicScore || 85} 
-                        sx={{ mb: 2 }}
-                      />
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography variant="body2">Attendance Rate</Typography>
-                        <Typography variant="body2">{performanceMetrics.attendanceRate || 92}%</Typography>
-                      </Box>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={performanceMetrics.attendanceRate || 92} 
-                        sx={{ mb: 2 }}
-                      />
-                    </Box>
-                  ) : (
-                    <Typography variant="body2" color="text.secondary">
-                      No performance data available
-                    </Typography>
-                  )}
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Recent Activities
-                  </Typography>
-                  <List dense>
-                    {getFlattenedAttendance().slice(0, 3).map((attendance, index) => (
-                      <ListItem key={index}>
-                        <ListItemText
-                          primary={`${attendance.teacherName} - ${attendance.status}`}
-                          secondary={new Date(attendance.date).toLocaleDateString()}
-                        />
-                        <Chip 
-                          label={attendance.status} 
-                          color={
-                            attendance.status === 'present' ? 'success' : 
-                            attendance.status === 'absent' ? 'error' : 
-                            attendance.status === 'late' ? 'warning' : 'default'
-                          } 
-                          size="small"
-                        />
-                      </ListItem>
-                    ))}
-                  </List>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        </TabPanel>
-
-        {/* Staff Management Tab */}
-        <TabPanel value={tabValue} index={1}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-            <Typography variant="h6">Staff Management</Typography>
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => setTeacherDialog(true)}
-            >
-              Add Staff
-            </Button>
-          </Box>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Staff Member</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Phone</TableCell>
-                  <TableCell>Role</TableCell>
-                  <TableCell>Qualification</TableCell>
-                  <TableCell>Experience</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {teachers?.map((staff) => (
-                  <TableRow key={staff._id || staff.id}>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Avatar sx={{ width: 32, height: 32 }}>
-                          {staff.name?.charAt(0) || 'S'}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="body2" fontWeight="bold">
-                            {staff.name || 'Unknown Staff'}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </TableCell>
-                    <TableCell>{staff.email || 'N/A'}</TableCell>
-                    <TableCell>{staff.phone || 'N/A'}</TableCell>
-                    <TableCell>
-                      <Chip 
-                        label={staff.role || 'Unknown'} 
-                        color={
-                          staff.role === 'Teacher' ? 'primary' : 
-                          staff.role === 'HOD' ? 'secondary' : 
-                          staff.role === 'Admin' ? 'error' : 'default'
-                        } 
-                        size="small" 
-                      />
-                    </TableCell>
-                    <TableCell>{staff.qualification || 'N/A'}</TableCell>
-                    <TableCell>{staff.experience || '0'} years</TableCell>
-                    <TableCell>
-                      <Chip 
-                        label={staff.status || 'active'} 
-                        color={(staff.status || 'active') === 'active' ? 'success' : 'error'} 
-                        size="small" 
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <IconButton size="small" onClick={() => setSelectedTeacher(staff)}>
-                        <Visibility />
-                      </IconButton>
-                      <IconButton size="small">
-                        <Edit />
-                      </IconButton>
-                      <IconButton size="small" color="error">
-                        <Delete />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </TabPanel>
-
-        {/* Teacher Attendance Tab */}
-        <TabPanel value={tabValue} index={2}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-            <Typography variant="h6">Teacher Attendance</Typography>
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => setAttendanceDialog(true)}
-            >
-              Mark Attendance
-            </Button>
-          </Box>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Teacher</TableCell>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Time In</TableCell>
-                  <TableCell>Time Out</TableCell>
-                  <TableCell>Remarks</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {getFlattenedAttendance().map((attendance) => (
-                  <TableRow key={attendance.key}>
-                    <TableCell>{attendance.teacherName}</TableCell>
-                    <TableCell>{new Date(attendance.date).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <Chip 
-                        label={attendance.status} 
-                        color={
-                          attendance.status === 'present' ? 'success' : 
-                          attendance.status === 'absent' ? 'error' : 
-                          attendance.status === 'late' ? 'warning' : 'default'
-                        } 
-                        size="small" 
-                      />
-                    </TableCell>
-                    <TableCell>{attendance.timeIn}</TableCell>
-                    <TableCell>{attendance.timeOut}</TableCell>
-                    <TableCell>{attendance.remarks}</TableCell>
-                    <TableCell>
-                      <IconButton size="small">
-                        <Edit />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </TabPanel>
-
-        {/* Evaluations Tab */}
-        <TabPanel value={tabValue} index={3}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-            <Typography variant="h6">Teacher Evaluations</Typography>
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => setEvaluationDialog(true)}
-            >
-              New Evaluation
-            </Button>
-          </Box>
-          <Grid container spacing={2}>
-            {evaluations?.map((evaluation) => (
-              <Grid item xs={12} md={6} key={evaluation.id}>
-                <Card>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                      <Typography variant="h6">{evaluation.teacherName}</Typography>
-                      <Rating value={evaluation.rating} readOnly />
-                    </Box>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      {evaluation.comments}
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <Chip label={evaluation.subject} size="small" />
-                      <Chip label={evaluation.date} size="small" variant="outlined" />
-                    </Box>
-                  </CardContent>
-                  <CardActions>
-                    <Button size="small" startIcon={<Edit />}>Edit</Button>
-                    <Button size="small" startIcon={<Delete />} color="error">Delete</Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        </TabPanel>
-
-        {/* Class Allocation Tab */}
-        <TabPanel value={tabValue} index={4}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-            <Typography variant="h6">Class Allocation</Typography>
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => setAllocationDialog(true)}
-            >
-              Allocate Class
-            </Button>
-          </Box>
-          
-          {/* Class Allocation Recommendations */}
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Class Allocation Recommendations (Based on Experience)
-            </Typography>
-            <Grid container spacing={2}>
-              {subjectAllocations?.gradeLevels?.map((grade) => (
-                <Grid item xs={12} sm={6} md={3} key={grade.grade}>
-                  <Card>
-                    <CardContent>
-                      <Typography variant="h6" color="primary">
-                        {grade.grade}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Experience: {grade.minExperience}-{grade.maxExperience} years
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Priority: {grade.priority}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-
-          {/* Teacher Allocations Table */}
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Teacher</TableCell>
-                  <TableCell>Experience</TableCell>
-                  <TableCell>Current Grade</TableCell>
-                  <TableCell>Recommended Grade</TableCell>
-                  <TableCell>Suitability Score</TableCell>
-                  <TableCell>Qualification</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {subjectAllocations?.allocations?.map((allocation) => (
-                  <TableRow key={allocation.teacherId}>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Avatar sx={{ width: 32, height: 32 }}>
-                          {allocation.teacherName?.charAt(0) || 'T'}
-                        </Avatar>
-                        <Typography variant="body2" fontWeight="bold">
-                          {allocation.teacherName}
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>{allocation.experience} years</TableCell>
-                    <TableCell>
-                      <Chip 
-                        label={allocation.currentGrade} 
-                        color={allocation.currentGrade === 'Not Assigned' ? 'default' : 'primary'} 
-                        size="small" 
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip 
-                        label={allocation.recommendedGrade} 
-                        color="success" 
-                        size="small" 
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <LinearProgress 
-                          variant="determinate" 
-                          value={allocation.suitabilityScore} 
-                          sx={{ width: 60, height: 8, borderRadius: 4 }}
-                        />
-                        <Typography variant="body2">
-                          {allocation.suitabilityScore}%
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>{allocation.qualification || 'N/A'}</TableCell>
-                    <TableCell>
-                      <IconButton 
-                        size="small" 
-                        color="primary"
-                        onClick={() => {
-                          setTeacherForm({
-                            ...teacherForm,
-                            teacherId: allocation.teacherId,
-                            grade: allocation.recommendedGrade
-                          });
-                          setAllocationDialog(true);
-                        }}
-                      >
-                        <Add />
-                      </IconButton>
-                      <IconButton size="small">
-                        <Edit />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </TabPanel>
-
-        {/* Department Reports Tab */}
-        <TabPanel value={tabValue} index={5}>
-          <Typography variant="h6" gutterBottom>
-            Department Reports & Analytics
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Teacher Performance Overview
-                  </Typography>
-                  {performanceMetrics ? (
-                    <Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography variant="body2">Average Teaching Rating</Typography>
-                        <Typography variant="body2">{performanceMetrics.avgTeachingRating || 4.2}/5</Typography>
-                      </Box>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={(performanceMetrics.avgTeachingRating || 4.2) * 20} 
-                        sx={{ mb: 2 }}
-                      />
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography variant="body2">Attendance Rate</Typography>
-                        <Typography variant="body2">{performanceMetrics.attendanceRate || 95}%</Typography>
-                      </Box>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={performanceMetrics.attendanceRate || 95} 
-                        sx={{ mb: 2 }}
-                      />
-                    </Box>
-                  ) : (
-                    <Typography variant="body2" color="text.secondary">
-                      No performance data available
-                    </Typography>
-                  )}
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Department Statistics
-                  </Typography>
-                  <Box>
-                    <Typography variant="body2" sx={{ mb: 1 }}>
-                      Total Teachers: {departmentStats?.totalTeachers || 0}
-                    </Typography>
-                    <Typography variant="body2" sx={{ mb: 1 }}>
-                      Active Teachers: {departmentStats?.activeTeachers || 0}
-                    </Typography>
-                    <Typography variant="body2" sx={{ mb: 1 }}>
-                      Total Students: {departmentStats?.totalStudents || 0}
-                    </Typography>
-                    <Typography variant="body2" sx={{ mb: 1 }}>
-                      Active Courses: {departmentStats?.activeCourses || 0}
-                    </Typography>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        </TabPanel>
-
-        {/* Lesson Plan Approvals Tab */}
-        <TabPanel value={tabValue} index={6}>
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            mb: 3,
-            p: 2,
-            backgroundColor: 'white',
-            borderRadius: 2,
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}>
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              Lesson Plan Approvals
-            </Typography>
-            <Button 
-              variant="contained" 
-              onClick={() => window.location.href = '/hod/lesson-plans'}
-              sx={{ 
-                backgroundColor: '#1976d2',
-                '&:hover': { backgroundColor: '#1565c0' }
-              }}
-            >
-              View All Lesson Plans
-            </Button>
-          </Box>
-
-          {lessonPlansLoading ? (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="20vh">
-              <CircularProgress />
-            </Box>
-          ) : (allPlans && allPlans.length > 0) ? (
-            <TableContainer component={Paper} sx={{ mb: 2 }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Title</TableCell>
-                    <TableCell>Subject</TableCell>
-                    <TableCell>Class</TableCell>
-                    <TableCell>Submitted</TableCell>
-                    <TableCell>Status</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {allPlans.slice(0, 5).map((plan) => (
-                    <TableRow key={plan._id} hover>
-                      <TableCell>{plan.title}</TableCell>
-                      <TableCell>{plan.subject}</TableCell>
-                      <TableCell>{plan.class || '-'}</TableCell>
-                      <TableCell>{new Date(plan.createdAt).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <Chip label={getPlanStatusLabel(plan.status)} color={getPlanStatusColor(plan.status)} size="small" />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          ) : (
-            <Card sx={{ 
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              borderRadius: 2,
-              backgroundColor: 'white'
-            }}>
-              <CardContent sx={{ p: 4, textAlign: 'center' }}>
-                <Typography variant="body1" sx={{ 
-                  color: '#666',
-                  fontSize: '1.1rem'
-                }}>
-                  No lesson plan submissions found.
-                </Typography>
-              </CardContent>
-            </Card>
-          )}
-        </TabPanel>
-
-        {/* Salary Payroll Tab */}
-        <TabPanel value={tabValue} index={7}>
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            mb: 3,
-            p: 2,
-            backgroundColor: 'white',
-            borderRadius: 2,
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}>
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              Salary & Payroll Management
-            </Typography>
-          </Box>
-          <SalaryPayroll />
-        </TabPanel>
+        {/* Tab Content */}
+        <Box sx={{ p: 3 }}>
+          {renderTabContent()}
+        </Box>
       </Paper>
 
       {/* Dialogs */}

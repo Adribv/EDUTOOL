@@ -192,7 +192,7 @@ const DisciplinaryFormCreate = () => {
           severity: 'error' 
         });
         setTimeout(() => {
-          window.location.href = '/login';
+          window.location.href = '/management-login';
         }, 2000);
       } else {
         setSnackbar({ 
@@ -233,7 +233,7 @@ const DisciplinaryFormCreate = () => {
           severity: 'error' 
         });
         setTimeout(() => {
-          window.location.href = '/login';
+          window.location.href = '/management-login';
         }, 2000);
       } else {
         setSnackbar({ 

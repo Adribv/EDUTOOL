@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   AppBar,
@@ -20,6 +20,8 @@ import {
   Badge,
   useTheme,
   useMediaQuery,
+  Chip,
+  Alert,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -55,6 +57,14 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import Logo from './Logo';
 import { roleConfig } from '../../pages/admin/roleConfig';
+import { api, staffActivitiesControlAPI } from '../../services/api';
+import { 
+  getUserActivitiesControl, 
+  hasAnyActivityAccess, 
+  filterMenuItemsByActivitiesControl,
+  storeUserActivitiesControl,
+  clearUserActivitiesControl 
+} from '../../utils/activitiesControl';
 
 const drawerWidth = 280;
 
@@ -62,11 +72,54 @@ const Layout = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [drawerCollapsed, setDrawerCollapsed] = useState(false);
+  const [userActivitiesControl, setUserActivitiesControl] = useState(null);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  // Fetch user's activities control on component mount
+  useEffect(() => {
+    const fetchUserActivitiesControl = async () => {
+      try {
+        if (user?._id || user?.id) {
+          const staffId = user._id || user.id;
+          
+          // Use the staff endpoint instead of VP endpoint for getting own activities control
+          const response = await staffActivitiesControlAPI.getMyActivities();
+          const activitiesControl = response?.data;
+          
+          if (activitiesControl) {
+            console.log(`🔍 Activities Control found for ${user.email}:`, activitiesControl);
+            
+            // Special logging for the specific example
+            if (user.email === 'kgokulpriyan@gmail.com') {
+              console.log(`🎯 Special case: ${user.email} - Expected access to Inventory and Student Records`);
+              const inventoryAccess = activitiesControl.activityAssignments?.find(a => a.activity === 'Inventory');
+              const studentRecordsAccess = activitiesControl.activityAssignments?.find(a => a.activity === 'Student Records');
+              console.log(`📦 Inventory access:`, inventoryAccess);
+              console.log(`📚 Student Records access:`, studentRecordsAccess);
+            }
+            
+            setUserActivitiesControl(activitiesControl);
+            storeUserActivitiesControl(activitiesControl);
+          } else {
+            console.log(`📋 No activities control found for ${user.email}, using default permissions`);
+            setUserActivitiesControl(null);
+            clearUserActivitiesControl();
+          }
+        }
+      } catch (error) {
+        console.log(`❌ Error fetching activities control for ${user?.email}:`, error.message);
+        // If no activities control is found, user will have default permissions
+        setUserActivitiesControl(null);
+        clearUserActivitiesControl();
+      }
+    };
+
+    fetchUserActivitiesControl();
+  }, [user]);
 
   const handleDrawerToggle = useCallback(() => {
     setMobileOpen(!mobileOpen);
@@ -81,8 +134,9 @@ const Layout = () => {
   }, []);
 
   const handleLogout = useCallback(() => {
+    clearUserActivitiesControl();
     logout();
-    navigate('/login');
+    navigate('/management-login');
     handleProfileMenuClose();
   }, [logout, navigate, handleProfileMenuClose]);
 
@@ -93,48 +147,125 @@ const Layout = () => {
   const getMenuItems = useMemo(() => {
     // If user is admin type and has a designation in roleConfig, use that
     if (user?.role === 'AdminStaff' && roleConfig[user?.designation]) {
-      return [
+      const baseMenuItems = [
         { text: 'Dashboard', icon: <Dashboard />, path: '/admin/dashboard' },
         { text: 'Profile', icon: <Person />, path: '/admin/profile' },
-        ...(roleConfig[user.designation]?.sidebar || []).map((item) => {
-          // Map sidebar item to path and icon
-          const iconMap = {
-            'Attendance': <Assignment />, 
-            'Classes': <School />, 
-            'Students': <People />, 
-            'Reports': <Assessment />,
-            'FeeConfiguration': <Payment />, 
-            'Fee_Management': <Payment />,
-            'Inventory_Management': <Inventory />, 
-            'UserManagement': <People />,
-            'A_Reports': <Assessment />, 
-            'A_Events': <Event />, 
-            'A_Communication': <Message />, 
-            'A_Settings': <Settings />,
-            'A_Users': <People />, 
-            'A_Classes': <School />, 
-            'A_Subjects': <Assignment />, 
-            'A_Schedules': <CalendarToday />,
-            'Exams': <Assignment />, 
-            'Results': <Assessment />, 
-            'SystemSettings': <Settings />,
-            'Enquiries': <Message />,
-            'Visitors': <GroupIcon />,
-            'Disciplinary_Forms': <Warning />,
-            'Teacher_Remarks': <RateReview />,
-          };
-          return {
-            text: item.replace(/_/g, ' '),
-            icon: iconMap[item] || <Assignment />,
-            path: `/admin/${item.toLowerCase().replace(/_/g, '-')}`,
-          };
-        })
-      ].flat();
+      ];
+
+      // Map roleConfig sidebar items to menu items with proper activity mapping
+      const roleSpecificItems = (roleConfig[user.designation]?.sidebar || []).map((item) => {
+        // Map sidebar item to path and icon
+        const iconMap = {
+          'Attendance': <Assignment />, 
+          'Classes': <School />, 
+          'Students': <People />, 
+          'Reports': <Assessment />,
+          'FeeConfiguration': <Payment />, 
+          'Fee_Management': <Payment />,
+          'Inventory_Management': <Inventory />, 
+          'UserManagement': <People />,
+          'A_Reports': <Assessment />, 
+          'A_Events': <Event />, 
+          'A_Communication': <Message />, 
+          'A_Settings': <Settings />,
+          'A_Users': <People />, 
+          'A_Classes': <School />, 
+          'A_Subjects': <Assignment />, 
+          'A_Schedules': <CalendarToday />,
+          'Exams': <Assignment />, 
+          'Results': <Assessment />, 
+          'SystemSettings': <Settings />,
+          'Enquiries': <Message />,
+          'Visitors': <GroupIcon />,
+          'Disciplinary_Forms': <Warning />,
+          'Teacher_Remarks': <RateReview />,
+        };
+
+        // Map roleConfig items to activities control activities
+        const activityMapping = {
+          'Attendance': 'Student Records',
+          'Classes': 'Classes',
+          'Students': 'Student Records',
+          'Reports': 'Reports',
+          'FeeConfiguration': 'Fee Management',
+          'Fee_Management': 'Fee Management',
+          'Inventory_Management': 'Inventory',
+          'UserManagement': 'User Management',
+          'A_Reports': 'Reports',
+          'A_Events': 'Events',
+          'A_Communication': 'Communications',
+          'A_Settings': 'System Settings',
+          'A_Users': 'User Management',
+          'A_Classes': 'Classes',
+          'A_Subjects': 'Classes',
+          'A_Schedules': 'Events',
+          'Exams': 'Reports',
+          'Results': 'Reports',
+          'SystemSettings': 'System Settings',
+          'Enquiries': 'Enquiries',
+          'Visitors': 'Visitors',
+          'Disciplinary_Forms': 'Student Records',
+          'Teacher_Remarks': 'Syllabus Completion',
+        };
+
+        return {
+          text: item.replace(/_/g, ' '),
+          icon: iconMap[item] || <Assignment />,
+          path: `/admin/${item.toLowerCase().replace(/_/g, '-')}`,
+          activity: activityMapping[item] || item.replace(/_/g, ' '),
+        };
+      });
+
+      const allMenuItems = [...baseMenuItems, ...roleSpecificItems];
+
+      // Filter menu items based on activities control if user has activities control
+      if (userActivitiesControl && userActivitiesControl.activityAssignments) {
+        console.log(`🔐 Filtering AdminStaff menu for ${user.email}:`, {
+          totalItems: allMenuItems.length,
+          activitiesControl: userActivitiesControl.activityAssignments,
+          availableActivities: userActivitiesControl.activityAssignments.filter(a => a.accessLevel !== 'Unauthorized').map(a => a.activity)
+        });
+
+        const filteredItems = allMenuItems.filter(item => {
+          // Always allow Dashboard and Profile
+          if (item.text === 'Dashboard' || item.text === 'Profile') {
+            console.log(`✅ Always allowing: ${item.text}`);
+            return true;
+          }
+          
+          // Check if user has access to this activity
+          const activityAssignment = userActivitiesControl.activityAssignments.find(
+            a => a.activity === item.activity
+          );
+          
+          if (!activityAssignment) {
+            console.log(`❌ No activity assignment found for: ${item.text} (${item.activity}) - HIDDEN`);
+            return false; // No assignment found, deny access
+          }
+          
+          // Check access level - only show if not 'Unauthorized'
+          const hasAccess = activityAssignment.accessLevel !== 'Unauthorized';
+          console.log(`${hasAccess ? '✅' : '❌'} AdminStaff Activity: ${item.text} (${item.activity}) - Access Level: ${activityAssignment.accessLevel} - ${hasAccess ? 'SHOWN' : 'HIDDEN'}`);
+          return hasAccess;
+        });
+
+        console.log(`📊 AdminStaff Activities Control Summary for ${user.email}:`, {
+          totalMenuItems: allMenuItems.length,
+          filteredMenuItems: filteredItems.length,
+          hiddenItems: allMenuItems.filter(item => !filteredItems.includes(item)).map(item => item.text),
+          availableItems: filteredItems.map(item => item.text),
+          userActivitiesControl: userActivitiesControl.activityAssignments
+        });
+
+        return filteredItems;
+      }
+
+      return allMenuItems;
     }
 
     // For HOD users, provide specific navigation
     if (user?.role === 'HOD') {
-      return [
+      const menuItems = [
         { text: 'Dashboard', icon: <Dashboard />, path: '/hod/dashboard' },
         { text: 'Profile', icon: <Person />, path: '/hod/profile' },
         { text: 'Department Management', icon: <School />, path: '/hod/department' },
@@ -143,6 +274,63 @@ const Layout = () => {
         { text: 'Reports', icon: <Assessment />, path: '/hod/reports' },
         { text: 'Lesson Plan Approvals', icon: <Approval />, path: '/hod/lesson-plans' },
       ];
+
+      // Filter menu items based on activities control if user has activities control
+      if (userActivitiesControl && userActivitiesControl.activityAssignments) {
+        console.log(`🔐 Filtering HOD menu for ${user.email}:`, {
+          totalItems: menuItems.length,
+          activitiesControl: userActivitiesControl.activityAssignments,
+          availableActivities: userActivitiesControl.activityAssignments.filter(a => a.accessLevel !== 'Unauthorized').map(a => a.activity)
+        });
+
+        const filteredItems = menuItems.filter(item => {
+          // Always allow Dashboard and Profile
+          if (item.text === 'Dashboard' || item.text === 'Profile') {
+            console.log(`✅ Always allowing HOD: ${item.text}`);
+            return true;
+          }
+          
+          // Map HOD menu items to activities
+          const hodActivityMapping = {
+            'Department Management': 'Department Management',
+            'Staff Management': 'HOD Staff Management',
+            'Course Management': 'Course Management',
+            'Reports': 'HOD Reports',
+            'Lesson Plan Approvals': 'Lesson Plan Approvals',
+          };
+          
+          const activity = hodActivityMapping[item.text];
+          if (!activity) {
+            console.log(`❌ No activity mapping found for HOD item: ${item.text} - HIDDEN`);
+            return false;
+          }
+          
+          const activityAssignment = userActivitiesControl.activityAssignments.find(
+            a => a.activity === activity
+          );
+          
+          if (!activityAssignment) {
+            console.log(`❌ No activity assignment found for HOD: ${item.text} (${activity}) - HIDDEN`);
+            return false;
+          }
+          
+          const hasAccess = activityAssignment.accessLevel !== 'Unauthorized';
+          console.log(`${hasAccess ? '✅' : '❌'} HOD Activity: ${item.text} (${activity}) - Access Level: ${activityAssignment.accessLevel} - ${hasAccess ? 'SHOWN' : 'HIDDEN'}`);
+          return hasAccess;
+        });
+
+        console.log(`📊 HOD Activities Control Summary for ${user.email}:`, {
+          totalMenuItems: menuItems.length,
+          filteredMenuItems: filteredItems.length,
+          hiddenItems: menuItems.filter(item => !filteredItems.includes(item)).map(item => item.text),
+          availableItems: filteredItems.map(item => item.text),
+          availableActivities: userActivitiesControl.activityAssignments.filter(a => a.accessLevel !== 'Unauthorized').map(a => a.activity)
+        });
+
+        return filteredItems;
+      }
+
+      return menuItems;
     }
 
     const getBasePath = () => {
@@ -175,61 +363,110 @@ const Layout = () => {
 
     const roleSpecificItems = {
       AdminStaff: [
-        { text: 'Staff Management', icon: <People />, path: '/admin/staff' },
-        { text: 'Student Records', icon: <School />, path: '/admin/students' },
-        { text: 'Fee Management', icon: <Payment />, path: '/admin/fee-management' },
-        { text: 'Inventory', icon: <Inventory />, path: '/admin/inventory' },
-        { text: 'Events', icon: <CalendarToday />, path: '/admin/events' },
-        { text: 'Communications', icon: <Notifications />, path: '/admin/communications' },
-        { text: 'Classes', icon: <School />, path: '/admin/classes' },
-        // Removed Subjects and Schedules
-        { text: 'System Settings', icon: <Settings />, path: '/admin/settings' },
-        { text: 'User Management', icon: <People />, path: '/admin/users' },
-        { text: 'Permissions', icon: <Security />, path: '/admin/permissions' },
-        { text: 'Reports', icon: <Assessment />, path: '/admin/reports' },
-        { text: 'Enquiries', icon: <Message />, path: '/admin/Enquiries' },
-        { text: 'Visitors', icon: <GroupIcon />, path: '/admin/Visitors' },
-        { text: 'Service Requests', icon: <Approval />, path: '/admin/service-requests' },
-        { text: 'Syllabus Completion', icon: <RateReview />, path: '/admin/syllabus-completion' },
-        { text: 'Salary Payroll', icon: <AccountBalance />, path: '/admin/salary-payroll' },
+        { text: 'Staff Management', icon: <People />, path: '/admin/staff', activity: 'Staff Management' },
+        { text: 'Student Records', icon: <School />, path: '/admin/students', activity: 'Student Records' },
+        { text: 'Fee Management', icon: <Payment />, path: '/admin/fee-management', activity: 'Fee Management' },
+        { text: 'Inventory', icon: <Inventory />, path: '/admin/inventory', activity: 'Inventory' },
+        { text: 'Events', icon: <CalendarToday />, path: '/admin/events', activity: 'Events' },
+        { text: 'Communications', icon: <Notifications />, path: '/admin/communications', activity: 'Communications' },
+        { text: 'Classes', icon: <School />, path: '/admin/classes', activity: 'Classes' },
+        { text: 'System Settings', icon: <Settings />, path: '/admin/settings', activity: 'System Settings' },
+        { text: 'User Management', icon: <People />, path: '/admin/users', activity: 'User Management' },
+        { text: 'Permissions', icon: <Security />, path: '/admin/permissions', activity: 'Permissions' },
+        { text: 'Reports', icon: <Assessment />, path: '/admin/reports', activity: 'Reports' },
+        { text: 'Enquiries', icon: <Message />, path: '/admin/Enquiries', activity: 'Enquiries' },
+        { text: 'Visitors', icon: <GroupIcon />, path: '/admin/Visitors', activity: 'Visitors' },
+        { text: 'Service Requests', icon: <Approval />, path: '/admin/service-requests', activity: 'Service Requests' },
+        { text: 'Syllabus Completion', icon: <RateReview />, path: '/admin/syllabus-completion', activity: 'Syllabus Completion' },
+        { text: 'Salary Payroll', icon: <AccountBalance />, path: '/admin/salary-payroll', activity: 'Salary Payroll' },
       ],
       ITAdmin: [
         { text: 'IT Admin Dashboard', icon: <Dashboard />, path: '/itadmin/dashboard' },
         { text: 'Profile', icon: <Person />, path: '/itadmin/profile' },
-        { text: 'User Management', icon: <People />, path: '/itadmin/users' },
-        { text: 'Reports', icon: <Assessment />, path: '/itadmin/reports' },
-        { text: 'System Settings', icon: <Settings />, path: '/itadmin/settings' },
+        { text: 'User Management', icon: <People />, path: '/itadmin/users', activity: 'IT User Management' },
+        { text: 'Reports', icon: <Assessment />, path: '/itadmin/reports', activity: 'IT Reports' },
+        { text: 'System Settings', icon: <Settings />, path: '/itadmin/settings', activity: 'IT System Settings' },
       ],
       Teacher: [
-        { text: 'Classes', icon: <School />, path: '/teacher/classes' },
-        { text: 'Assignments', icon: <Assignment />, path: '/teacher/assignments' },
-        { text: 'Calendar', icon: <CalendarToday />, path: '/teacher/calendar' },
-        { text: 'Substitute Teacher Request', icon: <Approval />, path: '/teacher/substitute-request' },
-        { text: 'My Substitute Requests', icon: <Approval />, path: '/teacher/substitute-requests' },
-        { text: 'Teacher Remarks', icon: <RateReview />, path: '/teacher/teacher-remarks' },
-        { text: 'Counselling Request Form', icon: <Psychology />, path: '/teacher/counselling-request' },
+        { text: 'Classes', icon: <School />, path: '/teacher/classes', activity: 'Classes' },
+        { text: 'Assignments', icon: <Assignment />, path: '/teacher/assignments', activity: 'Assignments' },
+        { text: 'Calendar', icon: <CalendarToday />, path: '/teacher/calendar', activity: 'Calendar' },
+        { text: 'Substitute Teacher Request', icon: <Approval />, path: '/teacher/substitute-request', activity: 'Substitute Teacher Request' },
+        { text: 'My Substitute Requests', icon: <Approval />, path: '/teacher/substitute-requests', activity: 'My Substitute Requests' },
+        { text: 'Teacher Remarks', icon: <RateReview />, path: '/teacher/teacher-remarks', activity: 'Teacher Remarks' },
+        { text: 'Counselling Request Form', icon: <Psychology />, path: '/teacher/counselling-request', activity: 'Counselling Request Form' },
       ],
       Student: [
-        { text: 'Courses', icon: <School />, path: '/student/courses' },
-        { text: 'Assignments', icon: <Assignment />, path: '/student/assignments' },
-        { text: 'Calendar', icon: <CalendarToday />, path: '/student/calendar' },
-        { text: 'Counselling Request Form', icon: <Psychology />, path: '/student/counselling-request' },
+        { text: 'Courses', icon: <School />, path: '/student/courses', activity: 'Courses' },
+        { text: 'Student Assignments', icon: <Assignment />, path: '/student/assignments', activity: 'Student Assignments' },
+        { text: 'Student Calendar', icon: <CalendarToday />, path: '/student/calendar', activity: 'Student Calendar' },
+        { text: 'Student Counselling Request Form', icon: <Psychology />, path: '/student/counselling-request', activity: 'Student Counselling Request Form' },
       ],
       Principal: [
-        { text: 'Staff Management', icon: <People />, path: '/principal/staff' },
-        { text: 'Student Management', icon: <School />, path: '/principal/students' },
-        { text: 'School Management', icon: <Settings />, path: '/principal/school' },
-        { text: 'Academic Management', icon: <Book />, path: '/principal/academic' },
-        { text: 'Approvals', icon: <Approval />, path: '/principal/approvals' },
-        { text: 'Reports', icon: <Assessment />, path: '/principal/reports' },
+        { text: 'Staff Management', icon: <People />, path: '/principal/staff', activity: 'Principal Staff Management' },
+        { text: 'Student Management', icon: <School />, path: '/principal/students', activity: 'Principal Student Management' },
+        { text: 'School Management', icon: <Settings />, path: '/principal/school', activity: 'School Management' },
+        { text: 'Academic Management', icon: <Book />, path: '/principal/academic', activity: 'Academic Management' },
+        { text: 'Approvals', icon: <Approval />, path: '/principal/approvals', activity: 'Principal Approvals' },
+        { text: 'Reports', icon: <Assessment />, path: '/principal/reports', activity: 'Principal Reports' },
       ],
       Counsellor: [
-        { text: 'Counselling Requests', icon: <Psychology />, path: '/counselor/requests' },
+        { text: 'Counselling Requests', icon: <Psychology />, path: '/counselor/requests', activity: 'Counselling Requests' },
       ],
     };
 
-    return [...commonItems, ...(roleSpecificItems[user?.role] || [])];
-  }, [user?.role, user?.designation]);
+    const allMenuItems = [...commonItems, ...(roleSpecificItems[user?.role] || [])];
+
+    // Filter menu items based on activities control if user has activities control
+    if (userActivitiesControl && userActivitiesControl.activityAssignments) {
+      console.log(`🔐 Filtering ${user?.role} menu for ${user.email}:`, {
+        totalItems: allMenuItems.length,
+        activitiesControl: userActivitiesControl.activityAssignments,
+        availableActivities: userActivitiesControl.activityAssignments.filter(a => a.accessLevel !== 'Unauthorized').map(a => a.activity)
+      });
+
+      const filteredItems = allMenuItems.filter(item => {
+        // Always allow Dashboard and Profile
+        if (item.text === 'Dashboard' || item.text === 'Profile') {
+          console.log(`✅ Always allowing ${user?.role}: ${item.text}`);
+          return true;
+        }
+        
+        // Check if item has an activity mapping
+        if (!item.activity) {
+          console.log(`⚠️ No activity mapping for ${user?.role} item: ${item.text} - ALLOWING (fallback)`);
+          return true; // If no activity mapping, allow access (fallback)
+        }
+        
+        // Check if user has access to this activity
+        const activityAssignment = userActivitiesControl.activityAssignments.find(
+          a => a.activity === item.activity
+        );
+        
+        if (!activityAssignment) {
+          console.log(`❌ No activity assignment found for ${user?.role}: ${item.text} (${item.activity}) - HIDDEN`);
+          return false; // No assignment found, deny access
+        }
+        
+        // Check access level - only show if not 'Unauthorized'
+        const hasAccess = activityAssignment.accessLevel !== 'Unauthorized';
+        console.log(`${hasAccess ? '✅' : '❌'} ${user?.role} Activity: ${item.text} (${item.activity}) - Access Level: ${activityAssignment.accessLevel} - ${hasAccess ? 'SHOWN' : 'HIDDEN'}`);
+        return hasAccess;
+      });
+
+      console.log(`📊 ${user?.role} Activities Control Summary for ${user.email}:`, {
+        totalMenuItems: allMenuItems.length,
+        filteredMenuItems: filteredItems.length,
+        hiddenItems: allMenuItems.filter(item => !filteredItems.includes(item)).map(item => item.text),
+        availableItems: filteredItems.map(item => item.text),
+        availableActivities: userActivitiesControl.activityAssignments.filter(a => a.accessLevel !== 'Unauthorized').map(a => a.activity)
+      });
+
+      return filteredItems;
+    }
+
+    return allMenuItems;
+  }, [user?.role, user?.designation, userActivitiesControl]);
 
   const handleNavigation = useCallback((path) => {
     navigate(path);
@@ -286,54 +523,98 @@ const Layout = () => {
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
       
       <List sx={{ flex: 1, px: 1, py: 2 }}>
-        {getMenuItems.map((item) => (
-          <ListItemButton
-            key={item.text}
-            onClick={() => handleNavigation(item.path)}
-            selected={isActiveRoute(item.path)}
-            sx={{
-              borderRadius: 2,
-              mb: 0.5,
-              minHeight: 48,
-              '&.Mui-selected': {
-                backgroundColor: 'rgba(59, 130, 246, 0.25)',
-                color: 'white',
-                '&:hover': {
-                  backgroundColor: 'rgba(59, 130, 246, 0.3)',
-                },
-                '& .MuiListItemIcon-root': {
-                  color: 'white',
-                },
-              },
-              '&:hover': {
-                backgroundColor: 'rgba(255, 255, 255, 0.08)',
-              },
-            }}
-          >
-            <ListItemIcon
+        {userActivitiesControl && (
+          <Box sx={{ mb: 2, px: 2 }}>
+            <Alert severity="info" sx={{ fontSize: '0.75rem', py: 0.5 }}>
+              <Typography variant="caption">
+                VP Controlled Access
+              </Typography>
+              <Typography variant="caption" display="block">
+                {userActivitiesControl.activityAssignments?.filter(a => a.accessLevel !== 'Unauthorized').length || 0} features available
+              </Typography>
+            </Alert>
+          </Box>
+        )}
+        
+        {getMenuItems.map((item) => {
+          // Get access level for this item if it has an activity
+          let accessLevel = null;
+          let accessLevelColor = 'default';
+          
+          if (item.activity && userActivitiesControl?.activityAssignments) {
+            const activityAssignment = userActivitiesControl.activityAssignments.find(
+              a => a.activity === item.activity
+            );
+            if (activityAssignment) {
+              accessLevel = activityAssignment.accessLevel;
+              switch (accessLevel) {
+                case 'View':
+                  accessLevelColor = 'info';
+                  break;
+                case 'Edit':
+                  accessLevelColor = 'warning';
+                  break;
+                case 'Approve':
+                  accessLevelColor = 'success';
+                  break;
+                case 'Unauthorized':
+                  accessLevelColor = 'error';
+                  break;
+                default:
+                  accessLevelColor = 'default';
+              }
+            }
+          }
+
+          return (
+            <ListItemButton
+              key={item.text}
+              onClick={() => handleNavigation(item.path)}
+              selected={isActiveRoute(item.path)}
               sx={{
-                minWidth: drawerCollapsed ? 0 : 40,
-                mr: drawerCollapsed ? 0 : 1,
-                justifyContent: 'center',
-                color: 'rgba(255, 255, 255, 0.7)',
-              }}
-            >
-              {item.icon}
-            </ListItemIcon>
-            {!drawerCollapsed && (
-              <ListItemText
-                primary={item.text}
-                sx={{
-                  '& .MuiListItemText-primary': {
-                    fontSize: '0.875rem',
-                    fontWeight: 500,
+                borderRadius: 2,
+                mb: 0.5,
+                minHeight: 48,
+                '&.Mui-selected': {
+                  backgroundColor: 'rgba(59, 130, 246, 0.25)',
+                  color: 'white',
+                  '&:hover': {
+                    backgroundColor: 'rgba(59, 130, 246, 0.3)',
+                  },
+                  '& .MuiListItemIcon-root': {
                     color: 'white',
                   },
+                },
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                },
+              }}
+            >
+              <ListItemIcon
+                sx={{
+                  minWidth: drawerCollapsed ? 0 : 40,
+                  mr: drawerCollapsed ? 0 : 1,
+                  justifyContent: 'center',
+                  color: 'rgba(255, 255, 255, 0.7)',
                 }}
-              />
-            )}
-          </ListItemButton>
-        ))}
+              >
+                {item.icon}
+              </ListItemIcon>
+              {!drawerCollapsed && (
+                <ListItemText
+                  primary={item.text}
+                  sx={{
+                    '& .MuiListItemText-primary': {
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                      color: 'white',
+                    },
+                  }}
+                />
+              )}
+            </ListItemButton>
+          );
+        })}
       </List>
       
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
@@ -410,6 +691,14 @@ const Layout = () => {
               : user?.role === 'HOD' && user?.designation
               ? `${user.designation} Dashboard`
               : user?.role ? `${user.role} Dashboard` : 'Dashboard'}
+            {userActivitiesControl && (
+              <Chip
+                label={`VP Controlled - ${userActivitiesControl.activityAssignments?.filter(a => a.accessLevel !== 'Unauthorized').length || 0} features accessible`}
+                size="small"
+                color="success"
+                sx={{ ml: 2, fontSize: '0.7rem' }}
+              />
+            )}
           </Typography>
           
           <IconButton color="inherit" sx={{ mr: 1 }}>

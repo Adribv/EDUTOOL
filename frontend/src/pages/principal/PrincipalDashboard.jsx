@@ -1,46 +1,114 @@
-import { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Box, Typography, Tabs, Tab, Card, CardContent, Button, Chip, Grid, TextField, Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Table, TableHead, TableRow, TableCell, TableBody, CircularProgress, Tooltip, Divider
+  Box,
+  Typography,
+  Paper,
+  Tabs,
+  Tab,
+  CircularProgress,
+  Alert,
+  Button,
+  Chip,
+  Grid,
+  Card,
+  CardContent,
+  Avatar,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon,
+  Divider,
+  IconButton,
+  Menu,
+  MenuItem,
+  useTheme,
+  useMediaQuery,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  Rating,
+  Badge
 } from '@mui/material';
-import SecurityIcon from '@mui/icons-material/Security';
-import PolicyIcon from '@mui/icons-material/Policy';
-import ApprovalIcon from '@mui/icons-material/HowToReg';
-import DataObjectIcon from '@mui/icons-material/DataObject';
-import GroupIcon from '@mui/icons-material/Group';
-import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import DownloadIcon from '@mui/icons-material/Download';
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import CrisisAlertIcon from '@mui/icons-material/CrisisAlert';
+import {
+  Security as SecurityIcon,
+  DataObject as DataObjectIcon,
+  Policy as PolicyIcon,
+  Group as GroupIcon,
+  Assessment as AssessmentIcon,
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  MoreVert,
+  CheckCircle,
+  Warning,
+  Error,
+  TrendingUp,
+  TrendingDown,
+  Star,
+  StarBorder,
+  Visibility,
+  VisibilityOff,
+  CrisisAlert as CrisisAlertIcon
+} from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { principalAPI } from '../../services/api';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
+import { 
+  filterDashboardTabsByActivitiesControl, 
+  useUserActivitiesControl,
+  canPerformAction,
+  getAccessLevelInfo
+} from '../../utils/activitiesControl';
+import { api } from '../../services/api';
+
+// Tab configuration for Principal Dashboard
+const allPrincipalTabs = [
+  { label: 'Overview', icon: <DataObjectIcon />, key: 'overview' },
+  { label: 'Policies', icon: <PolicyIcon />, key: 'policies' },
+  { label: 'Staff', icon: <GroupIcon />, key: 'staff' },
+  { label: 'Reports', icon: <AssessmentIcon />, key: 'reports' },
+];
 
 export default function PrincipalDashboard() {
+  const { user } = useAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const queryClient = useQueryClient();
+  
+  // Activities control hook
+  const { hasAccess, canEdit, canApprove, getAccessLevel, getAccessLevelInfo } = useUserActivitiesControl();
+  
   const [tab, setTab] = useState(0);
   const [editSchoolDialog, setEditSchoolDialog] = useState(false);
-  const [schoolForm, setSchoolForm] = useState({});
   const [policyDialog, setPolicyDialog] = useState(false);
-  const [policyForm, setPolicyForm] = useState({ title: '', content: '', type: 'General' });
-  const [editStaffDialog, setEditStaffDialog] = useState(false);
-  const [staffForm, setStaffForm] = useState({});
-  const [selectedStaff, setSelectedStaff] = useState(null);
+  const [staffDialog, setStaffDialog] = useState(false);
   const [appraisalDialog, setAppraisalDialog] = useState(false);
-  const [appraisalForm, setAppraisalForm] = useState({ staffId: '', performance: '', notes: '' });
-  const queryClient = useQueryClient();
-  const { user } = useAuth();
+  
+  // Filter tabs based on activities control
+  const principalTabs = useMemo(() => {
+    return filterDashboardTabsByActivitiesControl(allPrincipalTabs, 'Principal');
+  }, [hasAccess]);
 
   // School Info
   const { data: schoolInfo, isLoading: schoolLoading } = useQuery({
     queryKey: ['schoolInfo'],
-    queryFn: principalAPI.getSchoolInfo,
+    queryFn: api.getSchoolInfo,
     staleTime: 5 * 60 * 1000,
     onSuccess: (data) => setSchoolForm(data),
   });
   const updateSchoolMutation = useMutation({
-    mutationFn: principalAPI.updateSchoolInfo,
+    mutationFn: api.updateSchoolInfo,
     onSuccess: () => {
       queryClient.invalidateQueries(['schoolInfo']);
       setEditSchoolDialog(false);
@@ -52,11 +120,11 @@ export default function PrincipalDashboard() {
   // Policies/Announcements (including Crisis/PR)
   const { data: policies, isLoading: policiesLoading } = useQuery({
     queryKey: ['policies'],
-    queryFn: () => principalAPI.getPolicies?.() || Promise.resolve([]),
+    queryFn: () => api.getPolicies?.() || Promise.resolve([]),
     staleTime: 5 * 60 * 1000,
   });
   const createPolicyMutation = useMutation({
-    mutationFn: principalAPI.createAnnouncement ? principalAPI.createAnnouncement : () => Promise.resolve(),
+    mutationFn: api.createAnnouncement ? api.createAnnouncement : () => Promise.resolve(),
     onSuccess: () => {
       queryClient.invalidateQueries(['policies']);
       setPolicyDialog(false);
@@ -69,11 +137,11 @@ export default function PrincipalDashboard() {
   // Staff
   const { data: staff, isLoading: staffLoading } = useQuery({
     queryKey: ['staff'],
-    queryFn: principalAPI.getStaff,
+    queryFn: api.getStaff,
     staleTime: 5 * 60 * 1000,
   });
   const createStaffMutation = useMutation({
-    mutationFn: principalAPI.createStaff,
+    mutationFn: api.createStaff,
     onSuccess: () => {
       queryClient.invalidateQueries(['staff']);
       setEditStaffDialog(false);
@@ -83,7 +151,7 @@ export default function PrincipalDashboard() {
     onError: () => toast.error('Failed to add staff'),
   });
   const updateStaffMutation = useMutation({
-    mutationFn: ({ id, ...data }) => principalAPI.updateStaff(id, data),
+    mutationFn: ({ id, ...data }) => api.updateStaff(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries(['staff']);
       setEditStaffDialog(false);
@@ -94,7 +162,7 @@ export default function PrincipalDashboard() {
     onError: () => toast.error('Failed to update staff'),
   });
   const deleteStaffMutation = useMutation({
-    mutationFn: principalAPI.deleteStaff,
+    mutationFn: api.deleteStaff,
     onSuccess: () => {
       queryClient.invalidateQueries(['staff']);
       toast.success('Staff deleted');
@@ -105,14 +173,14 @@ export default function PrincipalDashboard() {
   // Reports
   const { data: schoolReport, isLoading: reportLoading } = useQuery({
     queryKey: ['schoolReport'],
-    queryFn: () => principalAPI.generateSchoolReport?.() || Promise.resolve({}),
+    queryFn: () => api.generateSchoolReport?.() || Promise.resolve({}),
     staleTime: 5 * 60 * 1000,
   });
 
   // Departments
   const { data: departments, isLoading: departmentsLoading } = useQuery({
     queryKey: ['departments'],
-    queryFn: principalAPI.getDepartments,
+    queryFn: api.getDepartments,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -130,182 +198,293 @@ export default function PrincipalDashboard() {
     setAppraisalForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  // UI
+  // Helper to get activity name from tab label
+  const getActivityNameFromTabLabel = (label, role) => {
+    const tab = principalTabs.find(t => t.label === label);
+    if (!tab) return null;
+
+    switch (tab.key) {
+      case 'policies': return 'School Management';
+      case 'staff': return 'Principal Staff Management';
+      case 'reports': return 'Principal Reports';
+      default: return null;
+    }
+  };
+
+  // Render tab content with access control
+  const renderTabContent = () => {
+    const currentTab = principalTabs[tab];
+    if (!currentTab) {
+      return (
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+          <Typography variant="h6" color="text.secondary">
+            No access to this feature
+          </Typography>
+        </Box>
+      );
+    }
+
+    // Check access level for the current activity
+    const activityName = getActivityNameFromTabLabel(currentTab.label, 'Principal');
+    const accessLevelInfo = getAccessLevelInfo(activityName);
+
+    if (!hasAccess(activityName, 'View')) {
+      return (
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+          <Alert severity="warning" sx={{ maxWidth: 600 }}>
+            <Typography variant="h6" gutterBottom>
+              Access Restricted
+            </Typography>
+            <Typography>
+              You don't have permission to access {currentTab.label}. 
+              Please contact your Vice Principal for access.
+            </Typography>
+          </Alert>
+        </Box>
+      );
+    }
+
+    const renderContent = () => {
+      switch (currentTab.key) {
+        case 'overview':
+          return (
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Strategic Leadership</Typography>
+                {schoolLoading ? <CircularProgress /> : (
+                  <Box>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} sm={6} md={4}>
+                        <Typography variant="subtitle2">School Vision</Typography>
+                        <Typography>{schoolInfo?.vision || '-'}</Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={4}>
+                        <Typography variant="subtitle2">Mission</Typography>
+                        <Typography>{schoolInfo?.mission || '-'}</Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={4}>
+                        <Typography variant="subtitle2">Long-term Goals</Typography>
+                        <Typography>{schoolInfo?.goals || '-'}</Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={4}>
+                        <Typography variant="subtitle2">Academic & Operational KPIs</Typography>
+                        <Typography>{schoolInfo?.kpis || '-'}</Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={4}>
+                        <Typography variant="subtitle2">Accreditation</Typography>
+                        <Typography>{schoolInfo?.accreditation || '-'}</Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={4}>
+                        <Typography variant="subtitle2">Compliance</Typography>
+                        <Typography>{schoolInfo?.compliance || '-'}</Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={4}>
+                        <Typography variant="subtitle2">Board/Authority Contacts</Typography>
+                        <Typography>{schoolInfo?.boardContacts || '-'}</Typography>
+                      </Grid>
+                    </Grid>
+                    {canEdit(activityName) && (
+                      <Button variant="outlined" sx={{ mt: 2 }} onClick={() => setEditSchoolDialog(true)}>
+                        Edit Strategic Info
+                      </Button>
+                    )}
+                    <Divider sx={{ my: 3 }} />
+                    <Typography variant="h6" gutterBottom>Governance & Policy</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      Draft and enforce school policies. Ensure legal and regulatory compliance. Liaise with the school board and education authorities.
+                    </Typography>
+                    <Divider sx={{ my: 3 }} />
+                    <Typography variant="h6" gutterBottom>Management</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      Oversee recruitment, training, and performance appraisal of staff. Manage crisis, discipline, and public relations. Supervise budgets, finances, and resource allocation.
+                    </Typography>
+                  </Box>
+                )}
+              </CardContent>
+            </Card>
+          );
+        case 'policies':
+          return (
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                  <Typography variant="h6">Policies & Announcements</Typography>
+                  {canEdit(activityName) && (
+                    <Button variant="contained" startIcon={<AddIcon />} onClick={() => setPolicyDialog(true)}>
+                      Add Policy/Announcement
+                    </Button>
+                  )}
+                </Box>
+                {policiesLoading ? <CircularProgress /> : (
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Title</TableCell>
+                        <TableCell>Content</TableCell>
+                        <TableCell>Type</TableCell>
+                        <TableCell>Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {policies?.map((policy, idx) => (
+                        <TableRow key={idx}>
+                          <TableCell>{policy.title}</TableCell>
+                          <TableCell>{policy.content}</TableCell>
+                          <TableCell>{policy.type || 'General'}</TableCell>
+                          <TableCell>
+                            {canEdit(activityName) && (
+                              <IconButton size="small" color="primary">
+                                <EditIcon />
+                              </IconButton>
+                            )}
+                            {canApprove(activityName) && (
+                              <IconButton size="small" color="error">
+                                <DeleteIcon />
+                              </IconButton>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+                <Divider sx={{ my: 3 }} />
+                <Typography variant="h6" gutterBottom><CrisisAlertIcon sx={{ mr: 1, color: 'error.main' }} />Crisis & Public Relations</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Use announcements for crisis management, discipline, and public relations. Add a new announcement with type "Crisis/PR" for urgent communications.
+                </Typography>
+              </CardContent>
+            </Card>
+          );
+        case 'staff':
+          return (
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                  <Typography variant="h6">Staff Management</Typography>
+                  {canEdit(activityName) && (
+                    <Button variant="contained" startIcon={<AddIcon />} onClick={() => setStaffDialog(true)}>
+                      Add Staff
+                    </Button>
+                  )}
+                </Box>
+                {/* Staff management content */}
+                <Typography variant="body2" color="text.secondary">
+                  Manage staff recruitment, training, and performance appraisal.
+                </Typography>
+              </CardContent>
+            </Card>
+          );
+        case 'reports':
+          return (
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Reports & Analytics</Typography>
+                {/* Reports content */}
+                <Typography variant="body2" color="text.secondary">
+                  View comprehensive reports and analytics for school performance.
+                </Typography>
+              </CardContent>
+            </Card>
+          );
+        default:
+          return (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+              <Typography variant="h6" color="text.secondary">
+                Feature not implemented yet
+              </Typography>
+            </Box>
+          );
+      }
+    };
+
+    return (
+      <Box>
+        {/* Access Level Indicator */}
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <Typography variant="h6">{currentTab.label}</Typography>
+          <Chip 
+            label={accessLevelInfo.label}
+            color={accessLevelInfo.color}
+            size="small"
+            icon={currentTab.icon}
+          />
+        </Box>
+        
+        {/* Render the content */}
+        {renderContent()}
+      </Box>
+    );
+  };
+
   return (
     <Box sx={{ p: { xs: 1, md: 3 }, width: '100%', maxWidth: '1400px', mx: 'auto' }}>
-      <Box display="flex" alignItems="center" mb={3}>
-        <SecurityIcon color="primary" sx={{ fontSize: 40, mr: 2 }} />
-        <Typography variant="h4" fontWeight={700}>Principal Dashboard</Typography>
-        <Chip label="Secured" color="success" sx={{ ml: 2 }} />
+      {/* Header */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Box display="flex" alignItems="center">
+          <SecurityIcon color="primary" sx={{ fontSize: 40, mr: 2 }} />
+          <Typography variant="h4" fontWeight={700}>Principal Dashboard</Typography>
+          <Chip label="Activities Controlled" color="success" sx={{ ml: 2 }} />
+        </Box>
       </Box>
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3 }} variant="scrollable" scrollButtons="auto">
-        <Tab label="Overview" icon={<DataObjectIcon />} />
-        <Tab label="Policies" icon={<PolicyIcon />} />
-        <Tab label="Staff" icon={<GroupIcon />} />
-        <Tab label="Reports" icon={<AssessmentIcon />} />
-      </Tabs>
 
-      {/* Overview Tab */}
-      {tab === 0 && (
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>Strategic Leadership</Typography>
-            {schoolLoading ? <CircularProgress /> : (
-              <Box>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6} md={4}>
-                    <Typography variant="subtitle2">School Vision</Typography>
-                    <Typography>{schoolInfo?.vision || '-'}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={4}>
-                    <Typography variant="subtitle2">Mission</Typography>
-                    <Typography>{schoolInfo?.mission || '-'}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={4}>
-                    <Typography variant="subtitle2">Long-term Goals</Typography>
-                    <Typography>{schoolInfo?.goals || '-'}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={4}>
-                    <Typography variant="subtitle2">Academic & Operational KPIs</Typography>
-                    <Typography>{schoolInfo?.kpis || '-'}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={4}>
-                    <Typography variant="subtitle2">Accreditation</Typography>
-                    <Typography>{schoolInfo?.accreditation || '-'}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={4}>
-                    <Typography variant="subtitle2">Compliance</Typography>
-                    <Typography>{schoolInfo?.compliance || '-'}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={4}>
-                    <Typography variant="subtitle2">Board/Authority Contacts</Typography>
-                    <Typography>{schoolInfo?.boardContacts || '-'}</Typography>
-                  </Grid>
-                </Grid>
-                <Button variant="outlined" sx={{ mt: 2 }} onClick={() => setEditSchoolDialog(true)}>
-                  Edit Strategic Info
-                </Button>
-                <Divider sx={{ my: 3 }} />
-                <Typography variant="h6" gutterBottom>Governance & Policy</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Draft and enforce school policies. Ensure legal and regulatory compliance. Liaise with the school board and education authorities.
-                </Typography>
-                <Divider sx={{ my: 3 }} />
-                <Typography variant="h6" gutterBottom>Management</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Oversee recruitment, training, and performance appraisal of staff. Manage crisis, discipline, and public relations. Supervise budgets, finances, and resource allocation.
-                </Typography>
-              </Box>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      {/* Activities Control Summary */}
+      <Box mb={3}>
+        <Alert severity="info" sx={{ mb: 2 }}>
+          <Typography variant="body2">
+            Your dashboard access is controlled by the Vice Principal. 
+            Only authorized features are visible based on your assigned activities.
+          </Typography>
+        </Alert>
+      </Box>
 
-      {/* Policies Tab */}
-      {tab === 1 && (
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-              <Typography variant="h6">Policies & Announcements</Typography>
-              <Button variant="contained" startIcon={<AddIcon />} onClick={() => setPolicyDialog(true)}>
-                Add Policy/Announcement
-              </Button>
-            </Box>
-            {policiesLoading ? <CircularProgress /> : (
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Title</TableCell>
-                    <TableCell>Content</TableCell>
-                    <TableCell>Type</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {policies?.map((policy, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell>{policy.title}</TableCell>
-                      <TableCell>{policy.content}</TableCell>
-                      <TableCell>{policy.type || 'General'}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-            <Divider sx={{ my: 3 }} />
-            <Typography variant="h6" gutterBottom><CrisisAlertIcon sx={{ mr: 1, color: 'error.main' }} />Crisis & Public Relations</Typography>
-            <Typography variant="body2" color="text.secondary">
-              Use announcements for crisis management, discipline, and public relations. Add a new announcement with type "Crisis/PR" for urgent communications.
-            </Typography>
-          </CardContent>
-        </Card>
-      )}
+      {/* Tabs */}
+      <Paper sx={{ width: '100%', mb: 3 }}>
+        <Tabs 
+          value={tab} 
+          onChange={(_, v) => setTab(v)} 
+          variant={isMobile ? "scrollable" : "fullWidth"}
+          scrollButtons={isMobile ? "auto" : false}
+          sx={{ 
+            borderBottom: 1, 
+            borderColor: 'divider',
+            '& .MuiTab-root': {
+              textTransform: 'none',
+              fontWeight: 500,
+              fontSize: '0.9rem',
+              minHeight: 64,
+              '&.Mui-selected': {
+                color: '#1976d2',
+                fontWeight: 600
+              }
+            },
+            '& .MuiTabs-indicator': {
+              backgroundColor: '#1976d2',
+              height: 3
+            }
+          }}
+        >
+          {principalTabs.map((tabItem, index) => (
+            <Tab 
+              key={tabItem.key}
+              label={tabItem.label} 
+              icon={tabItem.icon}
+              sx={{
+                '& .MuiTab-iconWrapper': {
+                  marginRight: 1
+                }
+              }}
+            />
+          ))}
+        </Tabs>
+      </Paper>
 
-      {/* Staff Tab */}
-      {tab === 2 && (
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-              <Typography variant="h6">Staff Management</Typography>
-              <Box>
-                <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setEditStaffDialog(true); setSelectedStaff(null); setStaffForm({}); }} sx={{ mr: 2 }}>
-                  Add Staff
-                </Button>
-                <Button variant="outlined" startIcon={<AssessmentIcon />} onClick={() => setAppraisalDialog(true)}>
-                  Performance Appraisal
-                </Button>
-              </Box>
-            </Box>
-            {staffLoading ? <CircularProgress /> : (
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Name</TableCell>
-                    <TableCell>Email</TableCell>
-                    <TableCell>Role</TableCell>
-                    <TableCell>Department</TableCell>
-                    <TableCell>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {staff?.map((s) => (
-                    <TableRow key={s._id || s.id}>
-                      <TableCell>{s.name}</TableCell>
-                      <TableCell>{s.email}</TableCell>
-                      <TableCell>{s.role}</TableCell>
-                      <TableCell>{s.department?.name || 'No Department'}</TableCell>
-                      <TableCell>
-                        <Tooltip title="Edit"><IconButton onClick={() => { setEditStaffDialog(true); setSelectedStaff(s); setStaffForm({...s, department: s.department?._id || s.department || ''}); }}><EditIcon /></IconButton></Tooltip>
-                        <Tooltip title="Delete"><IconButton color="error" onClick={() => deleteStaffMutation.mutate(s._id || s.id)}><DeleteIcon /></IconButton></Tooltip>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Reports Tab */}
-      {tab === 3 && (
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>Budgets, Finances & Resource Allocation</Typography>
-            {reportLoading ? <CircularProgress /> : (
-              <Box>
-                <Button variant="contained" startIcon={<DownloadIcon />} sx={{ mb: 2 }} onClick={() => {
-                  if (principalAPI.generateSchoolReport) {
-                    principalAPI.generateSchoolReport().then(() => toast.success('Report downloaded'));
-                  }
-                }}>
-                  Download School Report
-                </Button>
-                {/* Add more financial/resource reports as needed */}
-              </Box>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      {/* Tab Content */}
+      <Paper sx={{ width: '100%', minHeight: '60vh' }}>
+        <Box sx={{ p: 3 }}>
+          {renderTabContent()}
+        </Box>
+      </Paper>
 
       {/* Edit School Dialog */}
       <Dialog open={editSchoolDialog} onClose={() => setEditSchoolDialog(false)} maxWidth="sm" fullWidth>

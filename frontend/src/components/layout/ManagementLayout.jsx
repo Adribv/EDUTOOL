@@ -440,7 +440,7 @@ const ManagementLayout = () => {
       // Get user info from localStorage or API
       const token = localStorage.getItem('token');
       if (!token) {
-        navigate('/login');
+        navigate('/management-login');
         return;
       }
 
@@ -491,12 +491,12 @@ const ManagementLayout = () => {
     setAnchorEl(null);
   }, []);
 
-  const handleLogout = useCallback(() => {
+  const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    navigate('/login');
+    navigate('/management-login');
     handleMenuClose();
-  }, [navigate, handleMenuClose]);
+  };
 
   const renderNavItems = useCallback((items) => {
     return items.map((item) => {

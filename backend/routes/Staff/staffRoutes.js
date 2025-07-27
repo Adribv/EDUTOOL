@@ -1,8 +1,9 @@
-const express3 = require('express');
-const router3 = express3.Router();
+const express = require('express');
+const router = express.Router();
 const staffAuth = require('../../controllers/Staff/staffAuth');
 const staffController = require('../../controllers/Staff/staff.controller');
 const newStaffController = require('../../controllers/Staff/staffController');
+const activitiesControlController = require('../../controllers/Staff/VP/activitiesControlController');
 const { verifyToken } = require('../../middlewares/authMiddleware');
 const { permit } = require('../../middlewares/roleMiddleware');
 const upload = require('../../middlewares/uploadMiddleware');
@@ -10,12 +11,15 @@ const uploadLessonPlan = require('../../middlewares/uploadLessonPlanMiddleware')
 const Staff = require('../../models/Staff/staffModel');
 const bcrypt = require('bcryptjs');
 
+// Authentication routes
+router.post('/register', staffAuth.register);
+router.post('/login', staffAuth.login);
 
-router3.post('/register', staffAuth.register);
-router3.post('/login', staffAuth.login);
+// Staff can get their own activities control
+router.get('/activities-control/me', verifyToken, activitiesControlController.getMyActivities);
 
 // Profile routes
-router3.get('/profile', verifyToken, async (req, res) => {
+router.get('/profile', verifyToken, async (req, res) => {
   try {
     const staff = await Staff.findById(req.user.id).select('-password');
     if (!staff) {
@@ -29,7 +33,7 @@ router3.get('/profile', verifyToken, async (req, res) => {
 });
 
 // Update profile
-router3.put('/profile', verifyToken, async (req, res) => {
+router.put('/profile', verifyToken, async (req, res) => {
   try {
     const {
       name,
@@ -76,7 +80,7 @@ router3.put('/profile', verifyToken, async (req, res) => {
 });
 
 // Change password
-router3.put('/change-password', verifyToken, async (req, res) => {
+router.put('/change-password', verifyToken, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
 
@@ -107,7 +111,7 @@ router3.put('/change-password', verifyToken, async (req, res) => {
 });
 
 // Upload profile image
-router3.put('/profile-image', verifyToken, upload.single('profileImage'), async (req, res) => {
+router.put('/profile-image', verifyToken, upload.single('profileImage'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'Profile image is required' });
@@ -133,7 +137,7 @@ router3.put('/profile-image', verifyToken, upload.single('profileImage'), async 
 });
 
 // Professional Development Management
-router3.post('/professional-development', verifyToken, async (req, res) => {
+router.post('/professional-development', verifyToken, async (req, res) => {
   try {
     const {
       title,
@@ -170,7 +174,7 @@ router3.post('/professional-development', verifyToken, async (req, res) => {
   }
 });
 
-router3.put('/professional-development/:index', verifyToken, async (req, res) => {
+router.put('/professional-development/:index', verifyToken, async (req, res) => {
   try {
     const { index } = req.params;
     const {
@@ -212,7 +216,7 @@ router3.put('/professional-development/:index', verifyToken, async (req, res) =>
   }
 });
 
-router3.delete('/professional-development/:index', verifyToken, async (req, res) => {
+router.delete('/professional-development/:index', verifyToken, async (req, res) => {
   try {
     const { index } = req.params;
 
@@ -239,7 +243,7 @@ router3.delete('/professional-development/:index', verifyToken, async (req, res)
 });
 
 // Get public profile (for other staff members)
-router3.get('/profile/:id', verifyToken, async (req, res) => {
+router.get('/profile/:id', verifyToken, async (req, res) => {
   try {
     const staff = await Staff.findById(req.params.id).select('-password');
     if (!staff) {
@@ -279,31 +283,34 @@ router3.get('/profile/:id', verifyToken, async (req, res) => {
   }
 });
 
-router3.post('/assignments', verifyToken, permit('Teacher', 'HOD'), staffController.createAssignment);
-router3.get('/assignments', verifyToken, permit('Teacher', 'HOD'), staffController.getAssignments);
+// Teacher and HOD specific routes
+router.post('/assignments', verifyToken, permit('Teacher', 'HOD'), staffController.createAssignment);
+router.get('/assignments', verifyToken, permit('Teacher', 'HOD'), staffController.getAssignments);
 
-router3.post('/attendance', verifyToken, permit('Teacher', 'HOD'), staffController.markAttendance);
-router3.get('/attendance', verifyToken, permit('Teacher', 'HOD'), staffController.getMarkedAttendance);
+router.post('/attendance', verifyToken, permit('Teacher', 'HOD'), staffController.markAttendance);
+router.get('/attendance', verifyToken, permit('Teacher', 'HOD'), staffController.getMarkedAttendance);
 
-// routes/staff.router.js — Additions for HOD and Teacher
-router3.put('/assign', verifyToken, permit('HOD'), staffController.assignSubjectToTeacher);
-router3.get('/students', verifyToken, permit('Teacher'), staffController.getAssignedStudents);
-router3.get('/class-data', verifyToken, permit('Teacher'), staffController.getClassData);
+// HOD specific routes
+router.put('/assign', verifyToken, permit('HOD'), staffController.assignSubjectToTeacher);
+router.get('/students', verifyToken, permit('Teacher'), staffController.getAssignedStudents);
+router.get('/class-data', verifyToken, permit('Teacher'), staffController.getClassData);
 
-router3.post('/resources',
+// Resource management
+router.post('/resources',
   verifyToken,
   permit('Teacher'),
   upload.single('file'),
   staffController.uploadResource
 );
 
-router3.get('/resources', verifyToken, permit('Teacher'), async (req, res) => {
+router.get('/resources', verifyToken, permit('Teacher'), async (req, res) => {
   const Resource = require('../../models/Staff/Teacher/resource.model');
   const resources = await Resource.find({ uploadedBy: req.user.id });
   res.json(resources);
 });
 
-router3.post(
+// Lesson plan management
+router.post(
   '/lessonplans',
   verifyToken,
   permit('Teacher'),
@@ -311,17 +318,19 @@ router3.post(
   staffController.submitLessonPlan
 );
 
-router3.get('/lessonplans', verifyToken, permit('Teacher', 'HOD'), staffController.getLessonPlans);
-router3.put('/lessonplans/:id/approve', verifyToken, permit('HOD'), staffController.approveLessonPlan);
+router.get('/lessonplans', verifyToken, permit('Teacher', 'HOD'), staffController.getLessonPlans);
+router.put('/lessonplans/:id/approve', verifyToken, permit('HOD'), staffController.approveLessonPlan);
 
-router3.put('/grades', verifyToken, permit('Teacher'), staffController.editGrades);
-//protected route for staff only:
-router3.get('/dashboard', verifyToken, permit('Teacher', 'HOD', 'Principal'), (req, res) => {
+// Grade management
+router.put('/grades', verifyToken, permit('Teacher'), staffController.editGrades);
+
+// Dashboard routes
+router.get('/dashboard', verifyToken, permit('Teacher', 'HOD', 'Principal'), (req, res) => {
   res.json({ role : `${req.user.role}` });
 });
 
-// Add reports route
-router3.get('/reports', verifyToken, permit('Teacher', 'HOD', 'Principal'), async (req, res) => {
+// Reports route
+router.get('/reports', verifyToken, permit('Teacher', 'HOD', 'Principal'), async (req, res) => {
   try {
     const reports = await Staff.find({}, 'name email role assignedSubjects');
     res.json(reports);
@@ -332,27 +341,25 @@ router3.get('/reports', verifyToken, permit('Teacher', 'HOD', 'Principal'), asyn
 });
 
 // Staff Dashboard Routes
-router3.get('/dashboard', verifyToken, newStaffController.getStaffDashboard);
-router3.get('/:staffId/coordinated-students', verifyToken, newStaffController.getCoordinatedStudents);
-router3.get('/:staffId/coordinated-parents', verifyToken, newStaffController.getCoordinatedParents);
-router3.get('/:staffId/coordinated-classes', verifyToken, newStaffController.getCoordinatedClasses);
-router3.get('/:staffId/profile', verifyToken, newStaffController.getStaffProfile);
-router3.put('/:staffId/profile', verifyToken, newStaffController.updateStaffProfile);
+router.get('/dashboard', verifyToken, newStaffController.getStaffDashboard);
+router.get('/:staffId/coordinated-students', verifyToken, newStaffController.getCoordinatedStudents);
+router.get('/:staffId/coordinated-parents', verifyToken, newStaffController.getCoordinatedParents);
+router.get('/:staffId/coordinated-classes', verifyToken, newStaffController.getCoordinatedClasses);
+router.get('/:staffId/profile', verifyToken, newStaffController.getStaffProfile);
+router.put('/:staffId/profile', verifyToken, newStaffController.updateStaffProfile);
 
 // Leave Request Routes
-router3.get('/:staffId/leave-requests', verifyToken, newStaffController.getLeaveRequests);
-router3.put('/:staffId/leave-requests/:id', verifyToken, newStaffController.updateLeaveRequest);
-
-
+router.get('/:staffId/leave-requests', verifyToken, newStaffController.getLeaveRequests);
+router.put('/:staffId/leave-requests/:id', verifyToken, newStaffController.updateLeaveRequest);
 
 // Student Attendance Routes
-router3.get('/:staffId/students/:studentId/attendance', verifyToken, newStaffController.getStudentAttendancePercentage);
+router.get('/:staffId/students/:studentId/attendance', verifyToken, newStaffController.getStudentAttendancePercentage);
 
 // Exam Management - Add new route for fetching published exams
-router3.get('/:staffId/published-exams', verifyToken, newStaffController.getPublishedExams);
+router.get('/:staffId/published-exams', verifyToken, newStaffController.getPublishedExams);
 
 // Salary Records Route
-router3.get('/salary-records/:staffId', verifyToken, async (req, res) => {
+router.get('/salary-records/:staffId', verifyToken, async (req, res) => {
   try {
     const { staffId } = req.params;
     
@@ -377,4 +384,4 @@ router3.get('/salary-records/:staffId', verifyToken, async (req, res) => {
   }
 });
 
-module.exports = router3;
+module.exports = router;

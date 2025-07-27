@@ -173,9 +173,9 @@ const Dashboard = () => {
           <Button 
             variant="contained" 
             size="large"
-            onClick={() => navigate('/login')}
+            onClick={() => navigate('/management-login')}
           >
-            Go to Login
+            Get Started
           </Button>
         )}
       </Box>

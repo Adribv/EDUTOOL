@@ -19,7 +19,7 @@ const permissionSchema = new mongoose.Schema({
   // Department (for HODs and department-specific roles)
   department: {
     type: String,
-    enum: ['Academics', 'Administration', 'Support Staff', 'IT', 'Library', 'Wellness', 'Finance']
+    enum: ['Academics', 'Administration', 'Support Staff', 'IT', 'Library', 'Wellness', 'Finance', 'Admin']
   },
   // Remarks/notes
   remarks: {

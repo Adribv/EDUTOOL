@@ -1,13 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Box, Typography, Table, TableHead, TableRow, TableCell, TableBody, Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions, Chip, CircularProgress, Alert, Tabs, Tab } from '@mui/material';
 import { api } from '../../services/api';
+import { 
+  filterDashboardTabsByActivitiesControl, 
+  useUserActivitiesControl,
+  getActivityNameFromTabLabel,
+  getAccessLevelInfo
+} from '../../utils/activitiesControl';
+
+// IT Dashboard tabs configuration
+const allITDashboardTabs = [
+  { label: 'IT Support Requests', key: 'support-requests' },
+  { label: 'System Reports', key: 'system-reports' },
+  { label: 'User Management', key: 'user-management' },
+  { label: 'System Settings', key: 'system-settings' },
+];
 
 const ITDashboard = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [comment, setComment] = useState('');
   const queryClient = useQueryClient();
+
+  // Activities control hook
+  const { hasAccess, canEdit, canApprove, getAccessLevel } = useUserActivitiesControl();
+
+  // Filter tabs based on activities control
+  const itDashboardTabs = useMemo(() => {
+    return filterDashboardTabsByActivitiesControl(allITDashboardTabs, 'ITAdmin');
+  }, [hasAccess]);
 
   // Fetch all IT support requests
   const { data: requests, isLoading, error, refetch } = useQuery({
@@ -30,8 +52,30 @@ const ITDashboard = () => {
     }
   });
 
+  // Check access for current tab
+  const currentTab = itDashboardTabs[activeTab];
+  const activityName = currentTab ? getActivityNameFromTabLabel(currentTab.label, 'ITAdmin') : '';
+  const accessLevelInfo = getAccessLevelInfo(activityName);
+
   if (isLoading) return <CircularProgress />;
   if (error) return <Alert severity="error">Failed to load IT support requests</Alert>;
+
+  // Check if user has access to current tab
+  if (!hasAccess(activityName, 'View')) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity="warning">
+          <Typography variant="h6" gutterBottom>
+            Access Restricted
+          </Typography>
+          <Typography>
+            You don't have permission to access {currentTab?.label}. 
+            Please contact your Vice Principal for access.
+          </Typography>
+        </Alert>
+      </Box>
+    );
+  }
 
   // Separate solved and unsolved
   const solved = requests.filter(r => r.status === 'Resolved' || r.status === 'Closed');
@@ -39,11 +83,21 @@ const ITDashboard = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>IT Support Dashboard</Typography>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h4" gutterBottom>IT Support Dashboard</Typography>
+        <Chip 
+          label={accessLevelInfo.label}
+          color={accessLevelInfo.color}
+          size="small"
+        />
+      </Box>
+      
       <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} sx={{ mb: 2 }}>
-        <Tab label={`Unsolved (${unsolved.length})`} />
-        <Tab label={`Solved (${solved.length})`} />
+        {itDashboardTabs.map((tab, index) => (
+          <Tab key={tab.key} label={tab.label} />
+        ))}
       </Tabs>
+      
       <Box sx={{ width: '100%', overflowX: 'auto', minWidth: 900 }}>
         <Table>
           <TableHead>
@@ -65,7 +119,7 @@ const ITDashboard = () => {
                   <Chip label={req.status} color={req.status === 'Resolved' ? 'success' : 'warning'} />
                 </TableCell>
                 <TableCell>
-                  {activeTab === 0 && (
+                  {activeTab === 0 && canEdit(activityName) && (
                     <Button onClick={() => setSelectedRequest(req)}>Reply / Solve</Button>
                   )}
                 </TableCell>
@@ -74,6 +128,7 @@ const ITDashboard = () => {
           </TableBody>
         </Table>
       </Box>
+      
       {/* Reply/Solve Dialog */}
       <Dialog open={!!selectedRequest} onClose={() => setSelectedRequest(null)}>
         <DialogTitle>Reply to IT Support Request</DialogTitle>
@@ -100,9 +155,8 @@ const ITDashboard = () => {
                 status: 'Resolved'
               }
             })}
-            disabled={!comment}
           >
-            Mark as Solved
+            Resolve
           </Button>
         </DialogActions>
       </Dialog>

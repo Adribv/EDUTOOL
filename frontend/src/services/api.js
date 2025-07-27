@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: 'https://api.edulives.com/api',
+  baseURL: 'http://localhost:5000/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -1452,5 +1452,78 @@ export const teacherRemarksAPI = {
 export const getStudentFeeStatus = () => fetch('/api/accountant/fee-status').then(res => res.json());
 export const getFeeStats = () => fetch('/api/accountant/fee-stats').then(res => res.json());
 export const getTransactionLog = () => fetch('/api/accountant/transaction-log').then(res => res.json());
+
+export const vpAPI = {
+  // Dashboard
+  getOverview: () => api.get('/vp/department/overview').then(res => res.data),
+  getStaff: () => api.get('/vp/department/staff').then(res => res.data),
+  getStatistics: () => api.get('/vp/department/statistics').then(res => res.data),
+  getDepartment: () => api.get('/vp/department').then(res => res.data),
+  updateDepartment: (data) => api.put(`/vp/department/${data.id}`, data).then(res => res.data),
+  createDepartment: (data) => api.post('/vp/department', data).then(res => res.data),
+  
+  // HOD Management
+  getAllDepartments: () => api.get('/vp/departments').then(res => res.data),
+  assignHOD: (data) => api.post('/vp/department/hod', data).then(res => res.data),
+  getHODs: () => api.get('/vp/hods').then(res => res.data),
+  
+  // Teacher Management
+  getTeachers: () => api.get('/vp/teachers').then(res => res.data),
+  getTeachersByDepartment: (departmentId) => api.get(`/vp/department/${departmentId}/teachers`).then(res => res.data),
+  
+  // Exam Management
+  getExams: () => api.get('/vp/exams').then(res => res.data),
+  createExam: (data) => api.post('/vp/exams', data).then(res => res.data),
+  updateExam: (data) => api.put(`/vp/exams/${data.id}`, data).then(res => res.data),
+  deleteExam: (examId) => api.delete(`/vp/exams/${examId}`).then(res => res.data),
+  
+  // Exam Timetable Management
+  getTimetables: () => api.get('/vp/timetables').then(res => res.data),
+  createTimetable: (data) => api.post('/vp/timetables', data).then(res => res.data),
+  updateTimetable: (data) => api.put(`/vp/timetables/${data.id}`, data).then(res => res.data),
+  deleteTimetable: (timetableId) => api.delete(`/vp/timetables/${timetableId}`).then(res => res.data),
+  getTimetablesByDateRange: (startDate, endDate) => api.get(`/vp/timetables/date-range?startDate=${startDate}&endDate=${endDate}`).then(res => res.data),
+  
+  // Curriculum Management
+  getCurriculumPlans: () => api.get('/vp/curriculum').then(res => res.data),
+  getApprovedCurriculumPlans: () => api.get('/vp/curriculum/approved').then(res => res.data),
+  createCurriculum: (data) => api.post('/vp/curriculum', data).then(res => res.data),
+  updateCurriculum: (data) => api.put(`/vp/curriculum/${data.id}`, data).then(res => res.data),
+  deleteCurriculum: (curriculumId) => api.delete(`/vp/curriculum/${curriculumId}`).then(res => res.data),
+  approveCurriculum: (curriculumId) => api.post(`/vp/curriculum/${curriculumId}/approve`).then(res => res.data),
+  rejectCurriculum: (curriculumId, reason) => api.post(`/vp/curriculum/${curriculumId}/reject`, { reason }).then(res => res.data),
+  getCurriculumByGrade: (grade) => api.get(`/vp/curriculum/grade/${grade}`).then(res => res.data),
+  // Add new endpoint for teacher remarks
+  getTeacherRemarksForCurriculum: (curriculumId) => api.get(`/vp/curriculum/${curriculumId}/teacher-remarks`).then(res => res.data),
+  
+  // HOD Approval Management
+  getHODSubmissions: () => api.get('/vp/hod-submissions').then(res => res.data),
+  approveHODSubmission: (submissionId) => api.post(`/vp/hod-submissions/${submissionId}/approve`).then(res => res.data),
+  rejectHODSubmission: (submissionId) => api.post(`/vp/hod-submissions/${submissionId}/reject`).then(res => res.data),
+  
+  // Service Request Management
+  getServiceRequests: () => api.get('/vp/service-requests').then(res => res.data),
+  approveServiceRequest: (requestId, comments) => api.post(`/vp/service-requests/${requestId}/approve`, { comments }).then(res => res.data),
+  rejectServiceRequest: (requestId, comments) => api.post(`/vp/service-requests/${requestId}/reject`, { comments }).then(res => res.data),
+  
+  // Profile Management
+  getProfile: () => api.get('/vp/profile').then(res => res.data),
+  updateProfile: (data) => api.put('/vp/profile', data).then(res => res.data),
+  changePassword: (data) => api.post('/vp/change-password', data).then(res => res.data),
+
+  // Activities Control Management
+  getAllStaffActivities: () => api.get('/vp/activities-control/staff').then(res => res.data),
+  getStaffActivities: (staffId) => api.get(`/vp/activities-control/staff/${staffId}`).then(res => res.data),
+  saveStaffActivities: (staffId, data) => api.post(`/vp/activities-control/staff/${staffId}`, data).then(res => res.data),
+  deleteStaffActivities: (staffId) => api.delete(`/vp/activities-control/staff/${staffId}`).then(res => res.data),
+  getAvailableActivities: () => api.get('/vp/activities-control/activities').then(res => res.data),
+  bulkAssignActivities: (data) => api.post('/vp/activities-control/bulk-assign', data).then(res => res.data),
+  getActivitiesSummary: () => api.get('/vp/activities-control/summary').then(res => res.data),
+};
+
+// Staff Activities Control API
+export const staffActivitiesControlAPI = {
+  getMyActivities: () => api.get('/staffs/activities-control/me').then(res => res.data),
+};
 
 export default api;

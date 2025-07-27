@@ -6,6 +6,7 @@ const timetableController = require('../../../controllers/Staff/VP/timetableCont
 const curriculumController = require('../../../controllers/Staff/VP/curriculumController');
 const hodApprovalController = require('../../../controllers/Staff/VP/hodApprovalController');
 const profileController = require('../../../controllers/Staff/VP/profileController');
+const activitiesControlController = require('../../../controllers/Staff/VP/activitiesControlController');
 const { verifyToken, isVicePrincipal } = require('../../../middlewares/authMiddleware');
 
 // All routes require authentication and Vice Principal role
@@ -77,5 +78,14 @@ router.post('/change-password', profileController.changePassword);
 router.get('/service-requests', departmentController.getPendingServiceRequests);
 router.post('/service-requests/:id/approve', departmentController.approveServiceRequest);
 router.post('/service-requests/:id/reject', departmentController.rejectServiceRequest);
+
+// Activities Control Routes
+router.get('/activities-control/staff', activitiesControlController.getAllStaffActivities);
+router.get('/activities-control/staff/:staffId', activitiesControlController.getStaffActivities);
+router.post('/activities-control/staff/:staffId', activitiesControlController.saveStaffActivities);
+router.delete('/activities-control/staff/:staffId', activitiesControlController.deleteStaffActivities);
+router.get('/activities-control/activities', activitiesControlController.getAvailableActivities);
+router.post('/activities-control/bulk-assign', activitiesControlController.bulkAssignActivities);
+router.get('/activities-control/summary', activitiesControlController.getActivitiesSummary);
 
 module.exports = router; 
