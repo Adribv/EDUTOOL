@@ -27,6 +27,9 @@ export const ADMIN_PAGE_ACTIVITIES = {
   'Timetable': 'Events',
   'CurriculumTemplateDemo': 'Classes',
   
+  // School Management
+  'SchoolManagement': 'School Management',
+  
   // Fee Management
   'Fee_Management': 'Fee Management',
   'FeeConfiguration': 'Fee Management',

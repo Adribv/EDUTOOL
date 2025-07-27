@@ -19,6 +19,9 @@ export const activityMapping = {
   'A_Subjects': 'Classes',
   'A_Schedules': 'Events',
   
+  // School Management related
+  'SchoolManagement': 'School Management',
+  
   // Fee Management related
   'Fee_Management': 'Fee Management',
   'FeeConfiguration': 'Fee Management',

@@ -391,14 +391,17 @@ exports.getPendingFeeRecordApprovals = async (req, res) => {
 // Get all staff salary records
 exports.getStaffSalaryRecords = async (req, res) => {
   try {
+    console.log('getStaffSalaryRecords called with query:', req.query);
+    
     const { 
       page = 1, 
-      limit = 10, 
+      limit, 
       department, 
       paymentStatus, 
       status,
       month,
-      year 
+      year,
+      staffId // <-- add staffId support
     } = req.query;
 
     const query = {};
@@ -408,27 +411,39 @@ exports.getStaffSalaryRecords = async (req, res) => {
     if (status) query.status = status;
     if (month) query.month = month;
     if (year) query.year = parseInt(year);
+    if (staffId) query.staffId = staffId; // <-- filter by staffId if provided
 
-    const skip = (page - 1) * limit;
+    console.log('Final query:', query);
+
+    const skip = limit ? (page - 1) * limit : 0;
     
-    const records = await StaffSalaryRecord.find(query)
+    let queryBuilder = StaffSalaryRecord.find(query)
       .populate('staffId', 'name employeeId designation')
       .populate('createdBy', 'name')
       .populate('approvedBy', 'name')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
+      .sort({ createdAt: -1 });
+    
+    if (limit) {
+      queryBuilder = queryBuilder.skip(skip).limit(parseInt(limit));
+    }
+    
+    const records = await queryBuilder;
+
+    console.log('Found records:', records.length);
 
     const total = await StaffSalaryRecord.countDocuments(query);
 
-    res.json({
+    const response = {
       data: records,
       pagination: {
         current: parseInt(page),
-        total: Math.ceil(total / limit),
+        total: limit ? Math.ceil(total / limit) : 1,
         totalRecords: total
       }
-    });
+    };
+
+    console.log('Sending response:', response);
+    res.json(response);
   } catch (error) {
     console.error('Error fetching staff salary records:', error);
     res.status(500).json({ message: 'Server error' });

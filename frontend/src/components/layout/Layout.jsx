@@ -53,6 +53,7 @@ import {
   LocalShipping,
   RateReview,
   AccountBalance,
+  Support,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import Logo from './Logo';
@@ -189,6 +190,7 @@ const Layout = () => {
           'Reports': 'Reports',
           'FeeConfiguration': 'Fee Management',
           'Fee_Management': 'Fee Management',
+          'SchoolManagement': 'School Management',
           'Inventory_Management': 'Inventory',
           'UserManagement': 'User Management',
           'A_Reports': 'Reports',
@@ -364,8 +366,7 @@ const Layout = () => {
     const roleSpecificItems = {
       AdminStaff: [
         { text: 'Staff Management', icon: <People />, path: '/admin/staff', activity: 'Staff Management' },
-        { text: 'Student Records', icon: <School />, path: '/admin/students', activity: 'Student Records' },
-        { text: 'Fee Management', icon: <Payment />, path: '/admin/fee-management', activity: 'Fee Management' },
+        { text: 'School Management', icon: <School />, path: '/admin/school-management', activity: 'School Management' },
         { text: 'Inventory', icon: <Inventory />, path: '/admin/inventory', activity: 'Inventory' },
         { text: 'Events', icon: <CalendarToday />, path: '/admin/events', activity: 'Events' },
         { text: 'Communications', icon: <Notifications />, path: '/admin/communications', activity: 'Communications' },
@@ -408,7 +409,9 @@ const Layout = () => {
         { text: 'School Management', icon: <Settings />, path: '/principal/school', activity: 'School Management' },
         { text: 'Academic Management', icon: <Book />, path: '/principal/academic', activity: 'Academic Management' },
         { text: 'Approvals', icon: <Approval />, path: '/principal/approvals', activity: 'Principal Approvals' },
+        { text: 'Service Requests', icon: <Support />, path: '/principal/service-requests', activity: 'Principal Service Requests' },
         { text: 'Reports', icon: <Assessment />, path: '/principal/reports', activity: 'Principal Reports' },
+        { text: 'Delegation Authority', icon: <Security />, path: '/principal/delegation-authority', activity: 'Delegation Authority Management' },
       ],
       Counsellor: [
         { text: 'Counselling Requests', icon: <Psychology />, path: '/counselor/requests', activity: 'Counselling Requests' },

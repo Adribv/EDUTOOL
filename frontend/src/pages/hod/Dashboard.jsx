@@ -39,7 +39,8 @@ import {
   InputLabel,
   Select,
   Rating,
-  Badge
+  Badge,
+  Fab
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -64,7 +65,9 @@ import {
   StarBorder,
   Visibility,
   VisibilityOff,
-  Security
+  Security,
+  Support,
+  Approval
 } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
@@ -77,6 +80,9 @@ import {
 } from '../../utils/activitiesControl';
 import { api } from '../../services/api';
 import SalaryPayroll from '../teacher/SalaryPayroll';
+import ServiceRequests from './ServiceRequests';
+import TeacherApprovals from './TeacherApprovals';
+import DelegationAuthorityNotice from '../../components/DelegationAuthorityNotice';
 
 // API service for HOD using the configured api instance
 const hodAPI = {
@@ -135,8 +141,11 @@ const allHODTabs = [
   { label: 'Teacher Evaluation', icon: <Assessment />, key: 'teacherEvaluation' },
   { label: 'Class Allocation', icon: <Class />, key: 'classAllocation' },
   { label: 'Department Reports', icon: <Assignment />, key: 'departmentReports' },
+  { label: 'Service Requests', icon: <Support />, key: 'serviceRequests' },
+  { label: 'Teacher Approvals', icon: <Approval />, key: 'teacherApprovals' },
   { label: 'Lesson Plan Approvals', icon: <Analytics />, key: 'lessonPlanApprovals' },
   { label: 'Salary Payroll', icon: <AccountBalance />, key: 'salaryPayroll' },
+  { label: 'Delegation Authority', icon: <Security />, key: 'delegationAuthority' },
 ];
 
 const Dashboard = () => {
@@ -415,13 +424,16 @@ const Dashboard = () => {
     if (!tab) return null;
 
     switch (tab.key) {
-      case 'staffManagement': return 'Manage Staff';
-      case 'teacherAttendance': return 'Mark Attendance';
-      case 'teacherEvaluation': return 'Evaluate Teacher';
-      case 'classAllocation': return 'Allocate Class';
-      case 'departmentReports': return 'View Department Reports';
-      case 'lessonPlanApprovals': return 'Approve Lesson Plans';
-      case 'salaryPayroll': return 'Manage Salary & Payroll';
+      case 'staffManagement': return 'HOD Staff Management';
+      case 'teacherAttendance': return 'HOD Staff Management';
+      case 'teacherEvaluation': return 'HOD Staff Management';
+      case 'classAllocation': return 'Course Management';
+      case 'departmentReports': return 'HOD Reports';
+      case 'serviceRequests': return 'Service Requests';
+      case 'teacherApprovals': return 'HOD Staff Management';
+      case 'lessonPlanApprovals': return 'Lesson Plan Approvals';
+      case 'salaryPayroll': return 'Salary Payroll';
+      case 'delegationAuthority': return 'Delegation Authority Management';
       default: return null;
     }
   };
@@ -648,6 +660,10 @@ const Dashboard = () => {
               {/* Reports content */}
             </Box>
           );
+        case 'serviceRequests':
+          return <ServiceRequests />;
+        case 'teacherApprovals':
+          return <TeacherApprovals />;
         case 'lessonPlanApprovals':
           return (
             <Box>
@@ -662,6 +678,8 @@ const Dashboard = () => {
               {/* Salary payroll content */}
             </Box>
           );
+        case 'delegationAuthority':
+          return <DelegationAuthorityNotice />;
         default:
           return (
             <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">

@@ -3454,6 +3454,80 @@ exports.createServiceRequest = async (req, res) => {
   }
 };
 
+// Get all service requests
+exports.getServiceRequests = async (req, res) => {
+  try {
+    const requests = await ApprovalRequest.find({ requestType: 'ServiceRequest' })
+      .sort({ createdAt: -1 });
+    res.json(requests);
+  } catch (error) {
+    console.error('Error fetching service requests:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Get service request by ID
+exports.getServiceRequestById = async (req, res) => {
+  try {
+    const request = await ApprovalRequest.findById(req.params.id);
+    if (!request) {
+      return res.status(404).json({ message: 'Service request not found' });
+    }
+    res.json(request);
+  } catch (error) {
+    console.error('Error fetching service request:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Update service request
+exports.updateServiceRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    const request = await ApprovalRequest.findById(id);
+    if (!request) {
+      return res.status(404).json({ message: 'Service request not found' });
+    }
+    
+    // Update the request data
+    if (updateData.requestData) {
+      request.requestData = { ...request.requestData, ...updateData.requestData };
+    }
+    if (updateData.status) {
+      request.status = updateData.status;
+    }
+    if (updateData.currentApprover) {
+      request.currentApprover = updateData.currentApprover;
+    }
+    
+    await request.save();
+    res.json({ message: 'Service request updated successfully', request });
+  } catch (error) {
+    console.error('Error updating service request:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Delete service request
+exports.deleteServiceRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const request = await ApprovalRequest.findById(id);
+    if (!request) {
+      return res.status(404).json({ message: 'Service request not found' });
+    }
+    
+    await ApprovalRequest.findByIdAndDelete(id);
+    res.json({ message: 'Service request deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting service request:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // Bulk import visitors
 exports.bulkImportVisitors = async (req, res) => {
   try {
@@ -3573,5 +3647,159 @@ exports.uploadStaffDocuments = async (req, res) => {
   } catch (error) {
     console.error('Error uploading staff documents:', error);
     res.status(500).json({ message: 'Server error during file upload' });
+  }
+};
+
+// Leave Request Management
+const StaffLeaveRequest = require('../../../models/Staff/staffLeaveRequestModel');
+const StudentLeaveRequest = require('../../../models/Student/studentLeaveRequestModel');
+
+// Get all staff leave requests
+exports.getAllLeaveRequests = async (req, res) => {
+  try {
+    const leaveRequests = await StaffLeaveRequest.find()
+      .populate('staffId', 'name employeeId role department')
+      .populate('approvedBy', 'name')
+      .sort({ createdAt: -1 });
+
+    res.json(leaveRequests);
+  } catch (error) {
+    console.error('Error fetching staff leave requests:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Get all student leave requests
+exports.getAllStudentLeaveRequests = async (req, res) => {
+  try {
+    const leaveRequests = await StudentLeaveRequest.find()
+      .populate('studentId', 'name rollNumber class section')
+      .populate('approvedBy', 'name')
+      .sort({ createdAt: -1 });
+
+    res.json(leaveRequests);
+  } catch (error) {
+    console.error('Error fetching student leave requests:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Approve staff leave request
+exports.approveLeaveRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { comments } = req.body;
+
+    const leaveRequest = await StaffLeaveRequest.findById(id);
+    if (!leaveRequest) {
+      return res.status(404).json({ message: 'Leave request not found' });
+    }
+
+    leaveRequest.status = 'Approved';
+    leaveRequest.approvedBy = req.user.id;
+    leaveRequest.approvedAt = new Date();
+    if (comments) {
+      leaveRequest.comments = comments;
+    }
+
+    await leaveRequest.save();
+
+    res.json({ 
+      message: 'Leave request approved successfully',
+      leaveRequest 
+    });
+  } catch (error) {
+    console.error('Error approving leave request:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Reject staff leave request
+exports.rejectLeaveRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { comments } = req.body;
+
+    const leaveRequest = await StaffLeaveRequest.findById(id);
+    if (!leaveRequest) {
+      return res.status(404).json({ message: 'Leave request not found' });
+    }
+
+    leaveRequest.status = 'Rejected';
+    leaveRequest.approvedBy = req.user.id;
+    leaveRequest.approvedAt = new Date();
+    if (comments) {
+      leaveRequest.comments = comments;
+    }
+
+    await leaveRequest.save();
+
+    res.json({ 
+      message: 'Leave request rejected successfully',
+      leaveRequest 
+    });
+  } catch (error) {
+    console.error('Error rejecting leave request:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Approve student leave request
+exports.approveStudentLeaveRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { comments } = req.body;
+
+    const leaveRequest = await StudentLeaveRequest.findById(id);
+    if (!leaveRequest) {
+      return res.status(404).json({ message: 'Leave request not found' });
+    }
+
+    leaveRequest.status = 'Approved';
+    leaveRequest.approvedBy = req.user.id;
+    leaveRequest.approvedAt = new Date();
+    if (comments) {
+      leaveRequest.comments = comments;
+    }
+
+    await leaveRequest.save();
+
+    res.json({ 
+      message: 'Student leave request approved successfully',
+      leaveRequest 
+    });
+  } catch (error) {
+    console.error('Error approving student leave request:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Reject student leave request
+exports.rejectStudentLeaveRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { comments } = req.body;
+
+    const leaveRequest = await StudentLeaveRequest.findById(id);
+    if (!leaveRequest) {
+      return res.status(404).json({ message: 'Leave request not found' });
+    }
+
+    leaveRequest.status = 'Rejected';
+    leaveRequest.approvedBy = req.user.id;
+    leaveRequest.approvedAt = new Date();
+    if (comments) {
+      leaveRequest.comments = comments;
+    }
+
+    await leaveRequest.save();
+
+    res.json({ 
+      message: 'Student leave request rejected successfully',
+      leaveRequest 
+    });
+  } catch (error) {
+    console.error('Error rejecting student leave request:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };

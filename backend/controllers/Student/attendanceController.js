@@ -1,6 +1,6 @@
 const Student = require('../../models/Student/studentModel');
 const Attendance = require('../../models/Staff/Teacher/attendance.model');
-const LeaveRequest = require('../../models/Student/leaveRequestModel');
+const LeaveRequest = require('../../models/Student/studentLeaveRequestModel');
 
 // Get attendance records
 exports.getAttendance = async (req, res) => {

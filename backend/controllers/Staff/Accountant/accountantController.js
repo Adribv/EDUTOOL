@@ -589,11 +589,14 @@ exports.createSalaryRecord = async (req, res) => {
       return res.status(400).json({ message: 'Salary record already exists for this month and year' });
     }
 
+    // Generate employeeId if not present
+    const employeeId = staff.employeeId || `EMP${Date.now()}${Math.floor(Math.random() * 1000)}`;
+    
     const salaryRecord = new StaffSalaryRecord({
       staffId,
       staffName: staff.name,
-      employeeId: staff.employeeId,
-      designation: staff.designation || staff.role,
+      employeeId: employeeId,
+      designation: staff.designation || staff.role || 'Staff',
       department: staff.department?.name || '',
       month,
       year: parseInt(year),

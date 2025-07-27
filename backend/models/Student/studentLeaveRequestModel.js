@@ -1,9 +1,17 @@
 const mongoose = require('mongoose');
 
-const leaveRequestSchema = new mongoose.Schema({
+const studentLeaveRequestSchema = new mongoose.Schema({
   studentId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Student',
+    required: true
+  },
+  studentName: {
+    type: String,
+    required: true
+  },
+  rollNumber: {
+    type: String,
     required: true
   },
   class: {
@@ -12,6 +20,11 @@ const leaveRequestSchema = new mongoose.Schema({
   },
   section: {
     type: String,
+    required: true
+  },
+  leaveType: {
+    type: String,
+    enum: ['Sick Leave', 'Personal Leave', 'Emergency Leave', 'Family Function', 'Medical Appointment', 'Other'],
     required: true
   },
   startDate: {
@@ -26,9 +39,8 @@ const leaveRequestSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  type: {
+  parentContact: {
     type: String,
-    enum: ['Medical', 'Family Emergency', 'Personal', 'Other'],
     required: true
   },
   status: {
@@ -36,13 +48,18 @@ const leaveRequestSchema = new mongoose.Schema({
     enum: ['Pending', 'Approved', 'Rejected'],
     default: 'Pending'
   },
-  reviewedBy: {
+  approvedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Staff'
   },
-  reviewedAt: Date,
+  approvedAt: Date,
   comments: String,
-  attachments: [String]
-}, { timestamps: true });
+  submittedAt: {
+    type: Date,
+    default: Date.now
+  }
+}, {
+  timestamps: true
+});
 
-module.exports = mongoose.model('LeaveRequest', leaveRequestSchema);
+module.exports = mongoose.model('StudentLeaveRequest', studentLeaveRequestSchema); 

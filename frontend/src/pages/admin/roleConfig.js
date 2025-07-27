@@ -17,6 +17,7 @@ export const roleConfig = {
   },
   'AdminStaff': {
     sidebar: [
+      'SchoolManagement',
       'Fee_Management',
       'Inventory_Management',
       'UserManagement',

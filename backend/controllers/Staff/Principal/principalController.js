@@ -1895,4 +1895,248 @@ exports.getAllLessonPlans = async (req, res) => {
     console.error('Error fetching all lesson plans:', error);
     res.status(500).json({ message: 'Server error' });
   }
+};
+
+// Service Request Management
+exports.getServiceRequests = async (req, res) => {
+  try {
+    const { requesterType, status, requestType } = req.query;
+    let filter = {};
+    
+    if (requesterType) {
+      filter.requesterType = requesterType;
+    }
+    
+    if (status) {
+      filter.status = status;
+    }
+    
+    if (requestType) {
+      filter.requestType = requestType;
+    }
+    
+    const requests = await ApprovalRequest.find({
+      ...filter,
+      requestType: { $in: ['ITSupportRequest', 'GeneralServiceRequest'] }
+    })
+    .populate('requesterId', 'name email role')
+    .sort({ createdAt: -1 });
+    
+    res.json({
+      success: true,
+      data: requests
+    });
+  } catch (error) {
+    console.error('Error fetching service requests:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to fetch service requests',
+      error: error.message 
+    });
+  }
+};
+
+exports.createServiceRequest = async (req, res) => {
+  try {
+    const requesterId = req.user.id;
+    const {
+      requesterInfo,
+      deviceEquipmentInfo,
+      issueDescription,
+      priorityLevel,
+      requestedAction,
+      preferredContactTime,
+      requesterSignature,
+      serviceCategory,
+      serviceLocation,
+      description,
+      budgetEstimate,
+      urgencyLevel,
+      specialRequirements,
+      requesterType,
+      requestType
+    } = req.body;
+
+    // Determine request type and create appropriate request
+    const isITSupport = requestType === 'ITSupportRequest' || !requestType;
+    
+    const approvalRequest = new ApprovalRequest({
+      requesterId,
+      requesterName: requesterInfo?.name || req.user.name,
+      requestType: isITSupport ? 'ITSupportRequest' : 'GeneralServiceRequest',
+      title: isITSupport 
+        ? `IT Support Request - ${issueDescription?.substring(0, 50)}...`
+        : `General Service Request - ${serviceCategory}`,
+      description: isITSupport ? issueDescription : description,
+      requestData: isITSupport ? {
+        requesterInfo,
+        deviceEquipmentInfo,
+        issueDescription,
+        priorityLevel,
+        requestedAction,
+        preferredContactTime,
+        requesterSignature
+      } : {
+        requesterName: requesterInfo?.name || req.user.name,
+        serviceCategory,
+        serviceLocation,
+        description,
+        budgetEstimate,
+        urgencyLevel,
+        specialRequirements
+      },
+      status: 'Pending',
+      currentApprover: 'VP'
+    });
+
+    await approvalRequest.save();
+    
+    res.status(201).json({
+      success: true,
+      message: 'Service request submitted successfully',
+      requestNumber: approvalRequest._id,
+      data: approvalRequest
+    });
+  } catch (error) {
+    console.error('Error creating service request:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to submit service request',
+      error: error.message 
+    });
+  }
+};
+
+exports.getServiceRequestById = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    
+    const request = await ApprovalRequest.findById(requestId)
+      .populate('requesterId', 'name email role');
+    
+    if (!request) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Service request not found' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: request
+    });
+  } catch (error) {
+    console.error('Error fetching service request:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to fetch service request',
+      error: error.message 
+    });
+  }
+};
+
+exports.updateServiceRequest = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const updateData = req.body;
+    
+    const request = await ApprovalRequest.findByIdAndUpdate(
+      requestId,
+      updateData,
+      { new: true }
+    ).populate('requesterId', 'name email role');
+    
+    if (!request) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Service request not found' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Service request updated successfully',
+      data: request
+    });
+  } catch (error) {
+    console.error('Error updating service request:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to update service request',
+      error: error.message 
+    });
+  }
+};
+
+exports.deleteServiceRequest = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    
+    const request = await ApprovalRequest.findByIdAndDelete(requestId);
+    
+    if (!request) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Service request not found' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Service request deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting service request:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to delete service request',
+      error: error.message 
+    });
+  }
+};
+
+exports.getServiceRequestStats = async (req, res) => {
+  try {
+    const stats = await ApprovalRequest.aggregate([
+      {
+        $match: {
+          requestType: { $in: ['ITSupportRequest', 'GeneralServiceRequest'] }
+        }
+      },
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+    
+    const totalRequests = await ApprovalRequest.countDocuments({
+      requestType: { $in: ['ITSupportRequest', 'GeneralServiceRequest'] }
+    });
+    
+    const statsObject = {
+      total: totalRequests,
+      pending: 0,
+      approved: 0,
+      rejected: 0,
+      inProgress: 0
+    };
+    
+    stats.forEach(stat => {
+      statsObject[stat._id.toLowerCase()] = stat.count;
+    });
+    
+    res.json({
+      success: true,
+      stats: statsObject
+    });
+  } catch (error) {
+    console.error('Error fetching service request stats:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to fetch service request stats',
+      error: error.message 
+    });
+  }
 }; 

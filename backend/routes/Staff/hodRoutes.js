@@ -206,4 +206,188 @@ router.get('/reports/improvement-plans', reportsAnalyticsController.getImproveme
 router.get('/class-allocation/recommendations', teacherManagementController.getClassAllocationRecommendations);
 router.post('/class-allocation', teacherManagementController.allocateClass);
 
+// Service Requests Management routes
+router.get('/service-requests/leave', async (req, res) => {
+  try {
+    const StaffLeaveRequest = require('../../../models/Staff/staffLeaveRequestModel');
+    const leaveRequests = await StaffLeaveRequest.find()
+      .populate('staffId', 'name email department')
+      .populate('approvedBy', 'name')
+      .sort({ createdAt: -1 });
+    res.json(leaveRequests);
+  } catch (error) {
+    console.error('Error fetching leave requests:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.get('/service-requests/it-support', async (req, res) => {
+  try {
+    const ITSupportRequest = require('../../../models/ITSupportRequest/itSupportRequestModel');
+    const itRequests = await ITSupportRequest.find()
+      .populate('requesterId', 'name email')
+      .sort({ createdAt: -1 });
+    res.json(itRequests);
+  } catch (error) {
+    console.error('Error fetching IT support requests:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.get('/service-requests/general', async (req, res) => {
+  try {
+    const ApprovalRequest = require('../../../models/Staff/HOD/approvalRequest.model');
+    const generalRequests = await ApprovalRequest.find({
+      requestType: 'ServiceRequest'
+    })
+    .populate('requesterId', 'name email')
+    .sort({ createdAt: -1 });
+    res.json(generalRequests);
+  } catch (error) {
+    console.error('Error fetching general service requests:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.put('/service-requests/:requestType/:requestId/approve', async (req, res) => {
+  try {
+    const { requestType, requestId } = req.params;
+    const { feedback } = req.body;
+    
+    let request;
+    switch (requestType) {
+      case 'leave':
+        const StaffLeaveRequest = require('../../../models/Staff/staffLeaveRequestModel');
+        request = await StaffLeaveRequest.findById(requestId);
+        if (request) {
+          request.status = 'Approved';
+          request.approvedBy = req.user.id;
+          request.approvedAt = new Date();
+          if (feedback) request.comments = feedback;
+          await request.save();
+        }
+        break;
+      case 'it-support':
+        const ITSupportRequest = require('../../../models/ITSupportRequest/itSupportRequestModel');
+        request = await ITSupportRequest.findById(requestId);
+        if (request) {
+          request.status = 'In Progress';
+          request.itDepartmentUse.requestReceivedBy = req.user.name;
+          request.itDepartmentUse.dateTimeReceived = new Date();
+          if (feedback) request.reply = feedback;
+          await request.save();
+        }
+        break;
+      case 'general':
+        const ApprovalRequest = require('../../../models/Staff/HOD/approvalRequest.model');
+        request = await ApprovalRequest.findById(requestId);
+        if (request) {
+          request.status = 'Approved';
+          request.currentApprover = 'Completed';
+          request.approvalHistory.push({
+            approver: req.user.id,
+            role: 'HOD',
+            status: 'Approved',
+            comments: feedback || '',
+            timestamp: new Date()
+          });
+          await request.save();
+        }
+        break;
+    }
+    
+    if (!request) {
+      return res.status(404).json({ message: 'Request not found' });
+    }
+    
+    res.json({ message: 'Request approved successfully', request });
+  } catch (error) {
+    console.error('Error approving request:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.put('/service-requests/:requestType/:requestId/reject', async (req, res) => {
+  try {
+    const { requestType, requestId } = req.params;
+    const { feedback } = req.body;
+    
+    let request;
+    switch (requestType) {
+      case 'leave':
+        const StaffLeaveRequest = require('../../../models/Staff/staffLeaveRequestModel');
+        request = await StaffLeaveRequest.findById(requestId);
+        if (request) {
+          request.status = 'Rejected';
+          request.approvedBy = req.user.id;
+          request.approvedAt = new Date();
+          if (feedback) request.comments = feedback;
+          await request.save();
+        }
+        break;
+      case 'it-support':
+        const ITSupportRequest = require('../../../models/ITSupportRequest/itSupportRequestModel');
+        request = await ITSupportRequest.findById(requestId);
+        if (request) {
+          request.status = 'Closed';
+          if (feedback) request.reply = feedback;
+          await request.save();
+        }
+        break;
+      case 'general':
+        const ApprovalRequest = require('../../../models/Staff/HOD/approvalRequest.model');
+        request = await ApprovalRequest.findById(requestId);
+        if (request) {
+          request.status = 'Rejected';
+          request.currentApprover = 'Completed';
+          request.approvalHistory.push({
+            approver: req.user.id,
+            role: 'HOD',
+            status: 'Rejected',
+            comments: feedback || '',
+            timestamp: new Date()
+          });
+          await request.save();
+        }
+        break;
+    }
+    
+    if (!request) {
+      return res.status(404).json({ message: 'Request not found' });
+    }
+    
+    res.json({ message: 'Request rejected successfully', request });
+  } catch (error) {
+    console.error('Error rejecting request:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Teacher Leave Request Processing
+router.put('/teacher-supervision/leave-requests/:requestId/process', async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const { status, comments } = req.body;
+    
+    const TeacherLeaveRequest = require('../../../models/Staff/HOD/teacherLeaveRequest.model');
+    const leaveRequest = await TeacherLeaveRequest.findById(requestId);
+    
+    if (!leaveRequest) {
+      return res.status(404).json({ message: 'Leave request not found' });
+    }
+    
+    leaveRequest.status = status;
+    leaveRequest.hodComments = comments;
+    leaveRequest.processedBy = req.user.id;
+    leaveRequest.processedAt = new Date();
+    
+    await leaveRequest.save();
+    
+    res.json({ message: 'Leave request processed successfully', leaveRequest });
+  } catch (error) {
+    console.error('Error processing leave request:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;
