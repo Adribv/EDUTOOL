@@ -180,6 +180,7 @@ const Layout = () => {
           'Visitors': <GroupIcon />,
           'Disciplinary_Forms': <Warning />,
           'Teacher_Remarks': <RateReview />,
+          'Audit_Log': <Assessment />,
         };
 
         // Map roleConfig items to activities control activities
@@ -208,6 +209,7 @@ const Layout = () => {
           'Visitors': 'Visitors',
           'Disciplinary_Forms': 'Student Records',
           'Teacher_Remarks': 'Syllabus Completion',
+          'Audit_Log': 'Audit Log',
         };
 
         return {
@@ -275,6 +277,7 @@ const Layout = () => {
         { text: 'Course Management', icon: <Assignment />, path: '/hod/courses' },
         { text: 'Reports', icon: <Assessment />, path: '/hod/reports' },
         { text: 'Lesson Plan Approvals', icon: <Approval />, path: '/hod/lesson-plans' },
+        { text: 'Audit Log', icon: <Assessment />, path: '/admin/audit-log' },
       ];
 
       // Filter menu items based on activities control if user has activities control
@@ -299,6 +302,7 @@ const Layout = () => {
             'Course Management': 'Course Management',
             'Reports': 'HOD Reports',
             'Lesson Plan Approvals': 'Lesson Plan Approvals',
+            'Audit Log': 'Audit Log',
           };
           
           const activity = hodActivityMapping[item.text];
@@ -379,6 +383,7 @@ const Layout = () => {
         { text: 'Visitors', icon: <GroupIcon />, path: '/admin/Visitors', activity: 'Visitors' },
         { text: 'Service Requests', icon: <Approval />, path: '/admin/service-requests', activity: 'Service Requests' },
         { text: 'Syllabus Completion', icon: <RateReview />, path: '/admin/syllabus-completion', activity: 'Syllabus Completion' },
+        { text: 'Audit Log', icon: <Assessment />, path: '/admin/audit-log', activity: 'Audit Log' },
         { text: 'Salary Payroll', icon: <AccountBalance />, path: '/admin/salary-payroll', activity: 'Salary Payroll' },
       ],
       ITAdmin: [
