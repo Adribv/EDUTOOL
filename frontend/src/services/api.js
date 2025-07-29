@@ -1498,6 +1498,22 @@ export const teacherRemarksAPI = {
   
   // Parent APIs
   getParentForms: (childId, params) => api.get(`/teacher-remarks/parent/${childId}`, { params }).then(res => res.data),
+  
+  // Audit Log Management
+  getAuditLogs: (params) => api.get('/admin/audit-logs', { params }).then(res => res.data),
+  getAuditLogById: (id) => api.get(`/admin/audit-logs/${id}`).then(res => res.data),
+  createAuditLog: (data) => api.post('/admin/audit-logs', data).then(res => res.data),
+  updateAuditLog: (id, data) => api.put(`/admin/audit-logs/${id}`, data).then(res => res.data),
+  deleteAuditLog: (id) => api.delete(`/admin/audit-logs/${id}`).then(res => res.data),
+  getAuditStatistics: () => api.get('/admin/audit-logs/statistics').then(res => res.data),
+
+  // Inspection Log Management
+  getInspectionLogs: (params) => api.get('/admin/inspection-logs', { params }).then(res => res.data),
+  getInspectionLogById: (id) => api.get(`/admin/inspection-logs/${id}`).then(res => res.data),
+  createInspectionLog: (data) => api.post('/admin/inspection-logs', data).then(res => res.data),
+  updateInspectionLog: (id, data) => api.put(`/admin/inspection-logs/${id}`, data).then(res => res.data),
+  deleteInspectionLog: (id) => api.delete(`/admin/inspection-logs/${id}`).then(res => res.data),
+  getInspectionStatistics: () => api.get('/admin/inspection-logs/statistics').then(res => res.data),
 };
 
 export const getStudentFeeStatus = () => fetch('/api/accountant/fee-status').then(res => res.json());
@@ -1570,14 +1586,6 @@ export const vpAPI = {
   getAvailableActivities: () => api.get('/vp/activities-control/activities').then(res => res.data),
   bulkAssignActivities: (data) => api.post('/vp/activities-control/bulk-assign', data).then(res => res.data),
   getActivitiesSummary: () => api.get('/vp/activities-control/summary').then(res => res.data),
-
-  // Audit Log Management
-  getAuditLogs: (params) => api.get('/admin/audit-logs', { params }).then(res => res.data),
-  getAuditLogById: (id) => api.get(`/admin/audit-logs/${id}`).then(res => res.data),
-  createAuditLog: (data) => api.post('/admin/audit-logs', data).then(res => res.data),
-  updateAuditLog: (id, data) => api.put(`/admin/audit-logs/${id}`, data).then(res => res.data),
-  deleteAuditLog: (id) => api.delete(`/admin/audit-logs/${id}`).then(res => res.data),
-  getAuditStatistics: () => api.get('/admin/audit-logs/statistics').then(res => res.data),
 };
 
 // Staff Activities Control API

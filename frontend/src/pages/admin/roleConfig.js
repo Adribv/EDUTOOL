@@ -34,6 +34,7 @@ export const roleConfig = {
       'Disciplinary_Forms',
       'Teacher_Remarks',
       'Audit_Log',
+      'Inspection_Log',
     ],
     dashboard: [
       'Admissions',

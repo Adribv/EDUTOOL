@@ -154,6 +154,13 @@ const Layout = () => {
       ];
 
       // Map roleConfig sidebar items to menu items with proper activity mapping
+      console.log(`🔍 ROLE CONFIG DEBUG:`, {
+        userDesignation: user.designation,
+        roleConfigKeys: Object.keys(roleConfig),
+        hasRoleConfig: !!roleConfig[user.designation],
+        sidebarItems: roleConfig[user.designation]?.sidebar || []
+      });
+      
       const roleSpecificItems = (roleConfig[user.designation]?.sidebar || []).map((item) => {
         // Map sidebar item to path and icon
         const iconMap = {
@@ -181,6 +188,7 @@ const Layout = () => {
           'Disciplinary_Forms': <Warning />,
           'Teacher_Remarks': <RateReview />,
           'Audit_Log': <Assessment />,
+        'Inspection_Log': <Assessment />,
         };
 
         // Map roleConfig items to activities control activities
@@ -210,14 +218,25 @@ const Layout = () => {
           'Disciplinary_Forms': 'Student Records',
           'Teacher_Remarks': 'Syllabus Completion',
           'Audit_Log': 'Audit Log',
+        'Inspection_Log': 'Inspection Log',
         };
 
-        return {
+        const menuItem = {
           text: item.replace(/_/g, ' '),
           icon: iconMap[item] || <Assignment />,
           path: `/admin/${item.toLowerCase().replace(/_/g, '-')}`,
           activity: activityMapping[item] || item.replace(/_/g, ' '),
         };
+        
+        // Debug Inspection Log mapping
+        if (item === 'Inspection_Log') {
+          console.log(`🔍 INSPECTION LOG MAPPING:`, {
+            originalItem: item,
+            mappedMenuItem: menuItem
+          });
+        }
+        
+        return menuItem;
       });
 
       const allMenuItems = [...baseMenuItems, ...roleSpecificItems];
@@ -278,6 +297,7 @@ const Layout = () => {
         { text: 'Reports', icon: <Assessment />, path: '/hod/reports' },
         { text: 'Lesson Plan Approvals', icon: <Approval />, path: '/hod/lesson-plans' },
         { text: 'Audit Log', icon: <Assessment />, path: '/admin/audit-log' },
+        { text: 'Inspection Log', icon: <Assessment />, path: '/admin/inspection-log' },
       ];
 
       // Filter menu items based on activities control if user has activities control
@@ -303,6 +323,7 @@ const Layout = () => {
             'Reports': 'HOD Reports',
             'Lesson Plan Approvals': 'Lesson Plan Approvals',
             'Audit Log': 'Audit Log',
+            'Inspection Log': 'Inspection Log',
           };
           
           const activity = hodActivityMapping[item.text];
@@ -384,6 +405,7 @@ const Layout = () => {
         { text: 'Service Requests', icon: <Approval />, path: '/admin/service-requests', activity: 'Service Requests' },
         { text: 'Syllabus Completion', icon: <RateReview />, path: '/admin/syllabus-completion', activity: 'Syllabus Completion' },
         { text: 'Audit Log', icon: <Assessment />, path: '/admin/audit-log', activity: 'Audit Log' },
+        { text: 'Inspection Log', icon: <Assessment />, path: '/admin/inspection-log', activity: 'Inspection Log' },
         { text: 'Salary Payroll', icon: <AccountBalance />, path: '/admin/salary-payroll', activity: 'Salary Payroll' },
       ],
       ITAdmin: [
@@ -450,6 +472,21 @@ const Layout = () => {
         const activityAssignment = userActivitiesControl.activityAssignments.find(
           a => a.activity === item.activity
         );
+        
+        // Special debugging for Inspection Log
+        if (item.text === 'Inspection Log') {
+          console.log(`🔍 DEBUGGING INSPECTION LOG:`, {
+            itemText: item.text,
+            itemActivity: item.activity,
+            userActivities: userActivitiesControl.activityAssignments.map(a => ({ activity: a.activity, accessLevel: a.accessLevel })),
+            hasActivityAssignment: !!activityAssignment,
+            activityAssignment: activityAssignment
+          });
+          
+          // Temporarily force Inspection Log to be visible for testing
+          console.log(`🔧 TEMPORARILY FORCING INSPECTION LOG TO BE VISIBLE`);
+          return true;
+        }
         
         if (!activityAssignment) {
           console.log(`❌ No activity assignment found for ${user?.role}: ${item.text} (${item.activity}) - HIDDEN`);

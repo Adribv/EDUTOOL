@@ -5,6 +5,7 @@ const softSkillsController = require('../../controllers/Admin/softSkillsControll
 const supportStaffController = require('../../controllers/Admin/supportStaffController');
 const transportController = require('../../controllers/Admin/transportController');
 const auditLogRoutes = require('./auditLogRoutes');
+const inspectionLogRoutes = require('./inspectionLogRoutes');
 const { verifyToken } = require('../../middlewares/authMiddleware');
 
 // Test endpoint (no auth required)
@@ -113,5 +114,6 @@ router.get('/transport/logs', transportController.getAllLogs);
 
 // Audit Log routes
 router.use('/audit-logs', auditLogRoutes);
+router.use('/inspection-logs', inspectionLogRoutes);
 
 module.exports = router; 
