@@ -93,6 +93,14 @@ router.get('/lesson-plans/pending', principalController.getLessonPlansForApprova
 router.get('/lesson-plans/test', (req, res) => res.json({ message: 'Lesson plans test route working' }));
 router.put('/lesson-plans/:planId/approve', principalController.approveLessonPlan);
 
+// Service Request Management
+router.get('/service-requests', principalController.getServiceRequests);
+router.post('/service-requests', principalController.createServiceRequest);
+router.get('/service-requests/:requestId', principalController.getServiceRequestById);
+router.put('/service-requests/:requestId', principalController.updateServiceRequest);
+router.delete('/service-requests/:requestId', principalController.deleteServiceRequest);
+router.get('/service-requests/stats', principalController.getServiceRequestStats);
+
 // Debug route to check all lesson plans
 router.get('/debug/lesson-plans', async (req, res) => {
   try {

@@ -3,7 +3,7 @@ const Student = require('../../models/Student/studentModel');
 const ClassModel = require('../../models/Admin/classModel');
 const Parent = require('../../models/Parent/parentModel');
 const Calendar = require('../../models/Academic/calendarModel');
-const StudentLeaveRequest = require('../../models/Student/leaveRequestModel');
+const StudentLeaveRequest = require('../../models/Student/studentLeaveRequestModel');
 const ExamPaper = require('../../models/Staff/HOD/examPaper.model');
 
 // Staff Dashboard - Real data based on coordinator role

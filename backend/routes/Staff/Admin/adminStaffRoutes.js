@@ -100,6 +100,12 @@ router.post('/enquiries', enquiryController.createEnquiry);
 router.post('/enquiries/bulk', enquiryController.bulkImportEnquiries);
 router.post('/service-requests', adminStaffController.createServiceRequest);
 
+// Service Request Management (after auth middleware)
+router.get('/service-requests', adminStaffController.getServiceRequests);
+router.get('/service-requests/:id', adminStaffController.getServiceRequestById);
+router.put('/service-requests/:id', adminStaffController.updateServiceRequest);
+router.delete('/service-requests/:id', adminStaffController.deleteServiceRequest);
+
 // Apply authentication middleware to all routes below this line
 router.use(verifyToken);
 router.use(permit('AdminStaff'));
@@ -261,5 +267,13 @@ router.post('/fee-records/staff', feeRecordsController.createStaffSalaryRecord);
 router.post('/fee-records/staff/bulk-import', feeRecordsController.bulkImportStaffSalaryRecords);
 
 router.get('/fee-records/stats', feeRecordsController.getFeeRecordsStats);
+
+// Leave Request Management
+router.get('/leave-requests', adminStaffController.getAllLeaveRequests);
+router.get('/student-leave-requests', adminStaffController.getAllStudentLeaveRequests);
+router.put('/leave-requests/:id/approve', adminStaffController.approveLeaveRequest);
+router.put('/leave-requests/:id/reject', adminStaffController.rejectLeaveRequest);
+router.put('/student-leave-requests/:id/approve', adminStaffController.approveStudentLeaveRequest);
+router.put('/student-leave-requests/:id/reject', adminStaffController.rejectStudentLeaveRequest);
 
 module.exports = router;

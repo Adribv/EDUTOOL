@@ -1,26 +1,26 @@
 const mongoose = require('mongoose');
 
-const leaveRequestSchema = new mongoose.Schema({
-  studentId: {
+const staffLeaveRequestSchema = new mongoose.Schema({
+  staffId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Student',
+    ref: 'Staff',
     required: true
   },
-  studentName: {
+  staffName: {
     type: String,
     required: true
   },
-  studentClass: {
+  employeeId: {
     type: String,
     required: true
   },
-  studentSection: {
+  department: {
     type: String,
     required: true
   },
   leaveType: {
     type: String,
-    enum: ['Sick Leave', 'Personal Leave', 'Emergency Leave', 'Other'],
+    enum: ['Sick Leave', 'Personal Leave', 'Emergency Leave', 'Annual Leave', 'Maternity Leave', 'Paternity Leave', 'Other'],
     required: true
   },
   startDate: {
@@ -35,7 +35,7 @@ const leaveRequestSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  parentContact: {
+  contactNumber: {
     type: String,
     required: true
   },
@@ -58,4 +58,4 @@ const leaveRequestSchema = new mongoose.Schema({
   timestamps: true
 });
 
-module.exports = mongoose.model('StudentLeaveRequest', leaveRequestSchema); 
+module.exports = mongoose.model('StaffLeaveRequest', staffLeaveRequestSchema); 

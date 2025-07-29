@@ -114,6 +114,7 @@ app.use('/api/disciplinary-templates', require('./routes/disciplinaryFormTemplat
 app.use('/api/transport-forms', require('./routes/transportForm.routes'));
 app.use('/api/counselling-requests', counsellingRequestRoutes);
 app.use('/api/admin', require('./routes/Admin/adminRoutes'));
+app.use('/api/delegation-authority', require('./routes/delegationAuthorityRoutes'));
 
 // --- MOCK STAFF DATA AND PERMISSIONS ENDPOINT FOR DEMO ---
 let staffList = [

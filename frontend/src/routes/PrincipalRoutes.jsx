@@ -9,6 +9,8 @@ import AcademicManagement from '../pages/principal/AcademicManagement';
 import Reports from '../pages/principal/Reports';
 import Approvals from '../pages/principal/Approvals';
 import LessonPlanApprovals from '../pages/principal/LessonPlanApprovals';
+import ServiceRequests from '../pages/principal/ServiceRequests';
+import DelegationAuthorityNotice from '../components/DelegationAuthorityNotice';
 
 const PrincipalRoutes = () => {
   return (
@@ -24,6 +26,8 @@ const PrincipalRoutes = () => {
         <Route path="reports" element={<Reports />} />
         <Route path="approvals" element={<Approvals />} />
         <Route path="lesson-plans" element={<LessonPlanApprovals />} />
+        <Route path="service-requests" element={<ServiceRequests />} />
+        <Route path="delegation-authority" element={<DelegationAuthorityNotice />} />
       </Route>
     </Routes>
   );

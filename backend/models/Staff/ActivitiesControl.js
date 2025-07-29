@@ -53,20 +53,31 @@ const activitiesControlSchema = new mongoose.Schema({
           'Student Calendar',
           'Student Counselling Request Form',
           
-          // Principal activities
-          'Principal Staff Management',
-          'Principal Student Management',
-          'School Management',
-          'Academic Management',
-          'Principal Approvals',
-          'Principal Reports',
-          
-          // HOD activities
+                     // Principal activities
+           'Principal Staff Management',
+           'Principal Student Management',
+           'School Management',
+           'Academic Management',
+           'Principal Approvals',
+           'Principal Reports',
+           'Delegation Authority Management',
+           
+           // Vice Principal activities
+           'Vice Principal Staff Management',
+           'Vice Principal Student Management',
+           'Vice Principal School Management',
+           'Vice Principal Academic Management',
+           'Vice Principal Approvals',
+           'Vice Principal Reports',
+           'Delegation Authority Management',
+           
+           // HOD activities
           'Department Management',
           'HOD Staff Management',
           'Course Management',
           'HOD Reports',
           'Lesson Plan Approvals',
+          'Delegation Authority Management',
           
           // Counsellor activities
           'Counselling Requests',
@@ -88,7 +99,8 @@ const activitiesControlSchema = new mongoose.Schema({
   // Department assignment (optional)
   department: {
     type: String,
-    enum: ['Academics', 'Administration', 'Support Staff', 'IT', 'Library', 'Wellness', 'Finance', 'Admin']
+    enum: ['Academics', 'Administration', 'Support Staff', 'IT', 'Library', 'Wellness', 'Finance', 'Admin', ''],
+    default: ''
   },
   // Remarks/notes
   remarks: {
@@ -168,14 +180,25 @@ activitiesControlSchema.statics.getAvailableActivities = function() {
     'School Management',
     'Academic Management',
     'Principal Approvals',
-    'Principal Reports',
-    
-    // HOD activities
+         'Principal Reports',
+     'Delegation Authority Management',
+     
+     // Vice Principal activities
+     'Vice Principal Staff Management',
+     'Vice Principal Student Management',
+     'Vice Principal School Management',
+     'Vice Principal Academic Management',
+     'Vice Principal Approvals',
+     'Vice Principal Reports',
+     'Delegation Authority Management',
+     
+     // HOD activities
     'Department Management',
     'HOD Staff Management',
     'Course Management',
     'HOD Reports',
     'Lesson Plan Approvals',
+    'Delegation Authority Management',
     
     // Counsellor activities
     'Counselling Requests',

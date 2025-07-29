@@ -24,7 +24,7 @@ import {
   SupervisorAccount, People, Cancel, Approval, RateReview, Computer, LibraryBooks, 
   DirectionsBus, EmojiEvents, SportsSoccer, LocalLibrary, AccountBalance, Support,
   HealthAndSafety, EventAvailable, PsychologyAlt, School as SchoolIcon, 
-  BusinessCenter, Engineering, Science, ArtTrack, MusicNote, TheaterComedy
+  BusinessCenter, Engineering, Science, ArtTrack, MusicNote, TheaterComedy, Build
 } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { teacherAPI, staffAPI, api } from '../../services/api';
@@ -48,6 +48,7 @@ import { teacherRemarksAPI } from '../../services/api';
 // import { api } from '../../services/api';
 import CounsellingRequestForm from '../../components/CounsellingRequestForm';
 import ITSupportRequest from '../student/ITSupportRequest';
+import GeneralServiceRequest from './GeneralServiceRequest';
 
 // Import all available dashboard components
 import MentalWellnessDashboard from '../counselor/MentalWellnessDashboard';
@@ -76,6 +77,7 @@ function ServiceRequest() {
     { label: 'Substitute Request', icon: <Approval /> },
     { label: 'Counselling Request', icon: <Psychology /> },
     { label: 'IT Support Request', icon: <Computer /> },
+    { label: 'General Service Request', icon: <Build /> },
   ];
 
   const renderServiceContent = () => {
@@ -86,6 +88,8 @@ function ServiceRequest() {
         return <CounsellingRequestForm />;
       case 2:
         return <ITSupportRequest />;
+      case 3:
+        return <GeneralServiceRequest />;
       default:
         return <SubstituteTeacherRequest />;
     }

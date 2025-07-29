@@ -31,6 +31,15 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Tabs,
+  Tab,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material';
 import {
   School,
@@ -68,12 +77,21 @@ import {
   Warning,
   Info,
   CheckCircle,
+  Computer,
+  Build,
+  Send,
+  History,
+  Visibility,
+  Error,
 } from '@mui/icons-material';
 import studentService from '../../services/studentService';
 import axios from 'axios';
 import { Alert as MuiAlert } from '@mui/material';
+import { useAuth } from '../../context/AuthContext';
+import { toast } from 'react-toastify';
 
 const Dashboard = () => {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -101,6 +119,70 @@ const Dashboard = () => {
   const [remarksSchema, setRemarksSchema] = useState([]);
   const [schemaLoading, setSchemaLoading] = useState(false);
   const [schemaError, setSchemaError] = useState('');
+
+  // Service Requests State
+  const [serviceRequestsTab, setServiceRequestsTab] = useState(0);
+  const [serviceRequests, setServiceRequests] = useState([]);
+  const [createRequestDialog, setCreateRequestDialog] = useState(false);
+  const [requestType, setRequestType] = useState('ITSupportRequest');
+  const [loadingRequests, setLoadingRequests] = useState(false);
+
+  // IT Support Form State
+  const [itSupportForm, setItSupportForm] = useState({
+    requesterInfo: {
+      name: user?.name || '',
+      designationRole: 'Student',
+      departmentClass: user?.grade || '',
+      contactNumber: user?.phone || '',
+      emailAddress: user?.email || ''
+    },
+    deviceEquipmentInfo: {
+      typeOfDevice: '',
+      deviceAssetId: '',
+      operatingSystem: '',
+      otherDeviceType: ''
+    },
+    issueDescription: '',
+    priorityLevel: '',
+    requestedAction: '',
+    preferredContactTime: '',
+    requesterSignature: '',
+    acknowledgment: false
+  });
+
+  // General Service Form State
+  const [generalServiceForm, setGeneralServiceForm] = useState({
+    requesterName: user?.name || '',
+    studentId: user?.studentId || '',
+    grade: user?.grade || '',
+    contactNumber: user?.phone || '',
+    email: user?.email || '',
+    serviceCategory: '',
+    serviceLocation: '',
+    preferredDate: '',
+    preferredTime: '',
+    description: '',
+    urgencyLevel: '',
+    specialRequirements: ''
+  });
+
+  const [errors, setErrors] = useState({});
+
+  const priorityLevels = [
+    'Low - Minor inconvenience',
+    'Medium - Work impacted, workaround possible',
+    'High - Work halted, needs urgent resolution'
+  ];
+
+  const requestedActions = [
+    'Troubleshoot & Fix', 'Replace Device/Part', 'Software Installation/Update', 
+    'Network Configuration', 'Other'
+  ];
+
+  const serviceCategories = [
+    'Administrative', 'Facility', 'Security', 'Transportation', 'Catering',
+    'Events', 'Maintenance', 'Cleaning', 'Medical', 'Library', 'Sports', 'Other'
+  ];
 
   useEffect(() => {
     fetchDashboardData();
@@ -219,6 +301,206 @@ const Dashboard = () => {
   const fetchFeeStatus = async () => {
     try {
       console.log('🔍 Fetching fee status...');
+      // Only show once per session
+      if (localStorage.getItem('feePopupShown')) {
+        console.log('⏭️ Fee popup already shown this session');
+        return;
+      }
+      
+      console.log('📞 Calling studentService.getPaymentStatus()...');
+      const feeData = await studentService.getPaymentStatus();
+      console.log('📋 Fee status response:', feeData);
+      
+      if (feeData && feeData.data && feeData.data.paymentStatus === 'Overdue') {
+        console.log('⚠️ Payment overdue detected');
+        setFeeStatus(feeData.data);
+        setShowFeePopup(true);
+        localStorage.setItem('feePopupShown', 'true');
+      } else {
+        console.log('✅ Payment status is current');
+      }
+    } catch (error) {
+      console.error('❌ Error fetching fee status:', error);
+    }
+  };
+
+  // Service Request Functions
+  const fetchServiceRequests = async () => {
+    try {
+      setLoadingRequests(true);
+      const response = await studentService.getServiceRequests();
+      setServiceRequests(response.data?.data || response.data || []);
+    } catch (error) {
+      console.error('Error fetching service requests:', error);
+      toast.error('Failed to fetch service requests');
+    } finally {
+      setLoadingRequests(false);
+    }
+  };
+
+  const handleInputChange = (formType, field, value) => {
+    if (formType === 'itSupport') {
+      setItSupportForm(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    } else if (formType === 'general') {
+      setGeneralServiceForm(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    } else {
+      // Handle nested fields
+      const [parent, child] = field.split('.');
+      if (formType === 'itSupport') {
+        setItSupportForm(prev => ({
+          ...prev,
+          [parent]: {
+            ...prev[parent],
+            [child]: value
+          }
+        }));
+      } else if (formType === 'general') {
+        setGeneralServiceForm(prev => ({
+          ...prev,
+          [parent]: {
+            ...prev[parent],
+            [child]: value
+          }
+        }));
+      }
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (requestType === 'ITSupportRequest') {
+      if (!itSupportForm.issueDescription.trim()) {
+        newErrors.issueDescription = 'Issue description is required';
+      }
+      if (!itSupportForm.priorityLevel) {
+        newErrors.priorityLevel = 'Priority level is required';
+      }
+      if (!itSupportForm.requestedAction) {
+        newErrors.requestedAction = 'Requested action is required';
+      }
+      if (!itSupportForm.requesterSignature.trim()) {
+        newErrors.requesterSignature = 'Digital signature is required';
+      }
+      if (!itSupportForm.acknowledgment) {
+        newErrors.acknowledgment = 'You must confirm the acknowledgment';
+      }
+      if (!itSupportForm.deviceEquipmentInfo.typeOfDevice) {
+        newErrors['deviceEquipmentInfo.typeOfDevice'] = 'Device type is required';
+      }
+    } else {
+      if (!generalServiceForm.description.trim()) {
+        newErrors.description = 'Service description is required';
+      }
+      if (!generalServiceForm.serviceCategory) {
+        newErrors.serviceCategory = 'Service category is required';
+      }
+      if (!generalServiceForm.serviceLocation.trim()) {
+        newErrors.serviceLocation = 'Service location is required';
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    setLoadingRequests(true);
+    try {
+      const submissionData = requestType === 'ITSupportRequest' 
+        ? {
+            ...itSupportForm,
+            requesterType: 'Student'
+          }
+        : {
+            ...generalServiceForm,
+            requesterType: 'Student',
+            requestType: 'GeneralServiceRequest'
+          };
+
+      await studentService.createServiceRequest(submissionData);
+      
+      toast.success('Service request submitted successfully');
+      setCreateRequestDialog(false);
+      fetchServiceRequests();
+      
+      // Reset forms
+      setItSupportForm({
+        requesterInfo: {
+          name: user?.name || '',
+          designationRole: 'Student',
+          departmentClass: user?.grade || '',
+          contactNumber: user?.phone || '',
+          emailAddress: user?.email || ''
+        },
+        deviceEquipmentInfo: {
+          typeOfDevice: '',
+          deviceAssetId: '',
+          operatingSystem: '',
+          otherDeviceType: ''
+        },
+        issueDescription: '',
+        priorityLevel: '',
+        requestedAction: '',
+        preferredContactTime: '',
+        requesterSignature: '',
+        acknowledgment: false
+      });
+      
+      setGeneralServiceForm({
+        requesterName: user?.name || '',
+        studentId: user?.studentId || '',
+        grade: user?.grade || '',
+        contactNumber: user?.phone || '',
+        email: user?.email || '',
+        serviceCategory: '',
+        serviceLocation: '',
+        preferredDate: '',
+        preferredTime: '',
+        description: '',
+        urgencyLevel: '',
+        specialRequirements: ''
+      });
+      
+      setErrors({});
+    } catch (error) {
+      console.error('Error submitting request:', error);
+      toast.error('Failed to submit service request');
+    } finally {
+      setLoadingRequests(false);
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Approved': return 'success';
+      case 'Rejected': return 'error';
+      case 'Pending': return 'warning';
+      case 'In Progress': return 'info';
+      default: return 'default';
+    }
+  };
+
+  const getRequestTypeIcon = (type) => {
+    switch (type) {
+      case 'ITSupportRequest': return <Computer />;
+      case 'GeneralServiceRequest': return <Build />;
+      default: return <Computer />;
+    }
+  };
       // Only show once per session
       if (localStorage.getItem('feePopupShown')) {
         console.log('⏭️ Fee popup already shown this session');
@@ -1234,6 +1516,88 @@ const Dashboard = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Service Requests Section */}
+      <Box sx={{ my: 4 }}>
+        <Typography variant="h5" gutterBottom>
+          Service Requests
+        </Typography>
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+              <Typography variant="h6">Submit Service Requests</Typography>
+              <Button
+                variant="contained"
+                startIcon={<Send />}
+                onClick={() => setCreateRequestDialog(true)}
+              >
+                Create Request
+              </Button>
+            </Box>
+            
+            <Tabs 
+              value={serviceRequestsTab} 
+              onChange={(_, v) => setServiceRequestsTab(v)}
+              sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}
+            >
+              <Tab label="IT Support Requests" icon={<Computer />} />
+              <Tab label="General Service Requests" icon={<Build />} />
+            </Tabs>
+
+            {loadingRequests ? (
+              <Box display="flex" justifyContent="center" p={3}>
+                <CircularProgress />
+              </Box>
+            ) : (
+              <TableContainer component={Paper}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Request Number</TableCell>
+                      <TableCell>Type</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell>Priority</TableCell>
+                      <TableCell>Date</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {serviceRequests
+                      .filter(request => 
+                        serviceRequestsTab === 0 
+                          ? request.requestType === 'ITSupportRequest'
+                          : request.requestType === 'GeneralServiceRequest'
+                      )
+                      .map((request) => (
+                      <TableRow key={request._id}>
+                        <TableCell>{request.requestNumber || 'Pending'}</TableCell>
+                        <TableCell>
+                          <Box display="flex" alignItems="center" gap={1}>
+                            {getRequestTypeIcon(request.requestType)}
+                            {request.requestType === 'ITSupportRequest' ? 'IT Support' : 'General Service'}
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={request.status} 
+                            color={getStatusColor(request.status)}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {request.priorityLevel || 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          {new Date(request.createdAt).toLocaleDateString()}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </CardContent>
+        </Card>
+      </Box>
+
       {/* Teacher Remarks Form Structure */}
       <Box sx={{ my: 4 }}>
         <Typography variant="h5" gutterBottom>
@@ -1272,6 +1636,336 @@ const Dashboard = () => {
           </Paper>
         )}
       </Box>
+
+      {/* Create Request Dialog */}
+      <Dialog 
+        open={createRequestDialog} 
+        onClose={() => setCreateRequestDialog(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h6">Create Service Request</Typography>
+            <FormControl size="small" sx={{ minWidth: 200 }}>
+              <InputLabel>Request Type</InputLabel>
+              <Select
+                value={requestType}
+                onChange={(e) => setRequestType(e.target.value)}
+                label="Request Type"
+              >
+                <MenuItem value="ITSupportRequest">
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <Computer />
+                    IT Support Request
+                  </Box>
+                </MenuItem>
+                <MenuItem value="GeneralServiceRequest">
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <Build />
+                    General Service Request
+                  </Box>
+                </MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {requestType === 'ITSupportRequest' ? (
+            <form onSubmit={handleSubmit}>
+              <Grid container spacing={3}>
+                {/* Device Information */}
+                <Grid item xs={12}>
+                  <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                    Device Information
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth error={!!errors['deviceEquipmentInfo.typeOfDevice']}>
+                    <InputLabel>Type of Device *</InputLabel>
+                    <Select
+                      value={itSupportForm.deviceEquipmentInfo.typeOfDevice}
+                      onChange={(e) => handleInputChange('itSupport', 'deviceEquipmentInfo.typeOfDevice', e.target.value)}
+                      label="Type of Device *"
+                    >
+                      <MenuItem value="Desktop">Desktop</MenuItem>
+                      <MenuItem value="Laptop">Laptop</MenuItem>
+                      <MenuItem value="Printer">Printer</MenuItem>
+                      <MenuItem value="Projector">Projector</MenuItem>
+                      <MenuItem value="Network">Network</MenuItem>
+                      <MenuItem value="Software">Software</MenuItem>
+                      <MenuItem value="Other">Other</MenuItem>
+                    </Select>
+                    {errors['deviceEquipmentInfo.typeOfDevice'] && (
+                      <Typography variant="caption" color="error" sx={{ mt: 1, ml: 2 }}>
+                        {errors['deviceEquipmentInfo.typeOfDevice']}
+                      </Typography>
+                    )}
+                  </FormControl>
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Device Asset ID"
+                    value={itSupportForm.deviceEquipmentInfo.deviceAssetId}
+                    onChange={(e) => handleInputChange('itSupport', 'deviceEquipmentInfo.deviceAssetId', e.target.value)}
+                    fullWidth
+                  />
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Operating System"
+                    value={itSupportForm.deviceEquipmentInfo.operatingSystem}
+                    onChange={(e) => handleInputChange('itSupport', 'deviceEquipmentInfo.operatingSystem', e.target.value)}
+                    fullWidth
+                  />
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Other Device Type"
+                    value={itSupportForm.deviceEquipmentInfo.otherDeviceType}
+                    onChange={(e) => handleInputChange('itSupport', 'deviceEquipmentInfo.otherDeviceType', e.target.value)}
+                    fullWidth
+                    disabled={itSupportForm.deviceEquipmentInfo.typeOfDevice !== 'Other'}
+                  />
+                </Grid>
+
+                {/* Issue Details */}
+                <Grid item xs={12}>
+                  <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                    Issue Details
+                  </Typography>
+                </Grid>
+                
+                <Grid item xs={12}>
+                  <TextField
+                    label="Issue Description *"
+                    value={itSupportForm.issueDescription}
+                    onChange={(e) => handleInputChange('itSupport', 'issueDescription', e.target.value)}
+                    fullWidth
+                    multiline
+                    rows={4}
+                    error={!!errors.issueDescription}
+                    helperText={errors.issueDescription}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth error={!!errors.priorityLevel}>
+                    <InputLabel>Priority Level *</InputLabel>
+                    <Select
+                      value={itSupportForm.priorityLevel}
+                      onChange={(e) => handleInputChange('itSupport', 'priorityLevel', e.target.value)}
+                      label="Priority Level *"
+                    >
+                      {priorityLevels.map((level) => (
+                        <MenuItem key={level} value={level}>{level}</MenuItem>
+                      ))}
+                    </Select>
+                    {errors.priorityLevel && (
+                      <Typography variant="caption" color="error" sx={{ mt: 1, ml: 2 }}>
+                        {errors.priorityLevel}
+                      </Typography>
+                    )}
+                  </FormControl>
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth error={!!errors.requestedAction}>
+                    <InputLabel>Requested Action *</InputLabel>
+                    <Select
+                      value={itSupportForm.requestedAction}
+                      onChange={(e) => handleInputChange('itSupport', 'requestedAction', e.target.value)}
+                      label="Requested Action *"
+                    >
+                      {requestedActions.map((action) => (
+                        <MenuItem key={action} value={action}>{action}</MenuItem>
+                      ))}
+                    </Select>
+                    {errors.requestedAction && (
+                      <Typography variant="caption" color="error" sx={{ mt: 1, ml: 2 }}>
+                        {errors.requestedAction}
+                      </Typography>
+                    )}
+                  </FormControl>
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Preferred Contact Time"
+                    value={itSupportForm.preferredContactTime}
+                    onChange={(e) => handleInputChange('itSupport', 'preferredContactTime', e.target.value)}
+                    fullWidth
+                    placeholder="e.g., 9:00 AM - 5:00 PM"
+                  />
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Digital Signature *"
+                    value={itSupportForm.requesterSignature}
+                    onChange={(e) => handleInputChange('itSupport', 'requesterSignature', e.target.value)}
+                    fullWidth
+                    error={!!errors.requesterSignature}
+                    helperText={errors.requesterSignature}
+                    placeholder="Type your full name as digital signature"
+                  />
+                </Grid>
+                
+                <Grid item xs={12}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={itSupportForm.acknowledgment}
+                        onChange={(e) => handleInputChange('itSupport', 'acknowledgment', e.target.checked)}
+                        color="primary"
+                      />
+                    }
+                    label="I acknowledge that this request will be processed according to IT support policies and procedures."
+                  />
+                  {errors.acknowledgment && (
+                    <Typography variant="caption" color="error" sx={{ mt: 1, ml: 2 }}>
+                      {errors.acknowledgment}
+                    </Typography>
+                  )}
+                </Grid>
+                
+                <Grid item xs={12}>
+                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      size="large"
+                      disabled={loadingRequests}
+                      startIcon={loadingRequests ? <CircularProgress size={20} /> : <Send />}
+                      sx={{ minWidth: 200 }}
+                    >
+                      {loadingRequests ? 'Submitting...' : 'Submit IT Support Request'}
+                    </Button>
+                  </Box>
+                </Grid>
+              </Grid>
+            </form>
+          ) : (
+            <form onSubmit={handleSubmit}>
+              <Grid container spacing={3}>
+                {/* Service Category */}
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth error={!!errors.serviceCategory}>
+                    <InputLabel>Service Category *</InputLabel>
+                    <Select
+                      value={generalServiceForm.serviceCategory}
+                      onChange={(e) => handleInputChange('general', 'serviceCategory', e.target.value)}
+                      label="Service Category *"
+                    >
+                      {serviceCategories.map((category) => (
+                        <MenuItem key={category} value={category}>{category}</MenuItem>
+                      ))}
+                    </Select>
+                    {errors.serviceCategory && (
+                      <Typography variant="caption" color="error" sx={{ mt: 1, ml: 2 }}>
+                        {errors.serviceCategory}
+                      </Typography>
+                    )}
+                  </FormControl>
+                </Grid>
+                
+                {/* Service Location */}
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Service Location *"
+                    value={generalServiceForm.serviceLocation}
+                    onChange={(e) => handleInputChange('general', 'serviceLocation', e.target.value)}
+                    fullWidth
+                    error={!!errors.serviceLocation}
+                    helperText={errors.serviceLocation}
+                  />
+                </Grid>
+                
+                {/* Preferred Date and Time */}
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Preferred Date"
+                    type="date"
+                    value={generalServiceForm.preferredDate}
+                    onChange={(e) => handleInputChange('general', 'preferredDate', e.target.value)}
+                    fullWidth
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Preferred Time"
+                    value={generalServiceForm.preferredTime}
+                    onChange={(e) => handleInputChange('general', 'preferredTime', e.target.value)}
+                    fullWidth
+                    placeholder="e.g., 9:00 AM - 5:00 PM"
+                  />
+                </Grid>
+                
+                {/* Description */}
+                <Grid item xs={12}>
+                  <TextField
+                    label="Service Description *"
+                    value={generalServiceForm.description}
+                    onChange={(e) => handleInputChange('general', 'description', e.target.value)}
+                    fullWidth
+                    multiline
+                    rows={4}
+                    error={!!errors.description}
+                    helperText={errors.description}
+                  />
+                </Grid>
+                
+                {/* Urgency */}
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Urgency Level"
+                    value={generalServiceForm.urgencyLevel}
+                    onChange={(e) => handleInputChange('general', 'urgencyLevel', e.target.value)}
+                    fullWidth
+                    placeholder="e.g., Low, Medium, High"
+                  />
+                </Grid>
+                
+                {/* Special Requirements */}
+                <Grid item xs={12}>
+                  <TextField
+                    label="Special Requirements"
+                    value={generalServiceForm.specialRequirements}
+                    onChange={(e) => handleInputChange('general', 'specialRequirements', e.target.value)}
+                    fullWidth
+                    multiline
+                    rows={3}
+                    placeholder="Any special requirements or additional information"
+                  />
+                </Grid>
+                
+                <Grid item xs={12}>
+                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      size="large"
+                      disabled={loadingRequests}
+                      startIcon={loadingRequests ? <CircularProgress size={20} /> : <Send />}
+                      sx={{ minWidth: 200 }}
+                    >
+                      {loadingRequests ? 'Submitting...' : 'Submit General Service Request'}
+                    </Button>
+                  </Box>
+                </Grid>
+              </Grid>
+            </form>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCreateRequestDialog(false)}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

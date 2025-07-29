@@ -37,6 +37,8 @@ import {
   Download as DownloadIcon,
   Sort as SortIcon,
   Visibility as ViewIcon,
+  AccountBalance as AccountBalanceIcon,
+  AttachMoney as AttachMoneyIcon,
 } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminAPI } from '../../services/api';
@@ -103,6 +105,16 @@ function StaffManagement() {
     },
   });
 
+  // Fetch all salary records
+  const { data: salaryRecords, isLoading: salaryLoading } = useQuery({
+    queryKey: ['salaryRecords'],
+    queryFn: async () => {
+      const response = await adminAPI.getSalaryRecords();
+      return response || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { data: departments, isLoading: departmentsLoading } = useQuery({
     queryKey: ['departments'],
     queryFn: adminAPI.getDepartments,
@@ -149,6 +161,25 @@ function StaffManagement() {
       toast.error(error.response?.data?.message || 'Failed to delete staff member');
     },
   });
+
+  // Helper function to get the latest salary record for a staff member
+  const getLatestSalaryRecord = (staffId) => {
+    if (!salaryRecords || !Array.isArray(salaryRecords)) return null;
+    
+    // Convert both IDs to strings for comparison
+    const staffIdStr = String(staffId);
+    
+    // Handle both populated (object) and unpopulated (string) staffId
+    const staffSalaryRecords = salaryRecords.filter(record => {
+      const recordStaffId = record.staffId?._id || record.staffId;
+      return String(recordStaffId) === staffIdStr;
+    });
+    
+    if (staffSalaryRecords.length === 0) return null;
+    
+    // Sort by date and return the latest
+    return staffSalaryRecords.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+  };
 
   const handleOpen = (staff = null) => {
     if (staff) {
@@ -613,6 +644,102 @@ ${Object.entries(reportData.filters)
             </TableBody>
           </Table>
         </TableContainer>
+
+        {/* Staff Salary Records Section */}
+        <Card sx={{ mt: 3 }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h5" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <AccountBalanceIcon color="primary" />
+                Staff Salary Records
+              </Typography>
+              <Button
+                variant="outlined"
+                startIcon={<AttachMoneyIcon />}
+                onClick={() => window.open('/admin/salary-payroll', '_blank')}
+              >
+                View Full Payroll
+              </Button>
+            </Box>
+            
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Quick overview of staff salary records. Click on a staff member to view their detailed salary history.
+              {salaryLoading && ' Loading salary data...'}
+              {!salaryLoading && salaryRecords && (
+                <span> • {salaryRecords.length} salary records found</span>
+              )}
+            </Typography>
+
+            <TableContainer component={Paper}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Staff Name</TableCell>
+                    <TableCell>Employee ID</TableCell>
+                    <TableCell>Role</TableCell>
+                    <TableCell>Latest Salary</TableCell>
+                    <TableCell>Payment Status</TableCell>
+                    <TableCell>Last Updated</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {sortedStaff?.map((member) => {
+                    const latestSalaryRecord = getLatestSalaryRecord(member._id);
+                    return (
+                      <TableRow key={member._id} hover>
+                        <TableCell>
+                          <Box>
+                            <Typography variant="body2" fontWeight="bold">
+                              {member.name}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {member.email}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>{member.employeeId || 'N/A'}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={member.role}
+                            color="primary"
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight="bold" color="success.main">
+                            ₹{latestSalaryRecord ? latestSalaryRecord.netSalary : 'Not set'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={latestSalaryRecord ? latestSalaryRecord.paymentStatus : 'Pending'}
+                            color={latestSalaryRecord?.paymentStatus === 'Paid' ? 'success' : 'warning'}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="caption">
+                            {latestSalaryRecord ? new Date(latestSalaryRecord.createdAt).toLocaleDateString() : 'Never'}
+                          </Typography>
+                        </TableCell>
+
+                      </TableRow>
+                    );
+                  })}
+                  {(!sortedStaff || sortedStaff.length === 0) && (
+                    <TableRow>
+                      <TableCell colSpan={6} align="center">
+                        No staff members found
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+
+          </CardContent>
+        </Card>
 
         <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
           <DialogTitle>{selectedStaff ? 'Edit Staff Member' : 'Add Staff Member'}</DialogTitle>

@@ -74,8 +74,9 @@ router.get('/profile', profileController.getProfile);
 router.put('/profile', profileController.updateProfile);
 router.post('/change-password', profileController.changePassword);
 
-// Service Request Approvals
+// Service Request Management
 router.get('/service-requests', departmentController.getPendingServiceRequests);
+router.post('/service-requests', departmentController.createServiceRequest);
 router.post('/service-requests/:id/approve', departmentController.approveServiceRequest);
 router.post('/service-requests/:id/reject', departmentController.rejectServiceRequest);
 
@@ -87,5 +88,9 @@ router.delete('/activities-control/staff/:staffId', activitiesControlController.
 router.get('/activities-control/activities', activitiesControlController.getAvailableActivities);
 router.post('/activities-control/bulk-assign', activitiesControlController.bulkAssignActivities);
 router.get('/activities-control/summary', activitiesControlController.getActivitiesSummary);
+
+// HOD Template Management
+router.post('/hod-templates', departmentController.createHODTemplate);
+router.get('/hod-templates', departmentController.getHODTemplates);
 
 module.exports = router; 

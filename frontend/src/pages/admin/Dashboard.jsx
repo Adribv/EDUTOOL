@@ -15,6 +15,27 @@ import {
   ListItemText,
   ListItemIcon,
   Divider,
+  Tabs,
+  Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material';
 import {
   People,
@@ -33,6 +54,16 @@ import {
   TrendingUp as TrendingUpIcon,
   Warning,
   AccountBalance,
+  Computer,
+  Build,
+  Send,
+  History,
+  Visibility,
+  CheckCircle,
+  Error,
+  Schedule,
+  Person,
+  SupportAgent,
 } from '@mui/icons-material';
 import { adminAPI } from '../../services/api';
 import { toast } from 'react-toastify';
@@ -53,8 +84,75 @@ function AdminDashboard() {
     recentAnnouncements: [],
   });
 
+  // Service Requests State
+  const [serviceRequestsTab, setServiceRequestsTab] = useState(0);
+  const [serviceRequests, setServiceRequests] = useState([]);
+  const [createRequestDialog, setCreateRequestDialog] = useState(false);
+  const [requestType, setRequestType] = useState('ITSupportRequest');
+  const [loadingRequests, setLoadingRequests] = useState(false);
+
+  // IT Support Form State
+  const [itSupportForm, setItSupportForm] = useState({
+    requesterInfo: {
+      name: user?.name || '',
+      designationRole: 'Admin',
+      departmentClass: user?.department || '',
+      contactNumber: user?.phone || '',
+      emailAddress: user?.email || ''
+    },
+    deviceEquipmentInfo: {
+      typeOfDevice: '',
+      deviceAssetId: '',
+      operatingSystem: '',
+      otherDeviceType: ''
+    },
+    issueDescription: '',
+    priorityLevel: '',
+    requestedAction: '',
+    preferredContactTime: '',
+    requesterSignature: '',
+    acknowledgment: false
+  });
+
+  // General Service Form State
+  const [generalServiceForm, setGeneralServiceForm] = useState({
+    requesterName: user?.name || '',
+    employeeId: user?.employeeId || '',
+    department: user?.department || '',
+    designation: user?.role || '',
+    contactNumber: user?.phone || '',
+    email: user?.email || '',
+    serviceCategory: '',
+    serviceLocation: '',
+    preferredDate: '',
+    preferredTime: '',
+    description: '',
+    budgetEstimate: '',
+    urgencyLevel: '',
+    specialRequirements: ''
+  });
+
+  const [errors, setErrors] = useState({});
+
+  const priorityLevels = [
+    'Low - Minor inconvenience',
+    'Medium - Work impacted, workaround possible',
+    'High - Work halted, needs urgent resolution'
+  ];
+
+  const requestedActions = [
+    'Troubleshoot & Fix', 'Replace Device/Part', 'Software Installation/Update', 
+    'Network Configuration', 'Other'
+  ];
+
+  const serviceCategories = [
+    'Administrative', 'Facility', 'Security', 'Transportation', 'Catering',
+    'Events', 'Maintenance', 'Cleaning', 'Medical', 'Library', 'Sports', 'Other'
+  ];
+
   useEffect(() => {
     fetchDashboardData();
+    fetchServiceRequests();
   }, []);
 
   const fetchDashboardData = async () => {
@@ -69,14 +167,194 @@ function AdminDashboard() {
     }
   };
 
+  const fetchServiceRequests = async () => {
+    try {
+      setLoadingRequests(true);
+      const response = await adminAPI.getServiceRequests();
+      setServiceRequests(response || []);
+    } catch (error) {
+      console.error('Error fetching service requests:', error);
+      toast.error('Failed to fetch service requests');
+    } finally {
+      setLoadingRequests(false);
+    }
+  };
+
   const handleRefresh = () => {
     fetchDashboardData();
+    fetchServiceRequests();
     toast.success('Dashboard refreshed');
   };
 
   const handleDownloadReport = (type) => {
     // Implement report download logic
     toast.info(`Downloading ${type} report...`);
+  };
+
+  const handleInputChange = (formType, field, value) => {
+    if (formType === 'itSupport') {
+      setItSupportForm(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    } else if (formType === 'general') {
+      setGeneralServiceForm(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    } else {
+      // Handle nested fields
+      const [parent, child] = field.split('.');
+      if (formType === 'itSupport') {
+        setItSupportForm(prev => ({
+          ...prev,
+          [parent]: {
+            ...prev[parent],
+            [child]: value
+          }
+        }));
+      } else if (formType === 'general') {
+        setGeneralServiceForm(prev => ({
+          ...prev,
+          [parent]: {
+            ...prev[parent],
+            [child]: value
+          }
+        }));
+      }
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (requestType === 'ITSupportRequest') {
+      if (!itSupportForm.issueDescription.trim()) {
+        newErrors.issueDescription = 'Issue description is required';
+      }
+      if (!itSupportForm.priorityLevel) {
+        newErrors.priorityLevel = 'Priority level is required';
+      }
+      if (!itSupportForm.requestedAction) {
+        newErrors.requestedAction = 'Requested action is required';
+      }
+      if (!itSupportForm.requesterSignature.trim()) {
+        newErrors.requesterSignature = 'Digital signature is required';
+      }
+      if (!itSupportForm.acknowledgment) {
+        newErrors.acknowledgment = 'You must confirm the acknowledgment';
+      }
+      if (!itSupportForm.deviceEquipmentInfo.typeOfDevice) {
+        newErrors['deviceEquipmentInfo.typeOfDevice'] = 'Device type is required';
+      }
+    } else {
+      if (!generalServiceForm.description.trim()) {
+        newErrors.description = 'Service description is required';
+      }
+      if (!generalServiceForm.serviceCategory) {
+        newErrors.serviceCategory = 'Service category is required';
+      }
+      if (!generalServiceForm.serviceLocation.trim()) {
+        newErrors.serviceLocation = 'Service location is required';
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    setLoadingRequests(true);
+    try {
+      const submissionData = requestType === 'ITSupportRequest' 
+        ? {
+            ...itSupportForm,
+            requesterType: 'Admin'
+          }
+        : {
+            ...generalServiceForm,
+            requesterType: 'Admin',
+            requestType: 'GeneralServiceRequest'
+          };
+
+      await adminAPI.createServiceRequest(submissionData);
+      
+      toast.success('Service request submitted successfully');
+      setCreateRequestDialog(false);
+      fetchServiceRequests();
+      
+      // Reset forms
+      setItSupportForm({
+        requesterInfo: {
+          name: user?.name || '',
+          designationRole: 'Admin',
+          departmentClass: user?.department || '',
+          contactNumber: user?.phone || '',
+          emailAddress: user?.email || ''
+        },
+        deviceEquipmentInfo: {
+          typeOfDevice: '',
+          deviceAssetId: '',
+          operatingSystem: '',
+          otherDeviceType: ''
+        },
+        issueDescription: '',
+        priorityLevel: '',
+        requestedAction: '',
+        preferredContactTime: '',
+        requesterSignature: '',
+        acknowledgment: false
+      });
+      
+      setGeneralServiceForm({
+        requesterName: user?.name || '',
+        employeeId: user?.employeeId || '',
+        department: user?.department || '',
+        designation: user?.role || '',
+        contactNumber: user?.phone || '',
+        email: user?.email || '',
+        serviceCategory: '',
+        serviceLocation: '',
+        preferredDate: '',
+        preferredTime: '',
+        description: '',
+        budgetEstimate: '',
+        urgencyLevel: '',
+        specialRequirements: ''
+      });
+      
+      setErrors({});
+    } catch (error) {
+      console.error('Error submitting request:', error);
+      toast.error('Failed to submit service request');
+    } finally {
+      setLoadingRequests(false);
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Approved': return 'success';
+      case 'Rejected': return 'error';
+      case 'Pending': return 'warning';
+      case 'In Progress': return 'info';
+      default: return 'default';
+    }
+  };
+
+  const getRequestTypeIcon = (type) => {
+    switch (type) {
+      case 'ITSupportRequest': return <Computer />;
+      case 'GeneralServiceRequest': return <Build />;
+      default: return <Computer />;
+    }
   };
 
   if (loading) {
@@ -98,70 +376,19 @@ function AdminDashboard() {
   // If user is AdminStaff and has a designation in roleConfig, show only their dashboard widgets
   if (user?.role === 'AdminStaff' && roleConfig[user?.designation]) {
     return (
-      <Box>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-          <Typography variant="h4">{user.designation} Dashboard</Typography>
-          <Box>
-            <Tooltip title="Refresh Dashboard">
-              <IconButton onClick={handleRefresh} sx={{ mr: 1 }}>
-                <Refresh />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        </Box>
-        
+      <Box p={3}>
+        <Typography variant="h4" gutterBottom>
+          {roleConfig[user.designation].title} Dashboard
+        </Typography>
         <Grid container spacing={3}>
-          {roleConfig[user.designation].dashboard.map((widget) => (
-            <Grid item xs={12} sm={6} md={4} key={widget}>
-              <Card sx={{ height: '100%', cursor: 'pointer' }}>
+          {roleConfig[user.designation].widgets.map((widget, index) => (
+            <Grid item xs={12} md={6} lg={4} key={index}>
+              <Card>
                 <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    {widget.includes('Attendance') && <Assignment color="primary" sx={{ mr: 1 }} />}
-                    {widget.includes('Behavior') && <People color="warning" sx={{ mr: 1 }} />}
-                    {widget.includes('Finance') && <Payment color="success" sx={{ mr: 1 }} />}
-                    {widget.includes('Inventory') && <Inventory color="info" sx={{ mr: 1 }} />}
-                    {widget.includes('Systems') && <Settings color="secondary" sx={{ mr: 1 }} />}
-                    {widget.includes('Catalog') && <School color="primary" sx={{ mr: 1 }} />}
-                    {widget.includes('Counseling') && <People color="success" sx={{ mr: 1 }} />}
-                    {widget.includes('Exam') && <Assessment color="warning" sx={{ mr: 1 }} />}
-                    {widget.includes('Event') && <Event color="info" sx={{ mr: 1 }} />}
-                    {widget.includes('Campus') && <Settings color="secondary" sx={{ mr: 1 }} />}
-                    {!widget.includes('Attendance') && !widget.includes('Behavior') && !widget.includes('Finance') && 
-                     !widget.includes('Inventory') && !widget.includes('Systems') && !widget.includes('Catalog') && 
-                     !widget.includes('Counseling') && !widget.includes('Exam') && !widget.includes('Event') && 
-                     !widget.includes('Campus') && <Assignment color="primary" sx={{ mr: 1 }} />}
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                      {widget}
-                    </Typography>
-                  </Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    {widget.includes('Attendance') && 'Track student attendance and monitor patterns'}
-                    {widget.includes('Behavior') && 'Manage and address student behavior issues'}
-                    {widget.includes('Finance') && 'Handle financial operations and fee management'}
-                    {widget.includes('Inventory') && 'Manage school inventory and resources'}
-                    {widget.includes('Systems') && 'Maintain and configure system settings'}
-                    {widget.includes('Catalog') && 'Manage library catalog and resources'}
-                    {widget.includes('Counseling') && 'Provide student counseling and support'}
-                    {widget.includes('Exam') && 'Manage examination schedules and results'}
-                    {widget.includes('Event') && 'Plan and organize school events'}
-                    {widget.includes('Campus') && 'Ensure campus cleanliness and safety'}
-                    {!widget.includes('Attendance') && !widget.includes('Behavior') && !widget.includes('Finance') && 
-                     !widget.includes('Inventory') && !widget.includes('Systems') && !widget.includes('Catalog') && 
-                     !widget.includes('Counseling') && !widget.includes('Exam') && !widget.includes('Event') && 
-                     !widget.includes('Campus') && 'Manage related functions and operations'}
+                  <Typography variant="h6">{widget.title}</Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    {widget.description}
                   </Typography>
-                  <Button 
-                    variant="outlined" 
-                    size="small" 
-                    fullWidth
-                    onClick={() => {
-                      // Navigate to the relevant section based on widget
-                      const section = widget.toLowerCase().replace(/\s+/g, '');
-                      navigate(`/admin/${section}`);
-                    }}
-                  >
-                    Access {widget}
-                  </Button>
                 </CardContent>
               </Card>
             </Grid>
@@ -172,19 +399,29 @@ function AdminDashboard() {
   }
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Typography variant="h4">Admin Dashboard</Typography>
+    <Box p={3}>
+      {/* Header */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Box>
-          <Tooltip title="Refresh Dashboard">
-            <IconButton onClick={handleRefresh} sx={{ mr: 1 }}>
-              <Refresh />
-            </IconButton>
-          </Tooltip>
+          <Typography variant="h4" gutterBottom>
+            Admin Dashboard
+          </Typography>
+          <Typography variant="body1" color="textSecondary">
+            Welcome back, {user?.name}
+          </Typography>
+        </Box>
+        <Box display="flex" gap={2}>
+          <Button
+            variant="outlined"
+            startIcon={<Refresh />}
+            onClick={handleRefresh}
+          >
+            Refresh
+          </Button>
           <Button
             variant="contained"
             startIcon={<Download />}
-            onClick={() => handleDownloadReport('financial')}
+            onClick={() => handleDownloadReport('comprehensive')}
           >
             Download Report
           </Button>
@@ -192,182 +429,574 @@ function AdminDashboard() {
       </Box>
 
       {/* Statistics Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid xs={12} sm={6} md={3}>
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <People color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Total Students</Typography>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Box>
+                  <Typography color="textSecondary" gutterBottom>
+                    Total Students
+                  </Typography>
+                  <Typography variant="h4">
+                    {stats.totalStudents}
+                  </Typography>
+                </Box>
+                <People color="primary" sx={{ fontSize: 40 }} />
               </Box>
-              <Typography variant="h4" color="primary.main">
-                {stats?.totalStudents || 0}
-              </Typography>
             </CardContent>
           </Card>
         </Grid>
-        <Grid xs={12} sm={6} md={3}>
+        
+        <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <School color="success" sx={{ mr: 1 }} />
-                <Typography variant="h6">Total Staff</Typography>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Box>
+                  <Typography color="textSecondary" gutterBottom>
+                    Total Staff
+                  </Typography>
+                  <Typography variant="h4">
+                    {stats.totalStaff}
+                  </Typography>
+                </Box>
+                <GroupIcon color="secondary" sx={{ fontSize: 40 }} />
               </Box>
-              <Typography variant="h4" color="success.main">
-                {stats?.totalStaff || 0}
-              </Typography>
             </CardContent>
           </Card>
         </Grid>
-        <Grid xs={12} sm={6} md={3}>
+        
+        <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <Event color="info" sx={{ mr: 1 }} />
-                <Typography variant="h6">Events</Typography>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Box>
+                  <Typography color="textSecondary" gutterBottom>
+                    Total Classes
+                  </Typography>
+                  <Typography variant="h4">
+                    {stats.totalClasses}
+                  </Typography>
+                </Box>
+                <School color="success" sx={{ fontSize: 40 }} />
               </Box>
-              <Typography variant="h4" color="info.main">
-                {stats?.upcomingEvents?.length || 0}
-              </Typography>
             </CardContent>
           </Card>
         </Grid>
-        <Grid xs={12} sm={6} md={3}>
+        
+        <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <Assignment color="warning" sx={{ mr: 1 }} />
-                <Typography variant="h6">Pending Tasks</Typography>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Box>
+                  <Typography color="textSecondary" gutterBottom>
+                    Upcoming Events
+                  </Typography>
+                  <Typography variant="h4">
+                    {stats.upcomingEvents?.length || 0}
+                  </Typography>
+                </Box>
+                <Event color="warning" sx={{ fontSize: 40 }} />
               </Box>
-              <Typography variant="h4" color="warning.main">
-                {stats?.pendingTasks || 0}
-              </Typography>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
 
-      {/* Quick Actions */}
+      {/* Service Requests Section */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Typography variant="h6">Service Requests</Typography>
+            <Button
+              variant="contained"
+              startIcon={<Send />}
+              onClick={() => setCreateRequestDialog(true)}
+            >
+              Create Request
+            </Button>
+          </Box>
+          
+          <Tabs 
+            value={serviceRequestsTab} 
+            onChange={(_, v) => setServiceRequestsTab(v)}
+            sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}
+          >
+            <Tab label="IT Support Requests" icon={<Computer />} />
+            <Tab label="General Service Requests" icon={<Build />} />
+          </Tabs>
+
+          {loadingRequests ? (
+            <Box display="flex" justifyContent="center" p={3}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Request Number</TableCell>
+                    <TableCell>Type</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Priority</TableCell>
+                    <TableCell>Date</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {serviceRequests
+                    .filter(request => 
+                      serviceRequestsTab === 0 
+                        ? request.requestType === 'ITSupportRequest'
+                        : request.requestType === 'GeneralServiceRequest'
+                    )
+                    .map((request) => (
+                    <TableRow key={request._id}>
+                      <TableCell>{request.requestNumber || 'Pending'}</TableCell>
+                      <TableCell>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          {getRequestTypeIcon(request.requestType)}
+                          {request.requestType === 'ITSupportRequest' ? 'IT Support' : 'General Service'}
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Chip 
+                          label={request.status} 
+                          color={getStatusColor(request.status)}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {request.priorityLevel || 'N/A'}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(request.createdAt).toLocaleDateString()}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Recent Activities */}
       <Grid container spacing={3}>
-        <Grid xs={12} md={6}>
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Recent Announcements
+              </Typography>
+              <List>
+                {stats.recentAnnouncements?.map((announcement, index) => (
+                  <ListItem key={index}>
+                    <ListItemIcon>
+                      <NotificationsIcon />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={announcement.title}
+                      secondary={announcement.date}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            </CardContent>
+          </Card>
+        </Grid>
+        
+        <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
                 Quick Actions
               </Typography>
               <Grid container spacing={2}>
-                <Grid xs={6}>
+                <Grid item xs={6}>
                   <Button
-                    fullWidth
                     variant="outlined"
+                    fullWidth
                     startIcon={<People />}
-                    href="/admin/staff"
+                    onClick={() => navigate('/admin/staff')}
                   >
                     Manage Staff
                   </Button>
                 </Grid>
-                <Grid xs={6}>
+                <Grid item xs={6}>
                   <Button
-                    fullWidth
                     variant="outlined"
+                    fullWidth
                     startIcon={<School />}
-                    href="/admin/students"
+                    onClick={() => navigate('/admin/students')}
                   >
                     Manage Students
                   </Button>
                 </Grid>
-                <Grid xs={6}>
+                <Grid item xs={6}>
                   <Button
-                    fullWidth
                     variant="outlined"
-                    startIcon={<Payment />}
-                    href="/admin/fees"
-                  >
-                    Fee Configuration
-                  </Button>
-                </Grid>
-                <Grid xs={6}>
-                  <Button
                     fullWidth
-                    variant="outlined"
-                    startIcon={<Warning />}
-                    href="/admin/disciplinary-forms"
-                  >
-                    Disciplinary Forms
-                  </Button>
-                </Grid>
-                <Grid xs={6}>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    startIcon={<Assessment />}
-                    href="/admin/syllabus-completion"
-                  >
-                    Syllabus Completion
-                  </Button>
-                </Grid>
-                <Grid xs={6}>
-                  <Button
-                    fullWidth
-                    variant="outlined"
                     startIcon={<Event />}
-                    href="/admin/events"
+                    onClick={() => navigate('/admin/events')}
                   >
-                    Event Management
+                    Manage Events
                   </Button>
                 </Grid>
-                <Grid xs={6}>
+                <Grid item xs={6}>
                   <Button
-                    fullWidth
                     variant="outlined"
-                    startIcon={<AccountBalance />}
-                    href="/admin/salary-payroll"
+                    fullWidth
+                    startIcon={<Settings />}
+                    onClick={() => navigate('/admin/settings')}
                   >
-                    Salary Payroll
+                    System Settings
                   </Button>
                 </Grid>
               </Grid>
             </CardContent>
           </Card>
         </Grid>
-        <Grid xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Recent Activities
-              </Typography>
-              {stats?.recentActivities?.map((activity, index) => (
-                <Box
-                  key={index}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    mb: 2,
-                    p: 1,
-                    bgcolor: 'background.default',
-                    borderRadius: 1,
-                  }}
-                >
-                  <Box sx={{ mr: 2 }}>
-                    {activity.type === 'staff' && <People />}
-                    {activity.type === 'student' && <School />}
-                    {activity.type === 'fee' && <Payment />}
-                    {activity.type === 'task' && <Assignment />}
-                    {activity.type === 'event' && <Event />}
-                    {activity.type === 'message' && <Message />}
-                  </Box>
-                  <Box>
-                    <Typography variant="body2">{activity.description}</Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {new Date(activity.timestamp).toLocaleString()}
-                    </Typography>
-                  </Box>
-                </Box>
-              ))}
-            </CardContent>
-          </Card>
-        </Grid>
       </Grid>
+
+      {/* Create Request Dialog */}
+      <Dialog 
+        open={createRequestDialog} 
+        onClose={() => setCreateRequestDialog(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h6">Create Service Request</Typography>
+            <FormControl size="small" sx={{ minWidth: 200 }}>
+              <InputLabel>Request Type</InputLabel>
+              <Select
+                value={requestType}
+                onChange={(e) => setRequestType(e.target.value)}
+                label="Request Type"
+              >
+                <MenuItem value="ITSupportRequest">
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <Computer />
+                    IT Support Request
+                  </Box>
+                </MenuItem>
+                <MenuItem value="GeneralServiceRequest">
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <Build />
+                    General Service Request
+                  </Box>
+                </MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {requestType === 'ITSupportRequest' ? (
+            <form onSubmit={handleSubmit}>
+              <Grid container spacing={3}>
+                {/* Device Information */}
+                <Grid item xs={12}>
+                  <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                    Device Information
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth error={!!errors['deviceEquipmentInfo.typeOfDevice']}>
+                    <InputLabel>Type of Device *</InputLabel>
+                    <Select
+                      value={itSupportForm.deviceEquipmentInfo.typeOfDevice}
+                      onChange={(e) => handleInputChange('itSupport', 'deviceEquipmentInfo.typeOfDevice', e.target.value)}
+                      label="Type of Device *"
+                    >
+                      <MenuItem value="Desktop">Desktop</MenuItem>
+                      <MenuItem value="Laptop">Laptop</MenuItem>
+                      <MenuItem value="Printer">Printer</MenuItem>
+                      <MenuItem value="Projector">Projector</MenuItem>
+                      <MenuItem value="Network">Network</MenuItem>
+                      <MenuItem value="Software">Software</MenuItem>
+                      <MenuItem value="Other">Other</MenuItem>
+                    </Select>
+                    {errors['deviceEquipmentInfo.typeOfDevice'] && (
+                      <Typography variant="caption" color="error" sx={{ mt: 1, ml: 2 }}>
+                        {errors['deviceEquipmentInfo.typeOfDevice']}
+                      </Typography>
+                    )}
+                  </FormControl>
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Device Asset ID"
+                    value={itSupportForm.deviceEquipmentInfo.deviceAssetId}
+                    onChange={(e) => handleInputChange('itSupport', 'deviceEquipmentInfo.deviceAssetId', e.target.value)}
+                    fullWidth
+                  />
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Operating System"
+                    value={itSupportForm.deviceEquipmentInfo.operatingSystem}
+                    onChange={(e) => handleInputChange('itSupport', 'deviceEquipmentInfo.operatingSystem', e.target.value)}
+                    fullWidth
+                  />
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Other Device Type"
+                    value={itSupportForm.deviceEquipmentInfo.otherDeviceType}
+                    onChange={(e) => handleInputChange('itSupport', 'deviceEquipmentInfo.otherDeviceType', e.target.value)}
+                    fullWidth
+                    disabled={itSupportForm.deviceEquipmentInfo.typeOfDevice !== 'Other'}
+                  />
+                </Grid>
+
+                {/* Issue Details */}
+                <Grid item xs={12}>
+                  <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                    Issue Details
+                  </Typography>
+                </Grid>
+                
+                <Grid item xs={12}>
+                  <TextField
+                    label="Issue Description *"
+                    value={itSupportForm.issueDescription}
+                    onChange={(e) => handleInputChange('itSupport', 'issueDescription', e.target.value)}
+                    fullWidth
+                    multiline
+                    rows={4}
+                    error={!!errors.issueDescription}
+                    helperText={errors.issueDescription}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth error={!!errors.priorityLevel}>
+                    <InputLabel>Priority Level *</InputLabel>
+                    <Select
+                      value={itSupportForm.priorityLevel}
+                      onChange={(e) => handleInputChange('itSupport', 'priorityLevel', e.target.value)}
+                      label="Priority Level *"
+                    >
+                      {priorityLevels.map((level) => (
+                        <MenuItem key={level} value={level}>{level}</MenuItem>
+                      ))}
+                    </Select>
+                    {errors.priorityLevel && (
+                      <Typography variant="caption" color="error" sx={{ mt: 1, ml: 2 }}>
+                        {errors.priorityLevel}
+                      </Typography>
+                    )}
+                  </FormControl>
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth error={!!errors.requestedAction}>
+                    <InputLabel>Requested Action *</InputLabel>
+                    <Select
+                      value={itSupportForm.requestedAction}
+                      onChange={(e) => handleInputChange('itSupport', 'requestedAction', e.target.value)}
+                      label="Requested Action *"
+                    >
+                      {requestedActions.map((action) => (
+                        <MenuItem key={action} value={action}>{action}</MenuItem>
+                      ))}
+                    </Select>
+                    {errors.requestedAction && (
+                      <Typography variant="caption" color="error" sx={{ mt: 1, ml: 2 }}>
+                        {errors.requestedAction}
+                      </Typography>
+                    )}
+                  </FormControl>
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Preferred Contact Time"
+                    value={itSupportForm.preferredContactTime}
+                    onChange={(e) => handleInputChange('itSupport', 'preferredContactTime', e.target.value)}
+                    fullWidth
+                    placeholder="e.g., 9:00 AM - 5:00 PM"
+                  />
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Digital Signature *"
+                    value={itSupportForm.requesterSignature}
+                    onChange={(e) => handleInputChange('itSupport', 'requesterSignature', e.target.value)}
+                    fullWidth
+                    error={!!errors.requesterSignature}
+                    helperText={errors.requesterSignature}
+                    placeholder="Type your full name as digital signature"
+                  />
+                </Grid>
+                
+                <Grid item xs={12}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={itSupportForm.acknowledgment}
+                        onChange={(e) => handleInputChange('itSupport', 'acknowledgment', e.target.checked)}
+                        color="primary"
+                      />
+                    }
+                    label="I acknowledge that this request will be processed according to IT support policies and procedures."
+                  />
+                  {errors.acknowledgment && (
+                    <Typography variant="caption" color="error" sx={{ mt: 1, ml: 2 }}>
+                      {errors.acknowledgment}
+                    </Typography>
+                  )}
+                </Grid>
+                
+                <Grid item xs={12}>
+                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      size="large"
+                      disabled={loadingRequests}
+                      startIcon={loadingRequests ? <CircularProgress size={20} /> : <Send />}
+                      sx={{ minWidth: 200 }}
+                    >
+                      {loadingRequests ? 'Submitting...' : 'Submit IT Support Request'}
+                    </Button>
+                  </Box>
+                </Grid>
+              </Grid>
+            </form>
+          ) : (
+            <form onSubmit={handleSubmit}>
+              <Grid container spacing={3}>
+                {/* Service Category */}
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth error={!!errors.serviceCategory}>
+                    <InputLabel>Service Category *</InputLabel>
+                    <Select
+                      value={generalServiceForm.serviceCategory}
+                      onChange={(e) => handleInputChange('general', 'serviceCategory', e.target.value)}
+                      label="Service Category *"
+                    >
+                      {serviceCategories.map((category) => (
+                        <MenuItem key={category} value={category}>{category}</MenuItem>
+                      ))}
+                    </Select>
+                    {errors.serviceCategory && (
+                      <Typography variant="caption" color="error" sx={{ mt: 1, ml: 2 }}>
+                        {errors.serviceCategory}
+                      </Typography>
+                    )}
+                  </FormControl>
+                </Grid>
+                
+                {/* Service Location */}
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Service Location *"
+                    value={generalServiceForm.serviceLocation}
+                    onChange={(e) => handleInputChange('general', 'serviceLocation', e.target.value)}
+                    fullWidth
+                    error={!!errors.serviceLocation}
+                    helperText={errors.serviceLocation}
+                  />
+                </Grid>
+                
+                {/* Preferred Date and Time */}
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Preferred Date"
+                    type="date"
+                    value={generalServiceForm.preferredDate}
+                    onChange={(e) => handleInputChange('general', 'preferredDate', e.target.value)}
+                    fullWidth
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Preferred Time"
+                    value={generalServiceForm.preferredTime}
+                    onChange={(e) => handleInputChange('general', 'preferredTime', e.target.value)}
+                    fullWidth
+                    placeholder="e.g., 9:00 AM - 5:00 PM"
+                  />
+                </Grid>
+                
+                {/* Description */}
+                <Grid item xs={12}>
+                  <TextField
+                    label="Service Description *"
+                    value={generalServiceForm.description}
+                    onChange={(e) => handleInputChange('general', 'description', e.target.value)}
+                    fullWidth
+                    multiline
+                    rows={4}
+                    error={!!errors.description}
+                    helperText={errors.description}
+                  />
+                </Grid>
+                
+                {/* Budget and Urgency */}
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Budget Estimate"
+                    value={generalServiceForm.budgetEstimate}
+                    onChange={(e) => handleInputChange('general', 'budgetEstimate', e.target.value)}
+                    fullWidth
+                    placeholder="e.g., $500"
+                  />
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Urgency Level"
+                    value={generalServiceForm.urgencyLevel}
+                    onChange={(e) => handleInputChange('general', 'urgencyLevel', e.target.value)}
+                    fullWidth
+                    placeholder="e.g., Low, Medium, High"
+                  />
+                </Grid>
+                
+                {/* Special Requirements */}
+                <Grid item xs={12}>
+                  <TextField
+                    label="Special Requirements"
+                    value={generalServiceForm.specialRequirements}
+                    onChange={(e) => handleInputChange('general', 'specialRequirements', e.target.value)}
+                    fullWidth
+                    multiline
+                    rows={3}
+                    placeholder="Any special requirements or additional information"
+                  />
+                </Grid>
+                
+                <Grid item xs={12}>
+                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      size="large"
+                      disabled={loadingRequests}
+                      startIcon={loadingRequests ? <CircularProgress size={20} /> : <Send />}
+                      sx={{ minWidth: 200 }}
+                    >
+                      {loadingRequests ? 'Submitting...' : 'Submit General Service Request'}
+                    </Button>
+                  </Box>
+                </Grid>
+              </Grid>
+            </form>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCreateRequestDialog(false)}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
