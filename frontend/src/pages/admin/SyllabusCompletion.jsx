@@ -1,54 +1,5 @@
 import React from 'react';
-import {
-  Box,
-  Typography,
-  Paper,
-  Grid,
-  Card,
-  CardContent,
-  Button,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Chip,
-  Alert,
-  CircularProgress,
-  Snackbar,
-  Tooltip,
-  Divider,
-  Tabs,
-  Tab,
-  TablePagination,
-} from '@mui/material';
-import {
-  Add,
-  Edit,
-  Delete,
-  Visibility,
-  Download,
-  Upload,
-  Refresh,
-  Assessment,
-  School,
-  Person,
-  Schedule,
-  Warning
-} from '@mui/icons-material';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { syllabusAPI, adminAPI } from '../../services/api';
+import { Box, Typography } from '@mui/material';
 import TeacherRemarks from './TeacherRemarks';
 
 const SyllabusCompletion = () => {

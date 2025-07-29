@@ -33,6 +33,7 @@ import {
   TrendingUp as TrendingUpIcon,
   Warning,
   AccountBalance,
+  Security,
 } from '@mui/icons-material';
 import { adminAPI } from '../../services/api';
 import { toast } from 'react-toastify';
@@ -126,10 +127,11 @@ function AdminDashboard() {
                     {widget.includes('Exam') && <Assessment color="warning" sx={{ mr: 1 }} />}
                     {widget.includes('Event') && <Event color="info" sx={{ mr: 1 }} />}
                     {widget.includes('Campus') && <Settings color="secondary" sx={{ mr: 1 }} />}
+                    {widget.includes('Audit Log') && <Security color="error" sx={{ mr: 1 }} />}
                     {!widget.includes('Attendance') && !widget.includes('Behavior') && !widget.includes('Finance') && 
                      !widget.includes('Inventory') && !widget.includes('Systems') && !widget.includes('Catalog') && 
                      !widget.includes('Counseling') && !widget.includes('Exam') && !widget.includes('Event') && 
-                     !widget.includes('Campus') && <Assignment color="primary" sx={{ mr: 1 }} />}
+                     !widget.includes('Campus') && !widget.includes('Audit Log') && <Assignment color="primary" sx={{ mr: 1 }} />}
                     <Typography variant="h6" sx={{ fontWeight: 600 }}>
                       {widget}
                     </Typography>
@@ -145,10 +147,11 @@ function AdminDashboard() {
                     {widget.includes('Exam') && 'Manage examination schedules and results'}
                     {widget.includes('Event') && 'Plan and organize school events'}
                     {widget.includes('Campus') && 'Ensure campus cleanliness and safety'}
+                    {widget.includes('Audit Log') && 'Track and manage audit logs and compliance records'}
                     {!widget.includes('Attendance') && !widget.includes('Behavior') && !widget.includes('Finance') && 
                      !widget.includes('Inventory') && !widget.includes('Systems') && !widget.includes('Catalog') && 
                      !widget.includes('Counseling') && !widget.includes('Exam') && !widget.includes('Event') && 
-                     !widget.includes('Campus') && 'Manage related functions and operations'}
+                     !widget.includes('Campus') && !widget.includes('Audit Log') && 'Manage related functions and operations'}
                   </Typography>
                   <Button 
                     variant="outlined" 
@@ -156,8 +159,12 @@ function AdminDashboard() {
                     fullWidth
                     onClick={() => {
                       // Navigate to the relevant section based on widget
-                      const section = widget.toLowerCase().replace(/\s+/g, '');
-                      navigate(`/admin/${section}`);
+                      if (widget === 'Audit Log') {
+                        navigate('/admin/audit-log'); // Updated to navigate to standalone Audit Log page
+                      } else {
+                        const section = widget.toLowerCase().replace(/\s+/g, '');
+                        navigate(`/admin/${section}`);
+                      }
                     }}
                   >
                     Access {widget}
@@ -324,6 +331,16 @@ function AdminDashboard() {
                     href="/admin/salary-payroll"
                   >
                     Salary Payroll
+                  </Button>
+                </Grid>
+                <Grid xs={6}>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    startIcon={<Security />}
+                    href="/admin/audit-log"
+                  >
+                    Audit Log
                   </Button>
                 </Grid>
               </Grid>

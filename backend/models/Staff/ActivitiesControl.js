@@ -37,6 +37,7 @@ const activitiesControlSchema = new mongoose.Schema({
           'Service Requests',
           'Syllabus Completion',
           'Salary Payroll',
+          'Audit Log',
           
           // Teacher activities
           'Classes',
@@ -146,6 +147,7 @@ activitiesControlSchema.statics.getAvailableActivities = function() {
     'Service Requests',
     'Syllabus Completion',
     'Salary Payroll',
+    'Audit Log',
     
     // Teacher activities
     'Classes',

@@ -32,12 +32,14 @@ export const roleConfig = {
       'A_Schedules',
       'Disciplinary_Forms',
       'Teacher_Remarks',
+      'Audit_Log',
     ],
     dashboard: [
       'Admissions',
       'Finance',
       'Inventory',
       'Vendor Management',
+      'Audit Log',
     ],
   },
   'IT Administrator': {

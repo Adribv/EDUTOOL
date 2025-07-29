@@ -378,6 +378,7 @@ const Layout = () => {
         { text: 'Visitors', icon: <GroupIcon />, path: '/admin/Visitors', activity: 'Visitors' },
         { text: 'Service Requests', icon: <Approval />, path: '/admin/service-requests', activity: 'Service Requests' },
         { text: 'Syllabus Completion', icon: <RateReview />, path: '/admin/syllabus-completion', activity: 'Syllabus Completion' },
+        { text: 'Audit Log', icon: <Security />, path: '/admin/audit-log', activity: 'Audit Log' },
         { text: 'Salary Payroll', icon: <AccountBalance />, path: '/admin/salary-payroll', activity: 'Salary Payroll' },
       ],
       ITAdmin: [

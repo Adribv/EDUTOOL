@@ -214,7 +214,8 @@ exports.getAvailableActivities = async (req, res) => {
         'Visitors',
         'Service Requests',
         'Syllabus Completion',
-        'Salary Payroll'
+        'Salary Payroll',
+        'Audit Log'
       ],
       'Teacher Activities': [
         'Classes',

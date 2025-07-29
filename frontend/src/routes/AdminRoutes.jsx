@@ -48,6 +48,7 @@ import SyllabusCompletion from '../pages/admin/SyllabusCompletion';
 import CurriculumTemplateDemo from '../pages/admin/CurriculumTemplateDemo';
 import PermissionsManagement from '../pages/admin/PermissionsManagement';
 import AdminSalaryPayroll from '../pages/admin/SalaryPayroll';
+import AuditLog from '../pages/admin/AuditLog';
 
 const AdminRoutes = () => {
   return (
@@ -92,6 +93,8 @@ const AdminRoutes = () => {
         <Route path="service-requests" element={<A_ServiceRequests />} />
         {/* Syllabus Completion Route */}
         <Route path="syllabus-completion" element={<SyllabusCompletion />} />
+        {/* Audit Log Route */}
+        <Route path="audit-log" element={<AuditLog />} />
         {/* Teacher Remarks Routes */}
         <Route path="teacher-remarks" element={<TeacherRemarks />} />
         {/* Curriculum Template Demo Route */}
@@ -109,7 +112,6 @@ const AdminRoutes = () => {
         <Route path="disciplinary-forms/:formId" element={<DisciplinaryFormCreate />} />
         <Route path="disciplinary-forms/template/new" element={<DisciplinaryFormTemplateEditor />} />
         <Route path="disciplinary-forms/template/:templateId/edit" element={<DisciplinaryFormTemplateEditor />} />
-        <Route path="disciplinary-forms/template/:templateId" element={<DisciplinaryFormTemplateEditor />} />
         <Route path="permissions" element={<PermissionsManagement />} />
         {/* Salary Payroll Route */}
         <Route path="salary-payroll" element={<AdminSalaryPayroll />} />

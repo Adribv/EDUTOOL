@@ -123,6 +123,7 @@ const activityIcons = {
   'Service Requests': <ApprovalIcon />,
   'Syllabus Completion': <RateReviewIcon />,
   'Salary Payroll': <AccountBalanceIcon />,
+  'Audit Log': <AssessmentIcon />,
   'Assignments': <AssignmentIcon />,
   'Calendar': <CalendarIcon />,
   'Substitute Teacher Request': <ApprovalIcon />,
