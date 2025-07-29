@@ -1,0 +1,113 @@
+EDULIVES 
+
+ ┣ src
+ ┃  ┣ Pages
+ ┃  ┃  ┣ Inventory
+ ┃  ┃  ┃  ┣ Inventory_Logistics.jsx
+ ┃  ┃  ┃  ┗ Inventory_Management.jsx
+ ┃  ┃  ┣ Management
+ ┃  ┃  ┃  ┣ Admin_Staff
+ ┃  ┃  ┃  ┃  ┣ Admin_Admission.jsx
+ ┃  ┃  ┃  ┃  ┣ Admin_Finance_Invoice.jsx
+ ┃  ┃  ┃  ┃  ┣ Admin_Helpdesk.jsx
+ ┃  ┃  ┃  ┃  ┣ Admin_Hostel.jsx
+ ┃  ┃  ┃  ┃  ┣ Admin_Inventory.jsx
+ ┃  ┃  ┃  ┃  ┣ Admin_Role_Management.jsx
+ ┃  ┃  ┃  ┃  ┗ Admin_Student_Cred_Management.jsx
+ ┃  ┃  ┃  ┣ Class_Coordinator
+ ┃  ┃  ┃  ┃  ┣ Class_Overall_Performance.jsx
+ ┃  ┃  ┃  ┃  ┗ Class_Student_Disicipline.jsx
+ ┃  ┃  ┃  ┣ Co_curricular_Manager
+ ┃  ┃  ┃  ┃  ┣ CC_Event_Organization.jsx
+ ┃  ┃  ┃  ┃  ┣ CC_InterSchool_Records.jsx
+ ┃  ┃  ┃  ┃  ┗ CC_OD_Process.jsx
+ ┃  ┃  ┃  ┣ Counselor
+ ┃  ┃  ┃  ┃  ┣ Counselor_Medical_Helpline.jsx
+ ┃  ┃  ┃  ┃  ┗ Counselor_Wellness_Reports.jsx
+ ┃  ┃  ┃  ┣ EdTech_Coordinator
+ ┃  ┃  ┃  ┃  ┣ EDULIVES_Complaints.jsx
+ ┃  ┃  ┃  ┃  ┣ EDULIVES_Credential_Management.jsx
+ ┃  ┃  ┃  ┃  ┗ EDULIVES_Management.jsx
+ ┃  ┃  ┃  ┣ Exam_Controller
+ ┃  ┃  ┃  ┃  ┣ Exam_Document_Generator.jsx
+ ┃  ┃  ┃  ┃  ┣ Exam_Grading.jsx
+ ┃  ┃  ┃  ┃  ┣ Exam_Invigilation_Schedule.jsx
+ ┃  ┃  ┃  ┃  ┣ Exam_Publish_Results.jsx
+ ┃  ┃  ┃  ┃  ┣ Exam_QP.jsx
+ ┃  ┃  ┃  ┃  ┗ Exam_Schedule.jsx
+ ┃  ┃  ┃  ┣ HOD
+ ┃  ┃  ┃  ┃  ┣ HOD_Approval.jsx
+ ┃  ┃  ┃  ┃  ┣ HOD_Dept_Management.jsx
+ ┃  ┃  ┃  ┃  ┣ HOD_LEM_Mgnt.jsx
+ ┃  ┃  ┃  ┃  ┣ HOD_Profile.jsx
+ ┃  ┃  ┃  ┃  ┣ HOD_Subject_Performance.jsx
+ ┃  ┃  ┃  ┃  ┣ HOD_Teacher_Check.jsx
+ ┃  ┃  ┃  ┃  ┣ HOD_Teacher_Communication.jsx
+ ┃  ┃  ┃  ┃  ┗ HOD_VP_Interaction.jsx
+ ┃  ┃  ┃  ┣ Librarian
+ ┃  ┃  ┃  ┃  ┣ L_Books.jsx
+ ┃  ┃  ┃  ┃  ┣ L_SoftSkill_Training.jsx
+ ┃  ┃  ┃  ┃  ┗ L_Timetable.jsx
+ ┃  ┃  ┃  ┣ Principal
+ ┃  ┃  ┃  ┃  ┣ Principal_Announcements.jsx
+ ┃  ┃  ┃  ┃  ┣ Principal_Full_Administration.jsx
+ ┃  ┃  ┃  ┃  ┗ Principal_Policy_Maker.jsx
+ ┃  ┃  ┃  ┣ Supporting_Staffs
+ ┃  ┃  ┃  ┃  ┣ SS_List_handle.jsx
+ ┃  ┃  ┃  ┃  ┣ SS_Payment_Handle.jsx
+ ┃  ┃  ┃  ┃  ┣ SS_Review_Feedback.jsx
+ ┃  ┃  ┃  ┃  ┗ SS_Visitor_Log.jsx
+ ┃  ┃  ┃  ┣ Transport_Manager
+ ┃  ┃  ┃  ┃  ┣ Transport_Buses.jsx
+ ┃  ┃  ┃  ┃  ┣ Transport_Governor.jsx
+ ┃  ┃  ┃  ┃  ┣ Transport_Locations.jsx
+ ┃  ┃  ┃  ┃  ┗ Transport_Student_Address.jsx
+ ┃  ┃  ┃  ┗ Vice_Principal
+ ┃  ┃  ┃     ┣ VP_Edit_Curriculams.jsx
+ ┃  ┃  ┃     ┣ VP_Exam_Schedule.jsx
+ ┃  ┃  ┃     ┣ VP_HOD_Interactions.jsx
+ ┃  ┃  ┃     ┣ VP_Manage_PTM.jsx
+ ┃  ┃  ┃     ┣ VP_Report.jsx
+ ┃  ┃  ┃     ┣ VP_School_Mgnt.jsx
+ ┃  ┃  ┃     ┣ VP_Student_Affairs.jsx
+ ┃  ┃  ┃     ┗ VP_Transport_Mgnt.jsx
+ ┃  ┃  ┣ Parent
+ ┃  ┃  ┃  ┣ Dashboard.jsx
+ ┃  ┃  ┃  ┣ P_Profile.jsx
+ ┃  ┃  ┃  ┣ Students.jsx
+ ┃  ┃  ┃  ┣ StudentDetails.jsx
+ ┃  ┃  ┃  ┣ Assignments.jsx
+ ┃  ┃  ┃  ┣ Events.jsx
+ ┃  ┃  ┃  ┣ P_Fee_Payments.jsx
+ ┃  ┃  ┃  ┣ P_Feedback.jsx
+ ┃  ┃  ┃  ┣ P_Leave_Request.jsx
+ ┃  ┃  ┃  ┗ P_Raise_Complaints.jsx
+ ┃  ┃  ┣ Staffs
+ ┃  ┃  ┃  ┣ T_Calendar.jsx
+ ┃  ┃  ┃  ┣ T_Class_Activities.jsx
+ ┃  ┃  ┃  ┣ T_Class_Performance.jsx
+ ┃  ┃  ┃  ┣ T_Exam_Control.jsx
+ ┃  ┃  ┃  ┣ T_Feedback.jsx
+ ┃  ┃  ┃  ┣ T_Forum.jsx
+ ┃  ┃  ┃  ┣ T_Leave.jsx
+ ┃  ┃  ┃  ┣ T_Mark_Attendance.jsx
+ ┃  ┃  ┃  ┣ T_Parent_Interactions.jsx
+ ┃  ┃  ┃  ┣ T_Partial_Inventory_Control.jsx
+ ┃  ┃  ┃  ┣ T_Profile.jsx
+ ┃  ┃  ┃  ┣ T_ReportCard_Generator.jsx
+ ┃  ┃  ┃  ┣ T_Student_Analytics.jsx
+ ┃  ┃  ┃  ┣ T_StudentList.jsx
+ ┃  ┃  ┃  ┣ T_Timetable.jsx
+ ┃  ┃  ┃  ┗ T_Upload_Materials.jsx
+ ┃  ┃  ┣ Student
+ ┃  ┃  ┃  ┣ Attendance.jsx
+ ┃  ┃  ┃  ┣ Calender.jsx
+ ┃  ┃  ┃  ┣ Courses.jsx
+ ┃  ┃  ┃  ┣ Dashboard.jsx
+ ┃  ┃  ┃  ┣ Forum.jsx
+ ┃  ┃  ┃  ┣ Lem.jsx
+ ┃  ┃  ┃  ┣ Profile.jsx
+ ┃  ┃  ┃  ┣ Results.jsx
+ ┃  ┃  ┃  ┣ Timetable.jsx
+ ┃  ┃  ┃  ┗ Transport.jsx
+ ┃  ┃  ┗ Login.jsx

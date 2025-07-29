@@ -1,0 +1,1608 @@
+{
+  "info": {
+    "name": "EDULIVES - Admin Staff API",
+    "description": "API collection for the Admin Staff module in EDULIVES application",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Student Records Management",
+      "item": [
+        {
+          "name": "Get All Students",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/students?class=10&section=A&status=Active",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "students"],
+              "query": [
+                {
+                  "key": "class",
+                  "value": "10"
+                },
+                {
+                  "key": "section",
+                  "value": "A"
+                },
+                {
+                  "key": "status",
+                  "value": "Active"
+                }
+              ]
+            },
+            "description": "Retrieves a list of all students with optional filtering"
+          }
+        },
+        {
+          "name": "Get Student By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/students/{{studentId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "students", "{{studentId}}"]
+            },
+            "description": "Retrieves detailed information about a specific student"
+          }
+        },
+        {
+          "name": "Register Student",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"John Doe\",\n    \"gender\": \"Male\",\n    \"dateOfBirth\": \"2008-05-15\",\n    \"admissionNumber\": \"ADM2023001\",\n    \"rollNumber\": \"10A001\",\n    \"class\": \"10\",\n    \"section\": \"A\",\n    \"academicYear\": \"2023-2024\",\n    \"admissionDate\": \"2023-06-01\",\n    \"parentInfo\": {\n        \"fatherName\": \"Robert Doe\",\n        \"motherName\": \"Sarah Doe\",\n        \"guardianName\": \"Robert Doe\",\n        \"contactNumber\": \"9876543210\",\n        \"alternateContact\": \"8765432109\",\n        \"email\": \"parent@example.com\",\n        \"address\": \"123 Main Street, City\",\n        \"occupation\": \"Engineer\"\n    },\n    \"previousSchool\": {\n        \"name\": \"Previous School Name\",\n        \"board\": \"CBSE\",\n        \"grade\": \"9\",\n        \"yearOfPassing\": \"2023\"\n    },\n    \"medicalInfo\": {\n        \"bloodGroup\": \"O+\",\n        \"allergies\": \"None\",\n        \"medicalConditions\": \"None\"\n    },\n    \"documents\": {\n        \"birthCertificate\": true,\n        \"transferCertificate\": true,\n        \"previousMarksheets\": true,\n        \"addressProof\": true\n    }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/students",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "students"]
+            },
+            "description": "Registers a new student in the system"
+          }
+        },
+        {
+          "name": "Update Student",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"John Doe\",\n    \"class\": \"10\",\n    \"section\": \"B\",\n    \"parentInfo\": {\n        \"contactNumber\": \"9876543210\",\n        \"alternateContact\": \"8765432109\",\n        \"email\": \"updated.parent@example.com\",\n        \"address\": \"456 New Street, City\"\n    },\n    \"medicalInfo\": {\n        \"allergies\": \"Peanuts\",\n        \"medicalConditions\": \"Asthma\"\n    }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/students/{{studentId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "students", "{{studentId}}"]
+            },
+            "description": "Updates information for an existing student"
+          }
+        },
+        {
+          "name": "Generate Student ID Card",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/students/{{studentId}}/id-card",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "students", "{{studentId}}", "id-card"]
+            },
+            "description": "Generates an ID card for a student"
+          }
+        },
+        {
+          "name": "Process Student Transfer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"studentId\": \"{{studentId}}\",\n    \"transferType\": \"Internal\",\n    \"fromClass\": \"10\",\n    \"fromSection\": \"A\",\n    \"toClass\": \"10\",\n    \"toSection\": \"B\",\n    \"reason\": \"Balance class strength\",\n    \"effectiveDate\": \"2023-09-01\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/students/transfer",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "students", "transfer"]
+            },
+            "description": "Processes a student transfer between classes or to another school"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Staff Records Administration",
+      "item": [
+        {
+          "name": "Get All Staff",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/staff?department=Mathematics&role=Teacher&status=Active",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "staff"],
+              "query": [
+                {
+                  "key": "department",
+                  "value": "Mathematics"
+                },
+                {
+                  "key": "role",
+                  "value": "Teacher"
+                },
+                {
+                  "key": "status",
+                  "value": "Active"
+                }
+              ]
+            },
+            "description": "Retrieves a list of all staff members with optional filtering"
+          }
+        },
+        {
+          "name": "Get Staff By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/staff/{{staffId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "staff", "{{staffId}}"]
+            },
+            "description": "Retrieves detailed information about a specific staff member"
+          }
+        },
+        {
+          "name": "Register Staff",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Jane Smith\",\n    \"gender\": \"Female\",\n    \"dateOfBirth\": \"1985-08-20\",\n    \"employeeId\": \"EMP2023001\",\n    \"role\": \"Teacher\",\n    \"department\": \"Mathematics\",\n    \"joiningDate\": \"2023-07-01\",\n    \"contactInfo\": {\n        \"phone\": \"9876543210\",\n        \"alternatePhone\": \"8765432109\",\n        \"email\": \"jane.smith@example.com\",\n        \"address\": \"456 Staff Street, City\"\n    },\n    \"qualifications\": [\n        {\n            \"degree\": \"M.Sc Mathematics\",\n            \"institution\": \"University of Mathematics\",\n            \"year\": 2010\n        },\n        {\n            \"degree\": \"B.Ed\",\n            \"institution\": \"Teaching College\",\n            \"year\": 2008\n        }\n    ],\n    \"experience\": [\n        {\n            \"organization\": \"Previous School\",\n            \"position\": \"Mathematics Teacher\",\n            \"from\": \"2010-06-01\",\n            \"to\": \"2023-06-30\",\n            \"description\": \"Taught mathematics to high school students\"\n        }\n    ],\n    \"documents\": {\n        \"idProof\": true,\n        \"addressProof\": true,\n        \"qualificationCertificates\": true,\n        \"experienceCertificates\": true\n    },\n    \"bankDetails\": {\n        \"accountName\": \"Jane Smith\",\n        \"accountNumber\": \"1234567890\",\n        \"bankName\": \"Example Bank\",\n        \"ifscCode\": \"EXBK0001234\",\n        \"branch\": \"City Branch\"\n    }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/staff",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "staff"]
+            },
+            "description": "Registers a new staff member in the system"
+          }
+        },
+        {
+          "name": "Update Staff",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Jane Smith\",\n    \"department\": \"Mathematics\",\n    \"role\": \"HOD\",\n    \"contactInfo\": {\n        \"phone\": \"9876543210\",\n        \"alternatePhone\": \"8765432109\",\n        \"email\": \"jane.smith.updated@example.com\",\n        \"address\": \"789 New Staff Street, City\"\n    },\n    \"bankDetails\": {\n        \"accountName\": \"Jane Smith\",\n        \"accountNumber\": \"0987654321\",\n        \"bankName\": \"New Bank\",\n        \"ifscCode\": \"NEWB0001234\",\n        \"branch\": \"New City Branch\"\n    }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/staff/{{staffId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "staff", "{{staffId}}"]
+            },
+            "description": "Updates information for an existing staff member"
+          }
+        },
+        {
+          "name": "Generate Staff ID Card",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/staff/{{staffId}}/id-card",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "staff", "{{staffId}}", "id-card"]
+            },
+            "description": "Generates an ID card for a staff member"
+          }
+        },
+        {
+          "name": "Track Staff Attendance",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"date\": \"2023-09-15\",\n    \"attendanceData\": [\n        {\n            \"staffId\": \"{{staffId1}}\",\n            \"status\": \"Present\",\n            \"inTime\": \"09:00\",\n            \"outTime\": \"17:00\"\n        },\n        {\n            \"staffId\": \"{{staffId2}}\",\n            \"status\": \"Absent\",\n            \"reason\": \"Sick Leave\"\n        },\n        {\n            \"staffId\": \"{{staffId3}}\",\n            \"status\": \"Late\",\n            \"inTime\": \"10:30\",\n            \"outTime\": \"17:00\",\n            \"remarks\": \"Traffic delay\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/staff/attendance",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "staff", "attendance"]
+            },
+            "description": "Records attendance for staff members"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Fee Management System",
+      "item": [
+        {
+          "name": "Configure Fee Structure",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"academicYear\": \"2023-2024\",\n    \"class\": \"10\",\n    \"feeComponents\": [\n        {\n            \"name\": \"Tuition Fee\",\n            \"amount\": 25000,\n            \"frequency\": \"Quarterly\"\n        },\n        {\n            \"name\": \"Development Fee\",\n            \"amount\": 10000,\n            \"frequency\": \"Annual\"\n        },\n        {\n            \"name\": \"Computer Lab Fee\",\n            \"amount\": 5000,\n            \"frequency\": \"Annual\"\n        },\n        {\n            \"name\": \"Library Fee\",\n            \"amount\": 2000,\n            \"frequency\": \"Annual\"\n        },\n        {\n            \"name\": \"Sports Fee\",\n            \"amount\": 3000,\n            \"frequency\": \"Annual\"\n        }\n    ],\n    \"dueDate\": {\n        \"firstQuarter\": \"2023-07-15\",\n        \"secondQuarter\": \"2023-10-15\",\n        \"thirdQuarter\": \"2024-01-15\",\n        \"fourthQuarter\": \"2024-04-15\"\n    },\n    \"latePaymentCharges\": {\n        \"amount\": 500,\n        \"frequency\": \"Per Week\"\n    }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/fee-structure",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "fee-structure"]
+            },
+            "description": "Configures the fee structure for a class and academic year"
+          }
+        },
+        {
+          "name": "Generate Fee Invoice",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"studentId\": \"{{studentId}}\",\n    \"academicYear\": \"2023-2024\",\n    \"term\": \"First Quarter\",\n    \"dueDate\": \"2023-07-15\",\n    \"additionalCharges\": [\n        {\n            \"name\": \"Field Trip\",\n            \"amount\": 1500,\n            \"description\": \"Science Museum Visit\"\n        }\n    ],\n    \"concessions\": [\n        {\n            \"name\": \"Sibling Discount\",\n            \"amount\": 2000,\n            \"description\": \"Second child discount\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/fee-invoice",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "fee-invoice"]
+            },
+            "description": "Generates a fee invoice for a student"
+          }
+        },
+        {
+          "name": "Process Fee Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"studentId\": \"{{studentId}}\",\n    \"invoiceId\": \"{{invoiceId}}\",\n    \"amount\": 25000,\n    \"paymentDate\": \"2023-07-10\",\n    \"paymentMethod\": \"Online Transfer\",\n    \"transactionId\": \"TXN123456789\",\n    \"remarks\": \"First quarter fee payment\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/fee-payment",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "fee-payment"]
+            },
+            "description": "Processes a fee payment for a student"
+          }
+        },
+        {
+          "name": "Get Fee Defaulters",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/fee-defaulters?academicYear=2023-2024&term=First Quarter",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "fee-defaulters"],
+              "query": [
+                {
+                  "key": "academicYear",
+                  "value": "2023-2024"
+                },
+                {
+                  "key": "term",
+                  "value": "First Quarter"
+                }
+              ]
+            },
+            "description": "Retrieves a list of students who have not paid their fees by the due date"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Inventory Control",
+      "item": [
+        {
+          "name": "Add Inventory Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Science Lab Equipment - Microscope\",\n    \"category\": \"Lab Supplies\",\n    \"quantity\": 20,\n    \"unit\": \"Pieces\",\n    \"unitPrice\": 5000,\n    \"supplier\": {\n        \"name\": \"Scientific Supplies Ltd.\",\n        \"contactNumber\": \"9876543210\",\n        \"email\": \"info@scientificsupplies.com\"\n    },\n    \"purchaseDate\": \"2023-08-15\",\n    \"location\": \"Science Lab Store Room\",\n    \"minimumStockLevel\": 5,\n    \"description\": \"High-quality student microscopes for biology lab\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/inventory",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "inventory"]
+            },
+            "description": "Adds a new item to the inventory"
+          }
+        },
+        {
+          "name": "Update Inventory Item",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"quantity\": 25,\n    \"unitPrice\": 4800,\n    \"minimumStockLevel\": 8,\n    \"location\": \"Science Lab Cabinet 3\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/inventory/{{inventoryId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "inventory", "{{inventoryId}}"]
+            },
+            "description": "Updates an existing inventory item"
+          }
+        },
+        {
+          "name": "Issue Inventory Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"inventoryId\": \"{{inventoryId}}\",\n    \"issuedTo\": \"Science Department\",\n    \"quantity\": 5,\n    \"issueDate\": \"2023-09-01\",\n    \"expectedReturnDate\": \"2023-12-15\",\n    \"purpose\": \"For Class 10 Biology Practical\",\n    \"remarks\": \"Handle with care\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/inventory/issue",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "inventory", "issue"]
+            },
+            "description": "Issues inventory items to a department or individual"
+          }
+        },
+        {
+          "name": "Get Low Stock Items",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/inventory/low-stock",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "inventory", "low-stock"]
+            },
+            "description": "Retrieves a list of inventory items that are below their minimum stock level"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Transport Management",
+      "item": [
+        {
+          "name": "Add Transport Vehicle",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"vehicleNumber\": \"MH01AB1234\",\n    \"vehicleType\": \"Bus\",\n    \"capacity\": 40,\n    \"driverName\": \"Rajesh Kumar\",\n    \"driverContact\": \"9876543210\",\n    \"driverLicense\": \"DL123456789\",\n    \"routeNumber\": \"R001\",\n    \"routeDescription\": \"City Center to School via Main Road\",\n    \"stops\": [\n        {\n            \"name\": \"City Center\",\n            \"arrivalTime\": \"07:30\",\n            \"departureTime\": \"07:35\",\n            \"sequence\": 1\n        },\n        {\n            \"name\": \"Market Square\",\n            \"arrivalTime\": \"07:45\",\n            \"departureTime\": \"07:50\",\n            \"sequence\": 2\n        },\n        {\n            \"name\": \"Residential Complex\",\n            \"arrivalTime\": \"08:00\",\n            \"departureTime\": \"08:05\",\n            \"sequence\": 3\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/transport/vehicles",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "transport", "vehicles"]
+            },
+            "description": "Adds a new transport vehicle to the fleet"
+          }
+        },
+        {
+          "name": "Update Transport Vehicle",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"driverName\": \"Suresh Kumar\",\n    \"driverContact\": \"8765432109\",\n    \"stops\": [\n        {\n            \"name\": \"City Center\",\n            \"arrivalTime\": \"07:30\",\n            \"departureTime\": \"07:35\",\n            \"sequence\": 1\n        },\n        {\n            \"name\": \"New Stop - Shopping Mall\",\n            \"arrivalTime\": \"07:40\",\n            \"departureTime\": \"07:45\",\n            \"sequence\": 2\n        },\n        {\n            \"name\": \"Market Square\",\n            \"arrivalTime\": \"07:55\",\n            \"departureTime\": \"08:00\",\n            \"sequence\": 3\n        },\n        {\n            \"name\": \"Residential Complex\",\n            \"arrivalTime\": \"08:10\",\n            \"departureTime\": \"08:15\",\n            \"sequence\": 4\n        }\n    ],\n    \"status\": \"Active\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/transport/vehicles/{{vehicleId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "transport", "vehicles", "{{vehicleId}}"]
+            },
+            "description": "Updates information for an existing transport vehicle"
+          }
+        },
+        {
+          "name": "Assign Student to Transport",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+                "mode": "raw",
+                "raw": "{\n    \"studentId\": \"{{studentId}}\",\n    \"vehicleId\": \"{{vehicleId}}\",\n    \"pickupStop\": \"Residential Complex\",\n    \"dropStop\": \"Residential Complex\",\n    \"effectiveFrom\": \"2023-09-01\",\n    \"transportFee\": 5000,\n    \"paymentFrequency\": \"Monthly\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/transport/student-assignment",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "transport", "student-assignment"]
+            },
+            "description": "Assigns a student to a transport vehicle and route"
+          }
+        },
+        {
+          "name": "Generate Transport Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/transport/reports?vehicleId={{vehicleId}}&month=09&year=2023",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "transport", "reports"],
+              "query": [
+                {
+                  "key": "vehicleId",
+                  "value": "{{vehicleId}}"
+                },
+                {
+                  "key": "month",
+                  "value": "09"
+                },
+                {
+                  "key": "year",
+                  "value": "2023"
+                }
+              ]
+            },
+            "description": "Generates a transport usage and fee collection report"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Facility Management",
+      "item": [
+        {
+          "name": "Add Facility",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Auditorium\",\n    \"type\": \"Event Space\",\n    \"capacity\": 500,\n    \"location\": \"Main Building, Ground Floor\",\n    \"description\": \"Fully equipped auditorium with stage, sound system, and projector\",\n    \"amenities\": [\n        \"Sound System\",\n        \"Projector\",\n        \"Stage Lighting\",\n        \"Air Conditioning\",\n        \"Seating\"\n    ],\n    \"maintenanceSchedule\": {\n        \"frequency\": \"Monthly\",\n        \"lastMaintenance\": \"2023-08-15\",\n        \"nextMaintenance\": \"2023-09-15\"\n    }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/facilities",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "facilities"]
+            },
+            "description": "Adds a new facility to the school"
+          }
+        },
+        {
+          "name": "Get Facilities",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/facilities",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "facilities"]
+            },
+            "description": "Retrieves all facilities in the school"
+          }
+        },
+        {
+          "name": "Book Facility",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"facilityId\": \"{{facilityId}}\",\n    \"purpose\": \"Annual Science Exhibition\",\n    \"requestedBy\": {\n        \"id\": \"{{staffId}}\",\n        \"name\": \"Jane Smith\",\n        \"department\": \"Science\"\n    },\n    \"date\": \"2023-10-15\",\n    \"startTime\": \"09:00\",\n    \"endTime\": \"16:00\",\n    \"attendees\": 350,\n    \"requirements\": [\n        \"Sound System\",\n        \"Projector\",\n        \"Extra Chairs\"\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/facilities/bookings",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "facilities", "bookings"]
+            },
+            "description": "Books a facility for an event or activity"
+          }
+        },
+        {
+          "name": "Get Facility Bookings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/facilities/bookings?facilityId={{facilityId}}&startDate=2023-10-01&endDate=2023-10-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "facilities", "bookings"],
+              "query": [
+                {
+                  "key": "facilityId",
+                  "value": "{{facilityId}}"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2023-10-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2023-10-31"
+                }
+              ]
+            },
+            "description": "Retrieves all bookings for a facility within a date range"
+          }
+        },
+        {
+          "name": "Report Maintenance Issue",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "facilityId",
+                  "value": "{{facilityId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "issueType",
+                  "value": "Repair",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Projector not working properly, image appears blurry",
+                  "type": "text"
+                },
+                {
+                  "key": "priority",
+                  "value": "High",
+                  "type": "text"
+                },
+                {
+                  "key": "reportedBy",
+                  "value": "{{staffId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": ["/path/to/image1.jpg", "/path/to/image2.jpg"]
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/facilities/maintenance",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "facilities", "maintenance"]
+            },
+            "description": "Reports a maintenance issue for a facility"
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Academic Calendar Management",
+      "item": [
+        {
+          "name": "Create Academic Year",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"2023-2024\",\n    \"startDate\": \"2023-06-01\",\n    \"endDate\": \"2024-04-30\",\n    \"terms\": [\n        {\n            \"name\": \"First Term\",\n            \"startDate\": \"2023-06-01\",\n            \"endDate\": \"2023-09-30\"\n        },\n        {\n            \"name\": \"Second Term\",\n            \"startDate\": \"2023-10-01\",\n            \"endDate\": \"2023-12-31\"\n        },\n        {\n            \"name\": \"Third Term\",\n            \"startDate\": \"2024-01-01\",\n            \"endDate\": \"2024-04-30\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/academic-year",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "academic-year"]
+            },
+            "description": "Creates a new academic year with terms"
+          }
+        },
+        {
+          "name": "Add Calendar Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"Annual Sports Day\",\n    \"description\": \"Annual inter-house sports competition\",\n    \"startDate\": \"2023-11-15\",\n    \"endDate\": \"2023-11-16\",\n    \"eventType\": \"Sports\",\n    \"audience\": [\"All Students\", \"All Staff\", \"Parents\"],\n    \"location\": \"School Grounds\",\n    \"isHoliday\": false,\n    \"isRecurring\": false,\n    \"notifyDays\": 7\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/calendar-events",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "calendar-events"]
+            },
+            "description": "Adds an event to the academic calendar"
+          }
+        },
+        {
+          "name": "Get Calendar Events",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/calendar-events?startDate=2023-11-01&endDate=2023-11-30&eventType=Sports",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "calendar-events"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2023-11-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2023-11-30"
+                },
+                {
+                  "key": "eventType",
+                  "value": "Sports"
+                }
+              ]
+            },
+            "description": "Retrieves calendar events within a date range and optional filters"
+          }
+        },
+        {
+          "name": "Add Holiday",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Diwali\",\n    \"description\": \"Festival of Lights\",\n    \"startDate\": \"2023-11-12\",\n    \"endDate\": \"2023-11-13\",\n    \"isRecurring\": true,\n    \"recurringType\": \"Yearly\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/holidays",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "holidays"]
+            },
+            "description": "Adds a holiday to the academic calendar"
+          }
+        },
+        {
+          "name": "Generate Academic Calendar",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/academic-calendar/2023-2024/generate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "academic-calendar", "2023-2024", "generate"]
+            },
+            "description": "Generates a printable academic calendar for the specified academic year"
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Reporting and Analytics",
+      "item": [
+        {
+          "name": "Generate Student Attendance Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/reports/student-attendance?class=10&section=A&startDate=2023-09-01&endDate=2023-09-30",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "reports", "student-attendance"],
+              "query": [
+                {
+                  "key": "class",
+                  "value": "10"
+                },
+                {
+                  "key": "section",
+                  "value": "A"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2023-09-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2023-09-30"
+                }
+              ]
+            },
+            "description": "Generates a report of student attendance for a class over a date range"
+          }
+        },
+        {
+          "name": "Generate Staff Attendance Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/reports/staff-attendance?department=Mathematics&startDate=2023-09-01&endDate=2023-09-30",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "reports", "staff-attendance"],
+              "query": [
+                {
+                  "key": "department",
+                  "value": "Mathematics"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2023-09-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2023-09-30"
+                }
+              ]
+            },
+            "description": "Generates a report of staff attendance over a date range"
+          }
+        },
+        {
+          "name": "Generate Fee Collection Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/reports/fee-collection?academicYear=2023-2024&term=First Term",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "reports", "fee-collection"],
+              "query": [
+                {
+                  "key": "academicYear",
+                  "value": "2023-2024"
+                },
+                {
+                  "key": "term",
+                  "value": "First Term"
+                }
+              ]
+            },
+            "description": "Generates a report of fee collection for an academic term"
+          }
+        },
+        {
+          "name": "Generate Exam Performance Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/reports/exam-performance?class=10&section=A&examType=Mid-Term&subject=Mathematics",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "reports", "exam-performance"],
+              "query": [
+                {
+                  "key": "class",
+                  "value": "10"
+                },
+                {
+                  "key": "section",
+                  "value": "A"
+                },
+                {
+                  "key": "examType",
+                  "value": "Mid-Term"
+                },
+                {
+                  "key": "subject",
+                  "value": "Mathematics"
+                }
+              ]
+            },
+            "description": "Generates a report of student performance in exams"
+          }
+        },
+        {
+          "name": "Generate Inventory Usage Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/reports/inventory-usage?category=Lab Supplies&startDate=2023-09-01&endDate=2023-09-30",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "reports", "inventory-usage"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "Lab Supplies"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2023-09-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2023-09-30"
+                }
+              ]
+            },
+            "description": "Generates a report of inventory usage over a date range"
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. System Configuration",
+      "item": [
+        {
+          "name": "Configure School Information",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "EDULIVES International School",
+                  "type": "text"
+                },
+                {
+                  "key": "address",
+                  "value": "123 Education Street, Knowledge City",
+                  "type": "text"
+                },
+                {
+                  "key": "phone",
+                  "value": "9876543210",
+                  "type": "text"
+                },
+                {
+                  "key": "email",
+                  "value": "info@EDULIVES.edu",
+                  "type": "text"
+                },
+                {
+                  "key": "website",
+                  "value": "www.EDULIVES.edu",
+                  "type": "text"
+                },
+                {
+                  "key": "principalName",
+                  "value": "Dr. Robert Johnson",
+                  "type": "text"
+                },
+                {
+                  "key": "logo",
+                  "type": "file",
+                  "src": "/path/to/school_logo.png"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/configuration/school-info",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "configuration", "school-info"]
+            },
+            "description": "Configures or updates the school's basic information"
+          }
+        },
+        {
+          "name": "Configure Class Sections",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"academicYear\": \"2023-2024\",\n    \"classes\": [\n        {\n            \"grade\": \"10\",\n            \"sections\": [\n                {\n                    \"name\": \"A\",\n                    \"capacity\": 40,\n                    \"classTeacher\": \"{{staffId1}}\"\n                },\n                {\n                    \"name\": \"B\",\n                    \"capacity\": 40,\n                    \"classTeacher\": \"{{staffId2}}\"\n                },\n                {\n                    \"name\": \"C\",\n                    \"capacity\": 40,\n                    \"classTeacher\": \"{{staffId3}}\"\n                }\n            ]\n        },\n        {\n            \"grade\": \"11\",\n            \"sections\": [\n                {\n                    \"name\": \"Science\",\n                    \"capacity\": 35,\n                    \"classTeacher\": \"{{staffId4}}\"\n                },\n                {\n                    \"name\": \"Commerce\",\n                    \"capacity\": 35,\n                    \"classTeacher\": \"{{staffId5}}\"\n                },\n                {\n                    \"name\": \"Arts\",\n                    \"capacity\": 35,\n                    \"classTeacher\": \"{{staffId6}}\"\n                }\n            ]\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/configuration/class-sections",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "configuration", "class-sections"]
+            },
+            "description": "Configures class sections for an academic year"
+          }
+        },
+        {
+          "name": "Configure Subjects",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"academicYear\": \"2023-2024\",\n    \"subjects\": [\n        {\n            \"name\": \"Mathematics\",\n            \"code\": \"MATH\",\n            \"department\": \"Mathematics\",\n            \"classes\": [\"10\", \"11\", \"12\"],\n            \"description\": \"Core mathematics curriculum\"\n        },\n        {\n            \"name\": \"Physics\",\n            \"code\": \"PHY\",\n            \"department\": \"Science\",\n            \"classes\": [\"11 Science\", \"12 Science\"],\n            \"description\": \"Physics for higher secondary\"\n        },\n        {\n            \"name\": \"English\",\n            \"code\": \"ENG\",\n            \"department\": \"Languages\",\n            \"classes\": [\"10\", \"11\", \"12\"],\n            \"description\": \"English language and literature\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/configuration/subjects",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "configuration", "subjects"]
+            },
+            "description": "Configures subjects for an academic year"
+          }
+        },
+        {
+          "name": "Configure Timetable",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"academicYear\": \"2023-2024\",\n    \"class\": \"10\",\n    \"section\": \"A\",\n    \"periods\": [\n        {\n            \"name\": \"Period 1\",\n            \"startTime\": \"08:00\",\n            \"endTime\": \"08:45\"\n        },\n        {\n            \"name\": \"Period 2\",\n            \"startTime\": \"08:50\",\n            \"endTime\": \"09:35\"\n        },\n        {\n            \"name\": \"Period 3\",\n            \"startTime\": \"09:40\",\n            \"endTime\": \"10:25\"\n        },\n        {\n            \"name\": \"Break\",\n            \"startTime\": \"10:25\",\n            \"endTime\": \"10:45\"\n        },\n        {\n            \"name\": \"Period 4\",\n            \"startTime\": \"10:45\",\n            \"endTime\": \"11:30\"\n        },\n        {\n            \"name\": \"Period 5\",\n            \"startTime\": \"11:35\",\n            \"endTime\": \"12:20\"\n        },\n        {\n            \"name\": \"Period 6\",\n            \"startTime\": \"12:25\",\n            \"endTime\": \"13:10\"\n        },\n        {\n            \"name\": \"Lunch\",\n            \"startTime\": \"13:10\",\n            \"endTime\": \"13:50\"\n        },\n        {\n            \"name\": \"Period 7\",\n            \"startTime\": \"13:50\",\n            \"endTime\": \"14:35\"\n        },\n        {\n            \"name\": \"Period 8\",\n            \"startTime\": \"14:40\",\n            \"endTime\": \"15:25\"\n        }\n    ],\n    \"schedule\": {\n        \"Monday\": [\n            {\n                \"period\": \"Period 1\",\n                \"subject\": \"Mathematics\",\n                \"teacher\": \"{{staffId1}}\"\n            },\n            {\n                \"period\": \"Period 2\",\n                \"subject\": \"Science\",\n                \"teacher\": \"{{staffId2}}\"\n            },\n            {\n                \"period\": \"Period 3\",\n                \"subject\": \"English\",\n                \"teacher\": \"{{staffId3}}\"\n            },\n            {\n                \"period\": \"Period 4\",\n                \"subject\": \"Social Studies\",\n                \"teacher\": \"{{staffId4}}\"\n            },\n            {\n                \"period\": \"Period 5\",\n                \"subject\": \"Hindi\",\n                \"teacher\": \"{{staffId5}}\"\n            },\n            {\n                \"period\": \"Period 6\",\n                \"subject\": \"Computer Science\",\n                \"teacher\": \"{{staffId6}}\"\n            },\n            {\n                \"period\": \"Period 7\",\n                \"subject\": \"Physical Education\",\n                \"teacher\": \"{{staffId7}}\"\n            },\n            {\n                \"period\": \"Period 8\",\n                \"subject\": \"Art\",\n                \"teacher\": \"{{staffId8}}\"\n            }\n        ]\n    }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/configuration/timetable",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "configuration", "timetable"]
+            },
+            "description": "Configures the timetable for a class"
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. User Account Management",
+      "item": [
+        {
+          "name": "Create User Account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"john.doe\",\n    \"email\": \"john.doe@example.com\",\n    \"role\": \"Student\",\n    \"linkedId\": \"{{studentId}}\",\n    \"sendCredentials\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/users",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "users"]
+            },
+            "description": "Creates a user account for a student, parent, or staff member"
+          }
+        },
+        {
+            "name": "Reset User Password",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"userId\": \"{{userId}}\",\n    \"sendCredentials\": true\n}"
+              },
+              "url": {
+                "raw": "{{base_url}}/api/admin-staff/users/reset-password",
+                "host": ["{{base_url}}"],
+                "path": ["api", "admin-staff", "users", "reset-password"]
+              },
+              "description": "Resets a user's password and optionally sends new credentials"
+            }
+          },
+        {
+          "name": "Generate Transport Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/transport/reports?vehicleId={{vehicleId}}&month=09&year=2023",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "transport", "reports"],
+              "query": [
+                {
+                  "key": "vehicleId",
+                  "value": "{{vehicleId}}"
+                },
+                {
+                  "key": "month",
+                  "value": "09"
+                },
+                {
+                  "key": "year",
+                  "value": "2023"
+                }
+              ]
+            },
+            "description": "Generates a transport usage and fee collection report"
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Communication",
+      "item": [
+        {
+          "name": "Send Announcement",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"School Closed Due to Heavy Rain\",\n    \"message\": \"Due to the heavy rainfall and flood warning, the school will remain closed tomorrow. Stay safe and follow local weather updates.\",\n    \"audience\": [\n        {\n            \"type\": \"All\",\n            \"value\": \"Students,Parents,Staff\"\n        }\n    ],\n    \"priority\": \"High\",\n    \"channels\": [\"App Notification\", \"Email\", \"SMS\"],\n    \"attachments\": [],\n    \"sendImmediately\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/communications/announcements",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "communications", "announcements"]
+            },
+            "description": "Sends an announcement to selected audience groups"
+          }
+        },
+        {
+          "name": "Send Class Notification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"Science Project Submission Date Extended\",\n    \"message\": \"The submission deadline for the science project has been extended to October 15, 2023. Please ensure your projects are complete by then.\",\n    \"audience\": [\n        {\n            \"type\": \"Class\",\n            \"value\": \"10-A\"\n        }\n    ],\n    \"priority\": \"Medium\",\n    \"channels\": [\"App Notification\", \"Email\"],\n    \"attachments\": [],\n    \"sendImmediately\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/communications/class-notifications",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "communications", "class-notifications"]
+            },
+            "description": "Sends a notification to a specific class"
+          }
+        },
+        {
+          "name": "Schedule Communication",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"Parent-Teacher Meeting Reminder\",\n    \"message\": \"This is a reminder that the Parent-Teacher Meeting is scheduled for this Saturday, October 10, 2023, from 9:00 AM to 1:00 PM. Please arrive on time.\",\n    \"audience\": [\n        {\n            \"type\": \"Role\",\n            \"value\": \"Parents\"\n        }\n    ],\n    \"priority\": \"Medium\",\n    \"channels\": [\"App Notification\", \"Email\", \"SMS\"],\n    \"attachments\": [],\n    \"scheduledDate\": \"2023-10-07T08:00:00\",\n    \"recurrence\": null\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/communications/schedule",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "communications", "schedule"]
+            },
+            "description": "Schedules a communication to be sent at a later date"
+          }
+        },
+        {
+          "name": "Get Communication History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/communications/history?startDate=2023-09-01&endDate=2023-09-30&type=Announcement",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "communications", "history"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2023-09-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2023-09-30"
+                },
+                {
+                  "key": "type",
+                  "value": "Announcement"
+                }
+              ]
+            },
+            "description": "Retrieves communication history with filters"
+          }
+        },
+        {
+          "name": "Create Communication Template",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Fee Payment Reminder\",\n    \"type\": \"Email\",\n    \"subject\": \"Reminder: Fee Payment Due\",\n    \"content\": \"Dear {{parentName}},\\n\\nThis is a reminder that the {{termName}} fee payment for your ward {{studentName}} of class {{className}} is due on {{dueDate}}. The total amount payable is {{amount}}.\\n\\nPlease make the payment before the due date to avoid late fees.\\n\\nRegards,\\nAccounts Department\\n{{schoolName}}\",\n    \"variables\": [\"parentName\", \"termName\", \"studentName\", \"className\", \"dueDate\", \"amount\", \"schoolName\"],\n    \"category\": \"Finance\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin-staff/communications/templates",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin-staff", "communications", "templates"]
+            },
+            "description": "Creates a reusable communication template"
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+              "value": "https://api.edulives.com",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "123456789",
+      "type": "string"
+    },
+    {
+      "key": "studentId",
+      "value": "12001",
+      "type": "string"
+    },
+    {
+      "key": "parentId",
+      "value": "12001",
+      "type": "string"
+    },
+    {
+      "key": "assignmentId",
+      "value": "assignment_id_here",
+      "type": "string"
+    },
+    {
+      "key": "submissionId",
+      "value": "submission_id_here",
+      "type": "string"
+    },
+    {
+      "key": "examId",
+      "value": "exam_id_here",
+      "type": "string"
+    }
+  ]
+}

@@ -1,0 +1,819 @@
+{
+  "info": {
+    "name": "EDULIVES - Student API",
+    "description": "API collection for the Student module in EDULIVES application",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Student Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"rollNumber\": \"10A001\",\n    \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/students/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "login"]
+            },
+            "description": "Authenticates a student and returns a JWT token"
+          }
+        },
+        {
+          "name": "Student Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"John Doe\",\n    \"rollNumber\": \"10A001\",\n    \"password\": \"password123\",\n    \"class\": \"10\",\n    \"section\": \"A\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/students/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "register"]
+            },
+            "description": "Registers a new student account"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Personal Information Module",
+      "item": [
+        {
+          "name": "Get Student Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "profile"]
+            },
+            "description": "Retrieves the student's profile information including parent/guardian details"
+          }
+        },
+        {
+          "name": "Update Student Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"John Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"contactNumber\": \"9876543210\",\n    \"address\": \"123 Student Street, Education City\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/students/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "profile"]
+            },
+            "description": "Submits a request to update student profile information (pending admin approval)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Academic Dashboard",
+      "item": [
+        {
+          "name": "Get Timetable",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/timetable",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "timetable"]
+            },
+            "description": "Retrieves the student's class timetable"
+          }
+        },
+        {
+          "name": "Get Subjects and Teachers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/subjects",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "subjects"]
+            },
+            "description": "Retrieves the list of subjects and assigned teachers for the student's class"
+          }
+        },
+        {
+          "name": "Get Assignments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/assignments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "assignments"]
+            },
+            "description": "Retrieves all assignments for the student's class with submission status"
+          }
+        },
+        {
+          "name": "Submit Assignment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"content\": \"This is my assignment submission.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/students/assignments/{{assignmentId}}/submit",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "assignments", "{{assignmentId}}", "submit"]
+            },
+            "description": "Submits an assignment"
+          }
+        },
+        {
+          "name": "Get Submission Feedback",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/submissions/{{submissionId}}/feedback",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "submissions", "{{submissionId}}", "feedback"]
+            },
+            "description": "Retrieves teacher feedback and grades for a submitted assignment"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Attendance Tracker",
+      "item": [
+        {
+          "name": "Get Attendance Records",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/attendance?month=9&year=2023",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "attendance"],
+              "query": [
+                {
+                  "key": "month",
+                  "value": "9"
+                },
+                {
+                  "key": "year",
+                  "value": "2023"
+                }
+              ]
+            },
+            "description": "Retrieves attendance records for the student with optional month/year filters"
+          }
+        },
+        {
+          "name": "Submit Leave Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"startDate\": \"2023-09-20\",\n    \"endDate\": \"2023-09-22\",\n    \"reason\": \"Medical appointment\",\n    \"type\": \"Medical\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/students/leave-requests",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "leave-requests"]
+            },
+            "description": "Submits a leave request for approval"
+          }
+        },
+        {
+          "name": "Get Leave Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/leave-requests",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "leave-requests"]
+            },
+            "description": "Retrieves all leave requests submitted by the student"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Examination Portal",
+      "item": [
+        {
+          "name": "Get Upcoming Exams",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/exams/upcoming",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "exams", "upcoming"]
+            },
+            "description": "Retrieves upcoming exams for the student's class"
+          }
+        },
+        {
+          "name": "Get Admit Card",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/exams/{{examId}}/admit-card",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "exams", "{{examId}}", "admit-card"]
+            },
+            "description": "Retrieves admit card for a specific exam"
+          }
+        },
+        {
+          "name": "Get Exam Results",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/exam-results",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "exam-results"]
+            },
+            "description": "Retrieves all exam results for the student"
+          }
+        },
+        {
+          "name": "Get Report Cards",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/report-cards",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "report-cards"]
+            },
+            "description": "Retrieves all report cards for the student"
+          }
+        },
+        {
+          "name": "Get Performance Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/performance-analytics",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "performance-analytics"]
+            },
+            "description": "Retrieves performance analytics and trends for the student"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Fee Management",
+      "item": [
+        {
+          "name": "Get Fee Structure",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/fee-structure?academicYear=2023-2024",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "fee-structure"],
+              "query": [
+                {
+                  "key": "academicYear",
+                  "value": "2023-2024"
+                }
+              ]
+            },
+            "description": "Retrieves fee structure details for the student's class"
+          }
+        },
+        {
+          "name": "Get Payment Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/payment-status?academicYear=2023-2024",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "payment-status"],
+              "query": [
+                {
+                  "key": "academicYear",
+                  "value": "2023-2024"
+                }
+              ]
+            },
+            "description": "Retrieves payment status including paid and pending amounts"
+          }
+        },
+        {
+          "name": "Get Payment Receipt",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/payment-receipts/{{paymentId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "payment-receipts", "{{paymentId}}"]
+            },
+            "description": "Retrieves a specific payment receipt"
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Learning Resources",
+      "item": [
+        {
+          "name": "Get Learning Resources",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/learning-resources?subject=Mathematics",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "learning-resources"],
+              "query": [
+                {
+                  "key": "subject",
+                  "value": "Mathematics"
+                }
+              ]
+            },
+            "description": "Retrieves learning resources for the student's class with optional subject filter"
+          }
+        },
+        {
+          "name": "Get Resource Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/learning-resources/{{resourceId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "learning-resources", "{{resourceId}}"]
+            },
+            "description": "Retrieves details of a specific learning resource"
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Communication Center",
+      "item": [
+        {
+          "name": "Get Announcements",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/announcements",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "announcements"]
+            },
+            "description": "Retrieves all announcements relevant to the student"
+          }
+        },
+        {
+          "name": "Get Messages",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/messages",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "messages"]
+            },
+            "description": "Retrieves all messages received by the student"
+          }
+        },
+        {
+          "name": "Get Message Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/messages/{{messageId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "messages", "{{messageId}}"]
+            },
+            "description": "Retrieves details of a specific message"
+          }
+        },
+        {
+          "name": "Reply to Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"content\": \"Thank you for your feedback. I will work on improving those areas.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/students/messages/{{messageId}}/reply",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "messages", "{{messageId}}", "reply"]
+            },
+            "description": "Sends a reply to a received message"
+          }
+        },
+        {
+          "name": "Get Class Discussions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/class-discussions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "class-discussions"]
+            },
+            "description": "Retrieves all class discussions for the student's class"
+          }
+        },
+        {
+          "name": "Get Discussion Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/class-discussions/{{discussionId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "class-discussions", "{{discussionId}}"]
+            },
+            "description": "Retrieves details of a specific class discussion"
+          }
+        },
+        {
+          "name": "Post Discussion Comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"content\": \"I found this article that explains the concept in more detail: https://example.com/article\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/students/class-discussions/{{discussionId}}/comments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "class-discussions", "{{discussionId}}", "comments"]
+            },
+            "description": "Posts a comment to a class discussion"
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Homework Management",
+      "item": [
+        {
+          "name": "Get Homework",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/homework",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "homework"]
+            },
+            "description": "Retrieves all homework assignments for the student"
+          }
+        },
+        {
+          "name": "Get Homework Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/homework/{{homeworkId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "homework", "{{homeworkId}}"]
+            },
+            "description": "Retrieves details of a specific homework assignment"
+          }
+        },
+        {
+          "name": "Submit Homework",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "content",
+                  "value": "This is my homework submission.",
+                  "type": "text"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "/path/to/homework.pdf"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/students/homework/{{homeworkId}}/submit",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "homework", "{{homeworkId}}", "submit"]
+            },
+            "description": "Submits a homework assignment"
+          }
+        },
+        {
+          "name": "Get Homework Submissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/homework-submissions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "homework-submissions"]
+            },
+            "description": "Retrieves all homework submissions by the student"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+              "value": "https://api.edulives.com"
+    },
+    {
+      "key": "token",
+      "value": "your_jwt_token_here"
+    },
+    {
+      "key": "assignmentId",
+      "value": "assignment_id_here"
+    },
+    {
+      "key": "submissionId",
+      "value": "submission_id_here"
+    },
+    {
+      "key": "examId",
+      "value": "exam_id_here"
+    },
+    {
+      "key": "paymentId",
+      "value": "payment_id_here"
+    },
+    {
+      "key": "resourceId",
+      "value": "resource_id_here"
+    },
+    {
+      "key": "messageId",
+      "value": "message_id_here"
+    },
+    {
+      "key": "discussionId",
+      "value": "discussion_id_here"
+    },
+    {
+      "key": "homeworkId",
+      "value": "homework_id_here"
+    }
+  ]
+}

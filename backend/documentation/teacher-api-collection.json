@@ -1,0 +1,1671 @@
+{
+  "info": {
+    "name": "EDULIVES - Teacher API",
+    "description": "API collection for the Teacher module in EDULIVES application",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Personal Profile Management",
+      "item": [
+        {
+          "name": "Get Teacher Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/teachers/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "profile"]
+            },
+            "description": "Retrieves the teacher's profile information"
+          }
+        },
+        {
+          "name": "Update Teacher Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"contactInfo\": {\n        \"phone\": \"9876543210\",\n        \"alternateEmail\": \"teacher.personal@example.com\",\n        \"address\": \"123 Teacher Street, Education City\"\n    },\n    \"qualifications\": [\n        {\n            \"degree\": \"M.Ed\",\n            \"institution\": \"University of Education\",\n            \"year\": 2018\n        },\n        {\n            \"degree\": \"B.Ed\",\n            \"institution\": \"Teaching College\",\n            \"year\": 2015\n        }\n    ],\n    \"certifications\": [\n        {\n            \"name\": \"Advanced Teaching Certification\",\n            \"issuedBy\": \"National Board of Education\",\n            \"validUntil\": \"2025-12-31\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teachers/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "profile"]
+            },
+            "description": "Updates the teacher's profile information"
+          }
+        },
+        {
+          "name": "Add Professional Development",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "Modern Teaching Methods Workshop",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Two-week intensive workshop on modern teaching methodologies",
+                  "type": "text"
+                },
+                {
+                  "key": "completionDate",
+                  "value": "2023-08-15",
+                  "type": "text"
+                },
+                {
+                  "key": "document",
+                  "type": "file",
+                  "src": "/path/to/certificate.pdf"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teachers/profile/professional-development",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "profile", "professional-development"]
+            },
+            "description": "Adds a professional development record to the teacher's profile"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Class and Subject Management",
+      "item": [
+        {
+          "name": "Get Assigned Classes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/teachers/classes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "classes"]
+            },
+            "description": "Retrieves all classes and subjects assigned to the teacher"
+          }
+        },
+        {
+          "name": "Get Student Roster",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/teachers/classes/10/A/students",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "classes", "10", "A", "students"]
+            },
+            "description": "Retrieves the list of students in a specific class and section"
+          }
+        },
+        {
+          "name": "Create Chapter Plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"Algebra Fundamentals\",\n    \"description\": \"Introduction to basic algebraic concepts\",\n    \"class\": \"10\",\n    \"section\": \"A\",\n    \"subject\": \"Mathematics\",\n    \"startDate\": \"2023-09-01\",\n    \"endDate\": \"2023-09-30\",\n    \"topics\": [\n        {\n            \"title\": \"Linear Equations\",\n            \"description\": \"Solving linear equations with one variable\",\n            \"duration\": 5\n        },\n        {\n            \"title\": \"Quadratic Equations\",\n            \"description\": \"Introduction to quadratic equations and their solutions\",\n            \"duration\": 7\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teachers/chapter-plans",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "chapter-plans"]
+            },
+            "description": "Creates a new chapter plan for a subject"
+          }
+        },
+        {
+          "name": "Get Chapter Plans",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/teachers/chapter-plans/10/A/Mathematics",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "chapter-plans", "10", "A", "Mathematics"]
+            },
+            "description": "Retrieves all chapter plans for a specific class, section, and subject"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Timetable and Scheduling",
+      "item": [
+        {
+          "name": "Get Timetable",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/teachers/timetable",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "timetable"]
+            },
+            "description": "Retrieves the teacher's timetable"
+          }
+        },
+        {
+          "name": "Request Substitution",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"date\": \"2023-09-15\",\n    \"periodNumber\": 3,\n    \"class\": \"10\",\n    \"section\": \"A\",\n    \"subject\": \"Mathematics\",\n    \"reason\": \"Medical appointment\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teachers/substitution-requests",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "substitution-requests"]
+            },
+            "description": "Requests a substitution for a specific class period"
+          }
+        },
+        {
+          "name": "Get Substitution Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/teachers/substitution-requests",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "substitution-requests"]
+            },
+            "description": "Retrieves all substitution requests made by the teacher"
+          }
+        },
+        {
+          "name": "Get Academic Calendar",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/teachers/academic-calendar",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "academic-calendar"]
+            },
+            "description": "Retrieves the academic calendar events relevant to the teacher"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Attendance Management",
+      "item": [
+        {
+          "name": "Mark Attendance",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"date\": \"2023-09-15\",\n    \"class\": \"10\",\n    \"section\": \"A\",\n    \"attendanceData\": [\n        {\n            \"studentRollNumber\": \"10A001\",\n            \"status\": \"Present\"\n        },\n        {\n            \"studentRollNumber\": \"10A002\",\n            \"status\": \"Absent\"\n        },\n        {\n            \"studentRollNumber\": \"10A003\",\n            \"status\": \"Late\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teachers/attendance",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "attendance"]
+            },
+            "description": "Marks attendance for a class on a specific date"
+          }
+        },
+        {
+          "name": "Get Attendance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/teachers/attendance/10/A/2023-09-15",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "attendance", "10", "A", "2023-09-15"]
+            },
+            "description": "Retrieves attendance records for a class on a specific date"
+          }
+        },
+        {
+          "name": "Generate Attendance Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/teachers/attendance-report/10/A/2023-09-01/2023-09-30",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "attendance-report", "10", "A", "2023-09-01", "2023-09-30"]
+            },
+            "description": "Generates an attendance report for a class over a date range"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Assignment and Homework Module",
+      "item": [
+        {
+          "name": "Create Assignment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"Algebra Practice Problems\",\n    \"description\": \"Solve the following 10 algebraic equations\",\n    \"class\": \"10\",\n    \"section\": \"A\",\n    \"subject\": \"Mathematics\",\n    \"dueDate\": \"2023-09-20\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teachers/assignments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "assignments"]
+            },
+            "description": "Creates a new assignment for a class"
+          }
+        },
+        {
+          "name": "Get Assignments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/teachers/assignments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "assignments"]
+            },
+            "description": "Retrieves all assignments created by the teacher"
+          }
+        },
+        {
+          "name": "Get Submissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/teachers/assignments/{{assignmentId}}/submissions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "assignments", "{{assignmentId}}", "submissions"]
+            },
+            "description": "Retrieves all submissions for a specific assignment"
+          }
+        },
+        {
+          "name": "Grade Submission",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"grade\": \"A\",\n    \"feedback\": \"Excellent work! All problems solved correctly.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teachers/submissions/{{submissionId}}/grade",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "submissions", "{{submissionId}}", "grade"]
+            },
+            "description": "Grades a student's assignment submission"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Examination and Assessment",
+      "item": [
+        {
+          "name": "Create Exam",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "Mid-Term Mathematics Exam",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Covers chapters 1-5 of the textbook",
+                  "type": "text"
+                },
+                {
+                  "key": "class",
+                  "value": "10",
+                  "type": "text"
+                },
+                {
+                  "key": "section",
+                  "value": "A",
+                  "type": "text"
+                },
+                {
+                  "key": "subject",
+                  "value": "Mathematics",
+                  "type": "text"
+                },
+                {
+                  "key": "date",
+                  "value": "2023-10-15",
+                  "type": "text"
+                },
+                {
+                  "key": "duration",
+                  "value": "120",
+                  "type": "text"
+                },
+                {
+                  "key": "totalMarks",
+                  "value": "100",
+                  "type": "text"
+                },
+                {
+                  "key": "questionPaper",
+                  "type": "file",
+                  "src": "/path/to/question_paper.pdf"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teachers/exams",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "exams"]
+            },
+            "description": "Creates a new exam for a class"
+          }
+        },
+        {
+          "name": "Get Exams",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/teachers/exams",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "exams"]
+            },
+            "description": "Retrieves all exams created by the teacher"
+          }
+        },
+        {
+          "name": "Enter Exam Results",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"results\": [\n        {\n            \"studentId\": \"{{studentId1}}\",\n            \"marksObtained\": 85,\n            \"feedback\": \"Good performance in algebra, needs improvement in geometry\"\n        },\n        {\n            \"studentId\": \"{{studentId2}}\",\n            \"marksObtained\": 92,\n            \"feedback\": \"Excellent work overall\"\n        },\n        {\n            \"studentId\": \"{{studentId3}}\",\n            \"marksObtained\": 78,\n            \"feedback\": \"Good effort, needs to work on problem-solving skills\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teachers/exams/{{examId}}/results",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "exams", "{{examId}}", "results"]
+            },
+            "description": "Enters results for an exam"
+          }
+        },
+        {
+          "name": "Generate Performance Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/teachers/exams/{{examId}}/performance-report",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "exams", "{{examId}}", "performance-report"]
+            },
+            "description": "Generates a performance report for an exam"
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Learning Material Repository",
+      "item": [
+        {
+          "name": "Submit Lesson Plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "Introduction to Quadratic Equations",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Lesson plan covering the basics of quadratic equations and their applications",
+                  "type": "text"
+                },
+                {
+                  "key": "class",
+                  "value": "10",
+                  "type": "text"
+                },
+                {
+                  "key": "section",
+                  "value": "A",
+                  "type": "text"
+                },
+                {
+                  "key": "subject",
+                  "value": "Mathematics",
+                  "type": "text"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "/path/to/lesson_plan.pdf"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teachers/lesson-plans",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "lesson-plans"]
+            },
+            "description": "Submits a lesson plan for HOD approval"
+          }
+        },
+        {
+          "name": "Get Lesson Plans",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/teachers/lesson-plans",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "lesson-plans"]
+            },
+            "description": "Retrieves all lesson plans submitted by the teacher"
+          }
+        },
+        {
+          "name": "Upload Resource",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "Algebra Practice Worksheet",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Additional practice problems for algebraic equations",
+                  "type": "text"
+                },
+                {
+                  "key": "class",
+                  "value": "10",
+                  "type": "text"
+                },
+                {
+                  "key": "section",
+                  "value": "A",
+                  "type": "text"
+                },
+                {
+                  "key": "subject",
+                  "value": "Mathematics",
+                  "type": "text"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "/path/to/worksheet.pdf"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teachers/resources",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "resources"]
+            },
+            "description": "Uploads a teaching resource"
+          }
+        },
+        {
+          "name": "Get Resources",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/teachers/resources",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "resources"]
+            },
+            "description": "Retrieves all resources uploaded by the teacher"
+          }
+        },
+        {
+          "name": "Get Departmental Resources",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/teachers/departmental-resources",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "departmental-resources"]
+            },
+            "description": "Retrieves all resources shared within the teacher's department"
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Communication Tools",
+      "item": [
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "recipientId",
+                  "value": "{{studentId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "recipientModel",
+                  "value": "Student",
+                  "type": "text"
+                },
+                {
+                  "key": "subject",
+                  "value": "Regarding your recent assignment",
+                  "type": "text"
+                },
+                {
+                  "key": "content",
+                  "value": "I wanted to discuss your approach to the algebra problems in the last assignment.",
+                  "type": "text"
+                },
+                {
+                  "key": "attachments",
+                  "type": "file",
+                  "src": "/path/to/feedback.pdf"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teachers/messages",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "messages"]
+            },
+            "description": "Sends a message to a student or parent"
+          }
+        },
+        {
+          "name": "Get Received Messages",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/teachers/messages/received",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "messages", "received"]
+            },
+            "description": "Retrieves all messages received by the teacher"
+          }
+        },
+        {
+          "name": "Get Sent Messages",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/teachers/messages/sent",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "messages", "sent"]
+            },
+            "description": "Retrieves all messages sent by the teacher"
+          }
+        },
+        {
+          "name": "Post Announcement",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "Math Quiz Next Week",
+                  "type": "text"
+                },
+                {
+                  "key": "content",
+                  "value": "There will be a quiz on quadratic equations next Monday. Please prepare chapters 5-7.",
+                  "type": "text"
+                },
+                {
+                  "key": "class",
+                  "value": "10",
+                  "type": "text"
+                },
+                {
+                  "key": "section",
+                  "value": "A",
+                  "type": "text"
+                },
+                {
+                  "key": "attachments",
+                  "type": "file",
+                  "src": "/path/to/study_guide.pdf"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teachers/announcements",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "announcements"]
+            },
+            "description": "Posts an announcement to a class"
+          }
+        },
+        {
+          "name": "Get Announcements",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/teachers/announcements",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teachers", "announcements"]
+            },
+            "description": "Retrieves all announcements posted by the teacher"
+          }
+        },
+        {
+            "name": "Schedule Meeting",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"title\": \"Parent-Teacher Meeting\",\n    \"description\": \"Discussion about student's academic progress\",\n    \"date\": \"2023-10-20\",\n    \"startTime\": \"15:00\",\n    \"endTime\": \"15:30\",\n    \"attendees\": [\n        {\n            \"id\": \"{{parentId}}\",\n            \"role\": \"Parent\"\n        }\n    ],\n    \"location\": \"Room 105\",\n    \"meetingType\": \"In-person\"\n}"
+              },
+              "url": {
+                "raw": "{{base_url}}/api/teachers/meetings",
+                "host": ["{{base_url}}"],
+                "path": ["api", "teachers", "meetings"]
+              },
+              "description": "Schedules a meeting with parents or other staff members"
+            }
+          },
+          {
+            "name": "Get Meetings",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/api/teachers/meetings",
+                "host": ["{{base_url}}"],
+                "path": ["api", "teachers", "meetings"]
+              },
+              "description": "Retrieves all meetings scheduled by the teacher"
+            }
+          }
+        ]
+      },
+      {
+        "name": "9. Student Performance Tracking",
+        "item": [
+          {
+            "name": "Record Performance",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"studentId\": \"{{studentId}}\",\n    \"class\": \"10\",\n    \"section\": \"A\",\n    \"subject\": \"Mathematics\",\n    \"term\": \"First Term\",\n    \"academicYear\": \"2023-2024\",\n    \"assessments\": [\n        {\n            \"type\": \"Quiz\",\n            \"date\": \"2023-09-10\",\n            \"score\": 85,\n            \"maxScore\": 100,\n            \"topic\": \"Linear Equations\",\n            \"comments\": \"Good understanding of concepts\"\n        },\n        {\n            \"type\": \"Classwork\",\n            \"date\": \"2023-09-15\",\n            \"score\": 18,\n            \"maxScore\": 20,\n            \"topic\": \"Algebraic Expressions\",\n            \"comments\": \"Excellent problem-solving skills\"\n        }\n    ],\n    \"behavioralObservations\": [\n        {\n            \"date\": \"2023-09-12\",\n            \"observation\": \"Actively participates in class discussions\",\n            \"category\": \"Participation\"\n        },\n        {\n            \"date\": \"2023-09-14\",\n            \"observation\": \"Helps peers with difficult problems\",\n            \"category\": \"Collaboration\"\n        }\n    ],\n    \"needsRemedial\": false,\n    \"interventionPlan\": null\n}"
+              },
+              "url": {
+                "raw": "{{base_url}}/api/teachers/student-performance",
+                "host": ["{{base_url}}"],
+                "path": ["api", "teachers", "student-performance"]
+              },
+              "description": "Records or updates a student's performance in a subject"
+            }
+          },
+          {
+            "name": "Get Student Performance",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/api/teachers/student-performance/{{studentId}}/Mathematics",
+                "host": ["{{base_url}}"],
+                "path": ["api", "teachers", "student-performance", "{{studentId}}", "Mathematics"]
+              },
+              "description": "Retrieves a student's performance records for a specific subject"
+            }
+          },
+          {
+            "name": "Add Behavioral Observation",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"observation\": \"Shows exceptional problem-solving skills when faced with complex problems\",\n    \"category\": \"Academic Skills\",\n    \"subject\": \"Mathematics\"\n}"
+              },
+              "url": {
+                "raw": "{{base_url}}/api/teachers/student-performance/{{studentId}}/observations",
+                "host": ["{{base_url}}"],
+                "path": ["api", "teachers", "student-performance", "{{studentId}}", "observations"]
+              },
+              "description": "Adds a behavioral observation for a student"
+            }
+          },
+          {
+            "name": "Create Intervention Plan",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"description\": \"Additional support for algebraic concepts\",\n    \"startDate\": \"2023-10-01\",\n    \"endDate\": \"2023-10-31\",\n    \"strategies\": [\n        \"One-on-one tutoring sessions twice a week\",\n        \"Simplified practice problems with step-by-step solutions\",\n        \"Visual aids for complex concepts\"\n    ],\n    \"subject\": \"Mathematics\"\n}"
+              },
+              "url": {
+                "raw": "{{base_url}}/api/teachers/student-performance/{{studentId}}/intervention-plan",
+                "host": ["{{base_url}}"],
+                "path": ["api", "teachers", "student-performance", "{{studentId}}", "intervention-plan"]
+              },
+              "description": "Creates an intervention plan for a student who needs additional support"
+            }
+          }
+        ]
+      },
+      {
+        "name": "10. Project and Activity Management",
+        "item": [
+          {
+            "name": "Create Project",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "formdata",
+                "formdata": [
+                  {
+                    "key": "title",
+                    "value": "Science Fair Project",
+                    "type": "text"
+                  },
+                  {
+                    "key": "description",
+                    "value": "Students will work in groups to create a science project demonstrating principles of physics",
+                    "type": "text"
+                  },
+                  {
+                    "key": "class",
+                    "value": "10",
+                    "type": "text"
+                  },
+                  {
+                    "key": "section",
+                    "value": "A",
+                    "type": "text"
+                  },
+                  {
+                    "key": "subject",
+                    "value": "Science",
+                    "type": "text"
+                  },
+                  {
+                    "key": "startDate",
+                    "value": "2023-10-01",
+                    "type": "text"
+                  },
+                  {
+                    "key": "endDate",
+                    "value": "2023-10-31",
+                    "type": "text"
+                  },
+                  {
+                    "key": "evaluationCriteria",
+                    "value": "[{\"criterion\":\"Scientific Accuracy\",\"weightage\":30},{\"criterion\":\"Presentation\",\"weightage\":20},{\"criterion\":\"Creativity\",\"weightage\":25},{\"criterion\":\"Teamwork\",\"weightage\":25}]",
+                    "type": "text"
+                  },
+                  {
+                    "key": "groups",
+                    "value": "[{\"name\":\"Group 1\",\"students\":[\"{{studentId1}}\",\"{{studentId2}}\"]},{\"name\":\"Group 2\",\"students\":[\"{{studentId3}}\",\"{{studentId4}}\"]}]",
+                    "type": "text"
+                  },
+                  {
+                    "key": "attachment",
+                    "type": "file",
+                    "src": "/path/to/project_guidelines.pdf"
+                  }
+                ]
+              },
+              "url": {
+                "raw": "{{base_url}}/api/teachers/projects",
+                "host": ["{{base_url}}"],
+                "path": ["api", "teachers", "projects"]
+              },
+              "description": "Creates a new class project or group activity"
+            }
+          },
+          {
+            "name": "Get Projects",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/api/teachers/projects",
+                "host": ["{{base_url}}"],
+                "path": ["api", "teachers", "projects"]
+              },
+              "description": "Retrieves all projects created by the teacher"
+            }
+          },
+          {
+            "name": "Get Project Details",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/api/teachers/projects/{{projectId}}",
+                "host": ["{{base_url}}"],
+                "path": ["api", "teachers", "projects", "{{projectId}}"]
+              },
+              "description": "Retrieves details of a specific project"
+            }
+          },
+          {
+            "name": "Record Student Contribution",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"studentId\": \"{{studentId}}\",\n    \"description\": \"Prepared the experimental setup and collected data\",\n    \"date\": \"2023-10-15\",\n    \"evaluationScore\": 85,\n    \"feedback\": \"Excellent work on data collection. The experimental setup was well-designed.\"\n}"
+              },
+              "url": {
+                "raw": "{{base_url}}/api/teachers/projects/{{projectId}}/student-contributions",
+                "host": ["{{base_url}}"],
+                "path": ["api", "teachers", "projects", "{{projectId}}", "student-contributions"]
+              },
+              "description": "Records a student's contribution to a project"
+            }
+          },
+          {
+            "name": "Get Student Contributions",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/api/teachers/projects/{{projectId}}/student-contributions",
+                "host": ["{{base_url}}"],
+                "path": ["api", "teachers", "projects", "{{projectId}}", "student-contributions"]
+              },
+              "description": "Retrieves all student contributions for a specific project"
+            }
+          },
+          {
+            "name": "Record Extracurricular Achievement",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "formdata",
+                "formdata": [
+                  {
+                    "key": "studentId",
+                    "value": "{{studentId}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "title",
+                    "value": "District Science Olympiad",
+                    "type": "text"
+                  },
+                  {
+                    "key": "description",
+                    "value": "Won first place in the district science olympiad competition",
+                    "type": "text"
+                  },
+                  {
+                    "key": "date",
+                    "value": "2023-09-25",
+                    "type": "text"
+                  },
+                  {
+                    "key": "category",
+                    "value": "Science",
+                    "type": "text"
+                  },
+                  {
+                    "key": "level",
+                    "value": "District",
+                    "type": "text"
+                  },
+                  {
+                    "key": "position",
+                    "value": "First Place",
+                    "type": "text"
+                  },
+                  {
+                    "key": "certificate",
+                    "type": "file",
+                    "src": "/path/to/certificate.pdf"
+                  }
+                ]
+              },
+              "url": {
+                "raw": "{{base_url}}/api/teachers/extracurricular-achievements",
+                "host": ["{{base_url}}"],
+                "path": ["api", "teachers", "extracurricular-achievements"]
+              },
+              "description": "Records an extracurricular achievement for a student"
+            }
+          }
+        ],
+        "description": "APIs for managing class projects and student activities"
+      },
+      {
+        "name": "11. Parent Interaction Management",
+        "item": [
+          {
+            "name": "Get Parent Meetings",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/api/teachers/parent-meetings",
+                "host": ["{{base_url}}"],
+                "path": ["api", "teachers", "parent-meetings"]
+              },
+              "description": "Retrieves all scheduled parent-teacher meetings"
+            }
+          },
+          {
+            "name": "Record Communication",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"parentId\": \"{{parentId}}\",\n    \"studentId\": \"{{studentId}}\",\n    \"date\": \"2023-10-10\",\n    \"communicationType\": \"Phone Call\",\n    \"subject\": \"Academic Progress Discussion\",\n    \"details\": \"Discussed student's recent improvement in mathematics and areas that still need attention\",\n    \"outcome\": \"Parent agreed to provide additional support at home\",\n    \"followUpRequired\": true,\n    \"followUpDate\": \"2023-10-24\"\n}"
+              },
+              "url": {
+                "raw": "{{base_url}}/api/teachers/parent-communications",
+                "host": ["{{base_url}}"],
+                "path": ["api", "teachers", "parent-communications"]
+              },
+              "description": "Records a communication with a parent"
+            }
+          },
+          {
+            "name": "Get Communication History",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/api/teachers/parent-communications/{{parentId}}",
+                "host": ["{{base_url}}"],
+                "path": ["api", "teachers", "parent-communications", "{{parentId}}"]
+              },
+              "description": "Retrieves communication history with a specific parent"
+            }
+          },
+          {
+            "name": "Document Concern",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"parentId\": \"{{parentId}}\",\n    \"studentId\": \"{{studentId}}\",\n    \"date\": \"2023-10-12\",\n    \"communicationType\": \"Meeting\",\n    \"subject\": \"Behavioral Concern\",\n    \"details\": \"Parent expressed concern about student's difficulty focusing in class\",\n    \"outcome\": \"Agreed to monitor behavior more closely and provide weekly updates\",\n    \"followUpRequired\": true,\n    \"followUpDate\": \"2023-10-19\"\n}"
+              },
+              "url": {
+                "raw": "{{base_url}}/api/teachers/parent-concerns",
+                "host": ["{{base_url}}"],
+                "path": ["api", "teachers", "parent-concerns"]
+              },
+              "description": "Documents a concern raised by a parent"
+            }
+          },
+          {
+            "name": "Add Follow-Up",
+            "request": {
+              "method": "PUT",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"followUpDetails\": \"Observed improvement in focus during class. Shared specific examples with parent.\",\n    \"followUpCompleted\": true\n}"
+              },
+              "url": {
+                "raw": "{{base_url}}/api/teachers/parent-concerns/{{concernId}}/follow-up",
+                "host": ["{{base_url}}"],
+                "path": ["api", "teachers", "parent-concerns", "{{concernId}}", "follow-up"]
+              },
+              "description": "Adds follow-up information to a documented concern"
+            }
+          },
+          {
+            "name": "Send Progress Update",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "formdata",
+                "formdata": [
+                  {
+                    "key": "parentId",
+                    "value": "{{parentId}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "studentId",
+                    "value": "{{studentId}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "subject",
+                    "value": "Monthly Progress Report",
+                    "type": "text"
+                  },
+                  {
+                    "key": "content",
+                    "value": "I'm pleased to report significant improvement in your child's mathematics performance this month. Test scores have increased by 15%, and classroom participation has been excellent.",
+                    "type": "text"
+                  },
+                  {
+                    "key": "attachment",
+                    "type": "file",
+                    "src": "/path/to/progress_report.pdf"
+                  }
+                ]
+              },
+              "url": {
+                "raw": "{{base_url}}/api/teachers/progress-updates",
+                "host": ["{{base_url}}"],
+                "path": ["api", "teachers", "progress-updates"]
+              },
+              "description": "Sends a progress update to a parent"
+            }
+          }
+        ],
+        "description": "APIs for managing interactions with parents"
+      },
+      {
+        "name": "12. Feedback System",
+        "item": [
+          {
+            "name": "Submit Academic Suggestion",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"title\": \"Interactive Learning Tools for Mathematics\",\n    \"description\": \"I suggest implementing interactive digital tools for teaching algebraic concepts. This would help visual learners better understand abstract concepts.\",\n    \"category\": \"Teaching Methods\",\n    \"targetAudience\": \"Department\"\n}"
+              },
+              "url": {
+                "raw": "{{base_url}}/api/teachers/academic-suggestions",
+                "host": ["{{base_url}}"],
+                "path": ["api", "teachers", "academic-suggestions"]
+              },
+              "description": "Submits a suggestion for academic improvement"
+            }
+          },
+          {
+            "name": "Request Resource",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"title\": \"Geometry Modeling Kit\",\n    \"description\": \"Request for 10 geometry modeling kits to help students visualize 3D shapes\",\n    \"resourceType\": \"Teaching Material\",\n    \"purpose\": \"To enhance understanding of 3D geometry concepts through hands-on learning\",\n    \"targetDate\": \"2023-11-01\",\n    \"estimatedCost\": 500\n}"
+              },
+              "url": {
+                "raw": "{{base_url}}/api/teachers/resource-requests",
+                "host": ["{{base_url}}"],
+                "path": ["api", "teachers", "resource-requests"]
+              },
+              "description": "Requests resources or permissions for activities"
+            }
+          },
+          {
+            "name": "Get Resource Requests",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/api/teachers/resource-requests",
+                "host": ["{{base_url}}"],
+                "path": ["api", "teachers", "resource-requests"]
+              },
+              "description": "Retrieves all resource requests made by the teacher"
+            }
+          },
+          {
+            "name": "Provide Curriculum Feedback",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"title\": \"Mathematics Curriculum Pacing Feedback\",\n    \"description\": \"The current pacing for algebra in the 10th grade curriculum is too fast. Students need more time to master fundamental concepts before moving to advanced topics.\",\n    \"category\": \"Curriculum\",\n    \"targetAudience\": \"School Administration\"\n}"
+              },
+              "url": {
+                "raw": "{{base_url}}/api/teachers/curriculum-feedback",
+                "host": ["{{base_url}}"],
+                "path": ["api", "teachers", "curriculum-feedback"]
+              },
+              "description": "Provides feedback on curriculum and assessment methods"
+            }
+          },
+          {
+            "name": "Get Curriculum Feedback",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/api/teachers/curriculum-feedback",
+                "host": ["{{base_url}}"],
+                "path": ["api", "teachers", "curriculum-feedback"]
+              },
+              "description": "Retrieves all curriculum feedback provided by the teacher"
+            }
+          }
+        ],
+        "description": "APIs for providing feedback and requesting resources"
+      }
+    ],
+    "event": [
+      {
+        "listen": "prerequest",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            ""
+          ]
+        }
+      },
+      {
+        "listen": "test",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            ""
+          ]
+        }
+      }
+    ],
+    "variable": [
+          {
+      "key": "base_url",
+              "value": "https://api.edulives.com",
+      "type": "string"
+    },
+      {
+        "key": "token",
+        "value": "123456789",
+        "type": "string"
+      },
+      {
+        "key": "studentId",
+        "value": "12001",
+        "type": "string"
+      },
+      {
+        "key": "parentId",
+        "value": "12001",
+        "type": "string"
+      },
+      {
+        "key": "assignmentId",
+        "value": "assignment_id_here",
+        "type": "string"
+      },
+      {
+        "key": "submissionId",
+        "value": "submission_id_here",
+        "type": "string"
+      },
+      {
+        "key": "examId",
+        "value": "exam_id_here",
+        "type": "string"
+      }
+    ]
+  }
