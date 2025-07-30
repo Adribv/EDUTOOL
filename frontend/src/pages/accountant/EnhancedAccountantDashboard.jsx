@@ -951,6 +951,9 @@ const IncomeLogManager = () => {
               <TableCell>Received From</TableCell>
               <TableCell>Receipt No</TableCell>
               <TableCell>Payment Mode</TableCell>
+              <TableCell>Received By</TableCell>
+              <TableCell>Remarks</TableCell>
+              <TableCell>Upload Document</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
@@ -968,6 +971,17 @@ const IncomeLogManager = () => {
                 <TableCell>{income.receivedFrom}</TableCell>
                 <TableCell>{income.receiptNo}</TableCell>
                 <TableCell>{income.paymentMode}</TableCell>
+                <TableCell>{income.receivedBy || 'N/A'}</TableCell>
+                <TableCell>{income.remarks || 'N/A'}</TableCell>
+                <TableCell>
+                  {income.uploadDocument ? (
+                    <IconButton size="small" onClick={() => window.open(income.uploadDocument.path, '_blank')}>
+                      <DownloadIcon />
+                    </IconButton>
+                  ) : (
+                    'N/A'
+                  )}
+                </TableCell>
                 <TableCell>
                   <Chip
                     label={income.status}
@@ -1284,6 +1298,9 @@ const ExpenseLogManager = () => {
               <TableCell>Paid To</TableCell>
               <TableCell>Voucher No</TableCell>
               <TableCell>Payment Mode</TableCell>
+              <TableCell>Approved By</TableCell>
+              <TableCell>Remarks</TableCell>
+              <TableCell>Upload Document</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
@@ -1301,6 +1318,17 @@ const ExpenseLogManager = () => {
                 <TableCell>{expense.paidTo}</TableCell>
                 <TableCell>{expense.voucherNo}</TableCell>
                 <TableCell>{expense.paymentMode}</TableCell>
+                <TableCell>{expense.approvedBy || 'N/A'}</TableCell>
+                <TableCell>{expense.remarks || 'N/A'}</TableCell>
+                <TableCell>
+                  {expense.uploadDocument ? (
+                    <IconButton size="small" onClick={() => window.open(expense.uploadDocument.path, '_blank')}>
+                      <DownloadIcon />
+                    </IconButton>
+                  ) : (
+                    'N/A'
+                  )}
+                </TableCell>
                 <TableCell>
                   <Chip
                     label={expense.status}
