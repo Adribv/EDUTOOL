@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Table, Badge, Modal, Form, Input, Select, DatePicker, Space, Row, Col, Statistic, Tag, Tooltip, message, Divider, Typography, TimePicker, Upload, List, Avatar } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, CalendarOutlined, UserOutlined, FileTextOutlined, CheckOutlined, CloseOutlined, SendOutlined, ClockCircleOutlined, TeamOutlined, CheckCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, CalendarOutlined, UserOutlined, FileTextOutlined, CheckOutlined, CloseOutlined, SendOutlined, ClockCircleOutlined, TeamOutlined, CheckCircleOutlined, ExclamationCircleOutlined, UploadOutlined } from '@ant-design/icons';
 import { meetingMinutesAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import dayjs from 'dayjs';
@@ -25,6 +25,7 @@ const MeetingMinutes = () => {
     total: 0
   });
   const [filters, setFilters] = useState({});
+  const [uploadedFiles, setUploadedFiles] = useState([]);
   const { user } = useAuth();
 
   const [form] = Form.useForm();
@@ -92,48 +93,78 @@ const MeetingMinutes = () => {
 
   const handleCreate = async (values) => {
     try {
-      const meetingData = {
-        ...values,
-        meetingDate: values.meetingDate.toDate(),
-        meetingTime: values.meetingTime.format('HH:mm'),
-        attendees: values.attendees ? values.attendees.split('\n').filter(a => a.trim()) : [],
-        apologies: values.apologies ? values.apologies.split('\n').filter(a => a.trim()) : [],
-        // Add missing required fields
-        meetingType: values.meetingType || 'Administrative',
-        priority: values.priority || 'Medium',
-        approvalStatus: 'Draft'
-      };
+      const formData = new FormData();
       
-      await meetingMinutesAPI.createMeetingMinutes(meetingData);
+      // Add form data
+      Object.keys(values).forEach(key => {
+        if (values[key] !== undefined && values[key] !== null) {
+          if (key === 'meetingDate') {
+            formData.append(key, values[key].toDate());
+          } else if (key === 'meetingTime') {
+            formData.append(key, values[key].format('HH:mm'));
+          } else if (key === 'attendees') {
+            formData.append(key, values[key] ? values[key].split('\n').filter(a => a.trim()) : []);
+          } else if (key === 'apologies') {
+            formData.append(key, values[key] ? values[key].split('\n').filter(a => a.trim()) : []);
+          } else {
+            formData.append(key, values[key]);
+          }
+        }
+      });
+
+      // Add uploaded files
+      uploadedFiles.forEach((file, index) => {
+        formData.append('supportingDocuments', file);
+      });
+
+      await meetingMinutesAPI.createMeetingMinutes(formData);
       message.success('Meeting minutes created successfully');
       setCreateModalVisible(false);
+      setUploadedFiles([]);
       form.resetFields();
       fetchMeetingMinutes();
       fetchStats();
     } catch (error) {
-      message.error('Failed to create meeting minutes');
+      message.error(error.response?.data?.message || 'Failed to create meeting minutes');
     }
   };
 
   const handleUpdate = async (values) => {
     try {
-      const meetingData = {
-        ...values,
-        meetingDate: values.meetingDate.toDate(),
-        meetingTime: values.meetingTime.format('HH:mm'),
-        attendees: values.attendees ? values.attendees.split('\n').filter(a => a.trim()) : [],
-        apologies: values.apologies ? values.apologies.split('\n').filter(a => a.trim()) : []
-      };
+      const formData = new FormData();
       
-      await meetingMinutesAPI.updateMeetingMinutes(editingMeeting._id, meetingData);
+      // Add form data
+      Object.keys(values).forEach(key => {
+        if (values[key] !== undefined && values[key] !== null) {
+          if (key === 'meetingDate') {
+            formData.append(key, values[key].toDate());
+          } else if (key === 'meetingTime') {
+            formData.append(key, values[key].format('HH:mm'));
+          } else if (key === 'attendees') {
+            formData.append(key, values[key] ? values[key].split('\n').filter(a => a.trim()) : []);
+          } else if (key === 'apologies') {
+            formData.append(key, values[key] ? values[key].split('\n').filter(a => a.trim()) : []);
+          } else {
+            formData.append(key, values[key]);
+          }
+        }
+      });
+
+      // Add uploaded files
+      uploadedFiles.forEach((file, index) => {
+        formData.append('supportingDocuments', file);
+      });
+
+      await meetingMinutesAPI.updateMeetingMinutes(editingMeeting._id, formData);
       message.success('Meeting minutes updated successfully');
       setEditModalVisible(false);
       setEditingMeeting(null);
+      setUploadedFiles([]);
       form.resetFields();
       fetchMeetingMinutes();
       fetchStats();
     } catch (error) {
-      message.error('Failed to update meeting minutes');
+      message.error(error.response?.data?.message || 'Failed to update meeting minutes');
     }
   };
 
@@ -194,12 +225,11 @@ const MeetingMinutes = () => {
   const showEditModal = (meeting) => {
     setEditingMeeting(meeting);
     setEditModalVisible(true);
+    setUploadedFiles([]); // Reset uploaded files for editing
     form.setFieldsValue({
       ...meeting,
-      meetingDate: dayjs(meeting.meetingDate),
-      meetingTime: dayjs(meeting.meetingTime, 'HH:mm'),
-      attendees: meeting.attendees ? meeting.attendees.join('\n') : '',
-      apologies: meeting.apologies ? meeting.apologies.join('\n') : ''
+      meetingDate: meeting.meetingDate ? dayjs(meeting.meetingDate) : null,
+      meetingTime: meeting.meetingTime ? dayjs(meeting.meetingTime, 'HH:mm') : null
     });
   };
 
@@ -806,12 +836,41 @@ const MeetingMinutes = () => {
             </Form.List>
           </Card>
 
+          <Form.Item
+            label="Supporting Documents"
+          >
+            <Upload
+              multiple
+              beforeUpload={(file) => {
+                setUploadedFiles(prev => [...prev, file]);
+                return false; // Prevent default upload
+              }}
+              onRemove={(file) => {
+                setUploadedFiles(prev => prev.filter(f => f.uid !== file.uid));
+              }}
+              fileList={uploadedFiles.map((file, index) => ({
+                uid: index,
+                name: file.name,
+                status: 'done'
+              }))}
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+            >
+              <Button icon={<UploadOutlined />}>Upload Supporting Documents</Button>
+            </Upload>
+            <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+              Supported formats: PDF, DOC, DOCX, JPG, PNG (Max 10MB per file)
+            </div>
+          </Form.Item>
+
           <Form.Item>
             <Space>
               <Button type="primary" htmlType="submit">
                 Create Meeting Minutes
               </Button>
-              <Button onClick={() => setCreateModalVisible(false)}>
+              <Button onClick={() => {
+                setCreateModalVisible(false);
+                setUploadedFiles([]);
+              }}>
                 Cancel
               </Button>
             </Space>
@@ -1075,12 +1134,42 @@ const MeetingMinutes = () => {
             </Form.List>
           </Card>
 
+          <Form.Item
+            label="Supporting Documents"
+          >
+            <Upload
+              multiple
+              beforeUpload={(file) => {
+                setUploadedFiles(prev => [...prev, file]);
+                return false; // Prevent default upload
+              }}
+              onRemove={(file) => {
+                setUploadedFiles(prev => prev.filter(f => f.uid !== file.uid));
+              }}
+              fileList={uploadedFiles.map((file, index) => ({
+                uid: index,
+                name: file.name,
+                status: 'done'
+              }))}
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+            >
+              <Button icon={<UploadOutlined />}>Upload Supporting Documents</Button>
+            </Upload>
+            <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+              Supported formats: PDF, DOC, DOCX, JPG, PNG (Max 10MB per file)
+            </div>
+          </Form.Item>
+
           <Form.Item>
             <Space>
               <Button type="primary" htmlType="submit">
                 Update Meeting Minutes
               </Button>
-              <Button onClick={() => setEditModalVisible(false)}>
+              <Button onClick={() => {
+                setEditModalVisible(false);
+                setEditingMeeting(null);
+                setUploadedFiles([]);
+              }}>
                 Cancel
               </Button>
             </Space>
