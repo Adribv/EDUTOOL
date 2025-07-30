@@ -36,6 +36,10 @@ const activitiesControlSchema = new mongoose.Schema({
           'Visitors',
           'Service Requests',
           'Syllabus Completion',
+          'Audit Log',
+          'Inspection Log',
+          'Budget Approval',
+          'Expense Log',
           'Salary Payroll',
           
           // Teacher activities
@@ -160,6 +164,7 @@ activitiesControlSchema.statics.getAvailableActivities = function() {
     'Audit Log',
     'Inspection Log',
     'Budget Approval',
+    'Expense Log',
     'Salary Payroll',
     
     // Teacher activities

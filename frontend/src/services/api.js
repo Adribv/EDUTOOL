@@ -1528,6 +1528,17 @@ export const teacherRemarksAPI = {
   downloadBudgetApprovalPDF: (id) => api.get(`/budget-approvals/${id}/download-pdf`, { responseType: 'blob' }).then(res => res.data),
 };
 
+// Expense Log Management
+export const expenseLogAPI = {
+  getExpenseLogs: (params) => api.get('/expense-logs', { params }).then(res => res.data),
+  getExpenseLogById: (id) => api.get(`/expense-logs/${id}`).then(res => res.data),
+  createExpenseLog: (data) => api.post('/expense-logs', data).then(res => res.data),
+  updateExpenseLog: (id, data) => api.put(`/expense-logs/${id}`, data).then(res => res.data),
+  deleteExpenseLog: (id) => api.delete(`/expense-logs/${id}`).then(res => res.data),
+  updateExpenseLogStatus: (id, data) => api.patch(`/expense-logs/${id}/status`, data).then(res => res.data),
+  getExpenseLogStats: () => api.get('/expense-logs/stats').then(res => res.data),
+};
+
 export const getStudentFeeStatus = () => fetch('/api/accountant/fee-status').then(res => res.json());
 export const getFeeStats = () => fetch('/api/accountant/fee-stats').then(res => res.json());
 export const getTransactionLog = () => fetch('/api/accountant/transaction-log').then(res => res.json());

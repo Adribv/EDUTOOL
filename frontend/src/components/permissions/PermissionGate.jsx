@@ -228,8 +228,8 @@ export const PermissionButton = ({
         transition: 'all 0.3s ease',
         bgcolor: variant === 'contained' ? 'primary.main' : 'transparent',
         color: variant === 'contained' ? 'white' : 'primary.main',
-        borderColor: variant === 'outlined' ? 'primary.main' : 'transparent',
         border: variant === 'outlined' ? '1px solid' : 'none',
+        borderColor: variant === 'outlined' ? 'primary.main' : 'transparent',
         '&:hover': {
           bgcolor: isDisabled 
             ? 'primary.main' 

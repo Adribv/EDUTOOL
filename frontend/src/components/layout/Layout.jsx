@@ -54,6 +54,7 @@ import {
   LocalShipping,
   RateReview,
   AccountBalance,
+  Receipt,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import Logo from './Logo';
@@ -382,6 +383,7 @@ const Layout = () => {
               { text: 'Audit Log', icon: <Assessment />, path: '/admin/audit-log', activity: 'Audit Log' },
               { text: 'Inspection Log', icon: <Search />, path: '/admin/inspection-log', activity: 'Inspection Log' },
         { text: 'Budget Approval', icon: <AccountBalance />, path: '/admin/budget-approval', activity: 'Budget Approval' },
+        { text: 'Expense Log', icon: <Receipt />, path: '/admin/expense-log', activity: 'Expense Log' },
         { text: 'Salary Payroll', icon: <AccountBalance />, path: '/admin/salary-payroll', activity: 'Salary Payroll' },
       ],
       ITAdmin: [
@@ -416,6 +418,7 @@ const Layout = () => {
         { text: 'Audit Log', icon: <Assessment />, path: '/admin/audit-log', activity: 'Audit Log' },
         { text: 'Inspection Log', icon: <Search />, path: '/admin/inspection-log', activity: 'Inspection Log' },
         { text: 'Budget Approval', icon: <AccountBalance />, path: '/admin/budget-approval', activity: 'Budget Approval' },
+        { text: 'Expense Log', icon: <Receipt />, path: '/admin/expense-log', activity: 'Expense Log' },
       ],
       Counsellor: [
         { text: 'Counselling Requests', icon: <Psychology />, path: '/counselor/requests', activity: 'Counselling Requests' },
@@ -447,6 +450,12 @@ const Layout = () => {
         
         // Always allow Budget Approval for testing
         if (item.text === 'Budget Approval') {
+          console.log(`✅ Always allowing ${user?.role}: ${item.text} (testing)`);
+          return true;
+        }
+        
+        // Always allow Expense Log for testing
+        if (item.text === 'Expense Log') {
           console.log(`✅ Always allowing ${user?.role}: ${item.text} (testing)`);
           return true;
         }

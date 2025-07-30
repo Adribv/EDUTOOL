@@ -501,33 +501,8 @@ const Dashboard = () => {
       default: return <Computer />;
     }
   };
-      // Only show once per session
-      if (localStorage.getItem('feePopupShown')) {
-        console.log('⏭️ Fee popup already shown this session');
-        return;
-      }
-      
-      console.log('📞 Calling studentService.getPaymentStatus()...');
-      const res = await studentService.getPaymentStatus();
-      console.log('📋 Payment status response:', res);
-      
-      if (res && res.data) {
-        console.log('💰 Fee data received:', res.data);
-        setFeeStatus(res.data);
-        if (res.data.dueAmount > 0) {
-          console.log('⚠️ Pending fees found, showing popup');
-          setShowFeePopup(true);
-          localStorage.setItem('feePopupShown', 'true');
-        } else {
-          console.log('✅ No pending fees');
-        }
-      } else {
-        console.log('❌ No fee data received');
-      }
-    } catch (err) {
-      console.error('❌ Error fetching fee status:', err);
-    }
-  };
+
+
 
   // Temporary function to clear localStorage for testing
   const clearFeePopupFlag = () => {
