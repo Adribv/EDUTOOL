@@ -31,7 +31,6 @@ import { useNavigate } from 'react-router-dom';
 import React from 'react';
 import CommentIcon from '@mui/icons-material/Comment';
 import ActivitiesControl from './ActivitiesControl';
-import DelegationAuthorityNotice from '../../components/DelegationAuthorityNotice';
 
 // API service for Vice Principal using axios instance (token auto-attached)
 const vpAPI = {
@@ -195,7 +194,7 @@ export default function VicePrincipalDashboard() {
   
   // Service Request Templates State
   const [serviceRequestDialog, setServiceRequestDialog] = useState(false);
-  const [serviceRequestType, setServiceRequestType] = useState('LeaveRequest'); // Set default value
+  const [serviceRequestType, setServiceRequestType] = useState('');
   const [serviceRequestData, setServiceRequestData] = useState({});
   
   // HOD Template State
@@ -249,11 +248,6 @@ export default function VicePrincipalDashboard() {
       name: "Activities Control",
       icon: <SecurityIcon />,
       subTabs: []
-    },
-    {
-      name: "Delegation Authority",
-      icon: <SecurityIcon />,
-      subTabs: []
     }
   ];
 
@@ -264,13 +258,6 @@ export default function VicePrincipalDashboard() {
 
   const handleSubTabChange = (event, newValue) => {
     setSubTab(newValue);
-  };
-
-  // Reset service request form when dialog opens
-  const handleOpenServiceRequestDialog = () => {
-    setServiceRequestType('LeaveRequest'); // Set default
-    setServiceRequestData({}); // Reset form data
-    setServiceRequestDialog(true);
   };
 
   const queryClient = useQueryClient();
@@ -289,11 +276,6 @@ export default function VicePrincipalDashboard() {
     }
   }, [user]);
 
-  // Debug: Track serviceRequestType changes
-  React.useEffect(() => {
-    console.log('serviceRequestType changed to:', serviceRequestType);
-  }, [serviceRequestType]);
-
   // Queries
   const { data: overview, isLoading: loadingOverview } = useQuery({ queryKey: ['vpOverview'], queryFn: vpAPI.getOverview });
   const { data: staff, isLoading: loadingStaff } = useQuery({ queryKey: ['vpStaff'], queryFn: vpAPI.getStaff });
@@ -310,7 +292,6 @@ export default function VicePrincipalDashboard() {
   const { data: hodSubmissions, isLoading: loadingHODSubmissions } = useQuery({ queryKey: ['vpHODSubmissions'], queryFn: vpAPI.getHODSubmissions });
   const { data: serviceRequests, isLoading: loadingServiceRequests } = useQuery({ queryKey: ['vpServiceRequests'], queryFn: vpAPI.getServiceRequests });
   const { data: teachers, isLoading: loadingTeachers } = useQuery({ queryKey: ['vpTeachers'], queryFn: vpAPI.getTeachers });
-  const { data: hodTemplates, isLoading: loadingHODTemplates } = useQuery({ queryKey: ['vpHODTemplates'], queryFn: vpAPI.getHODTemplates });
 
   // Mutations
   const updateDepartmentMutation = useMutation({
@@ -607,7 +588,7 @@ export default function VicePrincipalDashboard() {
     return <Box p={3}><Typography color="error">Access denied: Vice Principal only</Typography></Box>;
   }
 
-  if (loadingOverview || loadingStaff || loadingStats || loadingDept || loadingAllDepts || loadingHODs || loadingExams || loadingTimetables || loadingCurriculum || loadingApprovedCurriculum || loadingHODSubmissions || loadingServiceRequests || loadingTeachers || loadingHODTemplates) {
+  if (loadingOverview || loadingStaff || loadingStats || loadingDept || loadingAllDepts || loadingHODs || loadingExams || loadingTimetables || loadingCurriculum || loadingApprovedCurriculum || loadingHODSubmissions || loadingServiceRequests) {
     return <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh"><CircularProgress /></Box>;
   }
 
@@ -2180,7 +2161,7 @@ export default function VicePrincipalDashboard() {
             <Button 
               variant="contained" 
               startIcon={<AddIcon />} 
-              onClick={handleOpenServiceRequestDialog}
+              onClick={() => setServiceRequestDialog(true)}
             >
               Create Service Request
             </Button>
@@ -2395,11 +2376,6 @@ export default function VicePrincipalDashboard() {
       {/* Activities Control Tab */}
       {mainTab === 5 && (
         <ActivitiesControl />
-      )}
-
-      {/* Delegation Authority Tab */}
-      {mainTab === 6 && (
-        <DelegationAuthorityNotice />
       )}
 
       {/* Dialogs */}
@@ -3788,125 +3764,201 @@ export default function VicePrincipalDashboard() {
 
       {/* Service Request Template Dialog */}
       <Dialog open={serviceRequestDialog} onClose={() => setServiceRequestDialog(false)} maxWidth="lg" fullWidth>
-        <DialogTitle>
-          <Box display="flex" alignItems="center" gap={1}>
-            <AssignmentIcon color="primary" />
-            Create Service Request Template
+        <DialogTitle sx={{ 
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white',
+          borderRadius: '8px 8px 0 0'
+        }}>
+          <Box display="flex" alignItems="center" gap={2}>
+            <AssignmentIcon sx={{ fontSize: 28 }} />
+            <Typography variant="h6" fontWeight="bold">
+              Create Service Request Template
+            </Typography>
           </Box>
         </DialogTitle>
-        <DialogContent>
-          <Alert severity="info" sx={{ mb: 2 }}>
+        <DialogContent sx={{ p: 3 }}>
+          <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
             <AlertTitle>Service Request Information</AlertTitle>
-            Create comprehensive service request templates for different departments and staff members.
-          </Alert>
-          
-          {/* Debug Info - Remove this later */}
-          <Alert severity="warning" sx={{ mb: 2 }}>
-            <AlertTitle>Debug Info</AlertTitle>
-            Current Request Type: <strong>{serviceRequestType || 'None selected'}</strong>
-            <br />
-            Leave Request Active: <strong>{serviceRequestType === 'LeaveRequest' ? 'YES' : 'NO'}</strong>
-            <br />
-            IT Support Active: <strong>{serviceRequestType === 'ITSupportRequest' ? 'YES' : 'NO'}</strong>
-            <br />
-            Counselling Active: <strong>{serviceRequestType === 'CounsellingRequest' ? 'YES' : 'NO'}</strong>
-            <br />
-            Substitute Teacher Active: <strong>{serviceRequestType === 'SubstituteTeacherRequest' ? 'YES' : 'NO'}</strong>
-            <br />
-            General Service Active: <strong>{serviceRequestType === 'GeneralServiceRequest' ? 'YES' : 'NO'}</strong>
+            <Typography variant="body2">
+              Select a request type below to see the specific fields for that service request. 
+              All fields marked with * are required.
+            </Typography>
           </Alert>
 
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold', mb: 2 }}>
-                Select Request Type *
+          {/* Progress Indicator */}
+          <Box sx={{ mb: 3, p: 2, bgcolor: '#f8f9fa', borderRadius: 2, border: '1px solid #dee2e6' }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: '#495057' }}>
+              📊 Form Progress
+            </Typography>
+            <Box display="flex" alignItems="center" gap={1}>
+              <Chip 
+                label="Step 1: Select Type" 
+                color={serviceRequestType ? "success" : "default"} 
+                size="small"
+                icon={serviceRequestType ? <span>✅</span> : <span>1️⃣</span>}
+              />
+              <span style={{ color: '#666' }}>→</span>
+              <Chip 
+                label="Step 2: Basic Info" 
+                color={serviceRequestData.date ? "success" : "default"} 
+                size="small"
+                icon={serviceRequestData.date ? <span>✅</span> : <span>2️⃣</span>}
+              />
+              <span style={{ color: '#666' }}>→</span>
+              <Chip 
+                label="Step 3: Details" 
+                color={serviceRequestType && serviceRequestData.date ? "success" : "default"} 
+                size="small"
+                icon={serviceRequestType && serviceRequestData.date ? <span>✅</span> : <span>3️⃣</span>}
+              />
+            </Box>
+          </Box>
+
+          {/* Request Type Selection - Enhanced */}
+          <Card sx={{ mb: 3, border: '2px solid #e3f2fd' }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ color: '#1976d2', fontWeight: 'bold', mb: 2 }}>
+                📋 Step 1: Select Request Type
               </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                {[
-                  { value: 'LeaveRequest', label: 'Leave Request', icon: '📋' },
-                  { value: 'ITSupportRequest', label: 'IT Support Request', icon: '💻' },
-                  { value: 'CounsellingRequest', label: 'Counselling Request', icon: '🧠' },
-                  { value: 'SubstituteTeacherRequest', label: 'Substitute Teacher Request', icon: '👨‍🏫' },
-                  { value: 'GeneralServiceRequest', label: 'General Service Request', icon: '🛠️' }
-                ].map((option) => (
-                  <Button
-                    key={option.value}
-                    variant={serviceRequestType === option.value ? 'contained' : 'outlined'}
-                    onClick={() => {
-                      console.log('Button clicked for:', option.value);
-                      setServiceRequestType(option.value);
-                    }}
-                    sx={{ 
-                      minWidth: 200,
-                      justifyContent: 'flex-start',
-                      textAlign: 'left',
-                      mb: 1
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <span>{option.icon}</span>
-                      <span>{option.label}</span>
-                    </Box>
-                  </Button>
-                ))}
-              </Box>
-            </Grid>
-          </Grid>
-
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth margin="normal">
-                <InputLabel>Priority Level *</InputLabel>
+              <FormControl fullWidth>
+                <InputLabel sx={{ fontWeight: 'bold' }}>Request Type *</InputLabel>
                 <Select
-                  value={serviceRequestData.priority || 'Medium'}
-                  onChange={(e) => setServiceRequestData({ ...serviceRequestData, priority: e.target.value })}
-                  label="Priority Level *"
+                  value={serviceRequestType}
+                  onChange={(e) => setServiceRequestType(e.target.value)}
+                  label="Request Type *"
+                  sx={{
+                    '& .MuiSelect-select': {
+                      fontWeight: 'bold',
+                      fontSize: '16px'
+                    }
+                  }}
                 >
-                  <MenuItem value="Low">Low</MenuItem>
-                  <MenuItem value="Medium">Medium</MenuItem>
-                  <MenuItem value="High">High</MenuItem>
-                  <MenuItem value="Critical">Critical</MenuItem>
-                  <MenuItem value="Emergency">Emergency</MenuItem>
+                  <MenuItem value="LeaveRequest" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <span>🏖️</span> Leave Request
+                  </MenuItem>
+                  <MenuItem value="ITSupportRequest" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <span>💻</span> IT Support Request
+                  </MenuItem>
+                  <MenuItem value="CounsellingRequest" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <span>🧠</span> Counselling Request
+                  </MenuItem>
+                  <MenuItem value="SubstituteTeacherRequest" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <span>👨‍🏫</span> Substitute Teacher Request
+                  </MenuItem>
+                  <MenuItem value="GeneralServiceRequest" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <span>🔧</span> General Service Request
+                  </MenuItem>
+                  <MenuItem value="MaintenanceRequest" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <span>🔨</span> Maintenance Request
+                  </MenuItem>
+                  <MenuItem value="EquipmentRequest" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <span>📱</span> Equipment Request
+                  </MenuItem>
+                  <MenuItem value="FacilityRequest" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <span>🏢</span> Facility Request
+                  </MenuItem>
                 </Select>
               </FormControl>
-            </Grid>
-          </Grid>
+            </CardContent>
+          </Card>
 
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
-              <TextField 
-                label="Request Date *" 
-                type="date" 
-                fullWidth 
-                margin="normal" 
-                value={serviceRequestData.date || ''} 
-                onChange={e => setServiceRequestData({ ...serviceRequestData, date: e.target.value })} 
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField 
-                label="Expected Completion Date" 
-                type="date" 
-                fullWidth 
-                margin="normal" 
-                value={serviceRequestData.expectedCompletionDate || ''} 
-                onChange={e => setServiceRequestData({ ...serviceRequestData, expectedCompletionDate: e.target.value })} 
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-          </Grid>
+          {/* Common Fields - Enhanced */}
+          <Card sx={{ mb: 3, border: '2px solid #f3e5f5' }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ color: '#7b1fa2', fontWeight: 'bold', mb: 2 }}>
+                📝 Step 2: Basic Information
+              </Typography>
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth>
+                    <InputLabel sx={{ fontWeight: 'bold' }}>Priority Level *</InputLabel>
+                    <Select
+                      value={serviceRequestData.priority || 'Medium'}
+                      onChange={(e) => setServiceRequestData({ ...serviceRequestData, priority: e.target.value })}
+                      label="Priority Level *"
+                    >
+                      <MenuItem value="Low">
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Chip label="Low" size="small" color="success" />
+                          <span>Low Priority</span>
+                        </Box>
+                      </MenuItem>
+                      <MenuItem value="Medium">
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Chip label="Medium" size="small" color="warning" />
+                          <span>Medium Priority</span>
+                        </Box>
+                      </MenuItem>
+                      <MenuItem value="High">
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Chip label="High" size="small" color="error" />
+                          <span>High Priority</span>
+                        </Box>
+                      </MenuItem>
+                      <MenuItem value="Critical">
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Chip label="Critical" size="small" sx={{ bgcolor: '#d32f2f', color: 'white' }} />
+                          <span>Critical Priority</span>
+                        </Box>
+                      </MenuItem>
+                      <MenuItem value="Emergency">
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Chip label="Emergency" size="small" sx={{ bgcolor: '#c62828', color: 'white' }} />
+                          <span>Emergency Priority</span>
+                        </Box>
+                      </MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField 
+                    label="Request Date *" 
+                    type="date" 
+                    fullWidth 
+                    value={serviceRequestData.date || ''} 
+                    onChange={e => setServiceRequestData({ ...serviceRequestData, date: e.target.value })} 
+                    InputLabelProps={{ shrink: true }}
+                    sx={{
+                      '& .MuiInputLabel-root': {
+                        fontWeight: 'bold'
+                      }
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField 
+                    label="Expected Completion Date" 
+                    type="date" 
+                    fullWidth 
+                    value={serviceRequestData.expectedCompletionDate || ''} 
+                    onChange={e => setServiceRequestData({ ...serviceRequestData, expectedCompletionDate: e.target.value })} 
+                    InputLabelProps={{ shrink: true }}
+                    helperText="Optional: When you expect this request to be completed"
+                  />
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
 
           {serviceRequestType === 'LeaveRequest' && (
             <>
-              <Typography variant="h6" gutterBottom sx={{ mt: 2, mb: 1, color: 'primary.main', fontWeight: 'bold' }}>
-                📋 Leave Request Details
-              </Typography>
-              
-              {/* Requester Information */}
-              <Typography variant="subtitle1" gutterBottom sx={{ mt: 2, mb: 1, fontWeight: 'bold' }}>
-                Requester Information
-              </Typography>
+              <Card sx={{ mb: 3, border: '2px solid #e8f5e8' }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom sx={{ color: '#2e7d32', fontWeight: 'bold', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <span>🏖️</span> Step 3: Leave Request Details
+                  </Typography>
+                  
+                  {/* Requester Information */}
+                  <Card sx={{ mb: 3, bgcolor: '#f8f9fa', border: '1px solid #dee2e6' }}>
+                    <CardHeader 
+                      title={
+                        <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#495057' }}>
+                          👤 Requester Information
+                        </Typography>
+                      }
+                      sx={{ pb: 1 }}
+                    />
+                    <CardContent sx={{ pt: 0 }}>
               <Grid container spacing={2}>
                 <Grid item xs={12} md={6}>
                   <TextField 
@@ -3957,385 +4009,549 @@ export default function VicePrincipalDashboard() {
                   <TextField 
                     label="Email Address *" 
                     fullWidth 
-                    margin="normal" 
                     value={serviceRequestData.email || user?.email || ''} 
                     onChange={e => setServiceRequestData({ ...serviceRequestData, email: e.target.value })} 
+                    sx={{
+                      '& .MuiInputLabel-root': {
+                        fontWeight: 'bold'
+                      }
+                    }}
                   />
                 </Grid>
               </Grid>
+                    </CardContent>
+                  </Card>
 
-              {/* Leave Details */}
-              <Typography variant="subtitle1" gutterBottom sx={{ mt: 2, mb: 1, fontWeight: 'bold' }}>
-                Leave Details
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth margin="normal">
-                    <InputLabel>Leave Type *</InputLabel>
-                    <Select
-                      value={serviceRequestData.leaveType || ''}
-                      onChange={(e) => setServiceRequestData({ ...serviceRequestData, leaveType: e.target.value })}
-                      label="Leave Type *"
-                    >
-                      <MenuItem value="Sick Leave">Sick Leave</MenuItem>
-                      <MenuItem value="Casual Leave">Casual Leave</MenuItem>
-                      <MenuItem value="Annual Leave">Annual Leave</MenuItem>
-                      <MenuItem value="Maternity Leave">Maternity Leave</MenuItem>
-                      <MenuItem value="Paternity Leave">Paternity Leave</MenuItem>
-                      <MenuItem value="Study Leave">Study Leave</MenuItem>
-                      <MenuItem value="Compensatory Leave">Compensatory Leave</MenuItem>
-                      <MenuItem value="Half Day Leave">Half Day Leave</MenuItem>
-                      <MenuItem value="Other">Other</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField 
-                    label="Number of Days *" 
-                    type="number" 
-                    fullWidth 
-                    margin="normal" 
-                    value={serviceRequestData.numberOfDays || ''} 
-                    onChange={e => setServiceRequestData({ ...serviceRequestData, numberOfDays: e.target.value })} 
-                    inputProps={{ min: 0.5, step: 0.5 }}
-                    helperText="Use 0.5 for half day"
-                  />
-                </Grid>
-              </Grid>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <TextField 
-                    label="From Date *" 
-                    type="date" 
-                    fullWidth 
-                    margin="normal" 
-                    value={serviceRequestData.fromDate || ''} 
-                    onChange={e => setServiceRequestData({ ...serviceRequestData, fromDate: e.target.value })} 
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField 
-                    label="To Date *" 
-                    type="date" 
-                    fullWidth 
-                    margin="normal" 
-                    value={serviceRequestData.toDate || ''} 
-                    onChange={e => setServiceRequestData({ ...serviceRequestData, toDate: e.target.value })} 
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </Grid>
-              </Grid>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <TextField 
-                    label="From Time" 
-                    type="time" 
-                    fullWidth 
-                    margin="normal" 
-                    value={serviceRequestData.fromTime || ''} 
-                    onChange={e => setServiceRequestData({ ...serviceRequestData, fromTime: e.target.value })} 
-                    InputLabelProps={{ shrink: true }}
-                    helperText="For half day or specific time leave"
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField 
-                    label="To Time" 
-                    type="time" 
-                    fullWidth 
-                    margin="normal" 
-                    value={serviceRequestData.toTime || ''} 
-                    onChange={e => setServiceRequestData({ ...serviceRequestData, toTime: e.target.value })} 
-                    InputLabelProps={{ shrink: true }}
-                    helperText="For half day or specific time leave"
-                  />
-                </Grid>
-              </Grid>
-              <TextField 
-                label="Reason for Leave *" 
-                fullWidth 
-                margin="normal" 
-                multiline 
-                rows={3}
-                value={serviceRequestData.reason || ''} 
-                onChange={e => setServiceRequestData({ ...serviceRequestData, reason: e.target.value })} 
-                placeholder="Please provide detailed reason for leave request..."
-              />
+                  {/* Leave Details */}
+                  <Card sx={{ mb: 3, bgcolor: '#fff3e0', border: '1px solid #ffcc02' }}>
+                    <CardHeader 
+                      title={
+                        <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#e65100' }}>
+                          📅 Leave Details
+                        </Typography>
+                      }
+                      sx={{ pb: 1 }}
+                    />
+                    <CardContent sx={{ pt: 0 }}>
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} md={6}>
+                          <FormControl fullWidth>
+                            <InputLabel sx={{ fontWeight: 'bold' }}>Leave Type *</InputLabel>
+                            <Select
+                              value={serviceRequestData.leaveType || ''}
+                              onChange={(e) => setServiceRequestData({ ...serviceRequestData, leaveType: e.target.value })}
+                              label="Leave Type *"
+                            >
+                              <MenuItem value="Sick Leave" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <span>🤒</span> Sick Leave
+                              </MenuItem>
+                              <MenuItem value="Casual Leave" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <span>😊</span> Casual Leave
+                              </MenuItem>
+                              <MenuItem value="Annual Leave" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <span>🏖️</span> Annual Leave
+                              </MenuItem>
+                              <MenuItem value="Maternity Leave" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <span>🤱</span> Maternity Leave
+                              </MenuItem>
+                              <MenuItem value="Paternity Leave" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <span>👨‍👶</span> Paternity Leave
+                              </MenuItem>
+                              <MenuItem value="Study Leave" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <span>📚</span> Study Leave
+                              </MenuItem>
+                              <MenuItem value="Compensatory Leave" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <span>⏰</span> Compensatory Leave
+                              </MenuItem>
+                              <MenuItem value="Half Day Leave" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <span>🌤️</span> Half Day Leave
+                              </MenuItem>
+                              <MenuItem value="Other" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <span>📝</span> Other
+                              </MenuItem>
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField 
+                            label="Number of Days *" 
+                            type="number" 
+                            fullWidth 
+                            value={serviceRequestData.numberOfDays || ''} 
+                            onChange={e => setServiceRequestData({ ...serviceRequestData, numberOfDays: e.target.value })} 
+                            inputProps={{ min: 0.5, step: 0.5 }}
+                            helperText="💡 Use 0.5 for half day, 1 for full day"
+                            sx={{
+                              '& .MuiInputLabel-root': {
+                                fontWeight: 'bold'
+                              }
+                            }}
+                          />
+                        </Grid>
+                                            </Grid>
+                      <Grid container spacing={3}>
+                        <Grid item xs={12} md={6}>
+                          <TextField 
+                            label="From Date *" 
+                            type="date" 
+                            fullWidth 
+                            value={serviceRequestData.fromDate || ''} 
+                            onChange={e => setServiceRequestData({ ...serviceRequestData, fromDate: e.target.value })} 
+                            InputLabelProps={{ shrink: true }}
+                            sx={{
+                              '& .MuiInputLabel-root': {
+                                fontWeight: 'bold'
+                              }
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField 
+                            label="To Date *" 
+                            type="date" 
+                            fullWidth 
+                            value={serviceRequestData.toDate || ''} 
+                            onChange={e => setServiceRequestData({ ...serviceRequestData, toDate: e.target.value })} 
+                            InputLabelProps={{ shrink: true }}
+                            sx={{
+                              '& .MuiInputLabel-root': {
+                                fontWeight: 'bold'
+                              }
+                            }}
+                          />
+                        </Grid>
+                      </Grid>
+                      <Grid container spacing={3}>
+                        <Grid item xs={12} md={6}>
+                          <TextField 
+                            label="From Time" 
+                            type="time" 
+                            fullWidth 
+                            value={serviceRequestData.fromTime || ''} 
+                            onChange={e => setServiceRequestData({ ...serviceRequestData, fromTime: e.target.value })} 
+                            InputLabelProps={{ shrink: true }}
+                            helperText="⏰ For half day or specific time leave"
+                            sx={{
+                              '& .MuiInputLabel-root': {
+                                fontWeight: 'bold'
+                              }
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField 
+                            label="To Time" 
+                            type="time" 
+                            fullWidth 
+                            value={serviceRequestData.toTime || ''} 
+                            onChange={e => setServiceRequestData({ ...serviceRequestData, toTime: e.target.value })} 
+                            InputLabelProps={{ shrink: true }}
+                            helperText="⏰ For half day or specific time leave"
+                            sx={{
+                              '& .MuiInputLabel-root': {
+                                fontWeight: 'bold'
+                              }
+                            }}
+                          />
+                        </Grid>
+                      </Grid>
+                      <TextField 
+                        label="Reason for Leave *" 
+                        fullWidth 
+                        multiline 
+                        rows={3}
+                        value={serviceRequestData.reason || ''} 
+                        onChange={e => setServiceRequestData({ ...serviceRequestData, reason: e.target.value })} 
+                        placeholder="Please provide detailed reason for leave request..."
+                        sx={{
+                          mt: 2,
+                          '& .MuiInputLabel-root': {
+                            fontWeight: 'bold'
+                          }
+                        }}
+                      />
               
-              {/* Additional Information */}
-              <Typography variant="subtitle1" gutterBottom sx={{ mt: 2, mb: 1, fontWeight: 'bold' }}>
-                Additional Information
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <TextField 
-                    label="Contact Number During Leave" 
-                    fullWidth 
-                    margin="normal" 
-                    value={serviceRequestData.emergencyContact || ''} 
-                    onChange={e => setServiceRequestData({ ...serviceRequestData, emergencyContact: e.target.value })} 
-                    helperText="Emergency contact number during leave period"
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField 
-                    label="Address During Leave" 
-                    fullWidth 
-                    margin="normal" 
-                    value={serviceRequestData.addressDuringLeave || ''} 
-                    onChange={e => setServiceRequestData({ ...serviceRequestData, addressDuringLeave: e.target.value })} 
-                    placeholder="If different from permanent address"
-                  />
-                </Grid>
-              </Grid>
-              <TextField 
-                label="Handover Details" 
-                fullWidth 
-                margin="normal" 
-                multiline 
-                rows={2}
-                value={serviceRequestData.handoverDetails || ''} 
-                onChange={e => setServiceRequestData({ ...serviceRequestData, handoverDetails: e.target.value })} 
-                placeholder="Details of work handover, pending tasks, etc."
-              />
+                  {/* Additional Information */}
+                  <Card sx={{ mb: 3, bgcolor: '#e3f2fd', border: '1px solid #2196f3' }}>
+                    <CardHeader 
+                      title={
+                        <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#1565c0' }}>
+                          ℹ️ Additional Information
+                        </Typography>
+                      }
+                      sx={{ pb: 1 }}
+                    />
+                    <CardContent sx={{ pt: 0 }}>
+                      <Grid container spacing={3}>
+                        <Grid item xs={12} md={6}>
+                          <TextField 
+                            label="Contact Number During Leave" 
+                            fullWidth 
+                            value={serviceRequestData.emergencyContact || ''} 
+                            onChange={e => setServiceRequestData({ ...serviceRequestData, emergencyContact: e.target.value })} 
+                            helperText="📞 Emergency contact number during leave period"
+                            sx={{
+                              '& .MuiInputLabel-root': {
+                                fontWeight: 'bold'
+                              }
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField 
+                            label="Address During Leave" 
+                            fullWidth 
+                            value={serviceRequestData.addressDuringLeave || ''} 
+                            onChange={e => setServiceRequestData({ ...serviceRequestData, addressDuringLeave: e.target.value })} 
+                            placeholder="If different from permanent address"
+                            sx={{
+                              '& .MuiInputLabel-root': {
+                                fontWeight: 'bold'
+                              }
+                            }}
+                          />
+                        </Grid>
+                      </Grid>
+                      <TextField 
+                        label="Handover Details" 
+                        fullWidth 
+                        multiline 
+                        rows={2}
+                        value={serviceRequestData.handoverDetails || ''} 
+                        onChange={e => setServiceRequestData({ ...serviceRequestData, handoverDetails: e.target.value })} 
+                        placeholder="Details of work handover, pending tasks, etc."
+                        sx={{
+                          mt: 2,
+                          '& .MuiInputLabel-root': {
+                            fontWeight: 'bold'
+                          }
+                        }}
+                      />
+                    </CardContent>
+                  </Card>
+                </CardContent>
+              </Card>
             </>
           )}
 
           {serviceRequestType === 'ITSupportRequest' && (
             <>
-              <Typography variant="h6" gutterBottom sx={{ mt: 2, mb: 1, color: 'primary.main', fontWeight: 'bold' }}>
-                💻 IT Support Request Details
-              </Typography>
-              
-              {/* Requester Information */}
-              <Typography variant="subtitle1" gutterBottom sx={{ mt: 2, mb: 1, fontWeight: 'bold' }}>
-                Requester Information
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <TextField 
-                    label="Requester Name *" 
-                    fullWidth 
-                    margin="normal" 
-                    value={serviceRequestData.requesterName || user?.name || ''} 
-                    onChange={e => setServiceRequestData({ ...serviceRequestData, requesterName: e.target.value })} 
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField 
-                    label="Employee ID *" 
-                    fullWidth 
-                    margin="normal" 
-                    value={serviceRequestData.employeeId || user?.employeeId || ''} 
-                    onChange={e => setServiceRequestData({ ...serviceRequestData, employeeId: e.target.value })} 
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField 
-                    label="Department *" 
-                    fullWidth 
-                    margin="normal" 
-                    value={serviceRequestData.department || user?.department || ''} 
-                    onChange={e => setServiceRequestData({ ...serviceRequestData, department: e.target.value })} 
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField 
-                    label="Designation *" 
-                    fullWidth 
-                    margin="normal" 
-                    value={serviceRequestData.designation || user?.role || ''} 
-                    onChange={e => setServiceRequestData({ ...serviceRequestData, designation: e.target.value })} 
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField 
-                    label="Contact Number *" 
-                    fullWidth 
-                    margin="normal" 
-                    value={serviceRequestData.contactNumber || user?.phone || ''} 
-                    onChange={e => setServiceRequestData({ ...serviceRequestData, contactNumber: e.target.value })} 
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField 
-                    label="Email Address *" 
-                    fullWidth 
-                    margin="normal" 
-                    value={serviceRequestData.email || user?.email || ''} 
-                    onChange={e => setServiceRequestData({ ...serviceRequestData, email: e.target.value })} 
-                  />
-                </Grid>
-              </Grid>
+              <Card sx={{ mb: 3, border: '2px solid #e3f2fd' }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom sx={{ color: '#1976d2', fontWeight: 'bold', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <span>💻</span> Step 3: IT Support Request Details
+                  </Typography>
+                  
+                  {/* Requester Information */}
+                  <Card sx={{ mb: 3, bgcolor: '#f8f9fa', border: '1px solid #dee2e6' }}>
+                    <CardHeader 
+                      title={
+                        <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#495057' }}>
+                          👤 Requester Information
+                        </Typography>
+                      }
+                      sx={{ pb: 1 }}
+                    />
+                    <CardContent sx={{ pt: 0 }}>
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} md={6}>
+                          <TextField 
+                            label="Requester Name *" 
+                            fullWidth 
+                            value={serviceRequestData.requesterName || user?.name || ''} 
+                            onChange={e => setServiceRequestData({ ...serviceRequestData, requesterName: e.target.value })} 
+                            sx={{
+                              '& .MuiInputLabel-root': {
+                                fontWeight: 'bold'
+                              }
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField 
+                            label="Employee ID *" 
+                            fullWidth 
+                            value={serviceRequestData.employeeId || user?.employeeId || ''} 
+                            onChange={e => setServiceRequestData({ ...serviceRequestData, employeeId: e.target.value })} 
+                            sx={{
+                              '& .MuiInputLabel-root': {
+                                fontWeight: 'bold'
+                              }
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField 
+                            label="Department *" 
+                            fullWidth 
+                            value={serviceRequestData.department || user?.department || ''} 
+                            onChange={e => setServiceRequestData({ ...serviceRequestData, department: e.target.value })} 
+                            sx={{
+                              '& .MuiInputLabel-root': {
+                                fontWeight: 'bold'
+                              }
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField 
+                            label="Designation *" 
+                            fullWidth 
+                            value={serviceRequestData.designation || user?.role || ''} 
+                            onChange={e => setServiceRequestData({ ...serviceRequestData, designation: e.target.value })} 
+                            sx={{
+                              '& .MuiInputLabel-root': {
+                                fontWeight: 'bold'
+                              }
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField 
+                            label="Contact Number *" 
+                            fullWidth 
+                            value={serviceRequestData.contactNumber || user?.phone || ''} 
+                            onChange={e => setServiceRequestData({ ...serviceRequestData, contactNumber: e.target.value })} 
+                            sx={{
+                              '& .MuiInputLabel-root': {
+                                fontWeight: 'bold'
+                              }
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField 
+                            label="Email Address *" 
+                            fullWidth 
+                            value={serviceRequestData.email || user?.email || ''} 
+                            onChange={e => setServiceRequestData({ ...serviceRequestData, email: e.target.value })} 
+                            sx={{
+                              '& .MuiInputLabel-root': {
+                                fontWeight: 'bold'
+                              }
+                            }}
+                          />
+                        </Grid>
+                      </Grid>
+                    </CardContent>
+                  </Card>
 
-              {/* Device/Equipment Information */}
-              <Typography variant="subtitle1" gutterBottom sx={{ mt: 2, mb: 1, fontWeight: 'bold' }}>
-                Device/Equipment Information
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth margin="normal">
-                    <InputLabel>Device Type *</InputLabel>
-                    <Select
-                      value={serviceRequestData.deviceType || ''}
-                      onChange={(e) => setServiceRequestData({ ...serviceRequestData, deviceType: e.target.value })}
-                      label="Device Type *"
-                    >
-                      <MenuItem value="Desktop">Desktop Computer</MenuItem>
-                      <MenuItem value="Laptop">Laptop</MenuItem>
-                      <MenuItem value="Projector">Projector</MenuItem>
-                      <MenuItem value="Printer">Printer</MenuItem>
-                      <MenuItem value="Smart Board">Smart Board</MenuItem>
-                      <MenuItem value="Scanner">Scanner</MenuItem>
-                      <MenuItem value="Tablet">Tablet</MenuItem>
-                      <MenuItem value="Mobile Device">Mobile Device</MenuItem>
-                      <MenuItem value="Network Equipment">Network Equipment</MenuItem>
-                      <MenuItem value="Other">Other</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField 
-                    label="Device Model" 
-                    fullWidth 
-                    margin="normal" 
-                    value={serviceRequestData.deviceModel || ''} 
-                    onChange={e => setServiceRequestData({ ...serviceRequestData, deviceModel: e.target.value })} 
-                    placeholder="e.g., Dell OptiPlex 7090, HP LaserJet Pro"
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField 
-                    label="Device/Equipment ID *" 
-                    fullWidth 
-                    margin="normal" 
-                    value={serviceRequestData.deviceId || ''} 
-                    onChange={e => setServiceRequestData({ ...serviceRequestData, deviceId: e.target.value })} 
-                    placeholder="e.g., PC-001, Laptop-002, Asset Tag"
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField 
-                    label="Operating System" 
-                    fullWidth 
-                    margin="normal" 
-                    value={serviceRequestData.operatingSystem || ''} 
-                    onChange={e => setServiceRequestData({ ...serviceRequestData, operatingSystem: e.target.value })} 
-                    placeholder="e.g., Windows 11, macOS, Linux"
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField 
-                    label="Location/Room *" 
-                    fullWidth 
-                    margin="normal" 
-                    value={serviceRequestData.location || ''} 
-                    onChange={e => setServiceRequestData({ ...serviceRequestData, location: e.target.value })} 
-                    placeholder="e.g., Room 101, Computer Lab 2"
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField 
-                    label="Serial Number" 
-                    fullWidth 
-                    margin="normal" 
-                    value={serviceRequestData.serialNumber || ''} 
-                    onChange={e => setServiceRequestData({ ...serviceRequestData, serialNumber: e.target.value })} 
-                    placeholder="Device serial number if available"
-                  />
-                </Grid>
-              </Grid>
+                  {/* Device/Equipment Information */}
+                  <Card sx={{ mb: 3, bgcolor: '#fff3e0', border: '1px solid #ffcc02' }}>
+                    <CardHeader 
+                      title={
+                        <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#e65100' }}>
+                          💻 Device/Equipment Information
+                        </Typography>
+                      }
+                      sx={{ pb: 1 }}
+                    />
+                    <CardContent sx={{ pt: 0 }}>
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} md={6}>
+                          <FormControl fullWidth>
+                            <InputLabel sx={{ fontWeight: 'bold' }}>Device Type *</InputLabel>
+                            <Select
+                              value={serviceRequestData.deviceType || ''}
+                              onChange={(e) => setServiceRequestData({ ...serviceRequestData, deviceType: e.target.value })}
+                              label="Device Type *"
+                            >
+                              <MenuItem value="Desktop">Desktop Computer</MenuItem>
+                              <MenuItem value="Laptop">Laptop</MenuItem>
+                              <MenuItem value="Projector">Projector</MenuItem>
+                              <MenuItem value="Printer">Printer</MenuItem>
+                              <MenuItem value="Smart Board">Smart Board</MenuItem>
+                              <MenuItem value="Scanner">Scanner</MenuItem>
+                              <MenuItem value="Tablet">Tablet</MenuItem>
+                              <MenuItem value="Mobile Device">Mobile Device</MenuItem>
+                              <MenuItem value="Network Equipment">Network Equipment</MenuItem>
+                              <MenuItem value="Other">Other</MenuItem>
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField 
+                            label="Device Model" 
+                            fullWidth 
+                            value={serviceRequestData.deviceModel || ''} 
+                            onChange={e => setServiceRequestData({ ...serviceRequestData, deviceModel: e.target.value })} 
+                            placeholder="e.g., Dell OptiPlex 7090, HP LaserJet Pro"
+                            sx={{
+                              '& .MuiInputLabel-root': {
+                                fontWeight: 'bold'
+                              }
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField 
+                            label="Device/Equipment ID *" 
+                            fullWidth 
+                            value={serviceRequestData.deviceId || ''} 
+                            onChange={e => setServiceRequestData({ ...serviceRequestData, deviceId: e.target.value })} 
+                            placeholder="e.g., PC-001, Laptop-002, Asset Tag"
+                            sx={{
+                              '& .MuiInputLabel-root': {
+                                fontWeight: 'bold'
+                              }
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField 
+                            label="Operating System" 
+                            fullWidth 
+                            value={serviceRequestData.operatingSystem || ''} 
+                            onChange={e => setServiceRequestData({ ...serviceRequestData, operatingSystem: e.target.value })} 
+                            placeholder="e.g., Windows 11, macOS, Linux"
+                            sx={{
+                              '& .MuiInputLabel-root': {
+                                fontWeight: 'bold'
+                              }
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField 
+                            label="Location/Room *" 
+                            fullWidth 
+                            value={serviceRequestData.location || ''} 
+                            onChange={e => setServiceRequestData({ ...serviceRequestData, location: e.target.value })} 
+                            placeholder="e.g., Room 101, Computer Lab 2"
+                            sx={{
+                              '& .MuiInputLabel-root': {
+                                fontWeight: 'bold'
+                              }
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField 
+                            label="Serial Number" 
+                            fullWidth 
+                            value={serviceRequestData.serialNumber || ''} 
+                            onChange={e => setServiceRequestData({ ...serviceRequestData, serialNumber: e.target.value })} 
+                            placeholder="Device serial number if available"
+                            sx={{
+                              '& .MuiInputLabel-root': {
+                                fontWeight: 'bold'
+                              }
+                            }}
+                          />
+                        </Grid>
+                      </Grid>
+                    </CardContent>
+                  </Card>
 
-              {/* Issue Details */}
-              <Typography variant="subtitle1" gutterBottom sx={{ mt: 2, mb: 1, fontWeight: 'bold' }}>
-                Issue Details
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth margin="normal">
-                    <InputLabel>Issue Category *</InputLabel>
-                    <Select
-                      value={serviceRequestData.issueCategory || ''}
-                      onChange={(e) => setServiceRequestData({ ...serviceRequestData, issueCategory: e.target.value })}
-                      label="Issue Category *"
-                    >
-                      <MenuItem value="Hardware">Hardware Issue</MenuItem>
-                      <MenuItem value="Software">Software Issue</MenuItem>
-                      <MenuItem value="Network">Network Issue</MenuItem>
-                      <MenuItem value="Email">Email Issue</MenuItem>
-                      <MenuItem value="Printer">Printer Issue</MenuItem>
-                      <MenuItem value="Access">Access/Permission Issue</MenuItem>
-                      <MenuItem value="Internet">Internet Connectivity</MenuItem>
-                      <MenuItem value="Virus">Virus/Malware</MenuItem>
-                      <MenuItem value="Performance">Performance Issue</MenuItem>
-                      <MenuItem value="Other">Other</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth margin="normal">
-                    <InputLabel>Priority Level *</InputLabel>
-                    <Select
-                      value={serviceRequestData.priority || 'Medium'}
-                      onChange={(e) => setServiceRequestData({ ...serviceRequestData, priority: e.target.value })}
-                      label="Priority Level *"
-                    >
-                      <MenuItem value="Low">Low - Minor inconvenience</MenuItem>
-                      <MenuItem value="Medium">Medium - Work impacted, workaround possible</MenuItem>
-                      <MenuItem value="High">High - Work halted, needs urgent resolution</MenuItem>
-                      <MenuItem value="Critical">Critical - System down, immediate attention required</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-              </Grid>
-              <TextField 
-                label="Issue Description *" 
-                fullWidth 
-                margin="normal" 
-                multiline 
-                rows={4}
-                value={serviceRequestData.issueDescription || ''} 
-                onChange={e => setServiceRequestData({ ...serviceRequestData, issueDescription: e.target.value })} 
-                placeholder="Please describe the issue in detail, including any error messages, steps to reproduce, when it started, etc."
-              />
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth margin="normal">
-                    <InputLabel>Requested Action *</InputLabel>
-                    <Select
-                      value={serviceRequestData.requestedAction || ''}
-                      onChange={(e) => setServiceRequestData({ ...serviceRequestData, requestedAction: e.target.value })}
-                      label="Requested Action *"
-                    >
-                      <MenuItem value="Troubleshoot & Fix">Troubleshoot & Fix</MenuItem>
-                      <MenuItem value="Replace Device/Part">Replace Device/Part</MenuItem>
-                      <MenuItem value="Software Installation/Update">Software Installation/Update</MenuItem>
-                      <MenuItem value="Network Configuration">Network Configuration</MenuItem>
-                      <MenuItem value="Data Recovery">Data Recovery</MenuItem>
-                      <MenuItem value="Training/Support">Training/Support</MenuItem>
-                      <MenuItem value="Other">Other</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField 
-                    label="Preferred Contact Time" 
-                    fullWidth 
-                    margin="normal" 
-                    value={serviceRequestData.preferredContactTime || ''} 
-                    onChange={e => setServiceRequestData({ ...serviceRequestData, preferredContactTime: e.target.value })} 
-                    placeholder="e.g., 9:00 AM - 5:00 PM, During break time"
-                  />
-                </Grid>
-              </Grid>
+                  {/* Issue Details */}
+                  <Card sx={{ mb: 3, bgcolor: '#e3f2fd', border: '1px solid #2196f3' }}>
+                    <CardHeader 
+                      title={
+                        <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#1565c0' }}>
+                          🔧 Issue Details
+                        </Typography>
+                      }
+                      sx={{ pb: 1 }}
+                    />
+                    <CardContent sx={{ pt: 0 }}>
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} md={6}>
+                          <FormControl fullWidth>
+                            <InputLabel sx={{ fontWeight: 'bold' }}>Issue Category *</InputLabel>
+                            <Select
+                              value={serviceRequestData.issueCategory || ''}
+                              onChange={(e) => setServiceRequestData({ ...serviceRequestData, issueCategory: e.target.value })}
+                              label="Issue Category *"
+                            >
+                              <MenuItem value="Hardware">Hardware Issue</MenuItem>
+                              <MenuItem value="Software">Software Issue</MenuItem>
+                              <MenuItem value="Network">Network Issue</MenuItem>
+                              <MenuItem value="Email">Email Issue</MenuItem>
+                              <MenuItem value="Printer">Printer Issue</MenuItem>
+                              <MenuItem value="Access">Access/Permission Issue</MenuItem>
+                              <MenuItem value="Internet">Internet Connectivity</MenuItem>
+                              <MenuItem value="Virus">Virus/Malware</MenuItem>
+                              <MenuItem value="Performance">Performance Issue</MenuItem>
+                              <MenuItem value="Other">Other</MenuItem>
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <FormControl fullWidth>
+                            <InputLabel sx={{ fontWeight: 'bold' }}>Priority Level *</InputLabel>
+                            <Select
+                              value={serviceRequestData.priority || 'Medium'}
+                              onChange={(e) => setServiceRequestData({ ...serviceRequestData, priority: e.target.value })}
+                              label="Priority Level *"
+                            >
+                              <MenuItem value="Low">Low - Minor inconvenience</MenuItem>
+                              <MenuItem value="Medium">Medium - Work impacted, workaround possible</MenuItem>
+                              <MenuItem value="High">High - Work halted, needs urgent resolution</MenuItem>
+                              <MenuItem value="Critical">Critical - System down, immediate attention required</MenuItem>
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                      </Grid>
+                      <TextField 
+                        label="Issue Description *" 
+                        fullWidth 
+                        multiline 
+                        rows={4}
+                        value={serviceRequestData.issueDescription || ''} 
+                        onChange={e => setServiceRequestData({ ...serviceRequestData, issueDescription: e.target.value })} 
+                        placeholder="Please describe the issue in detail, including any error messages, steps to reproduce, when it started, etc."
+                        sx={{
+                          mt: 2,
+                          '& .MuiInputLabel-root': {
+                            fontWeight: 'bold'
+                          }
+                        }}
+                      />
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} md={6}>
+                          <FormControl fullWidth>
+                            <InputLabel sx={{ fontWeight: 'bold' }}>Requested Action *</InputLabel>
+                            <Select
+                              value={serviceRequestData.requestedAction || ''}
+                              onChange={(e) => setServiceRequestData({ ...serviceRequestData, requestedAction: e.target.value })}
+                              label="Requested Action *"
+                            >
+                              <MenuItem value="Troubleshoot & Fix">Troubleshoot & Fix</MenuItem>
+                              <MenuItem value="Replace Device/Part">Replace Device/Part</MenuItem>
+                              <MenuItem value="Software Installation/Update">Software Installation/Update</MenuItem>
+                              <MenuItem value="Network Configuration">Network Configuration</MenuItem>
+                              <MenuItem value="Data Recovery">Data Recovery</MenuItem>
+                              <MenuItem value="Training/Support">Training/Support</MenuItem>
+                              <MenuItem value="Other">Other</MenuItem>
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField 
+                            label="Preferred Contact Time" 
+                            fullWidth 
+                            value={serviceRequestData.preferredContactTime || ''} 
+                            onChange={e => setServiceRequestData({ ...serviceRequestData, preferredContactTime: e.target.value })} 
+                            placeholder="e.g., 9:00 AM - 5:00 PM, During break time"
+                            sx={{
+                              '& .MuiInputLabel-root': {
+                                fontWeight: 'bold'
+                              }
+                            }}
+                          />
+                        </Grid>
+                      </Grid>
+                    </CardContent>
+                  </Card>
+                </CardContent>
+              </Card>
             </>
           )}
 
           {serviceRequestType === 'CounsellingRequest' && (
             <>
-              <Typography variant="h6" gutterBottom sx={{ mt: 2, mb: 1, color: 'primary.main', fontWeight: 'bold' }}>
-                🧠 Counselling Request Details
+              <Typography variant="h6" gutterBottom sx={{ mt: 2, mb: 1 }}>
+                Counselling Request Details
               </Typography>
               
               {/* Requester Information */}
@@ -4491,8 +4707,8 @@ export default function VicePrincipalDashboard() {
 
           {serviceRequestType === 'SubstituteTeacherRequest' && (
             <>
-              <Typography variant="h6" gutterBottom sx={{ mt: 2, mb: 1, color: 'primary.main', fontWeight: 'bold' }}>
-                👨‍🏫 Substitute Teacher Request Details
+              <Typography variant="h6" gutterBottom sx={{ mt: 2, mb: 1 }}>
+                Substitute Teacher Request Details
               </Typography>
               
               {/* Requester Information */}
@@ -4677,8 +4893,8 @@ export default function VicePrincipalDashboard() {
 
           {serviceRequestType === 'GeneralServiceRequest' && (
             <>
-              <Typography variant="h6" gutterBottom sx={{ mt: 2, mb: 1, color: 'primary.main', fontWeight: 'bold' }}>
-                🛠️ General Service Request Details
+              <Typography variant="h6" gutterBottom sx={{ mt: 2, mb: 1 }}>
+                General Service Request Details
               </Typography>
               
               {/* Requester Information */}
@@ -4889,8 +5105,21 @@ export default function VicePrincipalDashboard() {
             placeholder="Any additional information, special requirements, or notes..."
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setServiceRequestDialog(false)}>Cancel</Button>
+        <DialogActions sx={{ p: 3, gap: 2 }}>
+          <Button 
+            onClick={() => setServiceRequestDialog(false)}
+            variant="outlined"
+            sx={{ 
+              borderColor: '#666',
+              color: '#666',
+              '&:hover': {
+                borderColor: '#333',
+                backgroundColor: '#f5f5f5'
+              }
+            }}
+          >
+            ❌ Cancel
+          </Button>
           <Button 
             variant="contained" 
             onClick={() => createServiceRequestMutation.mutate({
@@ -4902,8 +5131,18 @@ export default function VicePrincipalDashboard() {
               createdAt: new Date().toISOString()
             })}
             disabled={!serviceRequestType || !serviceRequestData.date}
+            sx={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)'
+              },
+              '&:disabled': {
+                background: '#ccc',
+                color: '#666'
+              }
+            }}
           >
-            Create Request
+            ✅ Create Request
           </Button>
         </DialogActions>
       </Dialog>

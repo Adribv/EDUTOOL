@@ -14,6 +14,7 @@ import Profile from '../pages/admin/Profile';
 import StaffManagement from '../pages/admin/StaffManagement';
 import StudentRecords from '../pages/admin/StudentRecords';
 import FeeConfiguration from '../pages/admin/FeeConfiguration';
+import SchoolManagement from '../pages/admin/SchoolManagement';
 import SystemSettings from '../pages/admin/SystemSettings';
 import UserManagement from '../pages/admin/UserManagement';
 import Reports from '../pages/admin/Reports';
@@ -101,6 +102,7 @@ const ManagementRoutes = () => {
         {/* Academic Management */}
         <Route path="students" element={<StudentRecords />} />
         <Route path="student-records" element={<Students />} />
+        <Route path="school-management" element={<SchoolManagement />} />
         <Route path="teachers" element={<Teachers />} />
         <Route path="classes" element={<Classes />} />
         <Route path="class-management" element={<A_Classes />} />

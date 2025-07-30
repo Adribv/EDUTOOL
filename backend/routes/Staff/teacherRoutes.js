@@ -196,4 +196,223 @@ router.put('/it-support-requests/:requestId', itSupportController.updateITSuppor
 router.delete('/it-support-requests/:requestId', itSupportController.deleteITSupportRequest);
 router.get('/all-it-support-requests', itSupportController.getAllITSupportRequests);
 
+// General Service Request Management
+router.post('/general-service-requests', async (req, res) => {
+  try {
+    const requesterId = req.user.id;
+    const {
+      requesterName,
+      employeeId,
+      department,
+      designation,
+      contactNumber,
+      email,
+      serviceCategory,
+      serviceLocation,
+      preferredDate,
+      preferredTime,
+      description,
+      budgetEstimate,
+      urgencyLevel,
+      specialRequirements,
+      acknowledgment
+    } = req.body;
+
+    const approvalRequest = new ApprovalRequest({
+      requesterId,
+      requesterName,
+      requestType: 'GeneralServiceRequest',
+      title: `General Service Request - ${serviceCategory}`,
+      description,
+      requestData: {
+        requesterName,
+        employeeId,
+        department,
+        designation,
+        contactNumber,
+        email,
+        serviceCategory,
+        serviceLocation,
+        preferredDate,
+        preferredTime,
+        description,
+        budgetEstimate,
+        urgencyLevel,
+        specialRequirements,
+        acknowledgment
+      },
+      status: 'Pending',
+      currentApprover: 'HOD'
+    });
+
+    await approvalRequest.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'General service request created successfully',
+      requestNumber: approvalRequest._id,
+      data: approvalRequest
+    });
+  } catch (error) {
+    console.error('Error creating general service request:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create general service request',
+      error: error.message
+    });
+  }
+});
+
+router.get('/general-service-requests', async (req, res) => {
+  try {
+    const requests = await ApprovalRequest.find({
+      requestType: 'GeneralServiceRequest',
+      requesterId: req.user.id
+    }).sort({ createdAt: -1 });
+    
+    res.json({
+      success: true,
+      data: requests
+    });
+  } catch (error) {
+    console.error('Error fetching general service requests:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch general service requests',
+      error: error.message
+    });
+  }
+});
+
+router.get('/general-service-requests/stats', async (req, res) => {
+  try {
+    const stats = await ApprovalRequest.aggregate([
+      {
+        $match: {
+          requestType: 'GeneralServiceRequest',
+          requesterId: req.user.id
+        }
+      },
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+    
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    console.error('Error fetching general service request stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch general service request stats',
+      error: error.message
+    });
+  }
+});
+
+router.get('/general-service-requests/:requestId', async (req, res) => {
+  try {
+    const request = await ApprovalRequest.findOne({
+      _id: req.params.requestId,
+      requestType: 'GeneralServiceRequest',
+      requesterId: req.user.id
+    });
+    
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        message: 'General service request not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: request
+    });
+  } catch (error) {
+    console.error('Error fetching general service request:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch general service request',
+      error: error.message
+    });
+  }
+});
+
+router.put('/general-service-requests/:requestId', async (req, res) => {
+  try {
+    const request = await ApprovalRequest.findOneAndUpdate(
+      {
+        _id: req.params.requestId,
+        requestType: 'GeneralServiceRequest',
+        requesterId: req.user.id,
+        status: 'Pending'
+      },
+      {
+        $set: {
+          requestData: req.body,
+          title: `General Service Request - ${req.body.serviceCategory}`,
+          description: req.body.description
+        }
+      },
+      { new: true }
+    );
+    
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        message: 'General service request not found or cannot be updated'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'General service request updated successfully',
+      data: request
+    });
+  } catch (error) {
+    console.error('Error updating general service request:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update general service request',
+      error: error.message
+    });
+  }
+});
+
+router.delete('/general-service-requests/:requestId', async (req, res) => {
+  try {
+    const request = await ApprovalRequest.findOneAndDelete({
+      _id: req.params.requestId,
+      requestType: 'GeneralServiceRequest',
+      requesterId: req.user.id,
+      status: 'Pending'
+    });
+    
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        message: 'General service request not found or cannot be deleted'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'General service request deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting general service request:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete general service request',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

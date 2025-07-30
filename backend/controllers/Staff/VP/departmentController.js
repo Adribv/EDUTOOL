@@ -394,4 +394,128 @@ exports.rejectServiceRequest = async (req, res) => {
     console.error('Error rejecting service request:', error);
     res.status(500).json({ message: 'Server error' });
   }
+};
+
+// Create a new service request
+exports.createServiceRequest = async (req, res) => {
+  try {
+    const requesterId = req.user.id;
+    const {
+      requestType,
+      requestData,
+      requestedBy,
+      status,
+      currentApprover,
+      createdAt
+    } = req.body;
+
+    const approvalRequest = new ApprovalRequest({
+      requesterId,
+      requesterName: requestData?.requesterName || requestData?.employeeName || req.user.name,
+      requestType: requestType,
+      title: `${requestType} - ${requestData?.subject || requestData?.serviceCategory || 'Service Request'}`,
+      description: requestData?.description || requestData?.reason || requestData?.issueDescription || 'Service request submitted by VP',
+      requestData: requestData,
+      status: status || 'Pending',
+      currentApprover: currentApprover || 'VP'
+    });
+
+    await approvalRequest.save();
+    
+    res.status(201).json({
+      success: true,
+      message: 'Service request created successfully',
+      requestNumber: approvalRequest._id,
+      data: approvalRequest
+    });
+  } catch (error) {
+    console.error('Error creating service request:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to create service request',
+      error: error.message 
+    });
+  }
+};
+
+// Create HOD Template
+exports.createHODTemplate = async (req, res) => {
+  try {
+    const {
+      title,
+      departmentId,
+      templateType,
+      category,
+      description,
+      academicYear,
+      frequency,
+      content,
+      status,
+      version,
+      dueDate,
+      reviewCycle,
+      createdBy,
+      createdAt,
+      lastModified,
+      instructions,
+      notes
+    } = req.body;
+
+    // Create a simple template object (you might want to create a proper model for this)
+    const template = {
+      title,
+      departmentId,
+      templateType,
+      category,
+      description,
+      academicYear,
+      frequency,
+      content,
+      status: status || 'Active',
+      version: version || '1.0',
+      dueDate,
+      reviewCycle,
+      createdBy: createdBy || req.user.id,
+      createdAt: createdAt || new Date(),
+      lastModified: lastModified || new Date(),
+      instructions,
+      notes
+    };
+
+    // For now, we'll store it in a simple way. In a real implementation, you'd have a Template model
+    // This is a placeholder implementation
+    res.status(201).json({
+      success: true,
+      message: 'HOD template created successfully',
+      template
+    });
+  } catch (error) {
+    console.error('Error creating HOD template:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to create HOD template',
+      error: error.message 
+    });
+  }
+};
+
+// Get HOD Templates
+exports.getHODTemplates = async (req, res) => {
+  try {
+    // This is a placeholder implementation
+    // In a real implementation, you'd fetch from a Template model
+    const templates = [];
+    
+    res.json({
+      success: true,
+      templates
+    });
+  } catch (error) {
+    console.error('Error fetching HOD templates:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to fetch HOD templates',
+      error: error.message 
+    });
+  }
 }; 

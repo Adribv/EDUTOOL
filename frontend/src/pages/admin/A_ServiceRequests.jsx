@@ -18,19 +18,34 @@ import {
   Snackbar,
   Tabs,
   Tab,
-  CircularProgress
+  CircularProgress,
+  Chip,
+  IconButton,
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 import {
   Assignment as AssignmentIcon,
   LocalShipping as TransportIcon,
-  Warning as WarningIcon
+  Warning as WarningIcon,
+  Event as EventIcon,
+  CheckCircle as CheckCircleIcon,
+  Cancel as CancelIcon,
+  Visibility as VisibilityIcon
 } from '@mui/icons-material';
 import { AnimatePresence, motion } from 'framer-motion';
 import { api } from '../../services/api';
-
 // Lazy load the components for better performance
 const TransportFormsManagement = lazy(() => import('./TransportFormsManagement'));
 const DisciplinaryFormsManagement = lazy(() => import('./DisciplinaryFormsManagement'));
+const LeaveRequestsManagement = lazy(() => import('./LeaveRequestsManagement'));
 
 const initialForm = {
   date: '',
@@ -337,6 +352,12 @@ const A_ServiceRequests = () => {
             <DisciplinaryFormsManagement />
           </Suspense>
         );
+      case 3:
+        return (
+          <Suspense fallback={<LoadingSpinner />}>
+            <LeaveRequestsManagement />
+          </Suspense>
+        );
       default:
         return <StaffDutyAllocation />;
     }
@@ -399,6 +420,12 @@ const A_ServiceRequests = () => {
           <Tab 
             label="Disciplinary Forms" 
             icon={<WarningIcon />} 
+            iconPosition="start"
+            sx={{ minHeight: 64 }}
+          />
+          <Tab 
+            label="Leave Requests" 
+            icon={<EventIcon />} 
             iconPosition="start"
             sx={{ minHeight: 64 }}
           />

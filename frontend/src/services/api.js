@@ -189,7 +189,16 @@ export const staffAPI = {
   getAttendance: () => api.get('/admin-staff/attendance'),
   getEvents: () => api.get('/admin-staff/events'),
   getNotifications: () => api.get('/admin-staff/notifications'),
-  getSalaryRecords: (staffId) => api.get(`/staffs/salary-records/${staffId}`).then(res => res.data),
+  getSalaryRecords: (staffId) => {
+    console.log('🔍 Frontend requesting salary records for staffId:', staffId);
+    return api.get(`/staffs/salary-records/${staffId}`).then(res => {
+      console.log('✅ Salary records response:', res.data);
+      return Array.isArray(res.data) ? res.data : [];
+    }).catch(error => {
+      console.error('❌ Salary records request failed:', error);
+      throw error;
+    });
+  },
 };
 
 // Parent endpoints
@@ -271,6 +280,10 @@ export const adminAPI = {
   getStaffAttendance: () => api.get('/admin-staff/staff/attendance'),
   generateStaffReport: (params) => api.get('/admin-staff/reports/staff', { params }),
   getDepartments: () => api.get('/admin-staff/departments').then(res => res.data),
+  getSalaryRecords: (staffId) => {
+    const params = staffId ? { staffId } : {};
+    return api.get('/admin-staff/fee-records/staff', { params }).then(res => Array.isArray(res.data.data) ? res.data.data : []);
+  },
 
   // Student Management
   getAllStudents: (params) => api.get('/admin-staff/students', { params }).then(res => res.data),
@@ -819,6 +832,12 @@ export const adminAPI = {
 
   // Add new minimal API for saving staff roles and access
   saveStaffRolesAndAccess: (staffId, data) => api.put(`/admin/permissions/${staffId}`, data).then(res => res.data),
+  
+  // Service Request Management
+  getServiceRequests: () => api.get('/admin-staff/service-requests').then(res => res.data),
+  createServiceRequest: (data) => api.post('/admin-staff/service-requests', data).then(res => res.data),
+  updateServiceRequest: (id, data) => api.put(`/admin-staff/service-requests/${id}`, data).then(res => res.data),
+  deleteServiceRequest: (id) => api.delete(`/admin-staff/service-requests/${id}`).then(res => res.data),
 };
 
 // Teacher API functions
@@ -1098,6 +1117,14 @@ export const teacherAPI = {
   getITSupportRequestById: (requestId) => api.get(`/teachers/it-support-requests/${requestId}`).then(res => res.data),
   updateITSupportRequest: (requestId, data) => api.put(`/teachers/it-support-requests/${requestId}`, data).then(res => res.data),
   deleteITSupportRequest: (requestId) => api.delete(`/teachers/it-support-requests/${requestId}`).then(res => res.data),
+
+  // General Service Request Management
+  createGeneralServiceRequest: (data) => api.post('/teachers/general-service-requests', data).then(res => res.data),
+  getGeneralServiceRequests: (params) => api.get('/teachers/general-service-requests', { params }).then(res => res.data),
+  getGeneralServiceRequestStats: (params) => api.get('/teachers/general-service-requests/stats', { params }).then(res => res.data),
+  getGeneralServiceRequestById: (requestId) => api.get(`/teachers/general-service-requests/${requestId}`).then(res => res.data),
+  updateGeneralServiceRequest: (requestId, data) => api.put(`/teachers/general-service-requests/${requestId}`, data).then(res => res.data),
+  deleteGeneralServiceRequest: (requestId) => api.delete(`/teachers/general-service-requests/${requestId}`).then(res => res.data),
 };
 
 // HOD endpoints
@@ -1165,6 +1192,22 @@ export const hodAPI = {
   
   // Department Reports
   getPerformanceMetrics: () => api.get('/hod/reports/performance-metrics').then(res => res.data),
+  
+  // Service Requests Management
+  getLeaveRequests: () => api.get('/hod/service-requests/leave').then(res => res.data),
+  getITSupportRequests: () => api.get('/hod/service-requests/it-support').then(res => res.data),
+  getGeneralServiceRequests: () => api.get('/hod/service-requests/general').then(res => res.data),
+  approveServiceRequest: (requestType, requestId, data) => 
+    api.put(`/hod/service-requests/${requestType}/${requestId}/approve`, data).then(res => res.data),
+  rejectServiceRequest: (requestType, requestId, data) => 
+    api.put(`/hod/service-requests/${requestType}/${requestId}/reject`, data).then(res => res.data),
+  
+  // Teacher Approvals Management
+  getTeacherLeaveRequests: () => api.get('/hod/teacher-supervision/leave-requests').then(res => res.data),
+  approveTeacherLeaveRequest: (requestId, data) => 
+    api.put(`/hod/teacher-supervision/leave-requests/${requestId}/process`, data).then(res => res.data),
+  rejectTeacherLeaveRequest: (requestId, data) => 
+    api.put(`/hod/teacher-supervision/leave-requests/${requestId}/process`, data).then(res => res.data),
 };
 
 // Principal endpoints
@@ -1253,6 +1296,14 @@ export const principalAPI = {
   // Lesson Plan Approval
   getLessonPlansForApproval: () => api.get('/principal/lesson-plans/pending').then(res => res.data),
   approveLessonPlan: (planId, data) => api.put(`/principal/lesson-plans/${planId}/approve`, data).then(res => res.data),
+  
+  // Service Request Management
+  getServiceRequests: () => api.get('/principal/service-requests'),
+  createServiceRequest: (data) => api.post('/principal/service-requests', data),
+  getServiceRequestById: (requestId) => api.get(`/principal/service-requests/${requestId}`),
+  updateServiceRequest: (requestId, data) => api.put(`/principal/service-requests/${requestId}`, data),
+  deleteServiceRequest: (requestId) => api.delete(`/principal/service-requests/${requestId}`),
+  getServiceRequestStats: () => api.get('/principal/service-requests/stats'),
 };
 
 export const consentAPI = {
@@ -1447,6 +1498,22 @@ export const teacherRemarksAPI = {
   
   // Parent APIs
   getParentForms: (childId, params) => api.get(`/teacher-remarks/parent/${childId}`, { params }).then(res => res.data),
+  
+  // Audit Log Management
+  getAuditLogs: (params) => api.get('/admin/audit-logs', { params }).then(res => res.data),
+  getAuditLogById: (id) => api.get(`/admin/audit-logs/${id}`).then(res => res.data),
+  createAuditLog: (data) => api.post('/admin/audit-logs', data).then(res => res.data),
+  updateAuditLog: (id, data) => api.put(`/admin/audit-logs/${id}`, data).then(res => res.data),
+  deleteAuditLog: (id) => api.delete(`/admin/audit-logs/${id}`).then(res => res.data),
+  getAuditStatistics: () => api.get('/admin/audit-logs/statistics').then(res => res.data),
+
+  // Inspection Log Management
+  getInspectionLogs: (params) => api.get('/admin/inspection-logs', { params }).then(res => res.data),
+  getInspectionLogById: (id) => api.get(`/admin/inspection-logs/${id}`).then(res => res.data),
+  createInspectionLog: (data) => api.post('/admin/inspection-logs', data).then(res => res.data),
+  updateInspectionLog: (id, data) => api.put(`/admin/inspection-logs/${id}`, data).then(res => res.data),
+  deleteInspectionLog: (id) => api.delete(`/admin/inspection-logs/${id}`).then(res => res.data),
+  getInspectionStatistics: () => api.get('/admin/inspection-logs/statistics').then(res => res.data),
 };
 
 export const getStudentFeeStatus = () => fetch('/api/accountant/fee-status').then(res => res.json());
@@ -1524,6 +1591,42 @@ export const vpAPI = {
 // Staff Activities Control API
 export const staffActivitiesControlAPI = {
   getMyActivities: () => api.get('/staffs/activities-control/me').then(res => res.data),
+};
+
+// Delegation Authority API
+export const delegationAuthorityAPI = {
+  // Get all delegation notices
+  getAllNotices: () => api.get('/delegation-authority/notices').then(res => res.data),
+  
+  // Get notice by ID
+  getNoticeById: (id) => api.get(`/delegation-authority/notices/${id}`).then(res => res.data),
+  
+  // Create new notice
+  createNotice: (data) => api.post('/delegation-authority/notices', data).then(res => res.data),
+  
+  // Update notice
+  updateNotice: (id, data) => api.put(`/delegation-authority/notices/${id}`, data).then(res => res.data),
+  
+  // Delete notice
+  deleteNotice: (id) => api.delete(`/delegation-authority/notices/${id}`).then(res => res.data),
+  
+  // Approve notice
+  approveNotice: (id, data) => api.put(`/delegation-authority/notices/${id}/approve`, data).then(res => res.data),
+  
+  // Reject notice
+  rejectNotice: (id, data) => api.put(`/delegation-authority/notices/${id}/reject`, data).then(res => res.data),
+  
+  // Get pending notices for approval
+  getPendingNotices: () => api.get('/delegation-authority/notices/pending').then(res => res.data),
+  
+  // Generate PDF
+  generatePDF: (id) => api.get(`/delegation-authority/notices/${id}/pdf`).then(res => res.data),
+  
+  // Get staff members for delegation
+  getStaffMembers: () => api.get('/delegation-authority/staff').then(res => res.data),
+  
+  // Get departments
+  getDepartments: () => api.get('/delegation-authority/departments').then(res => res.data),
 };
 
 export default api;

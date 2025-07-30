@@ -17,6 +17,7 @@ export const roleConfig = {
   },
   'AdminStaff': {
     sidebar: [
+      'SchoolManagement',
       'Fee_Management',
       'Inventory_Management',
       'UserManagement',
@@ -32,6 +33,8 @@ export const roleConfig = {
       'A_Schedules',
       'Disciplinary_Forms',
       'Teacher_Remarks',
+      'Audit_Log',
+      'Inspection_Log',
     ],
     dashboard: [
       'Admissions',
@@ -46,6 +49,7 @@ export const roleConfig = {
       'UserManagement',
       'A_Communication',
       'A_Reports',
+      'Audit_Log',
     ],
     dashboard: [
       'Manage Systems',
@@ -83,6 +87,7 @@ export const roleConfig = {
       'Results',
       'A_Reports',
       'A_Schedules',
+      'Audit_Log',
     ],
     dashboard: [
       'Exam Timetable',

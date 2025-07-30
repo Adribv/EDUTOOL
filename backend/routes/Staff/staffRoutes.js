@@ -363,10 +363,20 @@ router.get('/salary-records/:staffId', verifyToken, async (req, res) => {
   try {
     const { staffId } = req.params;
     
+    console.log('🔍 Salary records request:', {
+      requestedStaffId: staffId,
+      userId: req.user.id,
+      userRole: req.user.role,
+      userEmail: req.user.email
+    });
+    
     // Check if the user is requesting their own salary records or has admin privileges
     if (req.user.id !== staffId && req.user.role !== 'AdminStaff' && req.user.role !== 'Accountant') {
+      console.log('❌ Access denied - User ID mismatch or insufficient privileges');
       return res.status(403).json({ message: 'Access denied' });
     }
+
+    console.log('✅ Access granted - Fetching salary records');
 
     // Import the StaffSalaryRecord model
     const StaffSalaryRecord = require('../../models/Finance/staffSalaryRecordModel');
@@ -375,6 +385,8 @@ router.get('/salary-records/:staffId', verifyToken, async (req, res) => {
     const salaryRecords = await StaffSalaryRecord.find({ staffId })
       .sort({ year: -1, month: -1 }) // Sort by year and month descending
       .limit(24); // Limit to last 24 months
+    
+    console.log(`📊 Found ${salaryRecords.length} salary records for staff ${staffId}`);
     
     // Return the records directly as an array
     res.json(salaryRecords);

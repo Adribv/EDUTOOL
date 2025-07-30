@@ -144,6 +144,16 @@ export const getActivityNameFromTabLabel = (tabLabel, userRole) => {
     'Academic Management': 'Academic Management',
     'Approvals': 'Principal Approvals',
     'Reports': 'Principal Reports',
+    'Delegation Authority': 'Delegation Authority Management',
+    
+    // Vice Principal activities
+    'Staff Management': 'Vice Principal Staff Management',
+    'Student Management': 'Vice Principal Student Management',
+    'School Management': 'Vice Principal School Management',
+    'Academic Management': 'Vice Principal Academic Management',
+    'Approvals': 'Vice Principal Approvals',
+    'Reports': 'Vice Principal Reports',
+    'Delegation Authority': 'Delegation Authority Management',
     
     // HOD activities
     'Department Management': 'Department Management',
@@ -155,6 +165,7 @@ export const getActivityNameFromTabLabel = (tabLabel, userRole) => {
     'Teacher Evaluation': 'HOD Staff Management',
     'Class Allocation': 'Course Management',
     'Department Reports': 'HOD Reports',
+    'Delegation Authority': 'Delegation Authority Management',
     
     // Counsellor activities
     'Counselling Requests': 'Counselling Requests',
@@ -262,6 +273,13 @@ export const activityToMenuTextMap = {
   'Academic Management': 'Academic Management',
   'Principal Approvals': 'Approvals',
   'Principal Reports': 'Reports',
+  'Delegation Authority Management': 'Delegation Authority',
+  'Vice Principal Staff Management': 'Staff Management',
+  'Vice Principal Student Management': 'Student Management',
+  'Vice Principal School Management': 'School Management',
+  'Vice Principal Academic Management': 'Academic Management',
+  'Vice Principal Approvals': 'Approvals',
+  'Vice Principal Reports': 'Reports',
   'Department Management': 'Department Management',
   'HOD Staff Management': 'Staff Management',
   'Course Management': 'Course Management',

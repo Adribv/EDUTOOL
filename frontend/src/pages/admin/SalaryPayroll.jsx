@@ -55,6 +55,7 @@ import {
   Assessment,
   Timeline,
 } from '@mui/icons-material';
+import { AlertTitle } from '@mui/material';
 import { adminAPI, staffAPI } from '../../services/api';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
@@ -72,33 +73,47 @@ const AdminSalaryPayroll = () => {
   const [filterYear, setFilterYear] = useState('');
   const [filterDepartment, setFilterDepartment] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [showAllRecords, setShowAllRecords] = useState(false);
+
+  // Check if user is admin
+  const isAdmin = user?.role === 'AdminStaff' || user?.role === 'Accountant';
 
   useEffect(() => {
-    fetchAllSalaryRecords();
-    fetchIndividualSalaryRecords();
-  }, []);
+    if (isAdmin && showAllRecords) {
+      fetchAllSalaryRecords();
+    } else {
+      fetchIndividualSalaryRecords();
+    }
+  }, [isAdmin, showAllRecords]);
 
   const fetchAllSalaryRecords = async () => {
     try {
       setLoading(true);
+      console.log('Fetching all salary records...');
+      
       // For admin, we'll fetch all salary records
       const response = await adminAPI.getAllStaff();
+      console.log('getAllStaff response:', response);
+      
       const staffData = response.data || response; // Handle both response.data and direct response
       const staffIds = Array.isArray(staffData) ? staffData.map(staff => staff._id || staff.id) : [];
+      console.log('Staff IDs:', staffIds);
       
       // Fetch salary records for all staff
       const allRecords = [];
       for (const staffId of staffIds) {
         try {
           const salaryResponse = await adminAPI.getSalaryRecords(staffId);
-          if (salaryResponse.data && Array.isArray(salaryResponse.data)) {
-            allRecords.push(...salaryResponse.data);
+          console.log(`Salary response for staff ${staffId}:`, salaryResponse);
+          if (Array.isArray(salaryResponse)) {
+            allRecords.push(...salaryResponse);
           }
-        } catch {
-          console.log(`No salary records for staff ${staffId}`);
+        } catch (error) {
+          console.log(`No salary records for staff ${staffId}:`, error);
         }
       }
       
+      console.log('All salary records:', allRecords);
       setAllSalaryRecords(allRecords);
       setError(null);
     } catch (error) {
@@ -112,13 +127,27 @@ const AdminSalaryPayroll = () => {
 
   const fetchIndividualSalaryRecords = async () => {
     try {
-      if (user?._id || user?.id) {
-        const response = await staffAPI.getSalaryRecords(user._id || user.id);
-        const records = Array.isArray(response.data) ? response.data : [];
+      setLoading(true);
+      const userId = user?._id || user?.id;
+      console.log('🔍 Fetching individual salary records for user:', userId);
+      console.log('🔍 Full user object:', user);
+      
+      if (userId) {
+        const response = await staffAPI.getSalaryRecords(userId);
+        console.log('✅ Individual salary response:', response);
+        const records = Array.isArray(response) ? response : [];
         setIndividualSalaryRecords(records);
+        setError(null);
+      } else {
+        console.error('❌ No user ID available');
+        setError('No user ID available');
       }
     } catch (error) {
-      console.error('Error fetching individual salary records:', error);
+      console.error('❌ Error fetching individual salary records:', error);
+      setError('Failed to load salary records');
+      toast.error('Failed to load salary records');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -170,7 +199,7 @@ const AdminSalaryPayroll = () => {
     }).format(amount || 0);
   };
 
-  const filteredRecords = (Array.isArray(allSalaryRecords) ? allSalaryRecords : []).filter(record => {
+  const filteredRecords = (isAdmin && showAllRecords ? allSalaryRecords : individualSalaryRecords).filter(record => {
     if (filterMonth && record.month !== filterMonth) return false;
     if (filterYear && record.year !== parseInt(filterYear)) return false;
     if (filterDepartment && record.department !== filterDepartment) return false;
@@ -194,11 +223,48 @@ const AdminSalaryPayroll = () => {
     );
   }
 
+  // Show message if no records found
+  const currentRecords = isAdmin && showAllRecords ? allSalaryRecords : individualSalaryRecords;
+  if (!loading && currentRecords.length === 0) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity="info">
+          No salary records found. {isAdmin && showAllRecords ? 'No staff salary records are available.' : 'You do not have any salary records yet.'}
+        </Alert>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
-        Admin Salary & Payroll Management
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h4" sx={{ fontWeight: 600 }}>
+          {isAdmin && showAllRecords ? 'Admin Salary & Payroll Management' : 'My Salary Records'}
+        </Typography>
+        {isAdmin && (
+          <Button
+            variant={showAllRecords ? 'contained' : 'outlined'}
+            onClick={() => setShowAllRecords(!showAllRecords)}
+            startIcon={<AccountBalance />}
+          >
+            {showAllRecords ? 'Show My Records' : 'Show All Records'}
+          </Button>
+        )}
+      </Box>
+
+      {isAdmin && showAllRecords && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          <AlertTitle>Admin View</AlertTitle>
+          You are viewing all staff salary records. Switch to "My Records" to view only your salary information.
+        </Alert>
+      )}
+
+      {!isAdmin && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          <AlertTitle>Personal Records</AlertTitle>
+          You are viewing your personal salary records. Only your own salary information is displayed.
+        </Alert>
+      )}
 
       {/* Summary Cards */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
@@ -210,13 +276,17 @@ const AdminSalaryPayroll = () => {
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <AccountBalance sx={{ mr: 1 }} />
-                <Typography variant="h6">Total Salary Paid</Typography>
+                <Typography variant="h6">
+                  {isAdmin && showAllRecords ? 'Total Salary Paid' : 'My Total Salary'}
+                </Typography>
               </Box>
               <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                {formatCurrency((Array.isArray(allSalaryRecords) ? allSalaryRecords : []).reduce((sum, record) => sum + (record.netSalary || 0), 0))}
+                {formatCurrency(
+                  (isAdmin && showAllRecords ? allSalaryRecords : individualSalaryRecords).reduce((sum, record) => sum + (record.netSalary || 0), 0)
+                )}
               </Typography>
               <Typography variant="body2" sx={{ mt: 1, opacity: 0.9 }}>
-                {(Array.isArray(allSalaryRecords) ? allSalaryRecords : []).length} records
+                {(isAdmin && showAllRecords ? allSalaryRecords : individualSalaryRecords).length} records
               </Typography>
             </CardContent>
           </Card>
@@ -229,10 +299,14 @@ const AdminSalaryPayroll = () => {
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <TrendingUp sx={{ mr: 1 }} />
-                <Typography variant="h6">Total Allowances</Typography>
+                <Typography variant="h6">
+                  {isAdmin && showAllRecords ? 'Total Allowances' : 'My Allowances'}
+                </Typography>
               </Box>
               <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                {formatCurrency((Array.isArray(allSalaryRecords) ? allSalaryRecords : []).reduce((sum, record) => sum + calculateTotalAllowances(record.allowances), 0))}
+                {formatCurrency(
+                  (isAdmin && showAllRecords ? allSalaryRecords : individualSalaryRecords).reduce((sum, record) => sum + calculateTotalAllowances(record.allowances), 0)
+                )}
               </Typography>
               <Typography variant="body2" sx={{ mt: 1, opacity: 0.9 }}>
                 All time
@@ -248,10 +322,14 @@ const AdminSalaryPayroll = () => {
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <TrendingDown sx={{ mr: 1 }} />
-                <Typography variant="h6">Total Deductions</Typography>
+                <Typography variant="h6">
+                  {isAdmin && showAllRecords ? 'Total Deductions' : 'My Deductions'}
+                </Typography>
               </Box>
               <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                {formatCurrency((Array.isArray(allSalaryRecords) ? allSalaryRecords : []).reduce((sum, record) => sum + calculateTotalDeductions(record.deductions), 0))}
+                {formatCurrency(
+                  (isAdmin && showAllRecords ? allSalaryRecords : individualSalaryRecords).reduce((sum, record) => sum + calculateTotalDeductions(record.deductions), 0)
+                )}
               </Typography>
               <Typography variant="body2" sx={{ mt: 1, opacity: 0.9 }}>
                 All time
@@ -267,10 +345,12 @@ const AdminSalaryPayroll = () => {
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <Payment sx={{ mr: 1 }} />
-                <Typography variant="h6">Paid Records</Typography>
+                <Typography variant="h6">
+                  {isAdmin && showAllRecords ? 'Paid Records' : 'My Paid Records'}
+                </Typography>
               </Box>
               <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                {(Array.isArray(allSalaryRecords) ? allSalaryRecords : []).filter(record => record.paymentStatus?.toLowerCase() === 'paid').length}
+                {(isAdmin && showAllRecords ? allSalaryRecords : individualSalaryRecords).filter(record => record.paymentStatus?.toLowerCase() === 'paid').length}
               </Typography>
               <Typography variant="body2" sx={{ mt: 1, opacity: 0.9 }}>
                 Successfully processed

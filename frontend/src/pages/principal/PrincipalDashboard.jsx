@@ -71,12 +71,15 @@ import {
   getAccessLevelInfo
 } from '../../utils/activitiesControl';
 import { api } from '../../services/api';
+import DelegationAuthorityNotice from '../../components/DelegationAuthorityNotice';
+
 
 // Tab configuration for Principal Dashboard
 const allPrincipalTabs = [
   { label: 'Overview', icon: <DataObjectIcon />, key: 'overview' },
   { label: 'Policies', icon: <PolicyIcon />, key: 'policies' },
   { label: 'Staff', icon: <GroupIcon />, key: 'staff' },
+  { label: 'Delegation Authority', icon: <SecurityIcon />, key: 'delegationAuthority' },
   { label: 'Reports', icon: <AssessmentIcon />, key: 'reports' },
 ];
 
@@ -85,6 +88,7 @@ export default function PrincipalDashboard() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const queryClient = useQueryClient();
+
   
   // Activities control hook
   const { hasAccess, canEdit, canApprove, getAccessLevel, getAccessLevelInfo } = useUserActivitiesControl();
@@ -206,6 +210,7 @@ export default function PrincipalDashboard() {
     switch (tab.key) {
       case 'policies': return 'School Management';
       case 'staff': return 'Principal Staff Management';
+      case 'delegationAuthority': return 'Delegation Authority Management';
       case 'reports': return 'Principal Reports';
       default: return null;
     }
@@ -375,6 +380,8 @@ export default function PrincipalDashboard() {
               </CardContent>
             </Card>
           );
+        case 'delegationAuthority':
+          return <DelegationAuthorityNotice />;
         case 'reports':
           return (
             <Card sx={{ mb: 3 }}>

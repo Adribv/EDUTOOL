@@ -167,7 +167,9 @@ exports.saveStaffActivities = async (req, res) => {
     
     // Update the activities control
     activitiesControl.activityAssignments = activityAssignments || [];
-    activitiesControl.department = department || '';
+    if (department && department.trim() !== '') {
+      activitiesControl.department = department;
+    }
     activitiesControl.remarks = remarks || '';
     activitiesControl.assignedBy = req.user.id;
     
@@ -237,14 +239,25 @@ exports.getAvailableActivities = async (req, res) => {
         'School Management',
         'Academic Management',
         'Principal Approvals',
-        'Principal Reports'
+        'Principal Reports',
+        'Delegation Authority Management'
+      ],
+      'Vice Principal Activities': [
+        'Vice Principal Staff Management',
+        'Vice Principal Student Management',
+        'Vice Principal School Management',
+        'Vice Principal Academic Management',
+        'Vice Principal Approvals',
+        'Vice Principal Reports',
+        'Delegation Authority Management'
       ],
       'HOD Activities': [
         'Department Management',
         'HOD Staff Management',
         'Course Management',
         'HOD Reports',
-        'Lesson Plan Approvals'
+        'Lesson Plan Approvals',
+        'Delegation Authority Management'
       ],
       'Counsellor Activities': [
         'Counselling Requests'
@@ -317,7 +330,9 @@ exports.bulkAssignActivities = async (req, res) => {
         
         // Update the activities control
         activitiesControl.activityAssignments = activityAssignments || [];
-        activitiesControl.department = department || '';
+        if (department && department.trim() !== '') {
+          activitiesControl.department = department;
+        }
         activitiesControl.remarks = remarks || '';
         activitiesControl.assignedBy = req.user.id;
         

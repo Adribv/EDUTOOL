@@ -82,7 +82,11 @@ import {
   Timer as TimerIcon,
   Speed as SpeedIcon,
   Height as HeightIcon,
-  MonitorWeight as WeightIcon
+  MonitorWeight as WeightIcon,
+  Computer,
+  Build,
+  Send,
+  SupportAgent
 } from '@mui/icons-material';
 import {
   XAxis,

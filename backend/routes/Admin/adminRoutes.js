@@ -4,6 +4,8 @@ const permissionsController = require('../../controllers/Admin/permissionsContro
 const softSkillsController = require('../../controllers/Admin/softSkillsController');
 const supportStaffController = require('../../controllers/Admin/supportStaffController');
 const transportController = require('../../controllers/Admin/transportController');
+const auditLogRoutes = require('./auditLogRoutes');
+const inspectionLogRoutes = require('./inspectionLogRoutes');
 const { verifyToken } = require('../../middlewares/authMiddleware');
 
 // Test endpoint (no auth required)
@@ -109,5 +111,9 @@ router.post('/transport/:id/schedule', transportController.addSchedule);
 router.post('/transport/:id/fuel-log', transportController.addFuelLog);
 router.post('/transport/:id/incident', transportController.addDriverIncident);
 router.get('/transport/logs', transportController.getAllLogs);
+
+// Audit Log routes
+router.use('/audit-logs', auditLogRoutes);
+router.use('/inspection-logs', inspectionLogRoutes);
 
 module.exports = router; 
