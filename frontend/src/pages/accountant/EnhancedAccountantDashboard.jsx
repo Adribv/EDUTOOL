@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { accountantAPI } from '../../services/api';
+import { accountantAPI, incomeLogAPI, expenseLogAPI } from '../../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Box,
@@ -45,7 +45,19 @@ import {
   Switch,
   FormControlLabel,
   Slider,
-  LinearProgress
+  LinearProgress,
+  Modal,
+  Form,
+  Input,
+  DatePicker,
+  Space,
+  Row,
+  Col,
+  Statistic,
+  Tag,
+  message,
+  InputNumber,
+  Upload
 } from '@mui/material';
 import {
   MonetizationOn as IncomeIcon,
@@ -88,7 +100,18 @@ import {
   AttachMoney as MoneyIcon,
   Percent as PercentIcon,
   PieChart as PieChartIcon,
-  Timeline as TimelineIcon
+  Timeline as TimelineIcon,
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  EyeOutlined,
+  DollarOutlined,
+  CalendarOutlined,
+  UserOutlined,
+  FileTextOutlined,
+  UploadOutlined,
+  SearchOutlined,
+  FilterOutlined
 } from '@mui/icons-material';
 import {
   XAxis,
@@ -108,6 +131,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
 import { getStudentFeeStatus, getFeeStats, getTransactionLog } from '../../services/api';
+import dayjs from 'dayjs';
 
 // Animated Stat Card Component
 const AnimatedStatCard = ({ icon: Icon, label, value, color, subtitle, trend, delay = 0 }) => (
@@ -641,6 +665,671 @@ const StudentFeeStatusManager = () => {
   );
 };
 
+// Income Log Manager Component
+const IncomeLogManager = () => {
+  const theme = useTheme();
+  const [incomeLogs, setIncomeLogs] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [stats, setStats] = useState({});
+  const [createModalVisible, setCreateModalVisible] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [viewModalVisible, setViewModalVisible] = useState(false);
+  const [editingIncome, setEditingIncome] = useState(null);
+  const [viewingIncome, setViewingIncome] = useState(null);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0
+  });
+  const [filters, setFilters] = useState({});
+  const { user } = useAuth();
+
+  // Income sources from the Excel template
+  const incomeSources = [
+    'Fees', 'Donation', 'Grant', 'Event', 'Sponsorship', 'Fundraising', 'Investment', 'Other'
+  ];
+
+  // Payment modes from the Excel template
+  const paymentModes = [
+    'Cash', 'Cheque', 'Bank Transfer', 'UPI', 'Credit Card', 'Debit Card', 'Online Payment'
+  ];
+
+  // Status options
+  const statusOptions = ['Pending', 'Confirmed', 'Rejected', 'Processed'];
+
+  useEffect(() => {
+    fetchIncomeLogs();
+    fetchStats();
+  }, [pagination.current, pagination.pageSize, filters]);
+
+  const fetchIncomeLogs = async () => {
+    setLoading(true);
+    try {
+      const params = {
+        page: pagination.current,
+        limit: pagination.pageSize,
+        ...filters
+      };
+      
+      const response = await incomeLogAPI.getIncomeLogs(params);
+      setIncomeLogs(response.docs || []);
+      setPagination(prev => ({
+        ...prev,
+        total: response.totalDocs || 0
+      }));
+    } catch (error) {
+      toast.error('Failed to fetch income logs');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const response = await incomeLogAPI.getIncomeLogStats();
+      setStats(response);
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    }
+  };
+
+  const handleCreate = async (values) => {
+    try {
+      await incomeLogAPI.createIncomeLog({
+        ...values,
+        date: values.date.toDate()
+      });
+      toast.success('Income log created successfully');
+      setCreateModalVisible(false);
+      fetchIncomeLogs();
+      fetchStats();
+    } catch (error) {
+      toast.error('Failed to create income log');
+    }
+  };
+
+  const handleUpdate = async (values) => {
+    try {
+      await incomeLogAPI.updateIncomeLog(editingIncome._id, {
+        ...values,
+        date: values.date.toDate()
+      });
+      toast.success('Income log updated successfully');
+      setEditModalVisible(false);
+      setEditingIncome(null);
+      fetchIncomeLogs();
+      fetchStats();
+    } catch (error) {
+      toast.error('Failed to update income log');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await incomeLogAPI.deleteIncomeLog(id);
+      toast.success('Income log deleted successfully');
+      fetchIncomeLogs();
+      fetchStats();
+    } catch (error) {
+      toast.error('Failed to delete income log');
+    }
+  };
+
+  const showCreateModal = () => {
+    setCreateModalVisible(true);
+  };
+
+  const showEditModal = (income) => {
+    setEditingIncome(income);
+    setEditModalVisible(true);
+  };
+
+  const showViewModal = (income) => {
+    setViewingIncome(income);
+    setViewModalVisible(true);
+  };
+
+  const handleTableChange = (paginationInfo, filters, sorter) => {
+    setPagination(prev => ({
+      ...prev,
+      current: paginationInfo.current,
+      pageSize: paginationInfo.pageSize
+    }));
+  };
+
+  const handleSearch = (value) => {
+    setFilters(prev => ({ ...prev, search: value }));
+    setPagination(prev => ({ ...prev, current: 1 }));
+  };
+
+  const handleFilter = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+    setPagination(prev => ({ ...prev, current: 1 }));
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Confirmed': return 'success';
+      case 'Pending': return 'warning';
+      case 'Rejected': return 'error';
+      case 'Processed': return 'info';
+      default: return 'default';
+    }
+  };
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+        <CircularProgress size={60} />
+      </Box>
+    );
+  }
+
+  return (
+    <Box>
+      {/* Summary Cards */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 2, textAlign: 'center', bgcolor: theme.palette.success.light, color: 'white' }}>
+            <Typography variant="h4" sx={{ fontWeight: 700 }}>
+              ₹{stats.totalIncome?.toLocaleString('en-IN') || 0}
+            </Typography>
+            <Typography variant="body2">Total Income</Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 2, textAlign: 'center', bgcolor: theme.palette.info.light, color: 'white' }}>
+            <Typography variant="h4" sx={{ fontWeight: 700 }}>
+              {stats.totalCount || 0}
+            </Typography>
+            <Typography variant="body2">Total Count</Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 2, textAlign: 'center', bgcolor: theme.palette.warning.light, color: 'white' }}>
+            <Typography variant="h4" sx={{ fontWeight: 700 }}>
+              ₹{stats.averageAmount?.toLocaleString('en-IN') || 0}
+            </Typography>
+            <Typography variant="body2">Average Amount</Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 2, textAlign: 'center', bgcolor: theme.palette.error.light, color: 'white' }}>
+            <Typography variant="h4" sx={{ fontWeight: 700 }}>
+              {stats.pendingIncome || 0}
+            </Typography>
+            <Typography variant="body2">Pending Income</Typography>
+          </Paper>
+        </Grid>
+      </Grid>
+
+      {/* Search and Filter Bar */}
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Typography variant="h6" sx={{ mb: 2 }}>Search & Filters</Typography>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6} md={3}>
+            <TextField
+              label="Search"
+              placeholder="Search description, received from..."
+              fullWidth
+              InputProps={{
+                startAdornment: <SearchIcon />,
+              }}
+              onChange={(e) => handleSearch(e.target.value)}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl fullWidth>
+              <InputLabel>Income Source</InputLabel>
+              <Select
+                value={filters.incomeSource || ''}
+                onChange={(e) => handleFilter('incomeSource', e.target.value)}
+              >
+                <MenuItem value="">All Sources</MenuItem>
+                {incomeSources.map(source => (
+                  <MenuItem key={source} value={source}>{source}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl fullWidth>
+              <InputLabel>Payment Mode</InputLabel>
+              <Select
+                value={filters.paymentMode || ''}
+                onChange={(e) => handleFilter('paymentMode', e.target.value)}
+              >
+                <MenuItem value="">All Modes</MenuItem>
+                {paymentModes.map(mode => (
+                  <MenuItem key={mode} value={mode}>{mode}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl fullWidth>
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={filters.status || ''}
+                onChange={(e) => handleFilter('status', e.target.value)}
+              >
+                <MenuItem value="">All Status</MenuItem>
+                {statusOptions.map(status => (
+                  <MenuItem key={status} value={status}>{status}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+        </Grid>
+      </Paper>
+
+      {/* Income Logs Table */}
+      <Paper sx={{ p: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h6">Income Logs</Typography>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button variant="contained" startIcon={<Add />} onClick={showCreateModal}>
+              Create Income Log
+            </Button>
+            <Button variant="outlined" startIcon={<RefreshIcon />} onClick={fetchIncomeLogs}>
+              Refresh
+            </Button>
+            <Button variant="outlined" startIcon={<DownloadIcon />}>
+              Export
+            </Button>
+          </Box>
+        </Box>
+        
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>S.No</TableCell>
+              <TableCell>Date</TableCell>
+              <TableCell>Income Source</TableCell>
+              <TableCell>Description</TableCell>
+              <TableCell>Amount (₹)</TableCell>
+              <TableCell>Received From</TableCell>
+              <TableCell>Receipt No</TableCell>
+              <TableCell>Payment Mode</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {incomeLogs.map((income, index) => (
+              <TableRow key={income._id} hover>
+                <TableCell>{income.serialNumber}</TableCell>
+                <TableCell>{new Date(income.date).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  <Chip label={income.incomeSource} size="small" color="primary" />
+                </TableCell>
+                <TableCell>{income.description}</TableCell>
+                <TableCell>₹{income.amount.toLocaleString('en-IN')}</TableCell>
+                <TableCell>{income.receivedFrom}</TableCell>
+                <TableCell>{income.receiptNo}</TableCell>
+                <TableCell>{income.paymentMode}</TableCell>
+                <TableCell>
+                  <Chip
+                    label={income.status}
+                    color={getStatusColor(income.status)}
+                    size="small"
+                  />
+                </TableCell>
+                <TableCell>
+                  <IconButton size="small" onClick={() => showViewModal(income)}>
+                    <ViewIcon />
+                  </IconButton>
+                  <IconButton size="small" onClick={() => showEditModal(income)}>
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton size="small" onClick={() => handleDelete(income._id)}>
+                    <DeleteIcon />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Paper>
+
+      {/* Create/Edit Modal would go here - simplified for now */}
+    </Box>
+  );
+};
+
+// Expense Log Manager Component
+const ExpenseLogManager = () => {
+  const theme = useTheme();
+  const [expenseLogs, setExpenseLogs] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [stats, setStats] = useState({});
+  const [createModalVisible, setCreateModalVisible] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [viewModalVisible, setViewModalVisible] = useState(false);
+  const [editingExpense, setEditingExpense] = useState(null);
+  const [viewingExpense, setViewingExpense] = useState(null);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0
+  });
+  const [filters, setFilters] = useState({});
+  const { user } = useAuth();
+
+  // Expense categories from the Excel template
+  const expenseCategories = [
+    'Maintenance', 'Salary', 'Equipment', 'Utilities', 'Transportation', 
+    'Office Supplies', 'Events', 'Training', 'Technology', 'Miscellaneous'
+  ];
+
+  // Payment modes from the Excel template
+  const paymentModes = [
+    'Cash', 'Cheque', 'Bank Transfer', 'UPI', 'Credit Card', 'Debit Card'
+  ];
+
+  // Status options
+  const statusOptions = ['Pending', 'Approved', 'Rejected', 'Paid'];
+
+  useEffect(() => {
+    fetchExpenseLogs();
+    fetchStats();
+  }, [pagination.current, pagination.pageSize, filters]);
+
+  const fetchExpenseLogs = async () => {
+    setLoading(true);
+    try {
+      const params = {
+        page: pagination.current,
+        limit: pagination.pageSize,
+        ...filters
+      };
+      
+      const response = await expenseLogAPI.getExpenseLogs(params);
+      setExpenseLogs(response.docs || []);
+      setPagination(prev => ({
+        ...prev,
+        total: response.totalDocs || 0
+      }));
+    } catch (error) {
+      toast.error('Failed to fetch expense logs');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const response = await expenseLogAPI.getExpenseLogStats();
+      setStats(response);
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    }
+  };
+
+  const handleCreate = async (values) => {
+    try {
+      await expenseLogAPI.createExpenseLog({
+        ...values,
+        date: values.date.toDate()
+      });
+      toast.success('Expense log created successfully');
+      setCreateModalVisible(false);
+      fetchExpenseLogs();
+      fetchStats();
+    } catch (error) {
+      toast.error('Failed to create expense log');
+    }
+  };
+
+  const handleUpdate = async (values) => {
+    try {
+      await expenseLogAPI.updateExpenseLog(editingExpense._id, {
+        ...values,
+        date: values.date.toDate()
+      });
+      toast.success('Expense log updated successfully');
+      setEditModalVisible(false);
+      setEditingExpense(null);
+      fetchExpenseLogs();
+      fetchStats();
+    } catch (error) {
+      toast.error('Failed to update expense log');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await expenseLogAPI.deleteExpenseLog(id);
+      toast.success('Expense log deleted successfully');
+      fetchExpenseLogs();
+      fetchStats();
+    } catch (error) {
+      toast.error('Failed to delete expense log');
+    }
+  };
+
+  const showCreateModal = () => {
+    setCreateModalVisible(true);
+  };
+
+  const showEditModal = (expense) => {
+    setEditingExpense(expense);
+    setEditModalVisible(true);
+  };
+
+  const showViewModal = (expense) => {
+    setViewingExpense(expense);
+    setViewModalVisible(true);
+  };
+
+  const handleTableChange = (paginationInfo, filters, sorter) => {
+    setPagination(prev => ({
+      ...prev,
+      current: paginationInfo.current,
+      pageSize: paginationInfo.pageSize
+    }));
+  };
+
+  const handleSearch = (value) => {
+    setFilters(prev => ({ ...prev, search: value }));
+    setPagination(prev => ({ ...prev, current: 1 }));
+  };
+
+  const handleFilter = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+    setPagination(prev => ({ ...prev, current: 1 }));
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Approved': return 'success';
+      case 'Pending': return 'warning';
+      case 'Rejected': return 'error';
+      case 'Paid': return 'info';
+      default: return 'default';
+    }
+  };
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+        <CircularProgress size={60} />
+      </Box>
+    );
+  }
+
+  return (
+    <Box>
+      {/* Summary Cards */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 2, textAlign: 'center', bgcolor: theme.palette.error.light, color: 'white' }}>
+            <Typography variant="h4" sx={{ fontWeight: 700 }}>
+              ₹{stats.totalExpenses?.toLocaleString('en-IN') || 0}
+            </Typography>
+            <Typography variant="body2">Total Expenses</Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 2, textAlign: 'center', bgcolor: theme.palette.info.light, color: 'white' }}>
+            <Typography variant="h4" sx={{ fontWeight: 700 }}>
+              {stats.totalCount || 0}
+            </Typography>
+            <Typography variant="body2">Total Count</Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 2, textAlign: 'center', bgcolor: theme.palette.warning.light, color: 'white' }}>
+            <Typography variant="h4" sx={{ fontWeight: 700 }}>
+              ₹{stats.averageAmount?.toLocaleString('en-IN') || 0}
+            </Typography>
+            <Typography variant="body2">Average Amount</Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 2, textAlign: 'center', bgcolor: theme.palette.success.light, color: 'white' }}>
+            <Typography variant="h4" sx={{ fontWeight: 700 }}>
+              {stats.approvedExpenses || 0}
+            </Typography>
+            <Typography variant="body2">Approved Expenses</Typography>
+          </Paper>
+        </Grid>
+      </Grid>
+
+      {/* Search and Filter Bar */}
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Typography variant="h6" sx={{ mb: 2 }}>Search & Filters</Typography>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6} md={3}>
+            <TextField
+              label="Search"
+              placeholder="Search description, paid to..."
+              fullWidth
+              InputProps={{
+                startAdornment: <SearchIcon />,
+              }}
+              onChange={(e) => handleSearch(e.target.value)}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl fullWidth>
+              <InputLabel>Expense Category</InputLabel>
+              <Select
+                value={filters.expenseCategory || ''}
+                onChange={(e) => handleFilter('expenseCategory', e.target.value)}
+              >
+                <MenuItem value="">All Categories</MenuItem>
+                {expenseCategories.map(category => (
+                  <MenuItem key={category} value={category}>{category}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl fullWidth>
+              <InputLabel>Payment Mode</InputLabel>
+              <Select
+                value={filters.paymentMode || ''}
+                onChange={(e) => handleFilter('paymentMode', e.target.value)}
+              >
+                <MenuItem value="">All Modes</MenuItem>
+                {paymentModes.map(mode => (
+                  <MenuItem key={mode} value={mode}>{mode}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl fullWidth>
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={filters.status || ''}
+                onChange={(e) => handleFilter('status', e.target.value)}
+              >
+                <MenuItem value="">All Status</MenuItem>
+                {statusOptions.map(status => (
+                  <MenuItem key={status} value={status}>{status}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+        </Grid>
+      </Paper>
+
+      {/* Expense Logs Table */}
+      <Paper sx={{ p: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h6">Expense Logs</Typography>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button variant="contained" startIcon={<Add />} onClick={showCreateModal}>
+              Create Expense Log
+            </Button>
+            <Button variant="outlined" startIcon={<RefreshIcon />} onClick={fetchExpenseLogs}>
+              Refresh
+            </Button>
+            <Button variant="outlined" startIcon={<DownloadIcon />}>
+              Export
+            </Button>
+          </Box>
+        </Box>
+        
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>S.No</TableCell>
+              <TableCell>Date</TableCell>
+              <TableCell>Expense Category</TableCell>
+              <TableCell>Description</TableCell>
+              <TableCell>Amount (₹)</TableCell>
+              <TableCell>Paid To</TableCell>
+              <TableCell>Voucher No</TableCell>
+              <TableCell>Payment Mode</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {expenseLogs.map((expense, index) => (
+              <TableRow key={expense._id} hover>
+                <TableCell>{expense.serialNumber}</TableCell>
+                <TableCell>{new Date(expense.date).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  <Chip label={expense.expenseCategory} size="small" color="primary" />
+                </TableCell>
+                <TableCell>{expense.description}</TableCell>
+                <TableCell>₹{expense.amount.toLocaleString('en-IN')}</TableCell>
+                <TableCell>{expense.paidTo}</TableCell>
+                <TableCell>{expense.voucherNo}</TableCell>
+                <TableCell>{expense.paymentMode}</TableCell>
+                <TableCell>
+                  <Chip
+                    label={expense.status}
+                    color={getStatusColor(expense.status)}
+                    size="small"
+                  />
+                </TableCell>
+                <TableCell>
+                  <IconButton size="small" onClick={() => showViewModal(expense)}>
+                    <ViewIcon />
+                  </IconButton>
+                  <IconButton size="small" onClick={() => showEditModal(expense)}>
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton size="small" onClick={() => handleDelete(expense._id)}>
+                    <DeleteIcon />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Paper>
+
+      {/* Create/Edit Modal would go here - simplified for now */}
+    </Box>
+  );
+};
+
 // Enhanced Accountant Dashboard
 const EnhancedAccountantDashboard = () => {
   const theme = useTheme();
@@ -713,6 +1402,17 @@ const EnhancedAccountantDashboard = () => {
   const { data: allFeePayments, isLoading: loadingAllFeePayments } = useQuery({
     queryKey: ['all-fee-payments'],
     queryFn: accountantAPI.getAllFeePayments
+  });
+
+  // Income and Expense Log Queries
+  const { data: incomeStats, isLoading: loadingIncomeStats } = useQuery({
+    queryKey: ['income-stats'],
+    queryFn: incomeLogAPI.getIncomeLogStats
+  });
+
+  const { data: expenseStats, isLoading: loadingExpenseStats } = useQuery({
+    queryKey: ['expense-stats'],
+    queryFn: expenseLogAPI.getExpenseLogStats
   });
 
   // Mutations
@@ -842,9 +1542,9 @@ const EnhancedAccountantDashboard = () => {
             <AnimatedStatCard
               icon={IncomeIcon}
               label="Total Income"
-              value={income}
+              value={incomeStats?.totalIncome || 0}
               color={theme.palette.success.main}
-              subtitle="From fee collections"
+              subtitle="From all sources"
               trend={12.5}
               delay={0.1}
             />
@@ -853,7 +1553,7 @@ const EnhancedAccountantDashboard = () => {
             <AnimatedStatCard
               icon={ExpenseIcon}
               label="Total Expenses"
-              value={expenses}
+              value={expenseStats?.totalExpenses || 0}
               color={theme.palette.error.main}
               subtitle="Operational costs"
               trend={-5.2}
@@ -875,7 +1575,7 @@ const EnhancedAccountantDashboard = () => {
             <AnimatedStatCard
               icon={TrendingUpIcon}
               label="Net Profit"
-              value={profitLoss}
+              value={(incomeStats?.totalIncome || 0) - (expenseStats?.totalExpenses || 0)}
               color={theme.palette.warning.main}
               subtitle="After all expenses"
               trend={15.3}
@@ -893,6 +1593,8 @@ const EnhancedAccountantDashboard = () => {
             <Tab label="Pending Approvals" icon={<HistoryIcon />} />
             <Tab label="Student Fee Status" icon={<AssessmentIcon />} />
             <Tab label="Transaction Log" icon={<HistoryIcon />} />
+            <Tab label="Income Log" icon={<TrendingUpIcon />} />
+            <Tab label="Expense Log" icon={<TrendingDownIcon />} />
           </Tabs>
         </Paper>
 
@@ -912,12 +1614,12 @@ const EnhancedAccountantDashboard = () => {
                     <Typography variant="h6" sx={{ mb: 2 }}>Financial Overview</Typography>
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={[
-                        { month: 'Jan', income: income * 0.2, expenses: expenses * 0.2, salary: salaryStats.totalSalaryPaid * 0.2 },
-                        { month: 'Feb', income: income * 0.3, expenses: expenses * 0.3, salary: salaryStats.totalSalaryPaid * 0.3 },
-                        { month: 'Mar', income: income * 0.4, expenses: expenses * 0.4, salary: salaryStats.totalSalaryPaid * 0.4 },
-                        { month: 'Apr', income: income * 0.5, expenses: expenses * 0.5, salary: salaryStats.totalSalaryPaid * 0.5 },
-                        { month: 'May', income: income * 0.6, expenses: expenses * 0.6, salary: salaryStats.totalSalaryPaid * 0.6 },
-                        { month: 'Jun', income: income * 0.7, expenses: expenses * 0.7, salary: salaryStats.totalSalaryPaid * 0.7 },
+                        { month: 'Jan', income: (incomeStats?.totalIncome || 0) * 0.2, expenses: (expenseStats?.totalExpenses || 0) * 0.2, salary: (salaryStats.totalSalaryPaid || 0) * 0.2 },
+                        { month: 'Feb', income: (incomeStats?.totalIncome || 0) * 0.3, expenses: (expenseStats?.totalExpenses || 0) * 0.3, salary: (salaryStats.totalSalaryPaid || 0) * 0.3 },
+                        { month: 'Mar', income: (incomeStats?.totalIncome || 0) * 0.4, expenses: (expenseStats?.totalExpenses || 0) * 0.4, salary: (salaryStats.totalSalaryPaid || 0) * 0.4 },
+                        { month: 'Apr', income: (incomeStats?.totalIncome || 0) * 0.5, expenses: (expenseStats?.totalExpenses || 0) * 0.5, salary: (salaryStats.totalSalaryPaid || 0) * 0.5 },
+                        { month: 'May', income: (incomeStats?.totalIncome || 0) * 0.6, expenses: (expenseStats?.totalExpenses || 0) * 0.6, salary: (salaryStats.totalSalaryPaid || 0) * 0.6 },
+                        { month: 'Jun', income: (incomeStats?.totalIncome || 0) * 0.7, expenses: (expenseStats?.totalExpenses || 0) * 0.7, salary: (salaryStats.totalSalaryPaid || 0) * 0.7 },
                       ]}>
                         <XAxis dataKey="month" />
                         <YAxis />
@@ -938,9 +1640,9 @@ const EnhancedAccountantDashboard = () => {
                         <Pie
                           data={[
                             { name: 'Salaries', value: salaryStats.totalSalaryPaid || 0, color: theme.palette.info.main },
-                            { name: 'Operations', value: expenses * 0.3, color: theme.palette.warning.main },
-                            { name: 'Maintenance', value: expenses * 0.2, color: theme.palette.error.main },
-                            { name: 'Others', value: expenses * 0.5, color: theme.palette.grey[500] }
+                            { name: 'Operations', value: (expenseStats?.totalExpenses || 0) * 0.3, color: theme.palette.warning.main },
+                            { name: 'Maintenance', value: (expenseStats?.totalExpenses || 0) * 0.2, color: theme.palette.error.main },
+                            { name: 'Others', value: (expenseStats?.totalExpenses || 0) * 0.5, color: theme.palette.grey[500] }
                           ]}
                           cx="50%"
                           cy="50%"
@@ -949,9 +1651,9 @@ const EnhancedAccountantDashboard = () => {
                         >
                           {[
                             { name: 'Salaries', value: salaryStats.totalSalaryPaid || 0, color: theme.palette.info.main },
-                            { name: 'Operations', value: expenses * 0.3, color: theme.palette.warning.main },
-                            { name: 'Maintenance', value: expenses * 0.2, color: theme.palette.error.main },
-                            { name: 'Others', value: expenses * 0.5, color: theme.palette.grey[500] }
+                            { name: 'Operations', value: (expenseStats?.totalExpenses || 0) * 0.3, color: theme.palette.warning.main },
+                            { name: 'Maintenance', value: (expenseStats?.totalExpenses || 0) * 0.2, color: theme.palette.error.main },
+                            { name: 'Others', value: (expenseStats?.totalExpenses || 0) * 0.5, color: theme.palette.grey[500] }
                           ].map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
@@ -1183,6 +1885,18 @@ const EnhancedAccountantDashboard = () => {
                   </Table>
                 )}
               </Paper>
+            </motion.div>
+          )}
+
+          {activeTab === 6 && (
+            <motion.div key="income-log" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
+              <IncomeLogManager />
+            </motion.div>
+          )}
+
+          {activeTab === 7 && (
+            <motion.div key="expense-log" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
+              <ExpenseLogManager />
             </motion.div>
           )}
         </AnimatePresence>
