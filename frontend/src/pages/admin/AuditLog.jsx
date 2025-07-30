@@ -235,6 +235,19 @@ const AuditLog = () => {
       render: (type) => <Tag color="blue">{type}</Tag>
     },
     {
+      title: 'Audit Category',
+      dataIndex: 'auditCategory',
+      key: 'auditCategory',
+      filters: [
+        { text: 'Internal Audit', value: 'Internal Audit' },
+        { text: 'External Audit', value: 'External Audit' }
+      ],
+      render: (category) => {
+        const color = category === 'Internal Audit' ? 'green' : 'orange';
+        return <Tag color={color}>{category}</Tag>;
+      }
+    },
+    {
       title: 'Auditor',
       key: 'auditor',
       render: (_, record) => (
@@ -478,6 +491,18 @@ const AuditLog = () => {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
+                name="auditCategory"
+                label="Audit Category"
+                rules={[{ required: true, message: 'Please select audit category' }]}
+              >
+                <Select placeholder="Select audit category">
+                  <Option value="Internal Audit">Internal Audit</Option>
+                  <Option value="External Audit">External Audit</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
                 name="auditorName"
                 label="Auditor Name"
                 rules={[{ required: true, message: 'Please enter auditor name' }]}
@@ -485,6 +510,9 @@ const AuditLog = () => {
                 <Input placeholder="Enter auditor name" />
               </Form.Item>
             </Col>
+          </Row>
+
+          <Row gutter={16}>
             <Col span={12}>
               <Form.Item
                 name="designation"
@@ -492,6 +520,15 @@ const AuditLog = () => {
                 rules={[{ required: true, message: 'Please enter designation' }]}
               >
                 <Input placeholder="Enter designation" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="targetCompletionDate"
+                label="Target Completion Date"
+                rules={[{ required: true, message: 'Please select target completion date' }]}
+              >
+                <DatePicker style={{ width: '100%' }} />
               </Form.Item>
             </Col>
           </Row>
@@ -520,21 +557,13 @@ const AuditLog = () => {
             </Col>
             <Col span={12}>
               <Form.Item
-                name="targetCompletionDate"
-                label="Target Completion Date"
-                rules={[{ required: true, message: 'Please select target completion date' }]}
+                name="nonConformitiesIdentified"
+                label="Non-Conformities Identified"
               >
-                <DatePicker style={{ width: '100%' }} />
+                <TextArea rows={3} placeholder="Describe any non-conformities identified" />
               </Form.Item>
             </Col>
           </Row>
-
-          <Form.Item
-            name="nonConformitiesIdentified"
-            label="Non-Conformities Identified"
-          >
-            <TextArea rows={3} placeholder="Describe any non-conformities identified" />
-          </Form.Item>
 
           <Form.Item
             name="recommendations"
@@ -633,13 +662,19 @@ const AuditLog = () => {
             </Row>
             <Row gutter={16} style={{ marginBottom: '16px' }}>
               <Col span={12}>
-                <strong>Auditor:</strong> {viewingAudit.auditorName}
+                <strong>Audit Category:</strong> 
+                <Tag color={viewingAudit.auditCategory === 'Internal Audit' ? 'green' : 'orange'}>
+                  {viewingAudit.auditCategory}
+                </Tag>
               </Col>
               <Col span={12}>
-                <strong>Designation:</strong> {viewingAudit.designation}
+                <strong>Auditor:</strong> {viewingAudit.auditorName}
               </Col>
             </Row>
             <Row gutter={16} style={{ marginBottom: '16px' }}>
+              <Col span={12}>
+                <strong>Designation:</strong> {viewingAudit.designation}
+              </Col>
               <Col span={12}>
                 <strong>Compliance Status:</strong> 
                 <Badge 
@@ -650,6 +685,8 @@ const AuditLog = () => {
                   text={viewingAudit.complianceStatus} 
                 />
               </Col>
+            </Row>
+            <Row gutter={16} style={{ marginBottom: '16px' }}>
               <Col span={12}>
                 <strong>Status:</strong> 
                 <Badge 
@@ -657,11 +694,11 @@ const AuditLog = () => {
                   text={viewingAudit.status} 
                 />
               </Col>
-            </Row>
-            <Row gutter={16} style={{ marginBottom: '16px' }}>
               <Col span={12}>
                 <strong>Target Completion:</strong> {dayjs(viewingAudit.targetCompletionDate).format('DD/MM/YYYY')}
               </Col>
+            </Row>
+            <Row gutter={16} style={{ marginBottom: '16px' }}>
               <Col span={12}>
                 <strong>Responsible Person:</strong> {viewingAudit.responsiblePerson}
               </Col>
