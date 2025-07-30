@@ -11,6 +11,7 @@ import Approvals from '../pages/principal/Approvals';
 import LessonPlanApprovals from '../pages/principal/LessonPlanApprovals';
 import AuditLog from '../pages/admin/AuditLog';
 import InspectionLog from '../pages/admin/InspectionLog';
+import BudgetApproval from '../pages/admin/BudgetApproval';
 
 const PrincipalRoutes = () => {
   return (
@@ -28,6 +29,7 @@ const PrincipalRoutes = () => {
         <Route path="lesson-plans" element={<LessonPlanApprovals />} />
         <Route path="audit-log" element={<AuditLog />} />
         <Route path="inspection-log" element={<InspectionLog />} />
+        <Route path="budget-approval" element={<BudgetApproval />} />
       </Route>
     </Routes>
   );

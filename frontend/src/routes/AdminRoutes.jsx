@@ -50,6 +50,7 @@ import PermissionsManagement from '../pages/admin/PermissionsManagement';
 import AdminSalaryPayroll from '../pages/admin/SalaryPayroll';
 import AuditLog from '../pages/admin/AuditLog';
 import InspectionLog from '../pages/admin/InspectionLog';
+import BudgetApproval from '../pages/admin/BudgetApproval';
 
 const AdminRoutes = () => {
   return (
@@ -98,6 +99,8 @@ const AdminRoutes = () => {
         <Route path="audit-log" element={<AuditLog />} />
         {/* Inspection Log Route */}
         <Route path="inspection-log" element={<InspectionLog />} />
+        {/* Budget Approval Route */}
+        <Route path="budget-approval" element={<BudgetApproval />} />
         {/* Teacher Remarks Routes */}
         <Route path="teacher-remarks" element={<TeacherRemarks />} />
         {/* Curriculum Template Demo Route */}

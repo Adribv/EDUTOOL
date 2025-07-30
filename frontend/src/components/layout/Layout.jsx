@@ -380,8 +380,9 @@ const Layout = () => {
         { text: 'Service Requests', icon: <Approval />, path: '/admin/service-requests', activity: 'Service Requests' },
         { text: 'Syllabus Completion', icon: <RateReview />, path: '/admin/syllabus-completion', activity: 'Syllabus Completion' },
               { text: 'Audit Log', icon: <Assessment />, path: '/admin/audit-log', activity: 'Audit Log' },
-      { text: 'Inspection Log', icon: <Search />, path: '/admin/inspection-log', activity: 'Inspection Log' },
-      { text: 'Salary Payroll', icon: <AccountBalance />, path: '/admin/salary-payroll', activity: 'Salary Payroll' },
+              { text: 'Inspection Log', icon: <Search />, path: '/admin/inspection-log', activity: 'Inspection Log' },
+        { text: 'Budget Approval', icon: <AccountBalance />, path: '/admin/budget-approval', activity: 'Budget Approval' },
+        { text: 'Salary Payroll', icon: <AccountBalance />, path: '/admin/salary-payroll', activity: 'Salary Payroll' },
       ],
       ITAdmin: [
         { text: 'IT Admin Dashboard', icon: <Dashboard />, path: '/itadmin/dashboard' },
@@ -414,6 +415,7 @@ const Layout = () => {
         { text: 'Reports', icon: <Assessment />, path: '/principal/reports', activity: 'Principal Reports' },
         { text: 'Audit Log', icon: <Assessment />, path: '/admin/audit-log', activity: 'Audit Log' },
         { text: 'Inspection Log', icon: <Search />, path: '/admin/inspection-log', activity: 'Inspection Log' },
+        { text: 'Budget Approval', icon: <AccountBalance />, path: '/admin/budget-approval', activity: 'Budget Approval' },
       ],
       Counsellor: [
         { text: 'Counselling Requests', icon: <Psychology />, path: '/counselor/requests', activity: 'Counselling Requests' },
@@ -439,6 +441,12 @@ const Layout = () => {
         
         // Always allow Inspection Log for testing
         if (item.text === 'Inspection Log') {
+          console.log(`✅ Always allowing ${user?.role}: ${item.text} (testing)`);
+          return true;
+        }
+        
+        // Always allow Budget Approval for testing
+        if (item.text === 'Budget Approval') {
           console.log(`✅ Always allowing ${user?.role}: ${item.text} (testing)`);
           return true;
         }

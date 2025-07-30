@@ -1514,6 +1514,18 @@ export const teacherRemarksAPI = {
   updateInspectionLog: (id, data) => api.put(`/admin/inspection-logs/${id}`, data).then(res => res.data),
   deleteInspectionLog: (id) => api.delete(`/admin/inspection-logs/${id}`).then(res => res.data),
   getInspectionStatistics: () => api.get('/admin/inspection-logs/statistics').then(res => res.data),
+
+  // Budget Approval Management
+  getBudgetApprovals: (params) => api.get('/budget-approvals', { params }).then(res => res.data),
+  getBudgetApprovalById: (id) => api.get(`/budget-approvals/${id}`).then(res => res.data),
+  createBudgetApproval: (data) => api.post('/budget-approvals', data).then(res => res.data),
+  updateBudgetApproval: (id, data) => api.put(`/budget-approvals/${id}`, data).then(res => res.data),
+  deleteBudgetApproval: (id) => api.delete(`/budget-approvals/${id}`).then(res => res.data),
+  submitBudgetApproval: (id) => api.patch(`/budget-approvals/${id}/submit`).then(res => res.data),
+  approveBudgetApproval: (id, data) => api.patch(`/budget-approvals/${id}/approve`, data).then(res => res.data),
+  rejectBudgetApproval: (id, data) => api.patch(`/budget-approvals/${id}/reject`, data).then(res => res.data),
+  getBudgetApprovalStats: () => api.get('/budget-approvals/stats').then(res => res.data),
+  downloadBudgetApprovalPDF: (id) => api.get(`/budget-approvals/${id}/download-pdf`, { responseType: 'blob' }).then(res => res.data),
 };
 
 export const getStudentFeeStatus = () => fetch('/api/accountant/fee-status').then(res => res.json());

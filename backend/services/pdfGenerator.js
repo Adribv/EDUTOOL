@@ -1,6 +1,7 @@
 const puppeteer = require('puppeteer');
 const path = require('path');
 const fs = require('fs').promises;
+const PDFDocument = require('pdfkit');
 
 class PDFGenerator {
   static async generateDisciplinaryFormPDF(formData, outputPath) {
@@ -714,6 +715,320 @@ class PDFGenerator {
       if (browser) {
         await browser.close();
       }
+    }
+  }
+
+  // Generate Budget Approval PDF
+  static async generateBudgetApprovalPDF(budgetApproval) {
+    try {
+      const doc = new PDFDocument({
+        size: 'A4',
+        margin: 50
+      });
+
+      // Set up streams
+      const chunks = [];
+      doc.on('data', chunk => chunks.push(chunk));
+      
+      return new Promise((resolve, reject) => {
+        doc.on('end', () => {
+          const result = Buffer.concat(chunks);
+          resolve(result);
+        });
+
+        // Header with yellow background
+        doc.rect(0, 0, 595.28, 80)
+          .fill('#FFD700')
+          .fillColor('black');
+
+        // Title
+        doc.fontSize(24)
+          .font('Helvetica-Bold')
+          .text('School Budget Approval', 50, 25, {
+            width: 495.28,
+            align: 'center'
+          });
+
+        // Reset fill color
+        doc.fillColor('black');
+
+        // School Information Section
+        let yPosition = 120;
+        
+        doc.fontSize(12)
+          .font('Helvetica-Bold')
+          .text('School Information:', 50, yPosition);
+        
+        yPosition += 25;
+
+        const schoolInfo = [
+          { label: 'School Name:', value: budgetApproval.schoolName },
+          { label: 'Academic Year:', value: budgetApproval.academicYear },
+          { label: 'Prepared By:', value: budgetApproval.preparedBy },
+          { label: 'Dept/Committee:', value: budgetApproval.department },
+          { label: 'Date of Submission:', value: new Date(budgetApproval.dateOfSubmission).toLocaleDateString() }
+        ];
+
+        schoolInfo.forEach(info => {
+          doc.fontSize(10)
+            .font('Helvetica-Bold')
+            .text(info.label, 50, yPosition);
+          
+          doc.fontSize(10)
+            .font('Helvetica')
+            .text(info.value, 200, yPosition);
+          
+          yPosition += 20;
+        });
+
+        // Budget Summary Table
+        yPosition += 20;
+        
+        doc.fontSize(12)
+          .font('Helvetica-Bold')
+          .text('Budget Summary Table:', 50, yPosition);
+        
+        yPosition += 25;
+
+        // Table headers
+        const tableHeaders = ['S.No', 'Budget Category', 'Description', 'Proposed Amount', 'Approved Amount', 'Remarks'];
+        const columnWidths = [40, 100, 150, 80, 80, 100];
+        let xPosition = 50;
+
+        // Draw table header background
+        doc.rect(xPosition, yPosition - 5, 550, 20)
+          .fill('#f0f0f0')
+          .fillColor('black');
+
+        // Header text
+        tableHeaders.forEach((header, index) => {
+          doc.fontSize(8)
+            .font('Helvetica-Bold')
+            .text(header, xPosition + 5, yPosition, {
+              width: columnWidths[index] - 10,
+              align: 'left'
+            });
+          xPosition += columnWidths[index];
+        });
+
+        yPosition += 25;
+
+        // Budget items
+        budgetApproval.budgetItems.forEach((item, index) => {
+          xPosition = 50;
+          
+          // Alternate row colors
+          if (index % 2 === 0) {
+            doc.rect(xPosition, yPosition - 5, 550, 20)
+              .fill('#fafafa')
+              .fillColor('black');
+          }
+
+          // S.No
+          doc.fontSize(8)
+            .font('Helvetica')
+            .text(item.serialNumber.toString(), xPosition + 5, yPosition, {
+              width: columnWidths[0] - 10,
+              align: 'left'
+            });
+          xPosition += columnWidths[0];
+
+          // Budget Category
+          doc.fontSize(8)
+            .font('Helvetica')
+            .text(item.budgetCategory, xPosition + 5, yPosition, {
+              width: columnWidths[1] - 10,
+              align: 'left'
+            });
+          xPosition += columnWidths[1];
+
+          // Description
+          doc.fontSize(8)
+            .font('Helvetica')
+            .text(item.description, xPosition + 5, yPosition, {
+              width: columnWidths[2] - 10,
+              align: 'left'
+            });
+          xPosition += columnWidths[2];
+
+          // Proposed Amount
+          doc.fontSize(8)
+            .font('Helvetica')
+            .text(`₹${item.proposedAmount.toLocaleString()}`, xPosition + 5, yPosition, {
+              width: columnWidths[3] - 10,
+              align: 'right'
+            });
+          xPosition += columnWidths[3];
+
+          // Approved Amount
+          doc.fontSize(8)
+            .font('Helvetica')
+            .text(item.approvedAmount ? `₹${item.approvedAmount.toLocaleString()}` : '-', xPosition + 5, yPosition, {
+              width: columnWidths[4] - 10,
+              align: 'right'
+            });
+          xPosition += columnWidths[4];
+
+          // Remarks
+          doc.fontSize(8)
+            .font('Helvetica')
+            .text(item.remarks || '-', xPosition + 5, yPosition, {
+              width: columnWidths[5] - 10,
+              align: 'left'
+            });
+
+          yPosition += 20;
+        });
+
+        // Total row
+        yPosition += 5;
+        xPosition = 50;
+        
+        doc.rect(xPosition, yPosition - 5, 550, 20)
+          .fill('#e0e0e0')
+          .fillColor('black');
+
+        doc.fontSize(10)
+          .font('Helvetica-Bold')
+          .text('Total', xPosition + 5, yPosition, {
+            width: 290,
+            align: 'left'
+          });
+
+        xPosition += 290;
+        doc.fontSize(10)
+          .font('Helvetica-Bold')
+          .text(`₹${budgetApproval.totalProposedAmount.toLocaleString()}`, xPosition + 5, yPosition, {
+            width: 80,
+            align: 'right'
+          });
+
+        xPosition += 80;
+        doc.fontSize(10)
+          .font('Helvetica-Bold')
+          .text(budgetApproval.totalApprovedAmount ? `₹${budgetApproval.totalApprovedAmount.toLocaleString()}` : '-', xPosition + 5, yPosition, {
+            width: 80,
+            align: 'right'
+          });
+
+        // Approval Section
+        yPosition += 40;
+        
+        doc.fontSize(12)
+          .font('Helvetica-Bold')
+          .text('Approval Section:', 50, yPosition);
+        
+        yPosition += 25;
+
+        doc.fontSize(10)
+          .font('Helvetica')
+          .text('I, the undersigned Principal, have reviewed the above budget proposal and', 50, yPosition, {
+            width: 495,
+            align: 'left'
+          });
+
+        yPosition += 25;
+
+        // Approval options
+        const approvalOptions = [
+          'Approved as presented',
+          'Approve with the following revisions'
+        ];
+
+        approvalOptions.forEach((option, index) => {
+          // Checkbox
+          doc.rect(50, yPosition - 2, 12, 12)
+            .stroke();
+          
+          // Check mark if this option is selected
+          if (budgetApproval.approvalType === option) {
+            doc.fontSize(12)
+              .text('✓', 53, yPosition - 5);
+          }
+
+          // Option text
+          doc.fontSize(10)
+            .font('Helvetica')
+            .text(option, 70, yPosition, {
+              width: 475,
+              align: 'left'
+            });
+
+          yPosition += 20;
+        });
+
+        // Signature block
+        yPosition += 20;
+        
+        const signatureInfo = [
+          { label: 'Principal Name:', value: budgetApproval.principalName || '_________________' },
+          { label: 'Signature:', value: '_________________' },
+          { label: 'Date:', value: budgetApproval.approvalDate ? new Date(budgetApproval.approvalDate).toLocaleDateString() : '_________________' }
+        ];
+
+        signatureInfo.forEach(info => {
+          doc.fontSize(10)
+            .font('Helvetica-Bold')
+            .text(info.label, 50, yPosition);
+          
+          doc.fontSize(10)
+            .font('Helvetica')
+            .text(info.value, 200, yPosition);
+          
+          yPosition += 20;
+        });
+
+        // Attachments
+        yPosition += 10;
+        doc.fontSize(10)
+          .font('Helvetica-Bold')
+          .text('Attachments (if any):', 50, yPosition);
+
+        if (budgetApproval.attachments && budgetApproval.attachments.length > 0) {
+          yPosition += 20;
+          budgetApproval.attachments.forEach(attachment => {
+            doc.fontSize(9)
+              .font('Helvetica')
+              .text(`• ${attachment.originalName}`, 70, yPosition);
+            yPosition += 15;
+          });
+        }
+
+        // Approval remarks if any
+        if (budgetApproval.approvalRemarks) {
+          yPosition += 20;
+          doc.fontSize(10)
+            .font('Helvetica-Bold')
+            .text('Approval Remarks:', 50, yPosition);
+          
+          yPosition += 15;
+          doc.fontSize(9)
+            .font('Helvetica')
+            .text(budgetApproval.approvalRemarks, 50, yPosition, {
+              width: 495,
+              align: 'left'
+            });
+        }
+
+        // Footer
+        const pageCount = doc.bufferedPageRange().count;
+        for (let i = 0; i < pageCount; i++) {
+          doc.switchToPage(i);
+          
+          // Page number
+          doc.fontSize(8)
+            .font('Helvetica')
+            .text(`Page ${i + 1} of ${pageCount}`, 50, 800, {
+              width: 495,
+              align: 'center'
+            });
+        }
+
+        doc.end();
+      });
+    } catch (error) {
+      console.error('Error generating budget approval PDF:', error);
+      throw error;
     }
   }
 }

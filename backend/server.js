@@ -109,6 +109,7 @@ app.use('/api/consent-forms', require('./routes/consentForm.routes'));
 app.use('/api/syllabus-completion', require('./routes/syllabusCompletion.routes'));
 app.use('/api/audit-logs', require('./routes/Staff/auditLogRoutes'));
 app.use('/api/inspection-logs', require('./routes/Staff/inspectionLogRoutes'));
+app.use('/api/budget-approvals', require('./routes/Admin/budgetApprovalRoutes'));
 app.use('/api/teacher-remarks', require('./routes/teacherRemarks.routes'));
 app.use('/api/admin-staff/consent-forms', require('./routes/consentForm.routes'));
 app.use('/api/disciplinary-forms', require('./routes/disciplinaryForm.routes'));

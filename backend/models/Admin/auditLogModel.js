@@ -73,4 +73,4 @@ auditLogSchema.index({ auditType: 1 });
 auditLogSchema.index({ status: 1 });
 auditLogSchema.index({ responsiblePerson: 1 });
 
-module.exports = mongoose.model('AuditLog', auditLogSchema); 
+module.exports = mongoose.model('AdminAuditLog', auditLogSchema); 

@@ -157,6 +157,9 @@ activitiesControlSchema.statics.getAvailableActivities = function() {
     'Visitors',
     'Service Requests',
     'Syllabus Completion',
+    'Audit Log',
+    'Inspection Log',
+    'Budget Approval',
     'Salary Payroll',
     
     // Teacher activities

@@ -61,4 +61,4 @@ inspectionLogSchema.index({ purposeOfVisit: 1 });
 inspectionLogSchema.index({ followUpRequired: 1 });
 inspectionLogSchema.index({ createdBy: 1 });
 
-module.exports = mongoose.model('InspectionLog', inspectionLogSchema); 
+module.exports = mongoose.model('AdminInspectionLog', inspectionLogSchema); 
