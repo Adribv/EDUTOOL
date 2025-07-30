@@ -4,23 +4,23 @@ const meetingMinutesController = require('../../controllers/Admin/meetingMinutes
 const { verifyToken } = require('../../middlewares/authMiddleware');
 const { permit } = require('../../middlewares/roleMiddleware');
 
-// Get meeting minutes statistics (Admin, VP, Principal can view)
-router.get('/stats', verifyToken, permit('Admin', 'VP', 'Principal'), meetingMinutesController.getMeetingMinutesStats);
+// Get meeting minutes statistics (Admin, AdminStaff, VP, Principal can view)
+router.get('/stats', verifyToken, permit('Admin', 'AdminStaff', 'VP', 'Principal'), meetingMinutesController.getMeetingMinutesStats);
 
-// Get all meeting minutes with pagination and filtering (Admin, VP, Principal can view)
-router.get('/', verifyToken, permit('Admin', 'VP', 'Principal'), meetingMinutesController.getAllMeetingMinutes);
+// Get all meeting minutes with pagination and filtering (Admin, AdminStaff, VP, Principal can view)
+router.get('/', verifyToken, permit('Admin', 'AdminStaff', 'VP', 'Principal'), meetingMinutesController.getAllMeetingMinutes);
 
-// Get meeting minutes by ID (Admin, VP, Principal can view)
-router.get('/:id', verifyToken, permit('Admin', 'VP', 'Principal'), meetingMinutesController.getMeetingMinutesById);
+// Get meeting minutes by ID (Admin, AdminStaff, VP, Principal can view)
+router.get('/:id', verifyToken, permit('Admin', 'AdminStaff', 'VP', 'Principal'), meetingMinutesController.getMeetingMinutesById);
 
-// Create new meeting minutes (Admin only)
-router.post('/', verifyToken, permit('Admin'), meetingMinutesController.createMeetingMinutes);
+// Create new meeting minutes (Admin and AdminStaff only)
+router.post('/', verifyToken, permit('Admin', 'AdminStaff'), meetingMinutesController.createMeetingMinutes);
 
-// Update meeting minutes (Admin, VP, Principal can edit based on status)
-router.put('/:id', verifyToken, permit('Admin', 'VP', 'Principal'), meetingMinutesController.updateMeetingMinutes);
+// Update meeting minutes (Admin, AdminStaff, VP, Principal can edit based on status)
+router.put('/:id', verifyToken, permit('Admin', 'AdminStaff', 'VP', 'Principal'), meetingMinutesController.updateMeetingMinutes);
 
-// Submit meeting minutes for approval (Admin only)
-router.patch('/:id/submit', verifyToken, permit('Admin'), meetingMinutesController.submitMeetingMinutes);
+// Submit meeting minutes for approval (Admin and AdminStaff only)
+router.patch('/:id/submit', verifyToken, permit('Admin', 'AdminStaff'), meetingMinutesController.submitMeetingMinutes);
 
 // VP Approval (VP only)
 router.patch('/:id/vp-approve', verifyToken, permit('VP'), meetingMinutesController.vpApproveMeetingMinutes);
@@ -31,7 +31,7 @@ router.patch('/:id/principal-approve', verifyToken, permit('Principal'), meeting
 // Reject meeting minutes (VP or Principal)
 router.patch('/:id/reject', verifyToken, permit('VP', 'Principal'), meetingMinutesController.rejectMeetingMinutes);
 
-// Delete meeting minutes (Admin only, if status is Draft)
-router.delete('/:id', verifyToken, permit('Admin'), meetingMinutesController.deleteMeetingMinutes);
+// Delete meeting minutes (Admin and AdminStaff only, if status is Draft)
+router.delete('/:id', verifyToken, permit('Admin', 'AdminStaff'), meetingMinutesController.deleteMeetingMinutes);
 
 module.exports = router; 

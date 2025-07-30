@@ -76,7 +76,7 @@ exports.getMeetingMinutesById = async (req, res) => {
   }
 };
 
-// Create new meeting minutes (Admin only)
+// Create new meeting minutes (Admin and AdminStaff only)
 exports.createMeetingMinutes = async (req, res) => {
   try {
     const meetingData = {
@@ -113,8 +113,8 @@ exports.updateMeetingMinutes = async (req, res) => {
     const userRole = req.user.role;
     const currentStatus = meetingMinutes.approvalStatus;
     
-    // Admin can edit if status is Draft or Submitted
-    if (userRole === 'Admin' && !['Draft', 'Submitted'].includes(currentStatus)) {
+    // Admin and AdminStaff can edit if status is Draft or Submitted
+    if ((userRole === 'Admin' || userRole === 'AdminStaff') && !['Draft', 'Submitted'].includes(currentStatus)) {
       return res.status(403).json({ message: 'Cannot edit meeting minutes in current status' });
     }
     
@@ -153,7 +153,7 @@ exports.updateMeetingMinutes = async (req, res) => {
   }
 };
 
-// Submit meeting minutes for approval (Admin only)
+// Submit meeting minutes for approval (Admin and AdminStaff only)
 exports.submitMeetingMinutes = async (req, res) => {
   try {
     const meetingMinutes = await MeetingMinutes.findById(req.params.id);
@@ -304,7 +304,7 @@ exports.rejectMeetingMinutes = async (req, res) => {
   }
 };
 
-// Delete meeting minutes (Admin only, if status is Draft)
+// Delete meeting minutes (Admin and AdminStaff only, if status is Draft)
 exports.deleteMeetingMinutes = async (req, res) => {
   try {
     const meetingMinutes = await MeetingMinutes.findById(req.params.id);

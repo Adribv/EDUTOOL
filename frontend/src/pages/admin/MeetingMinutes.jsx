@@ -241,7 +241,7 @@ const MeetingMinutes = () => {
     const userRole = user?.role;
     const status = meeting.approvalStatus;
     
-    if (userRole === 'Admin') {
+    if (userRole === 'Admin' || userRole === 'AdminStaff') {
       return ['Draft', 'Submitted'].includes(status);
     }
     if (userRole === 'VP') {
@@ -335,7 +335,7 @@ const MeetingMinutes = () => {
               Edit
             </Button>
           )}
-          {user?.role === 'Admin' && record.approvalStatus === 'Draft' && (
+          {(user?.role === 'Admin' || user?.role === 'AdminStaff') && record.approvalStatus === 'Draft' && (
             <Button
               type="link"
               icon={<SendOutlined />}
@@ -353,7 +353,7 @@ const MeetingMinutes = () => {
               Approve
             </Button>
           )}
-          {user?.role === 'Admin' && record.approvalStatus === 'Draft' && (
+          {(user?.role === 'Admin' || user?.role === 'AdminStaff') && record.approvalStatus === 'Draft' && (
             <Button
               type="link"
               danger
@@ -371,7 +371,7 @@ const MeetingMinutes = () => {
   return (
     <div style={{ padding: '24px' }}>
       <Card title="School Meeting Minutes Management" extra={
-        user?.role === 'Admin' && (
+        (user?.role === 'Admin' || user?.role === 'AdminStaff') && (
           <Button type="primary" icon={<PlusOutlined />} onClick={showCreateModal}>
             Create Meeting Minutes
           </Button>

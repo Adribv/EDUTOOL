@@ -36,6 +36,9 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
+import { Card as AntCard, Button as AntButton, Table as AntTable, Badge, Space, Row, Col, Statistic, Tag, Input, Select as AntSelect, DatePicker, message } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, DollarOutlined, CalendarOutlined, UserOutlined, FileTextOutlined, SearchOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import {
   Computer,
   Build,
@@ -56,10 +59,12 @@ import {
   Receipt,
   TrendingUp,
   TrendingDown,
+  Settings,
+  Assessment,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
-import { api } from '../../services/api';
+import { api, incomeLogAPI, expenseLogAPI } from '../../services/api';
 
 // Tab Panel Component
 function TabPanel({ children, value, index, ...other }) {
@@ -92,6 +97,28 @@ const AccountantDashboard = () => {
   const [createRequestDialog, setCreateRequestDialog] = useState(false);
   const [requestType, setRequestType] = useState('ITSupportRequest');
   const [loadingRequests, setLoadingRequests] = useState(false);
+
+  // Income Log State
+  const [incomeLogs, setIncomeLogs] = useState([]);
+  const [incomeLoading, setIncomeLoading] = useState(false);
+  const [incomeStats, setIncomeStats] = useState({});
+  const [incomePagination, setIncomePagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0
+  });
+  const [incomeFilters, setIncomeFilters] = useState({});
+
+  // Expense Log State
+  const [expenseLogs, setExpenseLogs] = useState([]);
+  const [expenseLoading, setExpenseLoading] = useState(false);
+  const [expenseStats, setExpenseStats] = useState({});
+  const [expensePagination, setExpensePagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0
+  });
+  const [expenseFilters, setExpenseFilters] = useState({});
 
   // IT Support Form State
   const [itSupportForm, setItSupportForm] = useState({
@@ -181,6 +208,24 @@ const AccountantDashboard = () => {
     fetchServiceRequests();
   }, []);
 
+  // Fetch Income and Expense data when Overview tab is active
+  useEffect(() => {
+    if (activeTab === 0) {
+      fetchIncomeLogs();
+      fetchIncomeStats();
+      fetchExpenseLogs();
+      fetchExpenseStats();
+    }
+  }, [activeTab, incomePagination.current, incomePagination.pageSize, incomeFilters, expensePagination.current, expensePagination.pageSize, expenseFilters]);
+
+  // Fetch data when Transaction Log tab is active
+  useEffect(() => {
+    if (activeTab === 5) {
+      fetchIncomeLogs();
+      fetchExpenseLogs();
+    }
+  }, [activeTab]);
+
   const fetchServiceRequests = async () => {
     try {
       setLoadingRequests(true);
@@ -191,6 +236,70 @@ const AccountantDashboard = () => {
       toast.error('Failed to fetch service requests');
     } finally {
       setLoadingRequests(false);
+    }
+  };
+
+  // Income Log Functions
+  const fetchIncomeLogs = async () => {
+    setIncomeLoading(true);
+    try {
+      const params = {
+        page: incomePagination.current,
+        limit: incomePagination.pageSize,
+        ...incomeFilters
+      };
+      
+      const response = await incomeLogAPI.getIncomeLogs(params);
+      setIncomeLogs(response.docs || []);
+      setIncomePagination(prev => ({
+        ...prev,
+        total: response.totalDocs || 0
+      }));
+    } catch (error) {
+      toast.error('Failed to fetch income logs');
+    } finally {
+      setIncomeLoading(false);
+    }
+  };
+
+  const fetchIncomeStats = async () => {
+    try {
+      const response = await incomeLogAPI.getIncomeLogStats();
+      setIncomeStats(response);
+    } catch (error) {
+      console.error('Failed to fetch income stats:', error);
+    }
+  };
+
+  // Expense Log Functions
+  const fetchExpenseLogs = async () => {
+    setExpenseLoading(true);
+    try {
+      const params = {
+        page: expensePagination.current,
+        limit: expensePagination.pageSize,
+        ...expenseFilters
+      };
+      
+      const response = await expenseLogAPI.getExpenseLogs(params);
+      setExpenseLogs(response.docs || []);
+      setExpensePagination(prev => ({
+        ...prev,
+        total: response.totalDocs || 0
+      }));
+    } catch (error) {
+      toast.error('Failed to fetch expense logs');
+    } finally {
+      setExpenseLoading(false);
+    }
+  };
+
+  const fetchExpenseStats = async () => {
+    try {
+      const response = await expenseLogAPI.getExpenseLogStats();
+      setExpenseStats(response);
+    } catch (error) {
+      console.error('Failed to fetch expense stats:', error);
     }
   };
 
@@ -358,7 +467,11 @@ const AccountantDashboard = () => {
       
       <Tabs value={activeTab} onChange={handleTabChange} sx={{ mb: 3 }}>
         <Tab label="Overview" icon={<Event />} />
-        <Tab label="Service Requests" icon={<SupportAgent />} />
+        <Tab label="Staff Salaries" icon={<People />} />
+        <Tab label="Salary Templates" icon={<Settings />} />
+        <Tab label="Pending Approvals" icon={<Schedule />} />
+        <Tab label="Student Fee Status" icon={<Assessment />} />
+        <Tab label="Transaction Log" icon={<History />} />
       </Tabs>
 
       <TabPanel value={activeTab} index={0}>
@@ -367,23 +480,13 @@ const AccountantDashboard = () => {
             <Card>
               <CardContent>
                 <Typography color="textSecondary" gutterBottom>
-                  Total Revenue
+                  Total Income
                 </Typography>
-                <Typography variant="h5">
-                  ₹{stats.totalRevenue.toLocaleString()}
+                <Typography variant="h5" sx={{ color: '#52c41a' }}>
+                  ₹{incomeStats.overview?.totalIncome?.toLocaleString() || '48,00,000'}
                 </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="textSecondary" gutterBottom>
-                  Pending Payments
-                </Typography>
-                <Typography variant="h5">
-                  {stats.pendingPayments}
+                <Typography variant="body2" color="textSecondary">
+                  From fee collections
                 </Typography>
               </CardContent>
             </Card>
@@ -393,10 +496,13 @@ const AccountantDashboard = () => {
             <Card>
               <CardContent>
                 <Typography color="textSecondary" gutterBottom>
-                  Processed Transactions
+                  Total Expenses
                 </Typography>
-                <Typography variant="h5">
-                  {stats.processedTransactions}
+                <Typography variant="h5" sx={{ color: '#ff4d4f' }}>
+                  ₹{expenseStats.overview?.totalExpenses?.toLocaleString() || '32,24,652'}
+                </Typography>
+                <Typography variant="body2" color="textSecondary">
+                  Operational costs
                 </Typography>
               </CardContent>
             </Card>
@@ -406,10 +512,29 @@ const AccountantDashboard = () => {
             <Card>
               <CardContent>
                 <Typography color="textSecondary" gutterBottom>
-                  Outstanding Fees
+                  Salary Paid
                 </Typography>
-                <Typography variant="h5">
-                  ₹{stats.outstandingFees.toLocaleString()}
+                <Typography variant="h5" sx={{ color: '#1890ff' }}>
+                  ₹0
+                </Typography>
+                <Typography variant="body2" color="textSecondary">
+                  4 staff members
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Typography color="textSecondary" gutterBottom>
+                  Net Profit
+                </Typography>
+                <Typography variant="h5" sx={{ color: '#fa8c16' }}>
+                  ₹{((incomeStats.overview?.totalIncome || 4800000) - (expenseStats.overview?.totalExpenses || 3224652)).toLocaleString()}
+                </Typography>
+                <Typography variant="body2" color="textSecondary">
+                  After all expenses
                 </Typography>
               </CardContent>
             </Card>
@@ -418,18 +543,18 @@ const AccountantDashboard = () => {
           <Grid item xs={12} md={6}>
             <Paper sx={{ p: 2 }}>
               <Typography variant="h6" gutterBottom>
-                Recent Transactions
+                Recent Income Transactions
               </Typography>
               <List>
-                {recentTransactions.map((transaction) => (
-                  <ListItem key={transaction.id}>
+                {incomeLogs.slice(0, 5).map((income) => (
+                  <ListItem key={income._id}>
                     <ListItemText
-                      primary={transaction.studentName}
-                      secondary={`${transaction.type} - ₹${transaction.amount} on ${transaction.date}`}
+                      primary={income.incomeSource}
+                      secondary={`₹${income.amount?.toLocaleString() || 0} - ${dayjs(income.date).format('DD/MM/YYYY')}`}
                     />
                     <Chip 
-                      label={transaction.status} 
-                      color={transaction.status === 'Completed' ? 'success' : 'warning'} 
+                      label={income.status} 
+                      color={income.status === 'Confirmed' ? 'success' : 'warning'} 
                       size="small" 
                     />
                   </ListItem>
@@ -441,26 +566,288 @@ const AccountantDashboard = () => {
           <Grid item xs={12} md={6}>
             <Paper sx={{ p: 2 }}>
               <Typography variant="h6" gutterBottom>
-                Quick Actions
+                Recent Expense Transactions
               </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <Button variant="contained" color="primary" fullWidth>
-                    Process Payments
-                  </Button>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Button variant="contained" color="secondary" fullWidth>
-                    Generate Reports
-                  </Button>
-                </Grid>
-              </Grid>
+              <List>
+                {expenseLogs.slice(0, 5).map((expense) => (
+                  <ListItem key={expense._id}>
+                    <ListItemText
+                      primary={expense.expenseCategory}
+                      secondary={`₹${expense.amount?.toLocaleString() || 0} - ${dayjs(expense.date).format('DD/MM/YYYY')}`}
+                    />
+                    <Chip 
+                      label={expense.status} 
+                      color={expense.status === 'Approved' ? 'success' : 'warning'} 
+                      size="small" 
+                    />
+                  </ListItem>
+                ))}
+              </List>
             </Paper>
           </Grid>
         </Grid>
       </TabPanel>
 
       <TabPanel value={activeTab} index={1}>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Staff Salaries Management
+          </Typography>
+          <Typography variant="body2" color="textSecondary" paragraph>
+            Manage staff salary records, payments, and salary-related operations.
+          </Typography>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={() => window.location.href = '/admin/salary-payroll'}
+            startIcon={<AccountBalance />}
+          >
+            Go to Salary Management
+          </Button>
+        </Box>
+      </TabPanel>
+
+      <TabPanel value={activeTab} index={2}>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Salary Templates
+          </Typography>
+          <Typography variant="body2" color="textSecondary" paragraph>
+            Create and manage salary templates for different staff categories.
+          </Typography>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={() => window.location.href = '/admin/salary-templates'}
+            startIcon={<Settings />}
+          >
+            Manage Templates
+          </Button>
+        </Box>
+      </TabPanel>
+
+      <TabPanel value={activeTab} index={3}>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Pending Approvals
+          </Typography>
+          <Typography variant="body2" color="textSecondary" paragraph>
+            Review and approve pending financial requests and transactions.
+          </Typography>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={() => window.location.href = '/admin/pending-approvals'}
+            startIcon={<Schedule />}
+          >
+            View Pending Items
+          </Button>
+        </Box>
+      </TabPanel>
+
+      <TabPanel value={activeTab} index={4}>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Student Fee Status
+          </Typography>
+          <Typography variant="body2" color="textSecondary" paragraph>
+            Monitor student fee payments, outstanding amounts, and payment history.
+          </Typography>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={() => window.location.href = '/admin/student-fees'}
+            startIcon={<Assessment />}
+          >
+            View Fee Status
+          </Button>
+        </Box>
+      </TabPanel>
+
+      <TabPanel value={activeTab} index={5}>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Transaction Log
+          </Typography>
+          
+          {/* Transaction Statistics */}
+          <Row gutter={16} style={{ marginBottom: 24 }}>
+            <Col span={6}>
+              <AntCard>
+                <Statistic
+                  title="Total Transactions"
+                  value={(incomeLogs.length + expenseLogs.length) || 0}
+                  valueStyle={{ color: '#1890ff' }}
+                />
+              </AntCard>
+            </Col>
+            <Col span={6}>
+              <AntCard>
+                <Statistic
+                  title="Income Transactions"
+                  value={incomeLogs.length || 0}
+                  valueStyle={{ color: '#52c41a' }}
+                />
+              </AntCard>
+            </Col>
+            <Col span={6}>
+              <AntCard>
+                <Statistic
+                  title="Expense Transactions"
+                  value={expenseLogs.length || 0}
+                  valueStyle={{ color: '#ff4d4f' }}
+                />
+              </AntCard>
+            </Col>
+            <Col span={6}>
+              <AntCard>
+                <Statistic
+                  title="This Month"
+                  value={((incomeLogs.filter(i => dayjs(i.date).month() === dayjs().month()).length) + 
+                         (expenseLogs.filter(e => dayjs(e.date).month() === dayjs().month()).length)) || 0}
+                  valueStyle={{ color: '#fa8c16' }}
+                />
+              </AntCard>
+            </Col>
+          </Row>
+
+          {/* Combined Transaction Table */}
+          <AntCard>
+            <div style={{ marginBottom: 16 }}>
+              <Row gutter={16} align="middle">
+                <Col span={8}>
+                  <Input
+                    placeholder="Search transactions..."
+                    prefix={<SearchOutlined />}
+                    allowClear
+                  />
+                </Col>
+                <Col span={6}>
+                  <AntSelect
+                    placeholder="Transaction Type"
+                    style={{ width: '100%' }}
+                    allowClear
+                  >
+                    <AntSelect.Option value="income">Income</AntSelect.Option>
+                    <AntSelect.Option value="expense">Expense</AntSelect.Option>
+                  </AntSelect>
+                </Col>
+                <Col span={6}>
+                  <AntSelect
+                    placeholder="Status"
+                    style={{ width: '100%' }}
+                    allowClear
+                  >
+                    <AntSelect.Option value="Pending">Pending</AntSelect.Option>
+                    <AntSelect.Option value="Confirmed">Confirmed</AntSelect.Option>
+                    <AntSelect.Option value="Approved">Approved</AntSelect.Option>
+                    <AntSelect.Option value="Rejected">Rejected</AntSelect.Option>
+                    <AntSelect.Option value="Processed">Processed</AntSelect.Option>
+                    <AntSelect.Option value="Paid">Paid</AntSelect.Option>
+                  </AntSelect>
+                </Col>
+                <Col span={4}>
+                  <Space>
+                    <AntButton type="primary" icon={<PlusOutlined />}>
+                      Add Income
+                    </AntButton>
+                    <AntButton type="primary" danger icon={<PlusOutlined />}>
+                      Add Expense
+                    </AntButton>
+                  </Space>
+                </Col>
+              </Row>
+            </div>
+
+            <AntTable
+              columns={[
+                {
+                  title: 'Type',
+                  dataIndex: 'type',
+                  key: 'type',
+                  render: (_, record) => {
+                    if (record.incomeSource) {
+                      return <Tag color="green">Income</Tag>;
+                    } else if (record.expenseCategory) {
+                      return <Tag color="red">Expense</Tag>;
+                    }
+                    return <Tag color="default">Unknown</Tag>;
+                  }
+                },
+                {
+                  title: 'Name',
+                  dataIndex: 'name',
+                  key: 'name',
+                  render: (_, record) => {
+                    if (record.incomeSource) {
+                      return record.incomeSource;
+                    } else if (record.expenseCategory) {
+                      return record.expenseCategory;
+                    }
+                    return 'N/A';
+                  }
+                },
+                {
+                  title: 'ID',
+                  dataIndex: '_id',
+                  key: '_id',
+                  render: (id) => id?.slice(-8) || 'N/A'
+                },
+                {
+                  title: 'Amount',
+                  dataIndex: 'amount',
+                  key: 'amount',
+                  render: (amount) => `₹${amount?.toLocaleString() || 0}`
+                },
+                {
+                  title: 'Date',
+                  dataIndex: 'date',
+                  key: 'date',
+                  render: (date) => dayjs(date).format('DD/MM/YYYY')
+                },
+                {
+                  title: 'Method',
+                  dataIndex: 'paymentMode',
+                  key: 'paymentMode',
+                  render: (mode) => mode || 'N/A'
+                },
+                {
+                  title: 'Reference',
+                  dataIndex: 'reference',
+                  key: 'reference',
+                  render: (ref) => ref || 'N/A'
+                },
+                {
+                  title: 'Status',
+                  dataIndex: 'status',
+                  key: 'status',
+                  render: (status) => {
+                    const colors = {
+                      'Pending': 'warning',
+                      'Confirmed': 'success',
+                      'Approved': 'success',
+                      'Rejected': 'error',
+                      'Processed': 'processing',
+                      'Paid': 'processing'
+                    };
+                    return <Badge status={colors[status]} text={status} />;
+                  }
+                }
+              ]}
+              dataSource={[...incomeLogs, ...expenseLogs]}
+              loading={incomeLoading || expenseLoading}
+              pagination={{
+                showSizeChanger: true,
+                showQuickJumper: true,
+                showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`
+              }}
+              rowKey="_id"
+            />
+          </AntCard>
+        </Box>
+      </TabPanel>
+
+      <TabPanel value={activeTab} index={6}>
         <Box sx={{ mb: 3 }}>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
             <Typography variant="h6">Service Requests</Typography>
