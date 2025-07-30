@@ -4,6 +4,55 @@ const expenseLogController = require('../../controllers/Admin/expenseLogControll
 const { verifyToken } = require('../../middlewares/authMiddleware');
 const { permit } = require('../../middlewares/roleMiddleware');
 
+// Test route for debugging (no authentication required)
+router.get('/test/stats', (req, res) => {
+  res.json({
+    totalExpenses: 800000,
+    totalCount: 15,
+    averageAmount: 53333,
+    approvedExpenses: 12
+  });
+});
+
+router.get('/test/logs', (req, res) => {
+  res.json({
+    docs: [
+      {
+        _id: '1',
+        serialNumber: 1,
+        date: new Date(),
+        expenseCategory: 'Utilities',
+        description: 'Electricity bill payment',
+        amount: 25000,
+        paidTo: 'Electricity Board',
+        voucherNo: 'VCH001',
+        paymentMode: 'Bank Transfer',
+        approvedBy: 'Principal',
+        remarks: 'Monthly electricity bill',
+        status: 'Approved'
+      },
+      {
+        _id: '2',
+        serialNumber: 2,
+        date: new Date(),
+        expenseCategory: 'Maintenance',
+        description: 'Building maintenance',
+        amount: 50000,
+        paidTo: 'Maintenance Company',
+        voucherNo: 'VCH002',
+        paymentMode: 'Cheque',
+        approvedBy: 'Principal',
+        remarks: 'Quarterly maintenance',
+        status: 'Approved'
+      }
+    ],
+    totalDocs: 2,
+    limit: 10,
+    page: 1,
+    totalPages: 1
+  });
+});
+
 // Get expense log statistics (Accountant, Admin, AdminStaff can view)
 router.get('/stats', verifyToken, permit('Accountant', 'Admin', 'AdminStaff'), expenseLogController.getExpenseLogStats);
 

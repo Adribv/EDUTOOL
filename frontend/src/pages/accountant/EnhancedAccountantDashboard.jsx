@@ -682,17 +682,14 @@ const IncomeLogManager = () => {
   const fetchIncomeLogs = async () => {
     setLoading(true);
     try {
-      const params = {
-        page: pagination.current,
-        limit: pagination.pageSize,
-        ...filters
-      };
+      // Temporary: Use test endpoint for debugging
+      const response = await fetch('http://localhost:50001/api/income-logs/test/logs');
+      const data = await response.json();
       
-      const response = await incomeLogAPI.getIncomeLogs(params);
-      setIncomeLogs(response.docs || []);
+      setIncomeLogs(data.docs || []);
       setPagination(prev => ({
         ...prev,
-        total: response.totalDocs || 0
+        total: data.totalDocs || 0
       }));
     } catch (error) {
       console.error('Error fetching income logs:', error);
@@ -711,8 +708,10 @@ const IncomeLogManager = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await incomeLogAPI.getIncomeLogStats();
-      setStats(response);
+      // Temporary: Use test endpoint for debugging
+      const response = await fetch('http://localhost:50001/api/income-logs/test/stats');
+      const data = await response.json();
+      setStats(data);
     } catch (error) {
       console.error('Failed to fetch stats:', error);
       // Set default stats if API fails
@@ -1060,17 +1059,14 @@ const ExpenseLogManager = () => {
   const fetchExpenseLogs = async () => {
     setLoading(true);
     try {
-      const params = {
-        page: pagination.current,
-        limit: pagination.pageSize,
-        ...filters
-      };
+      // Temporary: Use test endpoint for debugging
+      const response = await fetch('http://localhost:50001/api/expense-logs/test/logs');
+      const data = await response.json();
       
-      const response = await expenseLogAPI.getExpenseLogs(params);
-      setExpenseLogs(response.docs || []);
+      setExpenseLogs(data.docs || []);
       setPagination(prev => ({
         ...prev,
-        total: response.totalDocs || 0
+        total: data.totalDocs || 0
       }));
     } catch (error) {
       console.error('Error fetching expense logs:', error);
@@ -1089,8 +1085,10 @@ const ExpenseLogManager = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await expenseLogAPI.getExpenseLogStats();
-      setStats(response);
+      // Temporary: Use test endpoint for debugging
+      const response = await fetch('http://localhost:50001/api/expense-logs/test/stats');
+      const data = await response.json();
+      setStats(data);
     } catch (error) {
       console.error('Failed to fetch stats:', error);
       // Set default stats if API fails

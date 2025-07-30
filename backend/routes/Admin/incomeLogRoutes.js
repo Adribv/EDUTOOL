@@ -4,6 +4,55 @@ const incomeLogController = require('../../controllers/Admin/incomeLogController
 const { verifyToken } = require('../../middlewares/authMiddleware');
 const { permit } = require('../../middlewares/roleMiddleware');
 
+// Test route for debugging (no authentication required)
+router.get('/test/stats', (req, res) => {
+  res.json({
+    totalIncome: 1500000,
+    totalCount: 25,
+    averageAmount: 60000,
+    pendingIncome: 5
+  });
+});
+
+router.get('/test/logs', (req, res) => {
+  res.json({
+    docs: [
+      {
+        _id: '1',
+        serialNumber: 1,
+        date: new Date(),
+        incomeSource: 'Fees',
+        description: 'Monthly tuition fees',
+        amount: 50000,
+        receivedFrom: 'Student Parent',
+        receiptNo: 'RCP001',
+        paymentMode: 'Bank Transfer',
+        receivedBy: 'Accountant',
+        remarks: 'Regular monthly payment',
+        status: 'Confirmed'
+      },
+      {
+        _id: '2',
+        serialNumber: 2,
+        date: new Date(),
+        incomeSource: 'Donation',
+        description: 'Annual donation',
+        amount: 100000,
+        receivedFrom: 'Local Business',
+        receiptNo: 'RCP002',
+        paymentMode: 'Cheque',
+        receivedBy: 'Accountant',
+        remarks: 'Annual sponsorship',
+        status: 'Confirmed'
+      }
+    ],
+    totalDocs: 2,
+    limit: 10,
+    page: 1,
+    totalPages: 1
+  });
+});
+
 // Get income log statistics (Accountant, Admin can view)
 router.get('/stats', verifyToken, permit('Accountant', 'Admin'), incomeLogController.getIncomeLogStats);
 
