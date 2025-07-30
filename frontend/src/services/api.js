@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: 'http://api.edulives.com/api',
+  baseURL: 'https://api.edulives.com/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
