@@ -726,10 +726,10 @@ export default function DelegationAuthorityNotice() {
                       }
                       return false; // Teachers cannot delegate
                     }).map((staff) => (
-                      <MenuItem key={staff._id} value={staff.name}>
-                        {staff.name} - {staff.designation || staff.role} ({staff.department?.name || 'No Department'})
-                      </MenuItem>
-                    ))}
+                       <MenuItem key={staff._id} value={staff.name}>
+                         {staff.name} - {staff.designation || staff.role} ({staff.department?.name || 'No Department'})
+                       </MenuItem>
+                     ))}
                      {process.env.NODE_ENV === 'development' && (
                        <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
                          Available staff: {staffMembers?.map(s => s.name).join(', ')}

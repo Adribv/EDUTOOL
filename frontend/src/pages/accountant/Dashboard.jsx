@@ -485,7 +485,7 @@ const AccountantDashboard = () => {
       <Typography variant="h4" gutterBottom>
         Welcome, {user?.name || 'Accountant'}
       </Typography>
-
+      
       
       <Typography variant="h6" color="primary" sx={{ mb: 1, fontWeight: 'bold' }}>
         🔍 LOOK FOR THESE TABS: INCOME LOG TAB and EXPENSE LOG TAB (Should be visible after Transaction Log)

@@ -267,7 +267,7 @@ const ParentLayout = () => {
           p: 3,
           minHeight: 'calc(100vh - 120px)'
         }}>
-          <Outlet />
+        <Outlet />
         </Box>
       </Box>
     </Box>
