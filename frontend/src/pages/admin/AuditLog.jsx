@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Table, Badge, Modal, Form, Input, Select, DatePicker, Space, Row, Col, Statistic, Tag, Tooltip, message } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, FileTextOutlined, CalendarOutlined, UserOutlined, CheckCircleOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import { Card, Button, Table, Badge, Modal, Form, Input, Select, DatePicker, Space, Row, Col, Statistic, Tag, Tooltip, message, Upload } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, FileTextOutlined, CalendarOutlined, UserOutlined, CheckCircleOutlined, ClockCircleOutlined, UploadOutlined } from '@ant-design/icons';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import dayjs from 'dayjs';
@@ -23,6 +23,7 @@ const AuditLog = () => {
     total: 0
   });
   const [filters, setFilters] = useState({});
+  const [uploadedFiles, setUploadedFiles] = useState([]);
 
   // Fetch audit logs
   const fetchAuditLogs = async (page = 1, filters = {}) => {
@@ -98,25 +99,38 @@ const AuditLog = () => {
     try {
       console.log('Form values:', values); // Debug log
       
-      const auditData = {
-        ...values,
-        dateOfAudit: values.dateOfAudit?.toISOString(),
-        targetCompletionDate: values.targetCompletionDate?.toISOString()
-      };
+      const formData = new FormData();
+      
+      // Add form data
+      Object.keys(values).forEach(key => {
+        if (values[key] !== undefined && values[key] !== null) {
+          if (key === 'dateOfAudit' || key === 'targetCompletionDate') {
+            formData.append(key, values[key]?.toISOString());
+          } else {
+            formData.append(key, values[key]);
+          }
+        }
+      });
 
-      console.log('Audit data to send:', auditData); // Debug log
+      // Add uploaded files
+      uploadedFiles.forEach((file, index) => {
+        formData.append('supportingDocuments', file);
+      });
+
+      console.log('Audit data to send:', formData); // Debug log
 
       if (editingAudit) {
-        await api.put(`/audit-logs/${editingAudit._id}`, auditData);
+        await api.put(`/audit-logs/${editingAudit._id}`, formData);
         message.success('Audit log updated successfully');
       } else {
-        const response = await api.post('/audit-logs', auditData);
+        const response = await api.post('/audit-logs', formData);
         console.log('API response:', response); // Debug log
         message.success('Audit log created successfully');
       }
 
       setModalVisible(false);
       setEditingAudit(null);
+      setUploadedFiles([]);
       form.resetFields();
       fetchAuditLogs();
       fetchStats();
@@ -184,6 +198,7 @@ const AuditLog = () => {
   const showEditModal = (audit) => {
     setEditingAudit(audit);
     setModalVisible(true);
+    setUploadedFiles([]); // Reset uploaded files for editing
     form.setFieldsValue({
       ...audit,
       dateOfAudit: audit.dateOfAudit ? dayjs(audit.dateOfAudit) : null,
@@ -275,6 +290,30 @@ const AuditLog = () => {
             >
               {status === 'Open' ? 'Close' : 'Reopen'}
             </Button>
+          )}
+        </Space>
+      )
+    },
+    {
+      title: 'Documents',
+      dataIndex: 'supportingDocuments',
+      key: 'supportingDocuments',
+      render: (documents) => (
+        <Space>
+          {documents && documents.length > 0 ? (
+            documents.map((doc, index) => (
+              <Button
+                key={index}
+                type="link"
+                size="small"
+                icon={<UploadOutlined />}
+                onClick={() => window.open(doc.filePath, '_blank')}
+              >
+                {doc.fileName || `Document ${index + 1}`}
+              </Button>
+            ))
+          ) : (
+            <span style={{ color: '#999' }}>No documents</span>
           )}
         </Space>
       )
@@ -530,6 +569,32 @@ const AuditLog = () => {
             </Select>
           </Form.Item>
 
+          <Form.Item
+            label="Supporting Documents"
+          >
+            <Upload
+              multiple
+              beforeUpload={(file) => {
+                setUploadedFiles(prev => [...prev, file]);
+                return false; // Prevent default upload
+              }}
+              onRemove={(file) => {
+                setUploadedFiles(prev => prev.filter(f => f.uid !== file.uid));
+              }}
+              fileList={uploadedFiles.map((file, index) => ({
+                uid: index,
+                name: file.name,
+                status: 'done'
+              }))}
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+            >
+              <Button icon={<UploadOutlined />}>Upload Supporting Documents</Button>
+            </Upload>
+            <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+              Supported formats: PDF, DOC, DOCX, JPG, PNG (Max 10MB per file)
+            </div>
+          </Form.Item>
+
           <Form.Item>
             <Space>
               <Button type="primary" htmlType="submit">
@@ -538,6 +603,7 @@ const AuditLog = () => {
               <Button onClick={() => {
                 setModalVisible(false);
                 setEditingAudit(null);
+                setUploadedFiles([]);
                 form.resetFields();
               }}>
                 Cancel
