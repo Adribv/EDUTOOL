@@ -1539,6 +1539,17 @@ export const expenseLogAPI = {
   getExpenseLogStats: () => api.get('/expense-logs/stats').then(res => res.data),
 };
 
+// Income Log Management
+export const incomeLogAPI = {
+  getIncomeLogs: (params) => api.get('/income-logs', { params }).then(res => res.data),
+  getIncomeLogById: (id) => api.get(`/income-logs/${id}`).then(res => res.data),
+  createIncomeLog: (data) => api.post('/income-logs', data).then(res => res.data),
+  updateIncomeLog: (id, data) => api.put(`/income-logs/${id}`, data).then(res => res.data),
+  deleteIncomeLog: (id) => api.delete(`/income-logs/${id}`).then(res => res.data),
+  updateIncomeLogStatus: (id, data) => api.patch(`/income-logs/${id}/status`, data).then(res => res.data),
+  getIncomeLogStats: () => api.get('/income-logs/stats').then(res => res.data),
+};
+
 export const getStudentFeeStatus = () => fetch('/api/accountant/fee-status').then(res => res.json());
 export const getFeeStats = () => fetch('/api/accountant/fee-stats').then(res => res.json());
 export const getTransactionLog = () => fetch('/api/accountant/transaction-log').then(res => res.json());

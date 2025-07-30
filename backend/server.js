@@ -111,6 +111,7 @@ app.use('/api/audit-logs', require('./routes/Staff/auditLogRoutes'));
 app.use('/api/inspection-logs', require('./routes/Staff/inspectionLogRoutes'));
 app.use('/api/budget-approvals', require('./routes/Admin/budgetApprovalRoutes'));
 app.use('/api/expense-logs', require('./routes/Admin/expenseLogRoutes'));
+app.use('/api/income-logs', require('./routes/Admin/incomeLogRoutes'));
 app.use('/api/teacher-remarks', require('./routes/teacherRemarks.routes'));
 app.use('/api/admin-staff/consent-forms', require('./routes/consentForm.routes'));
 app.use('/api/disciplinary-forms', require('./routes/disciplinaryForm.routes'));
