@@ -385,6 +385,7 @@ const Layout = () => {
         { text: 'Budget Approval', icon: <AccountBalance />, path: '/admin/budget-approval', activity: 'Budget Approval' },
         { text: 'Expense Log', icon: <Receipt />, path: '/admin/expense-log', activity: 'Expense Log' },
         { text: 'Income Log', icon: <TrendingUp />, path: '/admin/income-log', activity: 'Income Log' },
+        { text: 'Meeting Minutes', icon: <Event />, path: '/admin/meeting-minutes', activity: 'Meeting Minutes' },
         { text: 'Salary Payroll', icon: <AccountBalance />, path: '/admin/salary-payroll', activity: 'Salary Payroll' },
       ],
       ITAdmin: [
@@ -421,6 +422,7 @@ const Layout = () => {
         { text: 'Budget Approval', icon: <AccountBalance />, path: '/admin/budget-approval', activity: 'Budget Approval' },
         { text: 'Expense Log', icon: <Receipt />, path: '/admin/expense-log', activity: 'Expense Log' },
         { text: 'Income Log', icon: <TrendingUp />, path: '/admin/income-log', activity: 'Income Log' },
+        { text: 'Meeting Minutes', icon: <Event />, path: '/admin/meeting-minutes', activity: 'Meeting Minutes' },
       ],
       Counsellor: [
         { text: 'Counselling Requests', icon: <Psychology />, path: '/counselor/requests', activity: 'Counselling Requests' },
@@ -464,6 +466,12 @@ const Layout = () => {
         
         // Always allow Income Log for testing
         if (item.text === 'Income Log') {
+          console.log(`✅ Always allowing ${user?.role}: ${item.text} (testing)`);
+          return true;
+        }
+        
+        // Always allow Meeting Minutes for testing
+        if (item.text === 'Meeting Minutes') {
           console.log(`✅ Always allowing ${user?.role}: ${item.text} (testing)`);
           return true;
         }
