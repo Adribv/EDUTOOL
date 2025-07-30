@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Table, Badge, Modal, Form, Input, Select, DatePicker, Space, Row, Col, Statistic, Tag, Tooltip, message, Switch } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, SearchOutlined, CalendarOutlined, UserOutlined, CheckCircleOutlined, ClockCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { Card, Button, Table, Badge, Modal, Form, Input, Select, DatePicker, Space, Row, Col, Statistic, Tag, Tooltip, message, Switch, Upload } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, SearchOutlined, CalendarOutlined, UserOutlined, CheckCircleOutlined, ClockCircleOutlined, ExclamationCircleOutlined, UploadOutlined } from '@ant-design/icons';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import dayjs from 'dayjs';
@@ -23,6 +23,7 @@ const InspectionLog = () => {
     total: 0
   });
   const [filters, setFilters] = useState({});
+  const [uploadedFiles, setUploadedFiles] = useState([]);
 
   // Fetch inspection logs
   const fetchInspectionLogs = async (page = 1, filters = {}) => {
@@ -78,27 +79,41 @@ const InspectionLog = () => {
   // Handle form submission
   const handleSubmit = async (values) => {
     try {
-      const inspectionData = {
-        ...values,
-        dateOfInspection: values.dateOfInspection?.toISOString(),
-        nextVisitDate: values.nextVisitDate?.toISOString()
-      };
+      const formData = new FormData();
+      
+      // Add form data
+      Object.keys(values).forEach(key => {
+        if (values[key] !== undefined && values[key] !== null) {
+          if (key === 'dateOfInspection' || key === 'nextVisitDate') {
+            formData.append(key, values[key]?.toISOString());
+          } else {
+            formData.append(key, values[key]);
+          }
+        }
+      });
+
+      // Add uploaded files
+      uploadedFiles.forEach((file, index) => {
+        formData.append('supportingDocuments', file);
+      });
 
       if (editingInspection) {
-        await api.put(`/inspection-logs/${editingInspection._id}`, inspectionData);
+        await api.put(`/inspection-logs/${editingInspection._id}`, formData);
         message.success('Inspection log updated successfully');
       } else {
-        await api.post('/inspection-logs', inspectionData);
+        await api.post('/inspection-logs', formData);
         message.success('Inspection log created successfully');
       }
 
       setModalVisible(false);
       setEditingInspection(null);
+      setUploadedFiles([]);
       form.resetFields();
       fetchInspectionLogs();
       fetchStats();
     } catch (error) {
-      message.error(error.response?.data?.message || 'Operation failed');
+      message.error(error.response?.data?.message || 'Failed to save inspection log');
+      console.error('Error saving inspection log:', error);
     }
   };
 
@@ -137,6 +152,7 @@ const InspectionLog = () => {
   const showEditModal = (inspection) => {
     setEditingInspection(inspection);
     setModalVisible(true);
+    setUploadedFiles([]); // Reset uploaded files for editing
     form.setFieldsValue({
       ...inspection,
       dateOfInspection: inspection.dateOfInspection ? dayjs(inspection.dateOfInspection) : null,
@@ -264,6 +280,30 @@ const InspectionLog = () => {
             <div style={{ fontSize: '12px', color: '#666' }}>
               Next: {dayjs(record.nextVisitDate).format('DD/MM/YYYY')}
             </div>
+          )}
+        </Space>
+      )
+    },
+    {
+      title: 'Documents',
+      dataIndex: 'supportingDocuments',
+      key: 'supportingDocuments',
+      render: (documents) => (
+        <Space>
+          {documents && documents.length > 0 ? (
+            documents.map((doc, index) => (
+              <Button
+                key={index}
+                type="link"
+                size="small"
+                icon={<UploadOutlined />}
+                onClick={() => window.open(doc.filePath, '_blank')}
+              >
+                {doc.fileName || `Document ${index + 1}`}
+              </Button>
+            ))
+          ) : (
+            <span style={{ color: '#999' }}>No documents</span>
           )}
         </Space>
       )
@@ -521,6 +561,32 @@ const InspectionLog = () => {
             <TextArea rows={2} placeholder="Any additional notes" />
           </Form.Item>
 
+          <Form.Item
+            label="Supporting Documents"
+          >
+            <Upload
+              multiple
+              beforeUpload={(file) => {
+                setUploadedFiles(prev => [...prev, file]);
+                return false; // Prevent default upload
+              }}
+              onRemove={(file) => {
+                setUploadedFiles(prev => prev.filter(f => f.uid !== file.uid));
+              }}
+              fileList={uploadedFiles.map((file, index) => ({
+                uid: index,
+                name: file.name,
+                status: 'done'
+              }))}
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+            >
+              <Button icon={<UploadOutlined />}>Upload Supporting Documents</Button>
+            </Upload>
+            <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+              Supported formats: PDF, DOC, DOCX, JPG, PNG (Max 10MB per file)
+            </div>
+          </Form.Item>
+
           <Form.Item>
             <Space>
               <Button type="primary" htmlType="submit">
@@ -529,6 +595,7 @@ const InspectionLog = () => {
               <Button onClick={() => {
                 setModalVisible(false);
                 setEditingInspection(null);
+                setUploadedFiles([]);
                 form.resetFields();
               }}>
                 Cancel
@@ -581,47 +648,64 @@ const InspectionLog = () => {
             )}
             <div style={{ marginBottom: '16px' }}>
               <strong>Summary of Observations:</strong>
-              <p>{viewingInspection.summaryOfObservations}</p>
+              <p style={{ margin: '8px 0', padding: '8px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
+                {viewingInspection.summaryOfObservations}
+              </p>
             </div>
             {viewingInspection.recommendationsGiven && (
               <div style={{ marginBottom: '16px' }}>
                 <strong>Recommendations Given:</strong>
-                <p>{viewingInspection.recommendationsGiven}</p>
+                <p style={{ margin: '8px 0', padding: '8px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
+                  {viewingInspection.recommendationsGiven}
+                </p>
               </div>
             )}
             {viewingInspection.actionTakenBySchool && (
               <div style={{ marginBottom: '16px' }}>
                 <strong>Action Taken by School:</strong>
-                <p>{viewingInspection.actionTakenBySchool}</p>
+                <p style={{ margin: '8px 0', padding: '8px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
+                  {viewingInspection.actionTakenBySchool}
+                </p>
               </div>
             )}
-            <Row gutter={16} style={{ marginBottom: '16px' }}>
+            {viewingInspection.notes && (
+              <div style={{ marginBottom: '16px' }}>
+                <strong>Additional Notes:</strong>
+                <p style={{ margin: '8px 0', padding: '8px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
+                  {viewingInspection.notes}
+                </p>
+              </div>
+            )}
+            {viewingInspection.supportingDocuments && viewingInspection.supportingDocuments.length > 0 && (
+              <div style={{ marginBottom: '16px' }}>
+                <strong>Supporting Documents:</strong>
+                <div style={{ margin: '8px 0' }}>
+                  {viewingInspection.supportingDocuments.map((doc, index) => (
+                    <Button
+                      key={index}
+                      type="link"
+                      icon={<UploadOutlined />}
+                      onClick={() => window.open(doc.filePath, '_blank')}
+                      style={{ marginRight: '8px', marginBottom: '4px' }}
+                    >
+                      {doc.fileName || `Document ${index + 1}`}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <Row gutter={16}>
               <Col span={12}>
                 <strong>Follow-up Required:</strong> 
                 <Badge 
                   status={viewingInspection.followUpRequired ? 'error' : 'success'} 
                   text={viewingInspection.followUpRequired ? 'Yes' : 'No'} 
+                  style={{ marginLeft: '8px' }}
                 />
               </Col>
               {viewingInspection.nextVisitDate && (
                 <Col span={12}>
                   <strong>Next Visit Date:</strong> {dayjs(viewingInspection.nextVisitDate).format('DD/MM/YYYY')}
-                </Col>
-              )}
-            </Row>
-            {viewingInspection.notes && (
-              <div style={{ marginBottom: '16px' }}>
-                <strong>Notes:</strong>
-                <p>{viewingInspection.notes}</p>
-              </div>
-            )}
-            <Row gutter={16}>
-              <Col span={12}>
-                <strong>Created By:</strong> {viewingInspection.createdBy?.name || 'Unknown'}
-              </Col>
-              {viewingInspection.lastEditedBy && (
-                <Col span={12}>
-                  <strong>Last Edited By:</strong> {viewingInspection.lastEditedBy.name}
                 </Col>
               )}
             </Row>
