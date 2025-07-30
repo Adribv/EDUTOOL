@@ -695,7 +695,15 @@ const IncomeLogManager = () => {
         total: response.totalDocs || 0
       }));
     } catch (error) {
-      toast.error('Failed to fetch income logs');
+      console.error('Error fetching income logs:', error);
+      if (error.response?.status === 401) {
+        toast.error('Please log in as Accountant to view income logs');
+      } else if (error.response?.status === 403) {
+        toast.error('Access denied. You need Accountant permissions');
+      } else {
+        toast.error('Failed to fetch income logs. Please try again.');
+      }
+      setIncomeLogs([]);
     } finally {
       setLoading(false);
     }
@@ -707,6 +715,13 @@ const IncomeLogManager = () => {
       setStats(response);
     } catch (error) {
       console.error('Failed to fetch stats:', error);
+      // Set default stats if API fails
+      setStats({
+        totalIncome: 0,
+        totalCount: 0,
+        averageAmount: 0,
+        pendingIncome: 0
+      });
     }
   };
 
@@ -936,49 +951,65 @@ const IncomeLogManager = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {incomeLogs.map((income, index) => (
-              <TableRow key={income._id} hover>
-                <TableCell>{income.serialNumber}</TableCell>
-                <TableCell>{new Date(income.date).toLocaleDateString()}</TableCell>
-                <TableCell>
-                  <Chip label={income.incomeSource} size="small" color="primary" />
-                </TableCell>
-                <TableCell>{income.description}</TableCell>
-                <TableCell>₹{income.amount.toLocaleString('en-IN')}</TableCell>
-                <TableCell>{income.receivedFrom}</TableCell>
-                <TableCell>{income.receiptNo}</TableCell>
-                <TableCell>{income.paymentMode}</TableCell>
-                <TableCell>{income.receivedBy || 'N/A'}</TableCell>
-                <TableCell>{income.remarks || 'N/A'}</TableCell>
-                <TableCell>
-                  {income.uploadDocument ? (
-                    <IconButton size="small" onClick={() => window.open(income.uploadDocument.path, '_blank')}>
-                      <DownloadIcon />
+            {incomeLogs.length > 0 ? (
+              incomeLogs.map((income, index) => (
+                <TableRow key={income._id} hover>
+                  <TableCell>{income.serialNumber}</TableCell>
+                  <TableCell>{new Date(income.date).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <Chip label={income.incomeSource} size="small" color="primary" />
+                  </TableCell>
+                  <TableCell>{income.description}</TableCell>
+                  <TableCell>₹{income.amount.toLocaleString('en-IN')}</TableCell>
+                  <TableCell>{income.receivedFrom}</TableCell>
+                  <TableCell>{income.receiptNo}</TableCell>
+                  <TableCell>{income.paymentMode}</TableCell>
+                  <TableCell>{income.receivedBy || 'N/A'}</TableCell>
+                  <TableCell>{income.remarks || 'N/A'}</TableCell>
+                  <TableCell>
+                    {income.uploadDocument ? (
+                      <IconButton size="small" onClick={() => window.open(income.uploadDocument.path, '_blank')}>
+                        <DownloadIcon />
+                      </IconButton>
+                    ) : (
+                      'N/A'
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={income.status}
+                      color={getStatusColor(income.status)}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <IconButton size="small" onClick={() => showViewModal(income)}>
+                      <ViewIcon />
                     </IconButton>
-                  ) : (
-                    'N/A'
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={income.status}
-                    color={getStatusColor(income.status)}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>
-                  <IconButton size="small" onClick={() => showViewModal(income)}>
-                    <ViewIcon />
-                  </IconButton>
-                  <IconButton size="small" onClick={() => showEditModal(income)}>
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton size="small" onClick={() => handleDelete(income._id)}>
-                    <DeleteIcon />
-                  </IconButton>
+                    <IconButton size="small" onClick={() => showEditModal(income)}>
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton size="small" onClick={() => handleDelete(income._id)}>
+                      <DeleteIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={13} align="center" sx={{ py: 4 }}>
+                  <Box sx={{ textAlign: 'center' }}>
+                    <InfoIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+                    <Typography variant="h6" color="text.secondary" gutterBottom>
+                      No Income Logs Found
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {loading ? 'Loading income logs...' : 'Start by creating your first income log entry.'}
+                    </Typography>
+                  </Box>
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </Paper>
@@ -1042,7 +1073,15 @@ const ExpenseLogManager = () => {
         total: response.totalDocs || 0
       }));
     } catch (error) {
-      toast.error('Failed to fetch expense logs');
+      console.error('Error fetching expense logs:', error);
+      if (error.response?.status === 401) {
+        toast.error('Please log in as Accountant to view expense logs');
+      } else if (error.response?.status === 403) {
+        toast.error('Access denied. You need Accountant permissions');
+      } else {
+        toast.error('Failed to fetch expense logs. Please try again.');
+      }
+      setExpenseLogs([]);
     } finally {
       setLoading(false);
     }
@@ -1054,6 +1093,13 @@ const ExpenseLogManager = () => {
       setStats(response);
     } catch (error) {
       console.error('Failed to fetch stats:', error);
+      // Set default stats if API fails
+      setStats({
+        totalExpenses: 0,
+        totalCount: 0,
+        averageAmount: 0,
+        approvedExpenses: 0
+      });
     }
   };
 
@@ -1283,49 +1329,65 @@ const ExpenseLogManager = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {expenseLogs.map((expense, index) => (
-              <TableRow key={expense._id} hover>
-                <TableCell>{expense.serialNumber}</TableCell>
-                <TableCell>{new Date(expense.date).toLocaleDateString()}</TableCell>
-                <TableCell>
-                  <Chip label={expense.expenseCategory} size="small" color="primary" />
-                </TableCell>
-                <TableCell>{expense.description}</TableCell>
-                <TableCell>₹{expense.amount.toLocaleString('en-IN')}</TableCell>
-                <TableCell>{expense.paidTo}</TableCell>
-                <TableCell>{expense.voucherNo}</TableCell>
-                <TableCell>{expense.paymentMode}</TableCell>
-                <TableCell>{expense.approvedBy || 'N/A'}</TableCell>
-                <TableCell>{expense.remarks || 'N/A'}</TableCell>
-                <TableCell>
-                  {expense.uploadDocument ? (
-                    <IconButton size="small" onClick={() => window.open(expense.uploadDocument.path, '_blank')}>
-                      <DownloadIcon />
+            {expenseLogs.length > 0 ? (
+              expenseLogs.map((expense, index) => (
+                <TableRow key={expense._id} hover>
+                  <TableCell>{expense.serialNumber}</TableCell>
+                  <TableCell>{new Date(expense.date).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <Chip label={expense.expenseCategory} size="small" color="primary" />
+                  </TableCell>
+                  <TableCell>{expense.description}</TableCell>
+                  <TableCell>₹{expense.amount.toLocaleString('en-IN')}</TableCell>
+                  <TableCell>{expense.paidTo}</TableCell>
+                  <TableCell>{expense.voucherNo}</TableCell>
+                  <TableCell>{expense.paymentMode}</TableCell>
+                  <TableCell>{expense.approvedBy || 'N/A'}</TableCell>
+                  <TableCell>{expense.remarks || 'N/A'}</TableCell>
+                  <TableCell>
+                    {expense.uploadDocument ? (
+                      <IconButton size="small" onClick={() => window.open(expense.uploadDocument.path, '_blank')}>
+                        <DownloadIcon />
+                      </IconButton>
+                    ) : (
+                      'N/A'
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={expense.status}
+                      color={getStatusColor(expense.status)}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <IconButton size="small" onClick={() => showViewModal(expense)}>
+                      <ViewIcon />
                     </IconButton>
-                  ) : (
-                    'N/A'
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={expense.status}
-                    color={getStatusColor(expense.status)}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>
-                  <IconButton size="small" onClick={() => showViewModal(expense)}>
-                    <ViewIcon />
-                  </IconButton>
-                  <IconButton size="small" onClick={() => showEditModal(expense)}>
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton size="small" onClick={() => handleDelete(expense._id)}>
-                    <DeleteIcon />
-                  </IconButton>
+                    <IconButton size="small" onClick={() => showEditModal(expense)}>
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton size="small" onClick={() => handleDelete(expense._id)}>
+                      <DeleteIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={13} align="center" sx={{ py: 4 }}>
+                  <Box sx={{ textAlign: 'center' }}>
+                    <InfoIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+                    <Typography variant="h6" color="text.secondary" gutterBottom>
+                      No Expense Logs Found
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {loading ? 'Loading expense logs...' : 'Start by creating your first expense log entry.'}
+                    </Typography>
+                  </Box>
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </Paper>
