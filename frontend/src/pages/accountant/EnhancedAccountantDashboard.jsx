@@ -1742,7 +1742,7 @@ const EnhancedAccountantDashboard = () => {
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <AnimatedStatCard
-              icon={DuesIcon}
+              icon={DueIcon}
               label="Pending Dues"
               value={dues || 0}
               color={theme.palette.warning.main}
