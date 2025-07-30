@@ -916,101 +916,145 @@ const IncomeLogManager = () => {
 
       {/* Income Logs Table */}
       <Paper sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between', 
+          alignItems: { xs: 'stretch', sm: 'center' }, 
+          mb: 2,
+          gap: 2
+        }}>
           <Typography variant="h6">Income Logs</Typography>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button variant="contained" startIcon={<Add />} onClick={showCreateModal}>
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 1,
+            width: { xs: '100%', sm: 'auto' }
+          }}>
+            <Button 
+              variant="contained" 
+              startIcon={<Add />} 
+              onClick={showCreateModal}
+              fullWidth={false}
+              sx={{ minWidth: { xs: '100%', sm: 'auto' } }}
+            >
               Create Income Log
             </Button>
-            <Button variant="outlined" startIcon={<RefreshIcon />} onClick={fetchIncomeLogs}>
+            <Button 
+              variant="outlined" 
+              startIcon={<RefreshIcon />} 
+              onClick={fetchIncomeLogs}
+              fullWidth={false}
+              sx={{ minWidth: { xs: '100%', sm: 'auto' } }}
+            >
               Refresh
             </Button>
-            <Button variant="outlined" startIcon={<DownloadIcon />}>
+            <Button 
+              variant="outlined" 
+              startIcon={<DownloadIcon />}
+              fullWidth={false}
+              sx={{ minWidth: { xs: '100%', sm: 'auto' } }}
+            >
               Export
             </Button>
           </Box>
         </Box>
         
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>S.No</TableCell>
-              <TableCell>Date</TableCell>
-              <TableCell>Income Source</TableCell>
-              <TableCell>Description</TableCell>
-              <TableCell>Amount (₹)</TableCell>
-              <TableCell>Received From</TableCell>
-              <TableCell>Receipt No</TableCell>
-              <TableCell>Payment Mode</TableCell>
-              <TableCell>Received By</TableCell>
-              <TableCell>Remarks</TableCell>
-              <TableCell>Upload Document</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {incomeLogs.length > 0 ? (
-              incomeLogs.map((income, index) => (
-                <TableRow key={income._id} hover>
-                  <TableCell>{income.serialNumber}</TableCell>
-                  <TableCell>{new Date(income.date).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <Chip label={income.incomeSource} size="small" color="primary" />
-                  </TableCell>
-                  <TableCell>{income.description}</TableCell>
-                  <TableCell>₹{income.amount.toLocaleString('en-IN')}</TableCell>
-                  <TableCell>{income.receivedFrom}</TableCell>
-                  <TableCell>{income.receiptNo}</TableCell>
-                  <TableCell>{income.paymentMode}</TableCell>
-                  <TableCell>{income.receivedBy || 'N/A'}</TableCell>
-                  <TableCell>{income.remarks || 'N/A'}</TableCell>
-                  <TableCell>
-                    {income.uploadDocument ? (
-                      <IconButton size="small" onClick={() => window.open(income.uploadDocument.path, '_blank')}>
-                        <DownloadIcon />
-                      </IconButton>
-                    ) : (
-                      'N/A'
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={income.status}
-                      color={getStatusColor(income.status)}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <IconButton size="small" onClick={() => showViewModal(income)}>
-                      <ViewIcon />
-                    </IconButton>
-                    <IconButton size="small" onClick={() => showEditModal(income)}>
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton size="small" onClick={() => handleDelete(income._id)}>
-                      <DeleteIcon />
-                    </IconButton>
+        {/* Responsive Table Container */}
+        <Box sx={{ 
+          width: '100%', 
+          overflowX: 'auto',
+          '& .MuiTable-root': {
+            minWidth: 1200, // Minimum width to prevent squishing
+          }
+        }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ minWidth: 60 }}>S.No</TableCell>
+                <TableCell sx={{ minWidth: 100 }}>Date</TableCell>
+                <TableCell sx={{ minWidth: 120 }}>Income Source</TableCell>
+                <TableCell sx={{ minWidth: 150 }}>Description</TableCell>
+                <TableCell sx={{ minWidth: 100 }}>Amount (₹)</TableCell>
+                <TableCell sx={{ minWidth: 120 }}>Received From</TableCell>
+                <TableCell sx={{ minWidth: 100 }}>Receipt No</TableCell>
+                <TableCell sx={{ minWidth: 120 }}>Payment Mode</TableCell>
+                <TableCell sx={{ minWidth: 100 }}>Received By</TableCell>
+                <TableCell sx={{ minWidth: 100 }}>Remarks</TableCell>
+                <TableCell sx={{ minWidth: 120 }}>Upload Document</TableCell>
+                <TableCell sx={{ minWidth: 100 }}>Status</TableCell>
+                <TableCell sx={{ minWidth: 120 }}>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {incomeLogs.length > 0 ? (
+                incomeLogs.map((income, index) => (
+                  <TableRow key={income._id} hover>
+                    <TableCell>{income.serialNumber}</TableCell>
+                    <TableCell>{new Date(income.date).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <Chip label={income.incomeSource} size="small" color="primary" />
+                    </TableCell>
+                    <TableCell sx={{ maxWidth: 150, wordWrap: 'break-word' }}>
+                      {income.description}
+                    </TableCell>
+                    <TableCell>₹{income.amount.toLocaleString('en-IN')}</TableCell>
+                    <TableCell>{income.receivedFrom}</TableCell>
+                    <TableCell>{income.receiptNo}</TableCell>
+                    <TableCell>{income.paymentMode}</TableCell>
+                    <TableCell>{income.receivedBy || 'N/A'}</TableCell>
+                    <TableCell sx={{ maxWidth: 100, wordWrap: 'break-word' }}>
+                      {income.remarks || 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      {income.uploadDocument ? (
+                        <IconButton size="small" onClick={() => window.open(income.uploadDocument.path, '_blank')}>
+                          <DownloadIcon />
+                        </IconButton>
+                      ) : (
+                        'N/A'
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={income.status}
+                        color={getStatusColor(income.status)}
+                        size="small"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                        <IconButton size="small" onClick={() => showViewModal(income)}>
+                          <ViewIcon />
+                        </IconButton>
+                        <IconButton size="small" onClick={() => showEditModal(income)}>
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton size="small" onClick={() => handleDelete(income._id)}>
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={13} align="center" sx={{ py: 4 }}>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <InfoIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+                      <Typography variant="h6" color="text.secondary" gutterBottom>
+                        No Income Logs Found
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {loading ? 'Loading income logs...' : 'Start by creating your first income log entry.'}
+                      </Typography>
+                    </Box>
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={13} align="center" sx={{ py: 4 }}>
-                  <Box sx={{ textAlign: 'center' }}>
-                    <InfoIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
-                    <Typography variant="h6" color="text.secondary" gutterBottom>
-                      No Income Logs Found
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {loading ? 'Loading income logs...' : 'Start by creating your first income log entry.'}
-                    </Typography>
-                  </Box>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              )}
+            </TableBody>
+          </Table>
+        </Box>
       </Paper>
 
       {/* Create/Edit Modal would go here - simplified for now */}
@@ -1293,101 +1337,145 @@ const ExpenseLogManager = () => {
 
       {/* Expense Logs Table */}
       <Paper sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between', 
+          alignItems: { xs: 'stretch', sm: 'center' }, 
+          mb: 2,
+          gap: 2
+        }}>
           <Typography variant="h6">Expense Logs</Typography>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button variant="contained" startIcon={<Add />} onClick={showCreateModal}>
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 1,
+            width: { xs: '100%', sm: 'auto' }
+          }}>
+            <Button 
+              variant="contained" 
+              startIcon={<Add />} 
+              onClick={showCreateModal}
+              fullWidth={false}
+              sx={{ minWidth: { xs: '100%', sm: 'auto' } }}
+            >
               Create Expense Log
             </Button>
-            <Button variant="outlined" startIcon={<RefreshIcon />} onClick={fetchExpenseLogs}>
+            <Button 
+              variant="outlined" 
+              startIcon={<RefreshIcon />} 
+              onClick={fetchExpenseLogs}
+              fullWidth={false}
+              sx={{ minWidth: { xs: '100%', sm: 'auto' } }}
+            >
               Refresh
             </Button>
-            <Button variant="outlined" startIcon={<DownloadIcon />}>
+            <Button 
+              variant="outlined" 
+              startIcon={<DownloadIcon />}
+              fullWidth={false}
+              sx={{ minWidth: { xs: '100%', sm: 'auto' } }}
+            >
               Export
             </Button>
           </Box>
         </Box>
         
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>S.No</TableCell>
-              <TableCell>Date</TableCell>
-              <TableCell>Expense Category</TableCell>
-              <TableCell>Description</TableCell>
-              <TableCell>Amount (₹)</TableCell>
-              <TableCell>Paid To</TableCell>
-              <TableCell>Voucher No</TableCell>
-              <TableCell>Payment Mode</TableCell>
-              <TableCell>Approved By</TableCell>
-              <TableCell>Remarks</TableCell>
-              <TableCell>Upload Document</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {expenseLogs.length > 0 ? (
-              expenseLogs.map((expense, index) => (
-                <TableRow key={expense._id} hover>
-                  <TableCell>{expense.serialNumber}</TableCell>
-                  <TableCell>{new Date(expense.date).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <Chip label={expense.expenseCategory} size="small" color="primary" />
-                  </TableCell>
-                  <TableCell>{expense.description}</TableCell>
-                  <TableCell>₹{expense.amount.toLocaleString('en-IN')}</TableCell>
-                  <TableCell>{expense.paidTo}</TableCell>
-                  <TableCell>{expense.voucherNo}</TableCell>
-                  <TableCell>{expense.paymentMode}</TableCell>
-                  <TableCell>{expense.approvedBy || 'N/A'}</TableCell>
-                  <TableCell>{expense.remarks || 'N/A'}</TableCell>
-                  <TableCell>
-                    {expense.uploadDocument ? (
-                      <IconButton size="small" onClick={() => window.open(expense.uploadDocument.path, '_blank')}>
-                        <DownloadIcon />
-                      </IconButton>
-                    ) : (
-                      'N/A'
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={expense.status}
-                      color={getStatusColor(expense.status)}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <IconButton size="small" onClick={() => showViewModal(expense)}>
-                      <ViewIcon />
-                    </IconButton>
-                    <IconButton size="small" onClick={() => showEditModal(expense)}>
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton size="small" onClick={() => handleDelete(expense._id)}>
-                      <DeleteIcon />
-                    </IconButton>
+        {/* Responsive Table Container */}
+        <Box sx={{ 
+          width: '100%', 
+          overflowX: 'auto',
+          '& .MuiTable-root': {
+            minWidth: 1200, // Minimum width to prevent squishing
+          }
+        }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ minWidth: 60 }}>S.No</TableCell>
+                <TableCell sx={{ minWidth: 100 }}>Date</TableCell>
+                <TableCell sx={{ minWidth: 120 }}>Expense Category</TableCell>
+                <TableCell sx={{ minWidth: 150 }}>Description</TableCell>
+                <TableCell sx={{ minWidth: 100 }}>Amount (₹)</TableCell>
+                <TableCell sx={{ minWidth: 120 }}>Paid To</TableCell>
+                <TableCell sx={{ minWidth: 100 }}>Voucher No</TableCell>
+                <TableCell sx={{ minWidth: 120 }}>Payment Mode</TableCell>
+                <TableCell sx={{ minWidth: 100 }}>Approved By</TableCell>
+                <TableCell sx={{ minWidth: 100 }}>Remarks</TableCell>
+                <TableCell sx={{ minWidth: 120 }}>Upload Document</TableCell>
+                <TableCell sx={{ minWidth: 100 }}>Status</TableCell>
+                <TableCell sx={{ minWidth: 120 }}>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {expenseLogs.length > 0 ? (
+                expenseLogs.map((expense, index) => (
+                  <TableRow key={expense._id} hover>
+                    <TableCell>{expense.serialNumber}</TableCell>
+                    <TableCell>{new Date(expense.date).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <Chip label={expense.expenseCategory} size="small" color="primary" />
+                    </TableCell>
+                    <TableCell sx={{ maxWidth: 150, wordWrap: 'break-word' }}>
+                      {expense.description}
+                    </TableCell>
+                    <TableCell>₹{expense.amount.toLocaleString('en-IN')}</TableCell>
+                    <TableCell>{expense.paidTo}</TableCell>
+                    <TableCell>{expense.voucherNo}</TableCell>
+                    <TableCell>{expense.paymentMode}</TableCell>
+                    <TableCell>{expense.approvedBy || 'N/A'}</TableCell>
+                    <TableCell sx={{ maxWidth: 100, wordWrap: 'break-word' }}>
+                      {expense.remarks || 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      {expense.uploadDocument ? (
+                        <IconButton size="small" onClick={() => window.open(expense.uploadDocument.path, '_blank')}>
+                          <DownloadIcon />
+                        </IconButton>
+                      ) : (
+                        'N/A'
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={expense.status}
+                        color={getStatusColor(expense.status)}
+                        size="small"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                        <IconButton size="small" onClick={() => showViewModal(expense)}>
+                          <ViewIcon />
+                        </IconButton>
+                        <IconButton size="small" onClick={() => showEditModal(expense)}>
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton size="small" onClick={() => handleDelete(expense._id)}>
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={13} align="center" sx={{ py: 4 }}>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <InfoIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+                      <Typography variant="h6" color="text.secondary" gutterBottom>
+                        No Expense Logs Found
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {loading ? 'Loading expense logs...' : 'Start by creating your first expense log entry.'}
+                      </Typography>
+                    </Box>
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={13} align="center" sx={{ py: 4 }}>
-                  <Box sx={{ textAlign: 'center' }}>
-                    <InfoIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
-                    <Typography variant="h6" color="text.secondary" gutterBottom>
-                      No Expense Logs Found
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {loading ? 'Loading expense logs...' : 'Start by creating your first expense log entry.'}
-                    </Typography>
-                  </Box>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              )}
+            </TableBody>
+          </Table>
+        </Box>
       </Paper>
 
       {/* Create/Edit Modal would go here - simplified for now */}
@@ -1569,23 +1657,39 @@ const EnhancedAccountantDashboard = () => {
       <Box sx={{ 
         background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
         color: 'white',
-        p: 3,
+        p: { xs: 2, md: 3 },
         mb: 3
       }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between', 
+          alignItems: { xs: 'stretch', sm: 'center' },
+          gap: 2
+        }}>
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <Typography variant="h4" sx={{ fontWeight: 700 }}>
+            <Typography variant="h4" sx={{ 
+              fontWeight: 700,
+              fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
+            }}>
               Accountant Dashboard
             </Typography>
-            <Typography variant="body1" sx={{ opacity: 0.9 }}>
+            <Typography variant="body1" sx={{ 
+              opacity: 0.9,
+              fontSize: { xs: '0.875rem', sm: '1rem' }
+            }}>
               Comprehensive Staff Salary Management System
             </Typography>
           </motion.div>
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            gap: 1,
+            justifyContent: { xs: 'center', sm: 'flex-end' }
+          }}>
             <Tooltip title="Profile">
               <IconButton onClick={() => navigate('/accountant/profile')} sx={{ color: 'white' }}>
                 <AccountCircle />
@@ -1610,7 +1714,7 @@ const EnhancedAccountantDashboard = () => {
               value={incomeStats?.totalIncome || 0}
               color={theme.palette.success.main}
               subtitle="From all sources"
-              trend={12.5}
+              trend="+12%"
               delay={0.1}
             />
           </Grid>
@@ -1620,30 +1724,30 @@ const EnhancedAccountantDashboard = () => {
               label="Total Expenses"
               value={expenseStats?.totalExpenses || 0}
               color={theme.palette.error.main}
-              subtitle="Operational costs"
-              trend={-5.2}
+              subtitle="All expenses"
+              trend="-5%"
               delay={0.2}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <AnimatedStatCard
-              icon={MoneyIcon}
-              label="Salary Paid"
-              value={salaryStats.totalSalaryPaid || 0}
+              icon={ProfitIcon}
+              label="Net Profit"
+              value={profitLoss || 0}
               color={theme.palette.info.main}
-              subtitle={`${salaryStats.totalRecords || 0} staff members`}
-              trend={8.7}
+              subtitle="Current period"
+              trend="+8%"
               delay={0.3}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <AnimatedStatCard
-              icon={TrendingUpIcon}
-              label="Net Profit"
-              value={(incomeStats?.totalIncome || 0) - (expenseStats?.totalExpenses || 0)}
+              icon={DuesIcon}
+              label="Pending Dues"
+              value={dues || 0}
               color={theme.palette.warning.main}
-              subtitle="After all expenses"
-              trend={15.3}
+              subtitle="Outstanding amounts"
+              trend="-15%"
               delay={0.4}
             />
           </Grid>
