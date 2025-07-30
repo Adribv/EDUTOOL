@@ -45,19 +45,7 @@ import {
   Switch,
   FormControlLabel,
   Slider,
-  LinearProgress,
-  Modal,
-  Form,
-  Input,
-  DatePicker,
-  Space,
-  Row,
-  Col,
-  Statistic,
-  Tag,
-  message,
-  InputNumber,
-  Upload
+  LinearProgress
 } from '@mui/material';
 import {
   MonetizationOn as IncomeIcon,
@@ -100,18 +88,7 @@ import {
   AttachMoney as MoneyIcon,
   Percent as PercentIcon,
   PieChart as PieChartIcon,
-  Timeline as TimelineIcon,
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  EyeOutlined,
-  DollarOutlined,
-  CalendarOutlined,
-  UserOutlined,
-  FileTextOutlined,
-  UploadOutlined,
-  SearchOutlined,
-  FilterOutlined
+  Timeline as TimelineIcon
 } from '@mui/icons-material';
 import {
   XAxis,
