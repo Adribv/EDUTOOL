@@ -403,8 +403,8 @@ const Dashboard = () => {
             mb: 1
           }}
         >
-          Parent Dashboard
-        </Typography>
+        Parent Dashboard
+      </Typography>
         <Typography 
           variant="h6" 
           sx={{ 
@@ -415,7 +415,7 @@ const Dashboard = () => {
         >
           Welcome back, <strong style={{ color: '#1976d2' }}>{user?.name}</strong>. 
           Monitor your children's progress and manage school-related activities.
-        </Typography>
+      </Typography>
       </Box>
 
       {/* Enhanced Statistics Cards */}
