@@ -51,8 +51,6 @@ import AdminSalaryPayroll from '../pages/admin/SalaryPayroll';
 import AuditLog from '../pages/admin/AuditLog';
 import InspectionLog from '../pages/admin/InspectionLog';
 import BudgetApproval from '../pages/admin/BudgetApproval';
-import ExpenseLog from '../pages/admin/ExpenseLog';
-import IncomeLog from '../pages/admin/IncomeLog';
 import MeetingMinutes from '../pages/admin/MeetingMinutes';
 
 const AdminRoutes = () => {
@@ -104,8 +102,6 @@ const AdminRoutes = () => {
         <Route path="inspection-log" element={<InspectionLog />} />
         {/* Budget Approval Route */}
         <Route path="budget-approval" element={<BudgetApproval />} />
-        <Route path="expense-log" element={<ExpenseLog />} />
-        <Route path="income-log" element={<IncomeLog />} />
         <Route path="meeting-minutes" element={<MeetingMinutes />} />
         {/* Teacher Remarks Routes */}
         <Route path="teacher-remarks" element={<TeacherRemarks />} />

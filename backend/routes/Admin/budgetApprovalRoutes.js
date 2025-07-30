@@ -14,13 +14,13 @@ router.get('/', verifyToken, permit('Admin', 'Accountant', 'Principal'), budgetA
 router.get('/:id', verifyToken, permit('Admin', 'Accountant', 'Principal'), budgetApprovalController.getBudgetApprovalById);
 
 // Create new budget approval (Admin and Accountant only)
-router.post('/', verifyToken, permit('Admin', 'Accountant'), budgetApprovalController.createBudgetApproval);
+router.post('/', verifyToken, permit('Admin', 'AdminStaff', 'Accountant'), budgetApprovalController.createBudgetApproval);
 
 // Update budget approval (Admin and Accountant only)
-router.put('/:id', verifyToken, permit('Admin', 'Accountant'), budgetApprovalController.updateBudgetApproval);
+router.put('/:id', verifyToken, permit('Admin', 'AdminStaff', 'Accountant'), budgetApprovalController.updateBudgetApproval);
 
 // Submit budget approval for review (Admin and Accountant only)
-router.patch('/:id/submit', verifyToken, permit('Admin', 'Accountant'), budgetApprovalController.submitBudgetApproval);
+router.patch('/:id/submit', verifyToken, permit('Admin', 'AdminStaff', 'Accountant'), budgetApprovalController.submitBudgetApproval);
 
 // Approve budget approval (Principal only)
 router.patch('/:id/approve', verifyToken, permit('Principal'), budgetApprovalController.approveBudgetApproval);

@@ -280,7 +280,7 @@ const InspectionLog = () => {
           >
             View
           </Button>
-          {['VP', 'Principal'].includes(user?.role) && (
+          {['VP', 'Principal', 'AdminStaff'].includes(user?.role) && (
             <Button
               type="link"
               icon={<EditOutlined />}
@@ -289,7 +289,7 @@ const InspectionLog = () => {
               Edit
             </Button>
           )}
-          {user?.role === 'Admin' && (
+          {(user?.role === 'Admin' || user?.role === 'AdminStaff') && (
             <Button
               type="link"
               danger
@@ -312,7 +312,7 @@ const InspectionLog = () => {
           <SearchOutlined style={{ marginRight: '8px' }} />
           Inspection Log Management
         </h1>
-        {user?.role === 'Admin' && (
+        {(user?.role === 'Admin' || user?.role === 'AdminStaff') && (
           <Button
             type="primary"
             icon={<PlusOutlined />}

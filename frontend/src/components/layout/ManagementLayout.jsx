@@ -70,6 +70,7 @@ import {
   Print,
   Gavel,
   Report,
+  Receipt,
 } from '@mui/icons-material';
 import { api } from '../../services/api';
 import { toast } from 'react-toastify';
@@ -211,6 +212,23 @@ const getNavigationItems = (permissions, userRole) => {
       icon: <BusinessCenter />,
       path: '/expenses',
       module: 'expenses'
+    });
+  }
+  
+  // Add Income Log and Expense Log for Accountant role
+  if (userRole === 'Accountant') {
+    financialItems.push({
+      text: 'Income Log',
+      icon: <TrendingUp />,
+      path: '/accountant/income-log',
+      module: 'income-log'
+    });
+    
+    financialItems.push({
+      text: 'Expense Log',
+      icon: <Receipt />,
+      path: '/accountant/expense-log',
+      module: 'expense-log'
     });
   }
 

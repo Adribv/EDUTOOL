@@ -273,10 +273,54 @@ const Events = () => {
       )}
 
       {/* Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs value={selectedTab} onChange={handleTabChange} variant="scrollable" scrollButtons="auto">
+      <Box sx={{ 
+        borderBottom: 2, 
+        borderColor: 'primary.main', 
+        mb: 3,
+        backgroundColor: '#f8f9fa',
+        borderRadius: 1,
+        p: 1
+      }}>
+        <Tabs 
+          value={selectedTab} 
+          onChange={handleTabChange} 
+          variant="scrollable" 
+          scrollButtons="auto"
+          sx={{
+            '& .MuiTab-root': {
+              minWidth: 'auto',
+              padding: '12px 24px',
+              fontSize: '14px',
+              fontWeight: 600,
+              textTransform: 'none',
+              borderRadius: 1,
+              mx: 0.5,
+              '&.Mui-selected': {
+                backgroundColor: 'primary.main',
+                color: 'white',
+                boxShadow: 2,
+              },
+              '&:hover': {
+                backgroundColor: 'primary.light',
+                color: 'white',
+              }
+            },
+            '& .MuiTabs-indicator': {
+              display: 'none', // Hide default indicator since we're using custom styling
+            }
+          }}
+        >
           {tabLabels.map((label) => (
-            <Tab key={label} label={label} />
+            <Tab 
+              key={label} 
+              label={label}
+              sx={{
+                '&.Mui-selected': {
+                  backgroundColor: 'primary.main',
+                  color: 'white',
+                }
+              }}
+            />
           ))}
         </Tabs>
       </Box>

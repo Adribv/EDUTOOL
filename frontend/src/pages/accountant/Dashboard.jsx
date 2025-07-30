@@ -226,6 +226,22 @@ const AccountantDashboard = () => {
     }
   }, [activeTab]);
 
+  // Fetch data when Income Log tab is active
+  useEffect(() => {
+    if (activeTab === 7) {
+      fetchIncomeLogs();
+      fetchIncomeStats();
+    }
+  }, [activeTab]);
+
+  // Fetch data when Expense Log tab is active
+  useEffect(() => {
+    if (activeTab === 8) {
+      fetchExpenseLogs();
+      fetchExpenseStats();
+    }
+  }, [activeTab]);
+
   const fetchServiceRequests = async () => {
     try {
       setLoadingRequests(true);
@@ -250,12 +266,14 @@ const AccountantDashboard = () => {
       };
       
       const response = await incomeLogAPI.getIncomeLogs(params);
-      setIncomeLogs(response.docs || []);
+      setIncomeLogs(Array.isArray(response.docs) ? response.docs : []);
       setIncomePagination(prev => ({
         ...prev,
         total: response.totalDocs || 0
       }));
     } catch (error) {
+      console.error('Error fetching income logs:', error);
+      setIncomeLogs([]); // Ensure it's always an array
       toast.error('Failed to fetch income logs');
     } finally {
       setIncomeLoading(false);
@@ -282,12 +300,14 @@ const AccountantDashboard = () => {
       };
       
       const response = await expenseLogAPI.getExpenseLogs(params);
-      setExpenseLogs(response.docs || []);
+      setExpenseLogs(Array.isArray(response.docs) ? response.docs : []);
       setExpensePagination(prev => ({
         ...prev,
         total: response.totalDocs || 0
       }));
     } catch (error) {
+      console.error('Error fetching expense logs:', error);
+      setExpenseLogs([]); // Ensure it's always an array
       toast.error('Failed to fetch expense logs');
     } finally {
       setExpenseLoading(false);
@@ -452,6 +472,7 @@ const AccountantDashboard = () => {
   };
 
   const handleTabChange = (event, newValue) => {
+    console.log('Tab changed to:', newValue); // Debug log
     setActiveTab(newValue);
   };
 
@@ -464,14 +485,42 @@ const AccountantDashboard = () => {
       <Typography variant="h4" gutterBottom>
         Welcome, {user?.name || 'Accountant'}
       </Typography>
+
       
-      <Tabs value={activeTab} onChange={handleTabChange} sx={{ mb: 3 }}>
+      <Typography variant="h6" color="primary" sx={{ mb: 1, fontWeight: 'bold' }}>
+        🔍 LOOK FOR THESE TABS: INCOME LOG TAB and EXPENSE LOG TAB (Should be visible after Transaction Log)
+      </Typography>
+      <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+        Total Tabs: 8 (Overview, Staff Salaries, Salary Templates, Pending Approvals, Student Fee Status, Transaction Log, INCOME LOG TAB, EXPENSE LOG TAB)
+      </Typography>
+      
+      <Tabs 
+        value={activeTab} 
+        onChange={handleTabChange} 
+        sx={{ 
+          mb: 3,
+          '& .MuiTab-root': {
+            minWidth: 'auto',
+            padding: '12px 16px',
+            fontSize: '14px',
+            fontWeight: 500
+          },
+          '& .MuiTabs-indicator': {
+            backgroundColor: '#1976d2',
+            height: 3
+          }
+        }}
+        variant="scrollable"
+        scrollButtons="auto"
+      >
         <Tab label="Overview" icon={<Event />} />
         <Tab label="Staff Salaries" icon={<People />} />
         <Tab label="Salary Templates" icon={<Settings />} />
         <Tab label="Pending Approvals" icon={<Schedule />} />
         <Tab label="Student Fee Status" icon={<Assessment />} />
         <Tab label="Transaction Log" icon={<History />} />
+        <Tab label="INCOME LOG TAB" icon={<TrendingUp />} />
+        <Tab label="EXPENSE LOG TAB" icon={<Receipt />} />
       </Tabs>
 
       <TabPanel value={activeTab} index={0}>
@@ -546,7 +595,7 @@ const AccountantDashboard = () => {
                 Recent Income Transactions
               </Typography>
               <List>
-                {incomeLogs.slice(0, 5).map((income) => (
+                {(Array.isArray(incomeLogs) ? incomeLogs.slice(0, 5) : []).map((income) => (
                   <ListItem key={income._id}>
                     <ListItemText
                       primary={income.incomeSource}
@@ -569,7 +618,7 @@ const AccountantDashboard = () => {
                 Recent Expense Transactions
               </Typography>
               <List>
-                {expenseLogs.slice(0, 5).map((expense) => (
+                {(Array.isArray(expenseLogs) ? expenseLogs.slice(0, 5) : []).map((expense) => (
                   <ListItem key={expense._id}>
                     <ListItemText
                       primary={expense.expenseCategory}
@@ -676,7 +725,7 @@ const AccountantDashboard = () => {
               <AntCard>
                 <Statistic
                   title="Total Transactions"
-                  value={(incomeLogs.length + expenseLogs.length) || 0}
+                  value={((Array.isArray(incomeLogs) ? incomeLogs.length : 0) + (Array.isArray(expenseLogs) ? expenseLogs.length : 0)) || 0}
                   valueStyle={{ color: '#1890ff' }}
                 />
               </AntCard>
@@ -685,7 +734,7 @@ const AccountantDashboard = () => {
               <AntCard>
                 <Statistic
                   title="Income Transactions"
-                  value={incomeLogs.length || 0}
+                  value={Array.isArray(incomeLogs) ? incomeLogs.length : 0}
                   valueStyle={{ color: '#52c41a' }}
                 />
               </AntCard>
@@ -694,7 +743,7 @@ const AccountantDashboard = () => {
               <AntCard>
                 <Statistic
                   title="Expense Transactions"
-                  value={expenseLogs.length || 0}
+                  value={Array.isArray(expenseLogs) ? expenseLogs.length : 0}
                   valueStyle={{ color: '#ff4d4f' }}
                 />
               </AntCard>
@@ -703,8 +752,8 @@ const AccountantDashboard = () => {
               <AntCard>
                 <Statistic
                   title="This Month"
-                  value={((incomeLogs.filter(i => dayjs(i.date).month() === dayjs().month()).length) + 
-                         (expenseLogs.filter(e => dayjs(e.date).month() === dayjs().month()).length)) || 0}
+                  value={((Array.isArray(incomeLogs) ? incomeLogs.filter(i => dayjs(i.date).month() === dayjs().month()).length : 0) + 
+                         (Array.isArray(expenseLogs) ? expenseLogs.filter(e => dayjs(e.date).month() === dayjs().month()).length : 0)) || 0}
                   valueStyle={{ color: '#fa8c16' }}
                 />
               </AntCard>
@@ -834,7 +883,10 @@ const AccountantDashboard = () => {
                   }
                 }
               ]}
-              dataSource={[...incomeLogs, ...expenseLogs]}
+              dataSource={[
+                ...(Array.isArray(incomeLogs) ? incomeLogs : []),
+                ...(Array.isArray(expenseLogs) ? expenseLogs : [])
+              ]}
               loading={incomeLoading || expenseLoading}
               pagination={{
                 showSizeChanger: true,
@@ -920,6 +972,194 @@ const AccountantDashboard = () => {
               </Table>
             </TableContainer>
           )}
+        </Box>
+      </TabPanel>
+
+      <TabPanel value={activeTab} index={7}>
+        <Box sx={{ mb: 3 }}>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Typography variant="h6">Income Log Management</Typography>
+            <Button
+              variant="contained"
+              startIcon={<PlusOutlined />}
+              onClick={() => window.location.href = '/accountant/income-log'}
+            >
+              Add Income
+            </Button>
+          </Box>
+          
+          <Row gutter={16} style={{ marginBottom: '24px' }}>
+            <Col span={6}>
+              <AntCard>
+                <Statistic
+                  title="Total Income"
+                  value={incomeStats.overview?.totalIncome || 0}
+                  prefix="₹"
+                  valueStyle={{ color: '#3f8600' }}
+                />
+              </AntCard>
+            </Col>
+            <Col span={6}>
+              <AntCard>
+                <Statistic
+                  title="This Month"
+                  value={incomeStats.overview?.monthlyIncome || 0}
+                  prefix="₹"
+                  valueStyle={{ color: '#1890ff' }}
+                />
+              </AntCard>
+            </Col>
+            <Col span={6}>
+              <AntCard>
+                <Statistic
+                  title="Pending Income"
+                  value={incomeStats.overview?.pendingIncome || 0}
+                  prefix="₹"
+                  valueStyle={{ color: '#faad14' }}
+                />
+              </AntCard>
+            </Col>
+            <Col span={6}>
+              <AntCard>
+                <Statistic
+                  title="Total Transactions"
+                  value={incomeStats.overview?.totalTransactions || 0}
+                  valueStyle={{ color: '#722ed1' }}
+                />
+              </AntCard>
+            </Col>
+          </Row>
+
+          <AntCard title="Recent Income Transactions">
+            <AntTable
+              dataSource={incomeLogs}
+              columns={[
+                {
+                  title: 'Date',
+                  dataIndex: 'date',
+                  key: 'date',
+                  render: (date) => dayjs(date).format('DD/MM/YYYY')
+                },
+                {
+                  title: 'Income Source',
+                  dataIndex: 'incomeSource',
+                  key: 'incomeSource'
+                },
+                {
+                  title: 'Amount',
+                  dataIndex: 'amount',
+                  key: 'amount',
+                  render: (amount) => `₹${amount?.toLocaleString() || 0}`
+                },
+                {
+                  title: 'Status',
+                  dataIndex: 'status',
+                  key: 'status',
+                  render: (status) => (
+                    <Tag color={status === 'Confirmed' ? 'green' : 'orange'}>
+                      {status}
+                    </Tag>
+                  )
+                }
+              ]}
+              pagination={{ pageSize: 10 }}
+              rowKey="_id"
+            />
+          </AntCard>
+        </Box>
+      </TabPanel>
+
+      <TabPanel value={activeTab} index={8}>
+        <Box sx={{ mb: 3 }}>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Typography variant="h6">Expense Log Management</Typography>
+            <Button
+              variant="contained"
+              startIcon={<PlusOutlined />}
+              onClick={() => window.location.href = '/accountant/expense-log'}
+            >
+              Add Expense
+            </Button>
+          </Box>
+          
+          <Row gutter={16} style={{ marginBottom: '24px' }}>
+            <Col span={6}>
+              <AntCard>
+                <Statistic
+                  title="Total Expenses"
+                  value={expenseStats.overview?.totalExpenses || 0}
+                  prefix="₹"
+                  valueStyle={{ color: '#cf1322' }}
+                />
+              </AntCard>
+            </Col>
+            <Col span={6}>
+              <AntCard>
+                <Statistic
+                  title="This Month"
+                  value={expenseStats.overview?.monthlyExpenses || 0}
+                  prefix="₹"
+                  valueStyle={{ color: '#1890ff' }}
+                />
+              </AntCard>
+            </Col>
+            <Col span={6}>
+              <AntCard>
+                <Statistic
+                  title="Pending Expenses"
+                  value={expenseStats.overview?.pendingExpenses || 0}
+                  prefix="₹"
+                  valueStyle={{ color: '#faad14' }}
+                />
+              </AntCard>
+            </Col>
+            <Col span={6}>
+              <AntCard>
+                <Statistic
+                  title="Total Transactions"
+                  value={expenseStats.overview?.totalTransactions || 0}
+                  valueStyle={{ color: '#722ed1' }}
+                />
+              </AntCard>
+            </Col>
+          </Row>
+
+          <AntCard title="Recent Expense Transactions">
+            <AntTable
+              dataSource={expenseLogs}
+              columns={[
+                {
+                  title: 'Date',
+                  dataIndex: 'date',
+                  key: 'date',
+                  render: (date) => dayjs(date).format('DD/MM/YYYY')
+                },
+                {
+                  title: 'Expense Category',
+                  dataIndex: 'expenseCategory',
+                  key: 'expenseCategory'
+                },
+                {
+                  title: 'Amount',
+                  dataIndex: 'amount',
+                  key: 'amount',
+                  render: (amount) => `₹${amount?.toLocaleString() || 0}`
+                },
+                {
+                  title: 'Status',
+                  dataIndex: 'status',
+                  key: 'status',
+                  render: (status) => (
+                    <Tag color={status === 'Approved' ? 'green' : status === 'Pending' ? 'orange' : 'red'}>
+                      {status}
+                    </Tag>
+                  )
+                }
+              ]}
+              pagination={{ pageSize: 10 }}
+              rowKey="_id"
+            />
+          </AntCard>
         </Box>
       </TabPanel>
 

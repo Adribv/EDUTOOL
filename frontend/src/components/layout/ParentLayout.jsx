@@ -75,23 +75,80 @@ const ParentLayout = () => {
   };
 
   const drawer = (
-    <div>
-      <Toolbar>
-        <Typography variant="h6" noWrap component="div">
+    <Box sx={{ height: '100%', backgroundColor: '#1e3a8a' }}>
+      {/* Enhanced Header */}
+      <Box sx={{ 
+        p: 3, 
+        backgroundColor: '#1e40af', 
+        borderBottom: '2px solid #3b82f6',
+        textAlign: 'center'
+      }}>
+        <Typography 
+          variant="h5" 
+          sx={{ 
+            fontWeight: 800,
+            color: 'white',
+            textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+            letterSpacing: '1px'
+          }}
+        >
           Parent Portal
         </Typography>
-      </Toolbar>
-      <List>
+      </Box>
+      
+      {/* Enhanced Navigation List */}
+      <List sx={{ p: 2 }}>
         {navItems.map((item) => (
-          <ListItem key={item.text} disablePadding>
-            <ListItemButton onClick={() => navigate(item.path)}>
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.text} />
+          <ListItem key={item.text} disablePadding sx={{ mb: 1 }}>
+            <ListItemButton 
+              onClick={() => navigate(item.path)}
+              sx={{
+                borderRadius: 2,
+                mx: 1,
+                py: 2,
+                px: 3,
+                backgroundColor: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  backgroundColor: 'rgba(255,255,255,0.15)',
+                  transform: 'translateX(8px)',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+                },
+                '&.Mui-selected': {
+                  backgroundColor: '#3b82f6',
+                  border: '1px solid #60a5fa',
+                  '&:hover': {
+                    backgroundColor: '#2563eb',
+                  }
+                }
+              }}
+            >
+              <ListItemIcon sx={{ 
+                color: 'white', 
+                minWidth: 40,
+                '& .MuiSvgIcon-root': {
+                  fontSize: '1.5rem'
+                }
+              }}>
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText 
+                primary={item.text} 
+                sx={{ 
+                  '& .MuiTypography-root': {
+                    color: 'white',
+                    fontWeight: 600,
+                    fontSize: '1rem',
+                    letterSpacing: '0.5px'
+                  }
+                }}
+              />
             </ListItemButton>
           </ListItem>
         ))}
       </List>
-    </div>
+    </Box>
   );
 
   return (
@@ -101,9 +158,13 @@ const ParentLayout = () => {
         sx={{
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           ml: { sm: `${drawerWidth}px` },
+          backgroundColor: 'white',
+          color: '#1e3a8a',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          borderBottom: '2px solid #e5e7eb'
         }}
       >
-        <Toolbar>
+        <Toolbar sx={{ minHeight: 70 }}>
           <IconButton
             color="inherit"
             aria-label="open drawer"
@@ -113,8 +174,18 @@ const ParentLayout = () => {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Welcome, {user?.name || 'Parent'}
+          <Typography 
+            variant="h5" 
+            noWrap 
+            component="div" 
+            sx={{ 
+              flexGrow: 1,
+              fontWeight: 700,
+              color: '#1e3a8a',
+              textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+            }}
+          >
+            Welcome, <span style={{ color: '#3b82f6', fontWeight: 800 }}>{user?.name || 'Parent'}</span>
           </Typography>
           <div>
             <IconButton
@@ -166,7 +237,13 @@ const ParentLayout = () => {
             keepMounted: true, // Better open performance on mobile.
           }}
           sx={{
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            '& .MuiDrawer-paper': { 
+              boxSizing: 'border-box', 
+              width: drawerWidth,
+              backgroundColor: '#1e3a8a',
+              borderRight: '2px solid #3b82f6',
+              boxShadow: '4px 0 8px rgba(0,0,0,0.1)'
+            },
           }}
         >
           {drawer}
@@ -178,10 +255,20 @@ const ParentLayout = () => {
           flexGrow: 1,
           p: 3,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
+          backgroundColor: '#f8fafc',
+          minHeight: '100vh'
         }}
       >
         <Toolbar />
-        <Outlet />
+        <Box sx={{ 
+          backgroundColor: 'white', 
+          borderRadius: 3, 
+          boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
+          p: 3,
+          minHeight: 'calc(100vh - 120px)'
+        }}>
+          <Outlet />
+        </Box>
       </Box>
     </Box>
   );

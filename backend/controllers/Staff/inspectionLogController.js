@@ -65,9 +65,9 @@ exports.createInspectionLog = async (req, res) => {
   try {
     const { role } = req.user;
     
-    // Check if user is Admin
-    if (role !== 'Admin') {
-      return res.status(403).json({ message: 'Only Admin staff can create inspection logs' });
+    // Check if user is Admin or AdminStaff
+    if (role !== 'Admin' && role !== 'AdminStaff') {
+      return res.status(403).json({ message: 'Only Admin and AdminStaff can create inspection logs' });
     }
 
     const inspectionLogData = {
@@ -141,9 +141,9 @@ exports.deleteInspectionLog = async (req, res) => {
   try {
     const { role } = req.user;
     
-    // Check if user is Admin
-    if (role !== 'Admin') {
-      return res.status(403).json({ message: 'Only Admin staff can delete inspection logs' });
+    // Check if user is Admin or AdminStaff
+    if (role !== 'Admin' && role !== 'AdminStaff') {
+      return res.status(403).json({ message: 'Only Admin and AdminStaff can delete inspection logs' });
     }
 
     const inspectionLog = await InspectionLog.findById(req.params.id);

@@ -42,26 +42,39 @@ const MeetingMinutes = () => {
   const actionStatusOptions = ['Not Started', 'In Progress', 'Completed', 'On Hold', 'Cancelled'];
 
   useEffect(() => {
-    fetchMeetingMinutes();
-    fetchStats();
-  }, [pagination.current, pagination.pageSize, filters]);
+    console.log('MeetingMinutes useEffect triggered');
+    console.log('Current user:', user);
+    console.log('Pagination:', pagination);
+    console.log('Filters:', filters);
+    
+    if (user && user.role) {
+      fetchMeetingMinutes();
+      fetchStats();
+    }
+  }, [user, pagination.current, pagination.pageSize, filters]);
 
   const fetchMeetingMinutes = async () => {
     setLoading(true);
     try {
-      const params = {
+      console.log('Fetching meeting minutes...');
+      const params = new URLSearchParams({
         page: pagination.current,
         limit: pagination.pageSize,
         ...filters
-      };
+      });
       
+      console.log('API params:', params.toString());
       const response = await meetingMinutesAPI.getMeetingMinutes(params);
-      setMeetingMinutes(response.docs || []);
+      console.log('Meeting minutes response:', response);
+      
+      setMeetingMinutes(response.meetingMinutes || []);
       setPagination(prev => ({
         ...prev,
-        total: response.totalDocs || 0
+        current: response.pagination?.currentPage || 1,
+        total: response.pagination?.totalItems || 0
       }));
     } catch (error) {
+      console.error('Error fetching meeting minutes:', error);
       message.error('Failed to fetch meeting minutes');
     } finally {
       setLoading(false);
@@ -84,7 +97,11 @@ const MeetingMinutes = () => {
         meetingDate: values.meetingDate.toDate(),
         meetingTime: values.meetingTime.format('HH:mm'),
         attendees: values.attendees ? values.attendees.split('\n').filter(a => a.trim()) : [],
-        apologies: values.apologies ? values.apologies.split('\n').filter(a => a.trim()) : []
+        apologies: values.apologies ? values.apologies.split('\n').filter(a => a.trim()) : [],
+        // Add missing required fields
+        meetingType: values.meetingType || 'Administrative',
+        priority: values.priority || 'Medium',
+        approvalStatus: 'Draft'
       };
       
       await meetingMinutesAPI.createMeetingMinutes(meetingData);
@@ -484,6 +501,41 @@ const MeetingMinutes = () => {
             </Col>
           </Row>
         </Card>
+
+        {/* Test Button */}
+        <Button 
+          type="primary" 
+          onClick={async () => {
+            try {
+              console.log('🧪 Creating test meeting minute...');
+              const testData = {
+                meetingTitle: 'Test Meeting',
+                meetingDate: new Date(),
+                meetingTime: '10:00',
+                venue: 'Conference Room',
+                chairperson: 'Test Chair',
+                recorder: 'Test Recorder',
+                attendees: ['Test Attendee 1', 'Test Attendee 2'],
+                apologies: ['Test Apology 1'],
+                meetingType: 'Administrative',
+                priority: 'Medium',
+                approvalStatus: 'Draft'
+              };
+              
+              const response = await meetingMinutesAPI.createMeetingMinutes(testData);
+              console.log('✅ Test meeting created:', response);
+              message.success('Test meeting created!');
+              fetchMeetingMinutes();
+              fetchStats();
+            } catch (error) {
+              console.error('❌ Test failed:', error);
+              message.error('Test failed: ' + error.message);
+            }
+          }}
+          style={{ marginBottom: 16 }}
+        >
+          Create Test Meeting
+        </Button>
 
         {/* Table */}
         <Table

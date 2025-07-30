@@ -259,7 +259,7 @@ const ExpenseLog = () => {
           >
             View
           </Button>
-          {user?.role === 'Accountant' && record.status === 'Pending' && (
+          {(user?.role === 'Accountant' || user?.role === 'AdminStaff') && record.status === 'Pending' && (
             <Button
               type="link"
               icon={<EditOutlined />}
@@ -268,7 +268,7 @@ const ExpenseLog = () => {
               Edit
             </Button>
           )}
-          {user?.role === 'Accountant' && record.status === 'Pending' && (
+          {(user?.role === 'Accountant' || user?.role === 'AdminStaff') && record.status === 'Pending' && (
             <Button
               type="link"
               danger
@@ -286,7 +286,7 @@ const ExpenseLog = () => {
   return (
     <div style={{ padding: '24px' }}>
       <Card title="Expense Log Management" extra={
-        user?.role === 'Accountant' && (
+        (user?.role === 'Accountant' || user?.role === 'AdminStaff') && (
           <Button type="primary" icon={<PlusOutlined />} onClick={showCreateModal}>
             Add Expense
           </Button>

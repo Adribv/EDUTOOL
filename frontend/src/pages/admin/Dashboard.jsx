@@ -501,6 +501,42 @@ function AdminDashboard() {
             </CardContent>
           </Card>
         </Grid>
+        
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Box>
+                  <Typography color="textSecondary" gutterBottom>
+                    Budget Requests
+                  </Typography>
+                  <Typography variant="h4">
+                    0
+                  </Typography>
+                </Box>
+                <AccountBalance color="info" sx={{ fontSize: 40 }} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Box>
+                  <Typography color="textSecondary" gutterBottom>
+                    Meeting Minutes
+                  </Typography>
+                  <Typography variant="h4">
+                    0
+                  </Typography>
+                </Box>
+                <Assignment color="success" sx={{ fontSize: 40 }} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
       </Grid>
 
       {/* Service Requests Section */}
@@ -579,6 +615,155 @@ function AdminDashboard() {
           )}
         </CardContent>
       </Card>
+
+      {/* Budget Approval and Meeting Minutes Section */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid item xs={12} md={6}>
+          <Card sx={{ 
+            height: '100%',
+            borderRadius: 2,
+            boxShadow: 3,
+            border: '1px solid #e0e0e0',
+            transition: 'transform 0.2s, box-shadow 0.2s',
+            '&:hover': {
+              transform: 'translateY(-4px)',
+              boxShadow: 6,
+              border: '2px solid #1976d2'
+            }
+          }}>
+            <CardContent>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography 
+                  variant="h5" 
+                  sx={{ 
+                    fontWeight: 800,
+                    color: '#1976d2',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  Budget Approval
+                </Typography>
+                <Button
+                  variant="contained"
+                  startIcon={<AccountBalance />}
+                  onClick={() => navigate('/admin/budget-approval')}
+                  sx={{
+                    backgroundColor: '#1976d2',
+                    fontWeight: 600,
+                    px: 3,
+                    py: 1,
+                    '&:hover': {
+                      backgroundColor: '#1565c0',
+                      transform: 'scale(1.05)'
+                    }
+                  }}
+                >
+                  Create Budget
+                </Button>
+              </Box>
+              <Typography variant="body1" color="textSecondary" sx={{ mb: 3, lineHeight: 1.6 }}>
+                Manage and approve budget requests for various departments and projects. Create new budget proposals and track approval status.
+              </Typography>
+              <Box display="flex" alignItems="center" gap={2} mb={2}>
+                <Chip label="Pending: 0" color="warning" size="medium" sx={{ fontWeight: 600 }} />
+                <Chip label="Approved: 0" color="success" size="medium" sx={{ fontWeight: 600 }} />
+                <Chip label="Rejected: 0" color="error" size="medium" sx={{ fontWeight: 600 }} />
+              </Box>
+              <Box display="flex" gap={1}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => navigate('/admin/budget-approval')}
+                  sx={{ fontSize: '0.8rem' }}
+                >
+                  View All
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => navigate('/admin/budget-approval')}
+                  sx={{ fontSize: '0.8rem' }}
+                >
+                  Quick Create
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        
+        <Grid item xs={12} md={6}>
+          <Card sx={{ 
+            height: '100%',
+            borderRadius: 2,
+            boxShadow: 3,
+            border: '1px solid #e0e0e0',
+            transition: 'transform 0.2s, box-shadow 0.2s',
+            '&:hover': {
+              transform: 'translateY(-4px)',
+              boxShadow: 6,
+              border: '2px solid #1976d2'
+            }
+          }}>
+            <CardContent>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography 
+                  variant="h5" 
+                  sx={{ 
+                    fontWeight: 800,
+                    color: '#1976d2',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  Meeting Minutes
+                </Typography>
+                <Button
+                  variant="contained"
+                  startIcon={<Assignment />}
+                  onClick={() => navigate('/admin/meeting-minutes')}
+                  sx={{
+                    backgroundColor: '#1976d2',
+                    fontWeight: 600,
+                    px: 3,
+                    py: 1,
+                    '&:hover': {
+                      backgroundColor: '#1565c0',
+                      transform: 'scale(1.05)'
+                    }
+                  }}
+                >
+                  Create Minutes
+                </Button>
+              </Box>
+              <Typography variant="body1" color="textSecondary" sx={{ mb: 3, lineHeight: 1.6 }}>
+                Create and manage school meeting minutes with agenda items and action points. Track meeting outcomes and follow-ups.
+              </Typography>
+              <Box display="flex" alignItems="center" gap={2} mb={2}>
+                <Chip label="Draft: 0" color="default" size="medium" sx={{ fontWeight: 600 }} />
+                <Chip label="Submitted: 0" color="info" size="medium" sx={{ fontWeight: 600 }} />
+                <Chip label="Approved: 0" color="success" size="medium" sx={{ fontWeight: 600 }} />
+              </Box>
+              <Box display="flex" gap={1}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => navigate('/admin/meeting-minutes')}
+                  sx={{ fontSize: '0.8rem' }}
+                >
+                  View All
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => navigate('/admin/meeting-minutes')}
+                  sx={{ fontSize: '0.8rem' }}
+                >
+                  Quick Create
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
 
       {/* Recent Activities */}
       <Grid container spacing={3}>

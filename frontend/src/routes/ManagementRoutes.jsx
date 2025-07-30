@@ -83,6 +83,8 @@ import FinancialReports from '../pages/accountant/FinancialReports';
 import FeeManagement from '../pages/accountant/FeeManagement';
 import ExpenseManagement from '../pages/accountant/ExpenseManagement';
 import SalaryManagement from '../pages/accountant/SalaryManagement';
+import ExpenseLog from '../pages/admin/ExpenseLog';
+import IncomeLog from '../pages/admin/IncomeLog';
 
 // IT Support pages
 import ITDashboard from '../pages/it/Dashboard';
@@ -201,6 +203,8 @@ const ManagementRoutes = () => {
         <Route path="accountant/fees" element={<FeeManagement />} />
         <Route path="accountant/expenses" element={<ExpenseManagement />} />
         <Route path="accountant/salaries" element={<SalaryManagement />} />
+        <Route path="accountant/expense-log" element={<ExpenseLog />} />
+        <Route path="accountant/income-log" element={<IncomeLog />} />
         
         {/* Admin specific */}
         <Route path="a-dashboard" element={<A_Dashboard />} />

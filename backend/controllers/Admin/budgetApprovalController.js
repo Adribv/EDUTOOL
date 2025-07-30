@@ -64,9 +64,9 @@ exports.createBudgetApproval = async (req, res) => {
   try {
     const { role } = req.user;
     
-    // Check if user is Admin or Accountant
-    if (!['Admin', 'Accountant'].includes(role)) {
-      return res.status(403).json({ message: 'Only Admin and Accountant staff can create budget approvals' });
+    // Check if user is Admin, AdminStaff, or Accountant
+    if (!['Admin', 'AdminStaff', 'Accountant'].includes(role)) {
+      return res.status(403).json({ message: 'Only Admin, AdminStaff, and Accountant staff can create budget approvals' });
     }
 
     const budgetData = {
@@ -104,9 +104,9 @@ exports.updateBudgetApproval = async (req, res) => {
   try {
     const { role } = req.user;
     
-    // Check if user is Admin or Accountant
-    if (!['Admin', 'Accountant'].includes(role)) {
-      return res.status(403).json({ message: 'Only Admin and Accountant staff can edit budget approvals' });
+    // Check if user is Admin, AdminStaff, or Accountant
+    if (!['Admin', 'AdminStaff', 'Accountant'].includes(role)) {
+      return res.status(403).json({ message: 'Only Admin, AdminStaff, and Accountant staff can edit budget approvals' });
     }
 
     const budgetApproval = await BudgetApproval.findById(req.params.id);

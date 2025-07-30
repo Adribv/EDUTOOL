@@ -28,13 +28,18 @@ const AuditLog = () => {
   const fetchAuditLogs = async (page = 1, filters = {}) => {
     setLoading(true);
     try {
+      console.log('Fetching audit logs with params:', { page, filters }); // Debug log
+      
       const params = new URLSearchParams({
         page,
         limit: pagination.pageSize,
         ...filters
       });
       
+      console.log('API call to:', `/audit-logs?${params}`); // Debug log
       const response = await api.get(`/audit-logs?${params}`);
+      console.log('Audit logs response:', response); // Debug log
+      
       setAuditLogs(response.data.auditLogs);
       setPagination(prev => ({
         ...prev,
@@ -42,8 +47,9 @@ const AuditLog = () => {
         total: response.data.pagination.totalItems
       }));
     } catch (error) {
+      console.error('Error fetching audit logs:', error); // Debug log
+      console.error('Error response:', error.response); // Debug log
       message.error('Failed to fetch audit logs');
-      console.error('Error fetching audit logs:', error);
     } finally {
       setLoading(false);
     }
@@ -52,17 +58,30 @@ const AuditLog = () => {
   // Fetch statistics
   const fetchStats = async () => {
     try {
+      console.log('Fetching audit stats...'); // Debug log
       const response = await api.get('/audit-logs/stats');
+      console.log('Stats response:', response); // Debug log
       setStats(response.data);
     } catch (error) {
-      console.error('Error fetching stats:', error);
+      console.error('Error fetching stats:', error); // Debug log
+      console.error('Stats error response:', error.response); // Debug log
     }
   };
 
   useEffect(() => {
-    fetchAuditLogs();
-    fetchStats();
-  }, []);
+    console.log('Current user:', user); // Debug log
+    console.log('User token:', localStorage.getItem('token')); // Debug log
+    console.log('User role:', user?.role); // Debug log
+    console.log('Token length:', localStorage.getItem('token')?.length); // Debug log
+    
+    if (user && user.role) {
+      console.log('User is authenticated, fetching data...'); // Debug log
+      fetchAuditLogs();
+      fetchStats();
+    } else {
+      console.log('No user or role found, skipping fetch'); // Debug log
+    }
+  }, [user]);
 
   // Handle table change (pagination, filters, sorting)
   const handleTableChange = (pagination, filters, sorter) => {
@@ -77,17 +96,22 @@ const AuditLog = () => {
   // Handle form submission
   const handleSubmit = async (values) => {
     try {
+      console.log('Form values:', values); // Debug log
+      
       const auditData = {
         ...values,
         dateOfAudit: values.dateOfAudit?.toISOString(),
         targetCompletionDate: values.targetCompletionDate?.toISOString()
       };
 
+      console.log('Audit data to send:', auditData); // Debug log
+
       if (editingAudit) {
         await api.put(`/audit-logs/${editingAudit._id}`, auditData);
         message.success('Audit log updated successfully');
       } else {
-        await api.post('/audit-logs', auditData);
+        const response = await api.post('/audit-logs', auditData);
+        console.log('API response:', response); // Debug log
         message.success('Audit log created successfully');
       }
 
@@ -97,6 +121,8 @@ const AuditLog = () => {
       fetchAuditLogs();
       fetchStats();
     } catch (error) {
+      console.error('Error in handleSubmit:', error); // Debug log
+      console.error('Error response:', error.response); // Debug log
       message.error(error.response?.data?.message || 'Operation failed');
     }
   };
@@ -104,12 +130,34 @@ const AuditLog = () => {
   // Handle delete
   const handleDelete = async (id) => {
     try {
-      await api.delete(`/audit-logs/${id}`);
-      message.success('Audit log deleted successfully');
-      fetchAuditLogs();
-      fetchStats();
+      console.log('Attempting to delete audit log with ID:', id); // Debug log
+      console.log('Current user role:', user?.role); // Debug log
+      
+      // Add confirmation dialog
+      Modal.confirm({
+        title: 'Are you sure you want to delete this audit log?',
+        content: 'This action cannot be undone.',
+        okText: 'Yes',
+        okType: 'danger',
+        cancelText: 'No',
+        onOk: async () => {
+          try {
+            const response = await api.delete(`/audit-logs/${id}`);
+            console.log('Delete response:', response); // Debug log
+            
+            message.success('Audit log deleted successfully');
+            fetchAuditLogs();
+            fetchStats();
+          } catch (error) {
+            console.error('Delete error:', error); // Debug log
+            console.error('Error response:', error.response); // Debug log
+            message.error(error.response?.data?.message || 'Failed to delete audit log');
+          }
+        }
+      });
     } catch (error) {
-      message.error('Failed to delete audit log');
+      console.error('Delete confirmation error:', error); // Debug log
+      message.error('Failed to show delete confirmation');
     }
   };
 
@@ -243,7 +291,7 @@ const AuditLog = () => {
           >
             View
           </Button>
-          {['VP', 'Principal'].includes(user?.role) && (
+          {['VP', 'Principal', 'AdminStaff'].includes(user?.role) && (
             <Button
               type="link"
               icon={<EditOutlined />}
@@ -252,7 +300,7 @@ const AuditLog = () => {
               Edit
             </Button>
           )}
-          {user?.role === 'Admin' && (
+          {(user?.role === 'Admin' || user?.role === 'AdminStaff') && (
             <Button
               type="link"
               danger
@@ -275,7 +323,7 @@ const AuditLog = () => {
           <FileTextOutlined style={{ marginRight: '8px' }} />
           Audit Log Management
         </h1>
-        {user?.role === 'Admin' && (
+        {(user?.role === 'Admin' || user?.role === 'AdminStaff') && (
           <Button
             type="primary"
             icon={<PlusOutlined />}
@@ -469,6 +517,17 @@ const AuditLog = () => {
             label="Additional Notes"
           >
             <TextArea rows={2} placeholder="Any additional notes" />
+          </Form.Item>
+
+          <Form.Item
+            name="status"
+            label="Status"
+            rules={[{ required: true, message: 'Please select status' }]}
+          >
+            <Select placeholder="Select status">
+              <Option value="Open">Open</Option>
+              <Option value="Closed">Closed</Option>
+            </Select>
           </Form.Item>
 
           <Form.Item>

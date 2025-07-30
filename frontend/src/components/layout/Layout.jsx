@@ -383,8 +383,6 @@ const Layout = () => {
               { text: 'Audit Log', icon: <Assessment />, path: '/admin/audit-log', activity: 'Audit Log' },
               { text: 'Inspection Log', icon: <Search />, path: '/admin/inspection-log', activity: 'Inspection Log' },
         { text: 'Budget Approval', icon: <AccountBalance />, path: '/admin/budget-approval', activity: 'Budget Approval' },
-        { text: 'Expense Log', icon: <Receipt />, path: '/admin/expense-log', activity: 'Expense Log' },
-        { text: 'Income Log', icon: <TrendingUp />, path: '/admin/income-log', activity: 'Income Log' },
         { text: 'Meeting Minutes', icon: <Event />, path: '/admin/meeting-minutes', activity: 'Meeting Minutes' },
         { text: 'Salary Payroll', icon: <AccountBalance />, path: '/admin/salary-payroll', activity: 'Salary Payroll' },
       ],
@@ -420,8 +418,6 @@ const Layout = () => {
         { text: 'Audit Log', icon: <Assessment />, path: '/admin/audit-log', activity: 'Audit Log' },
         { text: 'Inspection Log', icon: <Search />, path: '/admin/inspection-log', activity: 'Inspection Log' },
         { text: 'Budget Approval', icon: <AccountBalance />, path: '/admin/budget-approval', activity: 'Budget Approval' },
-        { text: 'Expense Log', icon: <Receipt />, path: '/admin/expense-log', activity: 'Expense Log' },
-        { text: 'Income Log', icon: <TrendingUp />, path: '/admin/income-log', activity: 'Income Log' },
         { text: 'Meeting Minutes', icon: <Event />, path: '/admin/meeting-minutes', activity: 'Meeting Minutes' },
       ],
       Counsellor: [
@@ -458,17 +454,7 @@ const Layout = () => {
           return true;
         }
         
-        // Always allow Expense Log for testing
-        if (item.text === 'Expense Log') {
-          console.log(`✅ Always allowing ${user?.role}: ${item.text} (testing)`);
-          return true;
-        }
-        
-        // Always allow Income Log for testing
-        if (item.text === 'Income Log') {
-          console.log(`✅ Always allowing ${user?.role}: ${item.text} (testing)`);
-          return true;
-        }
+
         
         // Always allow Meeting Minutes for testing
         if (item.text === 'Meeting Minutes') {

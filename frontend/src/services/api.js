@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: 'https://api.edulives.com/api',
+  baseURL: 'http://localhost:50001/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -1500,20 +1500,20 @@ export const teacherRemarksAPI = {
   getParentForms: (childId, params) => api.get(`/teacher-remarks/parent/${childId}`, { params }).then(res => res.data),
   
   // Audit Log Management
-  getAuditLogs: (params) => api.get('/admin/audit-logs', { params }).then(res => res.data),
-  getAuditLogById: (id) => api.get(`/admin/audit-logs/${id}`).then(res => res.data),
-  createAuditLog: (data) => api.post('/admin/audit-logs', data).then(res => res.data),
-  updateAuditLog: (id, data) => api.put(`/admin/audit-logs/${id}`, data).then(res => res.data),
-  deleteAuditLog: (id) => api.delete(`/admin/audit-logs/${id}`).then(res => res.data),
-  getAuditStatistics: () => api.get('/admin/audit-logs/statistics').then(res => res.data),
+  getAuditLogs: (params) => api.get('/audit-logs', { params }).then(res => res.data),
+  getAuditLogById: (id) => api.get(`/audit-logs/${id}`).then(res => res.data),
+  createAuditLog: (data) => api.post('/audit-logs', data).then(res => res.data),
+  updateAuditLog: (id, data) => api.put(`/audit-logs/${id}`, data).then(res => res.data),
+  deleteAuditLog: (id) => api.delete(`/audit-logs/${id}`).then(res => res.data),
+  getAuditStatistics: () => api.get('/audit-logs/stats').then(res => res.data),
 
   // Inspection Log Management
-  getInspectionLogs: (params) => api.get('/admin/inspection-logs', { params }).then(res => res.data),
-  getInspectionLogById: (id) => api.get(`/admin/inspection-logs/${id}`).then(res => res.data),
-  createInspectionLog: (data) => api.post('/admin/inspection-logs', data).then(res => res.data),
-  updateInspectionLog: (id, data) => api.put(`/admin/inspection-logs/${id}`, data).then(res => res.data),
-  deleteInspectionLog: (id) => api.delete(`/admin/inspection-logs/${id}`).then(res => res.data),
-  getInspectionStatistics: () => api.get('/admin/inspection-logs/statistics').then(res => res.data),
+  getInspectionLogs: (params) => api.get('/inspection-logs', { params }).then(res => res.data),
+  getInspectionLogById: (id) => api.get(`/inspection-logs/${id}`).then(res => res.data),
+  createInspectionLog: (data) => api.post('/inspection-logs', data).then(res => res.data),
+  updateInspectionLog: (id, data) => api.put(`/inspection-logs/${id}`, data).then(res => res.data),
+  deleteInspectionLog: (id) => api.delete(`/inspection-logs/${id}`).then(res => res.data),
+  getInspectionStatistics: () => api.get('/inspection-logs/statistics').then(res => res.data),
 
   // Budget Approval Management
   getBudgetApprovals: (params) => api.get('/budget-approvals', { params }).then(res => res.data),
@@ -1552,7 +1552,10 @@ export const incomeLogAPI = {
 
 // Meeting Minutes Management
 export const meetingMinutesAPI = {
-  getMeetingMinutes: (params) => api.get('/meeting-minutes', { params }).then(res => res.data),
+  getMeetingMinutes: (params) => {
+    const url = params instanceof URLSearchParams ? `/meeting-minutes?${params}` : '/meeting-minutes';
+    return api.get(url).then(res => res.data);
+  },
   getMeetingMinutesById: (id) => api.get(`/meeting-minutes/${id}`).then(res => res.data),
   createMeetingMinutes: (data) => api.post('/meeting-minutes', data).then(res => res.data),
   updateMeetingMinutes: (id, data) => api.put(`/meeting-minutes/${id}`, data).then(res => res.data),
@@ -1564,9 +1567,9 @@ export const meetingMinutesAPI = {
   getMeetingMinutesStats: () => api.get('/meeting-minutes/stats').then(res => res.data),
 };
 
-export const getStudentFeeStatus = () => fetch('/api/accountant/fee-status').then(res => res.json());
-export const getFeeStats = () => fetch('/api/accountant/fee-stats').then(res => res.json());
-export const getTransactionLog = () => fetch('/api/accountant/transaction-log').then(res => res.json());
+export const getStudentFeeStatus = () => fetch('http://localhost:50001/api/accountant/fee-status').then(res => res.json());
+export const getFeeStats = () => fetch('http://localhost:50001/api/accountant/fee-stats').then(res => res.json());
+export const getTransactionLog = () => fetch('http://localhost:50001/api/accountant/transaction-log').then(res => res.json());
 
 export const vpAPI = {
   // Dashboard

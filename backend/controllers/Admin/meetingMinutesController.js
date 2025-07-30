@@ -5,6 +5,7 @@ const Staff = require('../../models/Staff/staffModel');
 exports.getAllMeetingMinutes = async (req, res) => {
   try {
     const { page = 1, limit = 10, search, status, meetingType, startDate, endDate } = req.query;
+    const skip = (page - 1) * limit;
     
     const query = {};
     
@@ -35,21 +36,26 @@ exports.getAllMeetingMinutes = async (req, res) => {
       if (endDate) query.meetingDate.$lte = new Date(endDate);
     }
     
-    const options = {
-      page: parseInt(page),
-      limit: parseInt(limit),
-      sort: { meetingDate: -1 },
-      populate: [
-        { path: 'createdBy', select: 'name email role' },
-        { path: 'lastModifiedBy', select: 'name email role' },
-        { path: 'vpApproval.approvedBy', select: 'name email role' },
-        { path: 'principalApproval.approvedBy', select: 'name email role' }
-      ]
-    };
-    
-    const meetingMinutes = await MeetingMinutes.paginate(query, options);
-    
-    res.json(meetingMinutes);
+    const meetingMinutes = await MeetingMinutes.find(query)
+      .populate('createdBy', 'name email role')
+      .populate('lastModifiedBy', 'name email role')
+      .populate('vpApproval.approvedBy', 'name email role')
+      .populate('principalApproval.approvedBy', 'name email role')
+      .sort({ meetingDate: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await MeetingMinutes.countDocuments(query);
+
+    res.json({
+      meetingMinutes,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        itemsPerPage: parseInt(limit)
+      }
+    });
   } catch (error) {
     console.error('Error fetching meeting minutes:', error);
     res.status(500).json({ message: 'Error fetching meeting minutes' });
@@ -79,8 +85,25 @@ exports.getMeetingMinutesById = async (req, res) => {
 // Create new meeting minutes (Admin and AdminStaff only)
 exports.createMeetingMinutes = async (req, res) => {
   try {
+    // Generate unique meeting number
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    
+    // Get count of meetings for today
+    const todayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const todayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
+    
+    const todayMeetings = await MeetingMinutes.countDocuments({
+      meetingDate: { $gte: todayStart, $lt: todayEnd }
+    });
+    
+    const meetingNumber = `MM-${year}${month}${day}-${String(todayMeetings + 1).padStart(3, '0')}`;
+    
     const meetingData = {
       ...req.body,
+      meetingNumber,
       createdBy: req.user.id
     };
     

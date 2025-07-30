@@ -383,95 +383,222 @@ const Dashboard = () => {
   }
 
   return (
-    <Box sx={{ flexGrow: 1, p: 3 }}>
-      <Typography variant="h4" gutterBottom fontWeight={700}>
-        Parent Dashboard
-      </Typography>
-      <Typography variant="body1" color="textSecondary" paragraph>
-        Welcome back, {user?.name}. Monitor your children's progress and manage school-related activities.
-      </Typography>
+    <Box sx={{ flexGrow: 1, p: 3, backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
+      {/* Enhanced Header Section */}
+      <Box sx={{ 
+        mb: 4, 
+        p: 3, 
+        backgroundColor: 'white', 
+        borderRadius: 2, 
+        boxShadow: 2,
+        borderLeft: '4px solid #1976d2'
+      }}>
+        <Typography 
+          variant="h3" 
+          gutterBottom 
+          sx={{ 
+            fontWeight: 800,
+            color: '#1976d2',
+            textShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            mb: 1
+          }}
+        >
+          Parent Dashboard
+        </Typography>
+        <Typography 
+          variant="h6" 
+          sx={{ 
+            color: '#666',
+            fontWeight: 500,
+            lineHeight: 1.6
+          }}
+        >
+          Welcome back, <strong style={{ color: '#1976d2' }}>{user?.name}</strong>. 
+          Monitor your children's progress and manage school-related activities.
+        </Typography>
+      </Box>
 
-      {/* Statistics Cards */}
+      {/* Enhanced Statistics Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
+          <Card sx={{ 
+            borderRadius: 3, 
+            boxShadow: 3, 
+            transition: 'transform 0.2s, box-shadow 0.2s',
+            '&:hover': { transform: 'translateY(-4px)', boxShadow: 6 }
+          }}>
+            <CardContent sx={{ p: 3 }}>
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
-                  <Typography color="textSecondary" gutterBottom>
+                  <Typography 
+                    sx={{ 
+                      color: '#666', 
+                      fontWeight: 600, 
+                      fontSize: '0.9rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }} 
+                    gutterBottom
+                  >
                     Children
                   </Typography>
-                  <Typography variant="h4">
+                  <Typography 
+                    variant="h3" 
+                    sx={{ 
+                      fontWeight: 800, 
+                      color: '#1976d2',
+                      textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                    }}
+                  >
                     {dashboardData?.childrenCount || 0}
                   </Typography>
                 </Box>
-                <Person color="primary" sx={{ fontSize: 40 }} />
+                <Person color="primary" sx={{ fontSize: 50, opacity: 0.8 }} />
               </Box>
             </CardContent>
           </Card>
         </Grid>
         
         <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
+          <Card sx={{ 
+            borderRadius: 3, 
+            boxShadow: 3, 
+            transition: 'transform 0.2s, box-shadow 0.2s',
+            '&:hover': { transform: 'translateY(-4px)', boxShadow: 6 }
+          }}>
+            <CardContent sx={{ p: 3 }}>
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
-                  <Typography color="textSecondary" gutterBottom>
+                  <Typography 
+                    sx={{ 
+                      color: '#666', 
+                      fontWeight: 600, 
+                      fontSize: '0.9rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }} 
+                    gutterBottom
+                  >
                     Pending Fees
                   </Typography>
-                  <Typography variant="h4">
+                  <Typography 
+                    variant="h3" 
+                    sx={{ 
+                      fontWeight: 800, 
+                      color: '#f57c00',
+                      textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                    }}
+                  >
                     {childrenFeeStatus.length}
                   </Typography>
                 </Box>
-                <Payment color="warning" sx={{ fontSize: 40 }} />
+                <Payment color="warning" sx={{ fontSize: 50, opacity: 0.8 }} />
               </Box>
             </CardContent>
           </Card>
         </Grid>
         
         <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
+          <Card sx={{ 
+            borderRadius: 3, 
+            boxShadow: 3, 
+            transition: 'transform 0.2s, box-shadow 0.2s',
+            '&:hover': { transform: 'translateY(-4px)', boxShadow: 6 }
+          }}>
+            <CardContent sx={{ p: 3 }}>
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
-                  <Typography color="textSecondary" gutterBottom>
+                  <Typography 
+                    sx={{ 
+                      color: '#666', 
+                      fontWeight: 600, 
+                      fontSize: '0.9rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }} 
+                    gutterBottom
+                  >
                     Upcoming Events
                   </Typography>
-                  <Typography variant="h4">
+                  <Typography 
+                    variant="h3" 
+                    sx={{ 
+                      fontWeight: 800, 
+                      color: '#0288d1',
+                      textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                    }}
+                  >
                     {eventsWithConsentForms?.length || 0}
                   </Typography>
                 </Box>
-                <Event color="info" sx={{ fontSize: 40 }} />
+                <Event color="info" sx={{ fontSize: 50, opacity: 0.8 }} />
               </Box>
             </CardContent>
           </Card>
         </Grid>
         
         <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
+          <Card sx={{ 
+            borderRadius: 3, 
+            boxShadow: 3, 
+            transition: 'transform 0.2s, box-shadow 0.2s',
+            '&:hover': { transform: 'translateY(-4px)', boxShadow: 6 }
+          }}>
+            <CardContent sx={{ p: 3 }}>
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
-                  <Typography color="textSecondary" gutterBottom>
+                  <Typography 
+                    sx={{ 
+                      color: '#666', 
+                      fontWeight: 600, 
+                      fontSize: '0.9rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }} 
+                    gutterBottom
+                  >
                     Notifications
                   </Typography>
-                  <Typography variant="h4">
+                  <Typography 
+                    variant="h3" 
+                    sx={{ 
+                      fontWeight: 800, 
+                      color: '#7b1fa2',
+                      textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                    }}
+                  >
                     {dashboardData?.notificationsCount || 0}
                   </Typography>
                 </Box>
-                <Notifications color="secondary" sx={{ fontSize: 40 }} />
+                <Notifications color="secondary" sx={{ fontSize: 50, opacity: 0.8 }} />
               </Box>
             </CardContent>
           </Card>
+        </Grid>
       </Grid>
 
       {/* Service Requests Section */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h5" gutterBottom>
+        <Typography 
+          variant="h4" 
+          gutterBottom 
+          sx={{ 
+            fontWeight: 700,
+            color: '#1976d2',
+            borderBottom: '3px solid #1976d2',
+            pb: 1,
+            mb: 3
+          }}
+        >
           Service Requests
         </Typography>
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
+        <Card sx={{ 
+          mb: 3, 
+          borderRadius: 2, 
+          boxShadow: 3,
+          border: '1px solid #e0e0e0'
+        }}>
+          <CardContent sx={{ p: 3 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
               <Typography variant="h6">Submit Service Requests</Typography>
               <Button
@@ -497,8 +624,8 @@ const Dashboard = () => {
                 <CircularProgress />
               </Box>
             ) : (
-              <TableContainer component={Paper}>
-                <Table>
+                          <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 2 }}>
+              <Table sx={{ '& .MuiTableCell-root': { fontWeight: 500 } }}>
                   <TableHead>
                     <TableRow>
                       <TableCell>Request Number</TableCell>
