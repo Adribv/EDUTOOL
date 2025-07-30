@@ -14,6 +14,7 @@ const BudgetApproval = () => {
   const [budgetApprovals, setBudgetApprovals] = useState([]);
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({});
+  const [uploadedFiles, setUploadedFiles] = useState([]);
 
   // Sample data for testing
   const sampleBudgetData = [
@@ -201,26 +202,42 @@ const BudgetApproval = () => {
   // Handle form submission
   const handleSubmit = async (values) => {
     try {
-      const budgetData = {
-        ...values,
-        dateOfSubmission: values.dateOfSubmission?.toISOString(),
-        budgetItems: values.budgetItems || [],
-        // Add missing required fields
-        priority: values.priority || 'Medium',
-        status: 'Draft',
-        totalProposedAmount: 0 // Will be calculated by the model
-      };
+      const formData = new FormData();
+      
+      // Add form data
+      Object.keys(values).forEach(key => {
+        if (values[key] !== undefined && values[key] !== null) {
+          if (key === 'dateOfSubmission') {
+            formData.append(key, values[key]?.toISOString());
+          } else if (key === 'budgetItems') {
+            formData.append(key, JSON.stringify(values[key] || []));
+          } else {
+            formData.append(key, values[key]);
+          }
+        }
+      });
+
+      // Add missing required fields
+      formData.append('priority', values.priority || 'Medium');
+      formData.append('status', 'Draft');
+      formData.append('totalProposedAmount', '0'); // Will be calculated by the model
+
+      // Add uploaded files
+      uploadedFiles.forEach((file, index) => {
+        formData.append('supportingDocuments', file);
+      });
 
       if (editingBudget) {
-        await api.put(`/budget-approvals/${editingBudget._id}`, budgetData);
+        await api.put(`/budget-approvals/${editingBudget._id}`, formData);
         message.success('Budget approval updated successfully');
       } else {
-        await api.post('/budget-approvals', budgetData);
+        await api.post('/budget-approvals', formData);
         message.success('Budget approval created successfully');
       }
 
       setModalVisible(false);
       setEditingBudget(null);
+      setUploadedFiles([]);
       form.resetFields();
       fetchBudgetApprovals();
       fetchStats();
@@ -590,6 +607,7 @@ const BudgetApproval = () => {
   const showEditModal = (budget) => {
     setEditingBudget(budget);
     setModalVisible(true);
+    setUploadedFiles([]); // Reset uploaded files for editing
     form.setFieldsValue({
       ...budget,
       dateOfSubmission: budget.dateOfSubmission ? dayjs(budget.dateOfSubmission) : null
@@ -1118,6 +1136,32 @@ const BudgetApproval = () => {
             <TextArea rows={3} placeholder="Any additional notes or comments" />
           </Form.Item>
 
+          <Form.Item
+            label="Supporting Documents"
+          >
+            <Upload
+              multiple
+              beforeUpload={(file) => {
+                setUploadedFiles(prev => [...prev, file]);
+                return false; // Prevent default upload
+              }}
+              onRemove={(file) => {
+                setUploadedFiles(prev => prev.filter(f => f.uid !== file.uid));
+              }}
+              fileList={uploadedFiles.map((file, index) => ({
+                uid: index,
+                name: file.name,
+                status: 'done'
+              }))}
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+            >
+              <Button icon={<UploadOutlined />}>Upload Supporting Documents</Button>
+            </Upload>
+            <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+              Supported formats: PDF, DOC, DOCX, JPG, PNG (Max 10MB per file)
+            </div>
+          </Form.Item>
+
           <Form.Item>
             <Space>
               <Button type="primary" htmlType="submit">
@@ -1126,6 +1170,7 @@ const BudgetApproval = () => {
               <Button onClick={() => {
                 setModalVisible(false);
                 setEditingBudget(null);
+                setUploadedFiles([]);
                 form.resetFields();
               }}>
                 Cancel
