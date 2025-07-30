@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "antd/dist/reset.css";
 
 :root {
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;

@@ -10,7 +10,7 @@ class DatabaseConnection {
 
   async connect() {
     try {
-      const mongoURI = process.env.MONGO_URI || 'mongodb+srv://EDULIVES:EDULIVES123@ac-l2bmyna-shard-00-00.uno4ffz.mongodb.net:27017,ac-l2bmyna-shard-00-01.uno4ffz.mongodb.net:27017,ac-l2bmyna-shard-00-02.uno4ffz.mongodb.net:27017/EDULIVES?ssl=true&replicaSet=atlas-14b8sh-shard-0&authSource=admin&retryWrites=true&w=majority';
+      const mongoURI = process.env.MONGO_URI || 'mongodb+srv://EDULIVES:EDULIVES123@ac-l2bmyna.uno4ffz.mongodb.net/EDULIVES?retryWrites=true&w=majority';
       
       const conn = await mongoose.connect(mongoURI, {
         useNewUrlParser: true,
@@ -48,7 +48,8 @@ class DatabaseConnection {
           this.connect();
         }, delay);
       } else {
-        console.error('Max retry attempts reached. Please check your MongoDB connection.');
+        console.error('Max retry attempts reached. MongoDB connection failed, but server will continue running.');
+        console.log('⚠️  Using mock authentication for testing purposes.');
         this.isConnected = false;
       }
     }

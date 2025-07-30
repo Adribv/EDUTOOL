@@ -107,6 +107,8 @@ app.use('/api/vp', require('./routes/Staff/VP/vicePrincipalRoutes'));
 app.use('/api/accountant', require('./routes/Staff/accountantRoutes'));
 app.use('/api/consent-forms', require('./routes/consentForm.routes'));
 app.use('/api/syllabus-completion', require('./routes/syllabusCompletion.routes'));
+app.use('/api/audit-logs', require('./routes/Staff/auditLogRoutes'));
+app.use('/api/inspection-logs', require('./routes/Staff/inspectionLogRoutes'));
 app.use('/api/teacher-remarks', require('./routes/teacherRemarks.routes'));
 app.use('/api/admin-staff/consent-forms', require('./routes/consentForm.routes'));
 app.use('/api/disciplinary-forms', require('./routes/disciplinaryForm.routes'));
@@ -172,7 +174,7 @@ app.use('*', (req, res) => {
   });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000 || 5001;
 
 // Improved server startup with port conflict handling
 const startServer = () => {

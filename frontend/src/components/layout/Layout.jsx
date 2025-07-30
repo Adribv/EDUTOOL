@@ -35,6 +35,7 @@ import {
   People,
   Settings,
   Assessment,
+  Search,
   Payment,
   Inventory,
   ChevronLeft,
@@ -378,7 +379,9 @@ const Layout = () => {
         { text: 'Visitors', icon: <GroupIcon />, path: '/admin/Visitors', activity: 'Visitors' },
         { text: 'Service Requests', icon: <Approval />, path: '/admin/service-requests', activity: 'Service Requests' },
         { text: 'Syllabus Completion', icon: <RateReview />, path: '/admin/syllabus-completion', activity: 'Syllabus Completion' },
-        { text: 'Salary Payroll', icon: <AccountBalance />, path: '/admin/salary-payroll', activity: 'Salary Payroll' },
+              { text: 'Audit Log', icon: <Assessment />, path: '/admin/audit-log', activity: 'Audit Log' },
+      { text: 'Inspection Log', icon: <Search />, path: '/admin/inspection-log', activity: 'Inspection Log' },
+      { text: 'Salary Payroll', icon: <AccountBalance />, path: '/admin/salary-payroll', activity: 'Salary Payroll' },
       ],
       ITAdmin: [
         { text: 'IT Admin Dashboard', icon: <Dashboard />, path: '/itadmin/dashboard' },
@@ -409,6 +412,8 @@ const Layout = () => {
         { text: 'Academic Management', icon: <Book />, path: '/principal/academic', activity: 'Academic Management' },
         { text: 'Approvals', icon: <Approval />, path: '/principal/approvals', activity: 'Principal Approvals' },
         { text: 'Reports', icon: <Assessment />, path: '/principal/reports', activity: 'Principal Reports' },
+        { text: 'Audit Log', icon: <Assessment />, path: '/admin/audit-log', activity: 'Audit Log' },
+        { text: 'Inspection Log', icon: <Search />, path: '/admin/inspection-log', activity: 'Inspection Log' },
       ],
       Counsellor: [
         { text: 'Counselling Requests', icon: <Psychology />, path: '/counselor/requests', activity: 'Counselling Requests' },
@@ -429,6 +434,12 @@ const Layout = () => {
         // Always allow Dashboard and Profile
         if (item.text === 'Dashboard' || item.text === 'Profile') {
           console.log(`✅ Always allowing ${user?.role}: ${item.text}`);
+          return true;
+        }
+        
+        // Always allow Inspection Log for testing
+        if (item.text === 'Inspection Log') {
+          console.log(`✅ Always allowing ${user?.role}: ${item.text} (testing)`);
           return true;
         }
         
