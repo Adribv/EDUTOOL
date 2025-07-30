@@ -1674,13 +1674,18 @@ const EnhancedAccountantDashboard = () => {
           >
             <Typography variant="h4" sx={{ 
               fontWeight: 700,
-              fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
+              fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
+              color: 'white',
+              textShadow: '0 2px 4px rgba(0,0,0,0.3)'
             }}>
               Accountant Dashboard
             </Typography>
             <Typography variant="body1" sx={{ 
-              opacity: 0.9,
-              fontSize: { xs: '0.875rem', sm: '1rem' }
+              opacity: 1,
+              fontSize: { xs: '0.875rem', sm: '1rem' },
+              color: 'white',
+              textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+              mt: 0.5
             }}>
               Comprehensive Staff Salary Management System
             </Typography>
