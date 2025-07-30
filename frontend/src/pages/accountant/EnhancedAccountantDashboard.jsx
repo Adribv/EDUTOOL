@@ -682,8 +682,8 @@ const IncomeLogManager = () => {
   const fetchIncomeLogs = async () => {
     setLoading(true);
     try {
-      // Temporary: Use test endpoint for debugging
-      const response = await fetch('http://localhost:50001/api/income-logs/test/logs');
+      // Use production API URL instead of localhost
+      const response = await fetch('https://api.edulives.com/api/income-logs/test/logs');
       const data = await response.json();
       
       setIncomeLogs(data.docs || []);
@@ -708,8 +708,8 @@ const IncomeLogManager = () => {
 
   const fetchStats = async () => {
     try {
-      // Temporary: Use test endpoint for debugging
-      const response = await fetch('http://localhost:50001/api/income-logs/test/stats');
+      // Use production API URL instead of localhost
+      const response = await fetch('https://api.edulives.com/api/income-logs/test/stats');
       const data = await response.json();
       setStats(data);
     } catch (error) {
@@ -1103,8 +1103,8 @@ const ExpenseLogManager = () => {
   const fetchExpenseLogs = async () => {
     setLoading(true);
     try {
-      // Temporary: Use test endpoint for debugging
-      const response = await fetch('http://localhost:50001/api/expense-logs/test/logs');
+      // Use production API URL instead of localhost
+      const response = await fetch('https://api.edulives.com/api/expense-logs/test/logs');
       const data = await response.json();
       
       setExpenseLogs(data.docs || []);
@@ -1129,8 +1129,8 @@ const ExpenseLogManager = () => {
 
   const fetchStats = async () => {
     try {
-      // Temporary: Use test endpoint for debugging
-      const response = await fetch('http://localhost:50001/api/expense-logs/test/stats');
+      // Use production API URL instead of localhost
+      const response = await fetch('https://api.edulives.com/api/expense-logs/test/stats');
       const data = await response.json();
       setStats(data);
     } catch (error) {
