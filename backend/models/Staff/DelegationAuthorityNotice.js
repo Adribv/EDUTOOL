@@ -58,6 +58,22 @@ const delegationAuthorityNoticeSchema = new mongoose.Schema({
     enum: ['Temporary', 'Permanent', 'Emergency', 'Project-based'],
     required: true
   },
+  delegationHierarchy: {
+    type: String,
+    enum: ['Principal', 'VP', 'HOD', 'Teacher'],
+    required: true
+  },
+  delegationReason: {
+    type: String,
+    enum: ['Leave', 'Training', 'Conference', 'Emergency', 'Other'],
+    required: true
+  },
+  leaveDetails: {
+    startDate: Date,
+    endDate: Date,
+    leaveType: String,
+    leaveReason: String
+  },
   authorityScope: {
     type: String,
     required: true,
@@ -160,14 +176,24 @@ const delegationAuthorityNoticeSchema = new mongoose.Schema({
     default: 1
   },
   
-  // Attachments
-  attachments: [{
+  // Supporting Documents
+  supportingDocuments: [{
     filename: String,
     originalName: String,
     path: String,
+    documentType: {
+      type: String,
+      enum: ['Leave Application', 'Medical Certificate', 'Travel Document', 'Other'],
+      required: true
+    },
+    description: String,
     uploadedAt: {
       type: Date,
       default: Date.now
+    },
+    uploadedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Staff'
     }
   }],
   

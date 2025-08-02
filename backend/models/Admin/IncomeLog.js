@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const mongoosePaginate = require('mongoose-paginate-v2');
 
 const incomeLogSchema = new mongoose.Schema({
   serialNumber: {
@@ -25,6 +26,47 @@ const incomeLogSchema = new mongoose.Schema({
     type: Number,
     required: true,
     min: 0
+  },
+  // GST Fields
+  isGSTApplicable: {
+    type: Boolean,
+    default: false
+  },
+  gstRate: {
+    type: Number,
+    min: 0,
+    max: 100,
+    default: 0
+  },
+  gstAmount: {
+    type: Number,
+    min: 0,
+    default: 0
+  },
+  cgstAmount: {
+    type: Number,
+    min: 0,
+    default: 0
+  },
+  sgstAmount: {
+    type: Number,
+    min: 0,
+    default: 0
+  },
+  igstAmount: {
+    type: Number,
+    min: 0,
+    default: 0
+  },
+  totalAmount: {
+    type: Number,
+    min: 0,
+    default: 0
+  },
+  gstNumber: {
+    type: String,
+    trim: true,
+    default: ''
   },
   receivedFrom: {
     type: String,
@@ -135,5 +177,38 @@ incomeLogSchema.pre('save', async function(next) {
   }
   next();
 });
+
+// Calculate GST amounts
+incomeLogSchema.pre('save', function(next) {
+  if (this.isGSTApplicable && this.gstRate > 0 && this.amount > 0) {
+    this.gstAmount = (this.amount * this.gstRate) / 100;
+    
+    // For intra-state transactions (CGST + SGST)
+    if (this.gstNumber && this.gstNumber.length > 0) {
+      // If GST number is provided, assume it's intra-state
+      this.cgstAmount = this.gstAmount / 2;
+      this.sgstAmount = this.gstAmount / 2;
+      this.igstAmount = 0;
+    } else {
+      // For inter-state transactions (IGST)
+      this.igstAmount = this.gstAmount;
+      this.cgstAmount = 0;
+      this.sgstAmount = 0;
+    }
+    
+    this.totalAmount = this.amount + this.gstAmount;
+  } else {
+    // Reset GST amounts if not applicable
+    this.gstAmount = 0;
+    this.cgstAmount = 0;
+    this.sgstAmount = 0;
+    this.igstAmount = 0;
+    this.totalAmount = this.amount;
+  }
+  next();
+});
+
+// Add pagination plugin
+incomeLogSchema.plugin(mongoosePaginate);
 
 module.exports = mongoose.model('IncomeLog', incomeLogSchema); 

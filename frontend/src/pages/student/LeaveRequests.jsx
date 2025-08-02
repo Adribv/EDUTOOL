@@ -26,6 +26,7 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
+import DocumentUpload from '../../components/DocumentUpload';
 import {
   Event,
   Schedule,
@@ -46,6 +47,7 @@ const LeaveRequests = () => {
     endDate: '',
     reason: '',
     type: 'sick',
+    supportingDocuments: []
   });
 
   useEffect(() => {
@@ -70,7 +72,7 @@ const LeaveRequests = () => {
       await studentService.submitLeaveRequest(newRequest);
       toast.success('Leave request submitted successfully');
       setSubmitDialogOpen(false);
-      setNewRequest({ startDate: '', endDate: '', reason: '', type: 'sick' });
+      setNewRequest({ startDate: '', endDate: '', reason: '', type: 'sick', supportingDocuments: [] });
       fetchLeaveRequests();
     } catch (error) {
       console.error('Error submitting leave request:', error);
@@ -238,6 +240,22 @@ const LeaveRequests = () => {
               onChange={(e) => setNewRequest({ ...newRequest, reason: e.target.value })}
               sx={{ mt: 2 }}
             />
+            
+            <Box sx={{ mt: 3 }}>
+              <DocumentUpload
+                documents={newRequest.supportingDocuments}
+                onDocumentsChange={(documents) => setNewRequest({ ...newRequest, supportingDocuments: documents })}
+                documentTypes={[
+                  'Medical Certificate',
+                  'Travel Document',
+                  'Family Function Invitation',
+                  'School Event',
+                  'Other'
+                ]}
+                maxFiles={5}
+                title="Supporting Documents"
+              />
+            </Box>
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setSubmitDialogOpen(false)}>

@@ -2,6 +2,39 @@ const express = require('express');
 const router = express.Router();
 const delegationAuthorityController = require('../controllers/Staff/delegationAuthorityController');
 const { verifyToken, isPrincipal, isVicePrincipal, isHOD } = require('../middlewares/authMiddleware');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = 'uploads/delegation-documents/';
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  fileFilter: function (req, file, cb) {
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only PDF, DOC, DOCX, and image files are allowed.'), false);
+    }
+  },
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
+});
 
 // Middleware to check if user can access delegation authority features
 const canAccessDelegation = (req, res, next) => {
@@ -75,5 +108,11 @@ router.get('/notifications', delegationAuthorityController.getNotifications);
 
 // PUT /delegation-authority/notifications/:noticeId/:notificationId/read - Mark notification as read
 router.put('/notifications/:noticeId/:notificationId/read', delegationAuthorityController.markNotificationAsRead);
+
+// POST /delegation-authority/notices/:noticeId/documents - Upload supporting documents
+router.post('/notices/:noticeId/documents', upload.array('documents', 5), delegationAuthorityController.uploadDocuments);
+
+// GET /delegation-authority/available-delegates - Get available delegates based on hierarchy
+router.get('/available-delegates', delegationAuthorityController.getAvailableDelegates);
 
 module.exports = router; 

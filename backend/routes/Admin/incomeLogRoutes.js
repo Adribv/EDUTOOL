@@ -24,6 +24,14 @@ router.get('/test/logs', (req, res) => {
         incomeSource: 'Fees',
         description: 'Monthly tuition fees',
         amount: 50000,
+        isGSTApplicable: true,
+        gstRate: 18,
+        gstAmount: 9000,
+        cgstAmount: 4500,
+        sgstAmount: 4500,
+        igstAmount: 0,
+        totalAmount: 59000,
+        gstNumber: '27AABCA1234Z1Z5',
         receivedFrom: 'Student Parent',
         receiptNo: 'RCP001',
         paymentMode: 'Bank Transfer',
@@ -38,6 +46,14 @@ router.get('/test/logs', (req, res) => {
         incomeSource: 'Donation',
         description: 'Annual donation',
         amount: 100000,
+        isGSTApplicable: false,
+        gstRate: 0,
+        gstAmount: 0,
+        cgstAmount: 0,
+        sgstAmount: 0,
+        igstAmount: 0,
+        totalAmount: 100000,
+        gstNumber: '',
         receivedFrom: 'Local Business',
         receiptNo: 'RCP002',
         paymentMode: 'Cheque',
@@ -51,6 +67,25 @@ router.get('/test/logs', (req, res) => {
     page: 1,
     totalPages: 1
   });
+});
+
+// Test create route for debugging (no authentication required)
+router.post('/test/create', (req, res) => {
+  try {
+    console.log('Test create income log:', req.body);
+    res.json({
+      success: true,
+      message: 'Test income log created successfully',
+      data: req.body
+    });
+  } catch (error) {
+    console.error('Test create error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Test create failed',
+      error: error.message
+    });
+  }
 });
 
 // Get income log statistics (Accountant, Admin can view)

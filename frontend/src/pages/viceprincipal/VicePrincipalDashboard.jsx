@@ -216,7 +216,7 @@ export default function VicePrincipalDashboard() {
         "HOD Management",
         "Departments",
         "Curriculum",
-        "Classes Time Table",
+        "Add Class Time Table",
         "Exams Schedule"
       ]
     },
@@ -1315,13 +1315,13 @@ export default function VicePrincipalDashboard() {
         </Box>
       )}
 
-          {/* Classes Time Table Sub Tab */}
+          {/* Add Class Time Table Sub Tab */}
           {subTab === 3 && (
             <Box>
               {/* Header */}
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Typography variant="h4">
-                  Classes Time Table Management
+                  Class Time Table Management
                 </Typography>
                 <Button 
                   variant="contained" 
@@ -1334,7 +1334,7 @@ export default function VicePrincipalDashboard() {
                     }
                   }}
                 >
-                  Add Exam Schedule
+                  Add Class Time Table
                 </Button>
               </Box>
 
@@ -1351,7 +1351,7 @@ export default function VicePrincipalDashboard() {
                           <Typography variant="h4" fontWeight="bold">
                             {timetables?.length || 0}
                           </Typography>
-                          <Typography variant="body2">Total Schedules</Typography>
+                          <Typography variant="body2">Total Class Schedules</Typography>
                         </Box>
                         <Schedule sx={{ fontSize: 40, opacity: 0.8 }} />
                       </Box>
@@ -1369,12 +1369,12 @@ export default function VicePrincipalDashboard() {
                         <Box>
                           <Typography variant="h4" fontWeight="bold">
                             {timetables?.filter(timetable => {
-                              const examDate = new Date(timetable.examDate);
+                              const classDate = new Date(timetable.classDate);
                               const today = new Date();
-                              return examDate >= today;
+                              return classDate >= today;
                             }).length || 0}
                           </Typography>
-                          <Typography variant="body2">Upcoming Schedules</Typography>
+                          <Typography variant="body2">Active Class Schedules</Typography>
                         </Box>
                         <Event sx={{ fontSize: 40, opacity: 0.8 }} />
                       </Box>
@@ -1392,14 +1392,14 @@ export default function VicePrincipalDashboard() {
                         <Box>
                           <Typography variant="h4" fontWeight="bold">
                             {timetables?.filter(timetable => {
-                              const examDate = new Date(timetable.examDate);
+                              const classDate = new Date(timetable.classDate);
                               const today = new Date();
                               const tomorrow = new Date(today);
                               tomorrow.setDate(tomorrow.getDate() + 1);
-                              return examDate.toDateString() === today.toDateString();
+                              return classDate.toDateString() === today.toDateString();
                             }).length || 0}
                           </Typography>
-                          <Typography variant="body2">Today's Schedules</Typography>
+                          <Typography variant="body2">Today's Classes</Typography>
                         </Box>
                         <CalendarToday sx={{ fontSize: 40, opacity: 0.8 }} />
                       </Box>
@@ -1433,25 +1433,26 @@ export default function VicePrincipalDashboard() {
                 </Grid>
               </Grid>
 
-              {/* Timetable Table */}
+              {/* Class Time Table */}
               <Card sx={{ mb: 3 }}>
                 <CardHeader 
-                  title="Exam Schedule Overview"
-                  subheader="Manage and view all exam schedules"
+                  title="Class Time Table Overview"
+                  subheader="Manage and view all class schedules"
                 />
                 <CardContent>
                   <TableContainer component={Paper} sx={{ boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
                     <Table>
                       <TableHead>
                         <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                          <TableCell sx={{ fontWeight: 'bold' }}>Exam Name</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Class Name</TableCell>
                           <TableCell sx={{ fontWeight: 'bold' }}>Department</TableCell>
                           <TableCell sx={{ fontWeight: 'bold' }}>Subject</TableCell>
                           <TableCell sx={{ fontWeight: 'bold' }}>Grade</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Day</TableCell>
                           <TableCell sx={{ fontWeight: 'bold' }}>Time</TableCell>
                           <TableCell sx={{ fontWeight: 'bold' }}>Duration</TableCell>
                           <TableCell sx={{ fontWeight: 'bold' }}>Room</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Teacher</TableCell>
                           <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
                           <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
                         </TableRow>
@@ -1472,10 +1473,10 @@ export default function VicePrincipalDashboard() {
                             <TableCell>
                               <Box>
                                 <Typography variant="body2" fontWeight="bold">
-                                  {timetable.examName}
+                                  {timetable.className || timetable.examName}
                                 </Typography>
                                 <Typography variant="caption" color="textSecondary">
-                                  {timetable.examType}
+                                  {timetable.classType || timetable.examType}
                                 </Typography>
                               </Box>
                             </TableCell>
@@ -1502,10 +1503,10 @@ export default function VicePrincipalDashboard() {
                             <TableCell>
                               <Box>
                                 <Typography variant="body2" fontWeight="medium">
-                                  {new Date(timetable.examDate).toLocaleDateString()}
+                                  {timetable.dayOfWeek || new Date(timetable.examDate).toLocaleDateString('en-US', { weekday: 'long' })}
                                 </Typography>
                                 <Typography variant="caption" color="textSecondary">
-                                  {new Date(timetable.examDate).toLocaleDateString('en-US', { weekday: 'short' })}
+                                  {timetable.classDate ? new Date(timetable.classDate).toLocaleDateString() : 'Weekly'}
                                 </Typography>
                               </Box>
                             </TableCell>
@@ -1533,12 +1534,18 @@ export default function VicePrincipalDashboard() {
                               />
                             </TableCell>
                             <TableCell>
+                              <Typography variant="body2" fontWeight="medium">
+                                {timetable.teacherName || timetable.invigilator || 'TBD'}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
                               <Chip 
-                                label={timetable.status} 
+                                label={timetable.status || 'Active'} 
                                 color={
                                   timetable.status === 'Completed' ? 'success' : 
                                   timetable.status === 'In Progress' ? 'warning' : 
-                                  timetable.status === 'Cancelled' ? 'error' : 'primary'
+                                  timetable.status === 'Cancelled' ? 'error' : 
+                                  timetable.status === 'Active' ? 'success' : 'primary'
                                 } 
                                 size="small" 
                                 sx={{ fontWeight: 'medium' }}
@@ -1558,16 +1565,17 @@ export default function VicePrincipalDashboard() {
                                       id: timetable._id,
                                       departmentId: timetable.departmentId?._id,
                                       examId: timetable.examId?._id,
-                                      examName: timetable.examName,
+                                      className: timetable.className || timetable.examName,
                                       subject: timetable.subject,
                                       grade: timetable.grade,
-                                      examDate: new Date(timetable.examDate).toISOString().split('T')[0],
+                                      classDate: timetable.classDate || timetable.examDate,
+                                      dayOfWeek: timetable.dayOfWeek,
                                       startTime: timetable.startTime,
                                       endTime: timetable.endTime,
                                       duration: timetable.duration,
-                                      examType: timetable.examType,
+                                      classType: timetable.classType || timetable.examType,
                                       room: timetable.room,
-                                      invigilator: timetable.invigilator
+                                      teacherName: timetable.teacherName || timetable.invigilator
                                     });
                                     setEditTimetableDialog(true);
                                   }}
@@ -1582,7 +1590,7 @@ export default function VicePrincipalDashboard() {
                                     '&:hover': { backgroundColor: '#ffcdd2' }
                                   }}
                                   onClick={() => {
-                                    if (window.confirm('Are you sure you want to delete this exam schedule?')) {
+                                    if (window.confirm('Are you sure you want to delete this class schedule?')) {
                                       deleteTimetableMutation.mutate(timetable._id);
                                     }
                                   }}
@@ -1595,14 +1603,14 @@ export default function VicePrincipalDashboard() {
                         ))}
                         {(!timetables || timetables.length === 0) && (
                           <TableRow>
-                            <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
+                            <TableCell colSpan={11} align="center" sx={{ py: 4 }}>
                               <Box>
                                 <Event sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
                                 <Typography variant="h6" color="textSecondary" gutterBottom>
-                                  No Exam Schedules Found
+                                  No Class Schedules Found
                                 </Typography>
                                 <Typography variant="body2" color="textSecondary">
-                                  Start by scheduling your first exam using the button above.
+                                  Start by creating your first class schedule using the button above.
                                 </Typography>
                               </Box>
                             </TableCell>

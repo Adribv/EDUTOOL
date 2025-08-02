@@ -1,6 +1,65 @@
 const DelegationAuthorityNotice = require('../../models/Staff/DelegationAuthorityNotice');
 const Staff = require('../../models/Staff/staffModel');
 const Department = require('../../models/Staff/HOD/department.model');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = 'uploads/delegation-documents/';
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  fileFilter: function (req, file, cb) {
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only PDF, DOC, DOCX, and image files are allowed.'), false);
+    }
+  },
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
+});
+
+// Validate delegation hierarchy
+function validateDelegationHierarchy(delegatorPosition, delegatePosition) {
+  const hierarchy = {
+    'Principal': ['VP'],
+    'VP': ['HOD'],
+    'HOD': ['Teacher'],
+    'Teacher': [] // Teachers cannot delegate
+  };
+
+  if (!hierarchy[delegatorPosition]) {
+    return {
+      isValid: false,
+      message: `Invalid delegator position: ${delegatorPosition}. Only Principal, VP, and HOD can delegate authority.`
+    };
+  }
+
+  if (!hierarchy[delegatorPosition].includes(delegatePosition)) {
+    return {
+      isValid: false,
+      message: `Invalid delegation hierarchy. ${delegatorPosition} can only delegate to: ${hierarchy[delegatorPosition].join(', ')}`
+    };
+  }
+
+  return { isValid: true };
+}
 
 // Get all delegation notices
 exports.getAllNotices = async (req, res) => {
@@ -63,6 +122,9 @@ exports.createNotice = async (req, res) => {
       delegatePosition,
       delegateDepartment,
       delegationType,
+      delegationHierarchy,
+      delegationReason,
+      leaveDetails,
       authorityScope,
       responsibilities,
       limitations,
@@ -75,9 +137,17 @@ exports.createNotice = async (req, res) => {
     } = req.body;
 
     // Validate required fields
-    if (!title || !delegatorName || !delegateName || !delegationType || !authorityScope || !responsibilities || !effectiveDate) {
+    if (!title || !delegatorName || !delegateName || !delegationType || !delegationHierarchy || !delegationReason || !authorityScope || !responsibilities || !effectiveDate) {
       return res.status(400).json({ 
-        message: 'Missing required fields: title, delegatorName, delegateName, delegationType, authorityScope, responsibilities, effectiveDate' 
+        message: 'Missing required fields: title, delegatorName, delegateName, delegationType, delegationHierarchy, delegationReason, authorityScope, responsibilities, effectiveDate' 
+      });
+    }
+
+    // Validate delegation hierarchy
+    const hierarchyValidation = validateDelegationHierarchy(delegatorPosition, delegatePosition);
+    if (!hierarchyValidation.isValid) {
+      return res.status(400).json({ 
+        message: hierarchyValidation.message 
       });
     }
 
@@ -131,6 +201,9 @@ exports.createNotice = async (req, res) => {
       delegateDepartment,
       delegateId: delegate._id,
       delegationType,
+      delegationHierarchy,
+      delegationReason,
+      leaveDetails,
       authorityScope,
       responsibilities,
       limitations,
@@ -175,6 +248,107 @@ exports.createNotice = async (req, res) => {
     res.status(201).json(populatedNotice);
   } catch (error) {
     console.error('❌ Error creating delegation notice:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Upload supporting documents for delegation notice
+exports.uploadDocuments = async (req, res) => {
+  try {
+    const { noticeId } = req.params;
+    const { documentType, description } = req.body;
+
+    console.log(`📎 Uploading documents for delegation notice: ${noticeId}`);
+
+    // Check if notice exists
+    const notice = await DelegationAuthorityNotice.findById(noticeId);
+    if (!notice) {
+      return res.status(404).json({ message: 'Delegation notice not found' });
+    }
+
+    // Handle file uploads
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: 'No files uploaded' });
+    }
+
+    const uploadedDocuments = [];
+
+    for (const file of req.files) {
+      const document = {
+        filename: file.filename,
+        originalName: file.originalname,
+        path: file.path,
+        documentType: documentType || 'Other',
+        description: description || '',
+        uploadedAt: new Date(),
+        uploadedBy: req.user.id
+      };
+
+      uploadedDocuments.push(document);
+    }
+
+    // Add documents to notice
+    notice.supportingDocuments.push(...uploadedDocuments);
+
+    // Add to history
+    notice.history.push({
+      action: 'Documents Uploaded',
+      performedBy: req.user.id,
+      performedAt: new Date(),
+      comments: `Uploaded ${uploadedDocuments.length} supporting document(s)`,
+      previousStatus: notice.status,
+      newStatus: notice.status
+    });
+
+    await notice.save();
+
+    const populatedNotice = await DelegationAuthorityNotice.findById(notice._id)
+      .populate('delegatorId', 'name email position department')
+      .populate('delegateId', 'name email position department')
+      .populate('createdBy', 'name email');
+
+    console.log(`✅ ${uploadedDocuments.length} document(s) uploaded successfully`);
+    res.json(populatedNotice);
+  } catch (error) {
+    console.error('❌ Error uploading documents:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Get available staff for delegation based on hierarchy
+exports.getAvailableDelegates = async (req, res) => {
+  try {
+    const { delegatorPosition, delegatorDepartment } = req.query;
+
+    console.log(`🔍 Finding available delegates for ${delegatorPosition} in ${delegatorDepartment}`);
+
+    // Define hierarchy
+    const hierarchy = {
+      'Principal': ['VP'],
+      'VP': ['HOD'],
+      'HOD': ['Teacher'],
+      'Teacher': []
+    };
+
+    const allowedPositions = hierarchy[delegatorPosition] || [];
+
+    if (allowedPositions.length === 0) {
+      return res.status(400).json({ 
+        message: `${delegatorPosition} cannot delegate authority` 
+      });
+    }
+
+    // Find staff members with allowed positions
+    const availableDelegates = await Staff.find({
+      position: { $in: allowedPositions },
+      department: delegatorDepartment,
+      status: 'Active'
+    }).select('name email position department');
+
+    console.log(`✅ Found ${availableDelegates.length} available delegates`);
+    res.json(availableDelegates);
+  } catch (error) {
+    console.error('❌ Error finding available delegates:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

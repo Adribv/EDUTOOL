@@ -32,6 +32,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { Event, Assignment, CheckCircle, Cancel } from '@mui/icons-material';
 import { parentAPI } from '../../services/api';
+import DocumentUpload from '../../components/DocumentUpload';
 
 const P_Leave_Request = () => {
   const [loading, setLoading] = useState(true);
@@ -44,7 +45,7 @@ const P_Leave_Request = () => {
     startDate: null,
     endDate: null,
     reason: '',
-    attachments: []
+    supportingDocuments: []
   });
 
   useEffect(() => {
@@ -94,7 +95,7 @@ const P_Leave_Request = () => {
         startDate: leaveForm.startDate.toISOString().split('T')[0],
         endDate: leaveForm.endDate.toISOString().split('T')[0],
         reason: leaveForm.reason,
-        attachments: leaveForm.attachments
+        supportingDocuments: leaveForm.supportingDocuments
       };
 
       await parentAPI.submitLeaveApplication(selectedChild, leaveData);
@@ -268,6 +269,22 @@ const P_Leave_Request = () => {
               <FormHelperText>
                 Please provide a detailed reason for the leave request
               </FormHelperText>
+              
+              <Box sx={{ mt: 3 }}>
+                <DocumentUpload
+                  documents={leaveForm.supportingDocuments}
+                  onDocumentsChange={(documents) => setLeaveForm({ ...leaveForm, supportingDocuments: documents })}
+                  documentTypes={[
+                    'Medical Certificate',
+                    'Travel Document',
+                    'Family Function Invitation',
+                    'School Event',
+                    'Other'
+                  ]}
+                  maxFiles={5}
+                  title="Supporting Documents"
+                />
+              </Box>
             </Box>
           </LocalizationProvider>
         </DialogContent>

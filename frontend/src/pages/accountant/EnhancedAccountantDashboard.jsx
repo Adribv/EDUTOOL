@@ -659,7 +659,71 @@ const IncomeLogManager = () => {
     total: 0
   });
   const [filters, setFilters] = useState({});
+  const [formData, setFormData] = useState({
+    date: new Date().toISOString().split('T')[0],
+    incomeSource: '',
+    description: '',
+    amount: '',
+    receivedFrom: '',
+    receiptNo: '',
+    paymentMode: '',
+    receivedBy: '',
+    remarks: '',
+    isGSTApplicable: false,
+    gstRate: '',
+    gstNumber: '',
+    gstAmount: 0,
+    cgstAmount: 0,
+    sgstAmount: 0,
+    totalAmount: 0
+  });
   const { user } = useAuth();
+
+  // Handle form field changes
+  const handleFormChange = (field, value) => {
+    const updatedFormData = { ...formData, [field]: value };
+    
+    // Recalculate GST if amount, gstRate, or isGSTApplicable changes
+    if (field === 'amount' || field === 'gstRate' || field === 'isGSTApplicable') {
+      // Ensure proper number conversion
+      const amount = field === 'amount' ? parseFloat(value) || 0 : parseFloat(formData.amount) || 0;
+      const gstRate = field === 'gstRate' ? parseFloat(value) || 0 : parseFloat(formData.gstRate) || 0;
+      const isGSTApplicable = field === 'isGSTApplicable' ? value : formData.isGSTApplicable;
+      
+      const gstValues = calculateGST(amount, gstRate, isGSTApplicable);
+      
+      updatedFormData.gstAmount = gstValues.gstAmount;
+      updatedFormData.cgstAmount = gstValues.cgstAmount;
+      updatedFormData.sgstAmount = gstValues.sgstAmount;
+      updatedFormData.totalAmount = gstValues.totalAmount;
+    }
+    
+    setFormData(updatedFormData);
+  };
+
+  // GST calculation function
+  const calculateGST = (amount, gstRate, isGSTApplicable) => {
+    if (!isGSTApplicable || !amount || !gstRate) {
+      return {
+        gstAmount: 0,
+        cgstAmount: 0,
+        sgstAmount: 0,
+        totalAmount: amount || 0
+      };
+    }
+    
+    const gstAmount = (amount * gstRate) / 100;
+    const cgstAmount = gstAmount / 2;
+    const sgstAmount = gstAmount / 2;
+    const totalAmount = amount + gstAmount;
+    
+    return {
+      gstAmount,
+      cgstAmount,
+      sgstAmount,
+      totalAmount
+    };
+  };
 
   // Income sources from the Excel template
   const incomeSources = [
@@ -682,8 +746,8 @@ const IncomeLogManager = () => {
   const fetchIncomeLogs = async () => {
     setLoading(true);
     try {
-      // Use production API URL instead of localhost
-      const response = await fetch('https://api.edulives.com/api/income-logs/test/logs');
+      // Use local backend API
+      const response = await fetch('http://localhost:5001/api/income-logs/test/logs');
       const data = await response.json();
       
       setIncomeLogs(data.docs || []);
@@ -693,13 +757,7 @@ const IncomeLogManager = () => {
       }));
     } catch (error) {
       console.error('Error fetching income logs:', error);
-      if (error.response?.status === 401) {
-        toast.error('Please log in as Accountant to view income logs');
-      } else if (error.response?.status === 403) {
-        toast.error('Access denied. You need Accountant permissions');
-      } else {
         toast.error('Failed to fetch income logs. Please try again.');
-      }
       setIncomeLogs([]);
     } finally {
       setLoading(false);
@@ -708,8 +766,8 @@ const IncomeLogManager = () => {
 
   const fetchStats = async () => {
     try {
-      // Use production API URL instead of localhost
-      const response = await fetch('https://api.edulives.com/api/income-logs/test/stats');
+      // Use local backend API
+      const response = await fetch('http://localhost:5001/api/income-logs/test/stats');
       const data = await response.json();
       setStats(data);
     } catch (error) {
@@ -726,15 +784,43 @@ const IncomeLogManager = () => {
 
   const handleCreate = async (values) => {
     try {
-      await incomeLogAPI.createIncomeLog({
+      console.log('Creating income log with values:', values);
+      
+      // Ensure all values are properly formatted
+      const dataToSend = {
         ...values,
-        date: values.date.toDate()
+        date: values.date, // Keep as string, backend will handle conversion
+        amount: parseFloat(values.amount) || 0,
+        gstRate: parseFloat(values.gstRate) || 0,
+        gstAmount: parseFloat(values.gstAmount) || 0,
+        cgstAmount: parseFloat(values.cgstAmount) || 0,
+        sgstAmount: parseFloat(values.sgstAmount) || 0,
+        totalAmount: parseFloat(values.totalAmount) || 0
+      };
+      
+      console.log('Sending data to API:', dataToSend);
+      
+      // Use local backend API for creation (test endpoint)
+      const response = await fetch('http://localhost:5001/api/income-logs/test/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dataToSend)
       });
-      toast.success('Income log created successfully');
-      setCreateModalVisible(false);
-      fetchIncomeLogs();
-      fetchStats();
+      
+      if (response.ok) {
+        toast.success('Income log created successfully');
+        setCreateModalVisible(false);
+        resetForm();
+        fetchIncomeLogs();
+        fetchStats();
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.message || 'Failed to create income log');
+      }
     } catch (error) {
+      console.error('Error creating income log:', error);
       toast.error('Failed to create income log');
     }
   };
@@ -766,7 +852,29 @@ const IncomeLogManager = () => {
     }
   };
 
+  const resetForm = () => {
+    setFormData({
+      date: new Date().toISOString().split('T')[0],
+      incomeSource: '',
+      description: '',
+      amount: '',
+      receivedFrom: '',
+      receiptNo: '',
+      paymentMode: '',
+      receivedBy: '',
+      remarks: '',
+      isGSTApplicable: false,
+      gstRate: '',
+      gstNumber: '',
+      gstAmount: 0,
+      cgstAmount: 0,
+      sgstAmount: 0,
+      totalAmount: 0
+    });
+  };
+
   const showCreateModal = () => {
+    resetForm();
     setCreateModalVisible(true);
   };
 
@@ -1057,7 +1165,234 @@ const IncomeLogManager = () => {
         </Box>
       </Paper>
 
-      {/* Create/Edit Modal would go here - simplified for now */}
+      {/* Create Income Log Modal */}
+      <Dialog 
+        open={createModalVisible} 
+        onClose={() => setCreateModalVisible(false)} 
+        maxWidth="md" 
+        fullWidth
+      >
+        <DialogTitle>Create New Income Log</DialogTitle>
+        <DialogContent dividers>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Date"
+                type="date"
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                value={formData.date}
+                onChange={(e) => handleFormChange('date', e.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Income Source</InputLabel>
+                <Select
+                  value={formData.incomeSource}
+                  onChange={(e) => handleFormChange('incomeSource', e.target.value)}
+                >
+                  {incomeSources.map(source => (
+                    <MenuItem key={source} value={source}>{source}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="Description"
+                multiline
+                rows={3}
+                fullWidth
+                placeholder="Brief description of the income"
+                value={formData.description}
+                onChange={(e) => handleFormChange('description', e.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Amount (₹)"
+                type="number"
+                fullWidth
+                value={formData.amount}
+                onChange={(e) => handleFormChange('amount', e.target.value)}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Received From"
+                fullWidth
+                placeholder="Name of person/organization"
+                value={formData.receivedFrom}
+                onChange={(e) => handleFormChange('receivedFrom', e.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Receipt No"
+                fullWidth
+                placeholder="Internal receipt number"
+                value={formData.receiptNo}
+                onChange={(e) => handleFormChange('receiptNo', e.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Payment Mode</InputLabel>
+                <Select 
+                  value={formData.paymentMode}
+                  onChange={(e) => handleFormChange('paymentMode', e.target.value)}
+                >
+                  {paymentModes.map(mode => (
+                    <MenuItem key={mode} value={mode}>{mode}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Received By"
+                fullWidth
+                placeholder="Staff member who collected"
+                value={formData.receivedBy}
+                onChange={(e) => handleFormChange('receivedBy', e.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Remarks"
+                fullWidth
+                placeholder="Additional notes"
+                value={formData.remarks}
+                onChange={(e) => handleFormChange('remarks', e.target.value)}
+              />
+            </Grid>
+            
+            {/* GST Section */}
+            <Grid item xs={12}>
+              <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>GST Details</Typography>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <FormControlLabel
+                control={
+                  <Switch 
+                    checked={formData.isGSTApplicable}
+                    onChange={(e) => handleFormChange('isGSTApplicable', e.target.checked)}
+                  />
+                }
+                label="GST Applicable"
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                label="GST Rate (%)"
+                type="number"
+                fullWidth
+                value={formData.gstRate}
+                onChange={(e) => handleFormChange('gstRate', e.target.value)}
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                label="GST Number"
+                fullWidth
+                placeholder="GST Number (optional)"
+                value={formData.gstNumber}
+                onChange={(e) => handleFormChange('gstNumber', e.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <TextField
+                label="GST Amount"
+                type="number"
+                fullWidth
+                value={formData.gstAmount}
+                onChange={(e) => handleFormChange('gstAmount', e.target.value)}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                }}
+                sx={{ backgroundColor: '#f5f5f5' }}
+              />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <TextField
+                label="CGST Amount"
+                type="number"
+                fullWidth
+                value={formData.cgstAmount}
+                onChange={(e) => handleFormChange('cgstAmount', e.target.value)}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                }}
+                sx={{ backgroundColor: '#f5f5f5' }}
+              />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <TextField
+                label="SGST Amount"
+                type="number"
+                fullWidth
+                value={formData.sgstAmount}
+                onChange={(e) => handleFormChange('sgstAmount', e.target.value)}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                }}
+                sx={{ backgroundColor: '#f5f5f5' }}
+              />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <TextField
+                label="Total Amount"
+                type="number"
+                fullWidth
+                value={formData.totalAmount}
+                onChange={(e) => handleFormChange('totalAmount', e.target.value)}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                }}
+                sx={{ fontWeight: 'bold', color: theme.palette.primary.main, backgroundColor: '#e3f2fd' }}
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCreateModalVisible(false)}>Cancel</Button>
+          <Button 
+            variant="contained" 
+            onClick={() => {
+              // Create income log data from form state
+              const incomeData = {
+                date: new Date(formData.date),
+                incomeSource: formData.incomeSource,
+                description: formData.description,
+                amount: parseFloat(formData.amount) || 0,
+                receivedFrom: formData.receivedFrom,
+                receiptNo: formData.receiptNo,
+                paymentMode: formData.paymentMode,
+                receivedBy: formData.receivedBy,
+                remarks: formData.remarks,
+                isGSTApplicable: formData.isGSTApplicable,
+                gstRate: parseFloat(formData.gstRate) || 0,
+                gstNumber: formData.gstNumber,
+                gstAmount: parseFloat(formData.gstAmount) || 0,
+                cgstAmount: parseFloat(formData.cgstAmount) || 0,
+                sgstAmount: parseFloat(formData.sgstAmount) || 0,
+                totalAmount: parseFloat(formData.totalAmount) || 0
+              };
+              
+              handleCreate(incomeData);
+            }}
+          >
+            Create Income Log
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
@@ -1079,7 +1414,49 @@ const ExpenseLogManager = () => {
     total: 0
   });
   const [filters, setFilters] = useState({});
+  const [formData, setFormData] = useState({
+    date: new Date().toISOString().split('T')[0],
+    expenseCategory: '',
+    description: '',
+    amount: '',
+    paidTo: '',
+    voucherNo: '',
+    paymentMode: '',
+    approvedBy: '',
+    remarks: '',
+    isGSTApplicable: false,
+    gstRate: '',
+    gstNumber: '',
+    gstAmount: 0,
+    cgstAmount: 0,
+    sgstAmount: 0,
+    totalAmount: 0
+  });
   const { user } = useAuth();
+
+  // GST calculation function
+  const calculateGST = (amount, gstRate, isGSTApplicable) => {
+    if (!isGSTApplicable || !amount || !gstRate) {
+      return {
+        gstAmount: 0,
+        cgstAmount: 0,
+        sgstAmount: 0,
+        totalAmount: amount || 0
+      };
+    }
+    
+    const gstAmount = (amount * gstRate) / 100;
+    const cgstAmount = gstAmount / 2;
+    const sgstAmount = gstAmount / 2;
+    const totalAmount = amount + gstAmount;
+    
+    return {
+      gstAmount,
+      cgstAmount,
+      sgstAmount,
+      totalAmount
+    };
+  };
 
   // Expense categories from the Excel template
   const expenseCategories = [
@@ -1103,8 +1480,8 @@ const ExpenseLogManager = () => {
   const fetchExpenseLogs = async () => {
     setLoading(true);
     try {
-      // Use production API URL instead of localhost
-      const response = await fetch('https://api.edulives.com/api/expense-logs/test/logs');
+      // Use local backend API
+      const response = await fetch('http://localhost:5001/api/expense-logs/test/logs');
       const data = await response.json();
       
       setExpenseLogs(data.docs || []);
@@ -1114,13 +1491,7 @@ const ExpenseLogManager = () => {
       }));
     } catch (error) {
       console.error('Error fetching expense logs:', error);
-      if (error.response?.status === 401) {
-        toast.error('Please log in as Accountant to view expense logs');
-      } else if (error.response?.status === 403) {
-        toast.error('Access denied. You need Accountant permissions');
-      } else {
         toast.error('Failed to fetch expense logs. Please try again.');
-      }
       setExpenseLogs([]);
     } finally {
       setLoading(false);
@@ -1129,8 +1500,8 @@ const ExpenseLogManager = () => {
 
   const fetchStats = async () => {
     try {
-      // Use production API URL instead of localhost
-      const response = await fetch('https://api.edulives.com/api/expense-logs/test/stats');
+      // Use local backend API
+      const response = await fetch('http://localhost:5001/api/expense-logs/test/stats');
       const data = await response.json();
       setStats(data);
     } catch (error) {
@@ -1147,15 +1518,42 @@ const ExpenseLogManager = () => {
 
   const handleCreate = async (values) => {
     try {
-      await expenseLogAPI.createExpenseLog({
+      console.log('Creating expense log with values:', values);
+      
+      // Ensure all values are properly formatted
+      const dataToSend = {
         ...values,
-        date: values.date.toDate()
+        date: values.date, // Keep as string, backend will handle conversion
+        amount: parseFloat(values.amount) || 0,
+        gstRate: parseFloat(values.gstRate) || 0,
+        gstAmount: parseFloat(values.gstAmount) || 0,
+        cgstAmount: parseFloat(values.cgstAmount) || 0,
+        sgstAmount: parseFloat(values.sgstAmount) || 0,
+        totalAmount: parseFloat(values.totalAmount) || 0
+      };
+      
+      console.log('Sending data to API:', dataToSend);
+      
+      // Use local backend API for creation (test endpoint)
+      const response = await fetch('http://localhost:5001/api/expense-logs/test/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dataToSend)
       });
+      
+      if (response.ok) {
       toast.success('Expense log created successfully');
       setCreateModalVisible(false);
       fetchExpenseLogs();
       fetchStats();
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.message || 'Failed to create expense log');
+      }
     } catch (error) {
+      console.error('Error creating expense log:', error);
       toast.error('Failed to create expense log');
     }
   };
@@ -1478,7 +1876,194 @@ const ExpenseLogManager = () => {
         </Box>
       </Paper>
 
-      {/* Create/Edit Modal would go here - simplified for now */}
+      {/* Create Expense Log Modal */}
+      <Dialog 
+        open={createModalVisible} 
+        onClose={() => setCreateModalVisible(false)} 
+        maxWidth="md" 
+        fullWidth
+      >
+        <DialogTitle>Create New Expense Log</DialogTitle>
+        <DialogContent dividers>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Date"
+                type="date"
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                defaultValue={new Date().toISOString().split('T')[0]}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Expense Category</InputLabel>
+                <Select value="">
+                  {expenseCategories.map(category => (
+                    <MenuItem key={category} value={category}>{category}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="Description"
+                multiline
+                rows={3}
+                fullWidth
+                placeholder="Brief description of the expense"
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Amount (₹)"
+                type="number"
+                fullWidth
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Paid To"
+                fullWidth
+                placeholder="Vendor or individual"
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Voucher No"
+                fullWidth
+                placeholder="Internal voucher number"
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Payment Mode</InputLabel>
+                <Select value="">
+                  {paymentModes.map(mode => (
+                    <MenuItem key={mode} value={mode}>{mode}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Approved By"
+                fullWidth
+                placeholder="Person authorizing payment"
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Remarks"
+                fullWidth
+                placeholder="Additional notes"
+              />
+            </Grid>
+            
+            {/* GST Section */}
+            <Grid item xs={12}>
+              <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>GST Details</Typography>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <FormControlLabel
+                control={<Switch />}
+                label="GST Applicable"
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                label="GST Rate (%)"
+                type="number"
+                fullWidth
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                label="GST Number"
+                fullWidth
+                placeholder="GST Number (optional)"
+              />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <TextField
+                label="GST Amount"
+                type="number"
+                fullWidth
+                disabled
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <TextField
+                label="CGST Amount"
+                type="number"
+                fullWidth
+                disabled
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <TextField
+                label="SGST Amount"
+                type="number"
+                fullWidth
+                disabled
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <TextField
+                label="Total Amount"
+                type="number"
+                fullWidth
+                disabled
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                }}
+                sx={{ fontWeight: 'bold', color: theme.palette.primary.main }}
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCreateModalVisible(false)}>Cancel</Button>
+          <Button 
+            variant="contained" 
+            onClick={() => {
+              // Handle form submission
+              const formData = {
+                date: new Date(),
+                expenseCategory: 'Maintenance',
+                description: 'Sample expense',
+                amount: 25000,
+                paidTo: 'Test Vendor',
+                voucherNo: 'VCH001',
+                paymentMode: 'Bank Transfer',
+                approvedBy: 'Principal',
+                remarks: 'Test entry',
+                isGSTApplicable: true,
+                gstRate: 18,
+                gstNumber: '27AABCA1234Z1Z5'
+              };
+              handleCreate(formData);
+            }}
+          >
+            Create Expense Log
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

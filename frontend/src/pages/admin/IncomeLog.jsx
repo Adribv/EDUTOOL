@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Table, Badge, Modal, Form, Input, Select, DatePicker, Space, Row, Col, Statistic, Tag, Tooltip, message, InputNumber, Divider, Typography, Upload } from 'antd';
+import { Card, Button, Table, Badge, Modal, Form, Input, Select, DatePicker, Space, Row, Col, Statistic, Tag, Tooltip, message, InputNumber, Divider, Typography, Upload, Switch } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, DollarOutlined, CalendarOutlined, UserOutlined, FileTextOutlined, UploadOutlined, SearchOutlined, FilterOutlined } from '@ant-design/icons';
 import { incomeLogAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -26,6 +26,46 @@ const IncomeLog = () => {
   const { user } = useAuth();
 
   const [form] = Form.useForm();
+
+  // GST calculation function
+  const calculateGST = (amount, gstRate, isGSTApplicable) => {
+    if (!isGSTApplicable || !amount || !gstRate) {
+      return {
+        gstAmount: 0,
+        cgstAmount: 0,
+        sgstAmount: 0,
+        totalAmount: amount || 0
+      };
+    }
+    
+    const gstAmount = (amount * gstRate) / 100;
+    const cgstAmount = gstAmount / 2;
+    const sgstAmount = gstAmount / 2;
+    const totalAmount = amount + gstAmount;
+    
+    return {
+      gstAmount,
+      cgstAmount,
+      sgstAmount,
+      totalAmount
+    };
+  };
+
+  // Handle GST calculation on form field changes
+  const handleGSTCalculation = () => {
+    const amount = form.getFieldValue('amount') || 0;
+    const gstRate = form.getFieldValue('gstRate') || 0;
+    const isGSTApplicable = form.getFieldValue('isGSTApplicable') || false;
+    
+    const gstValues = calculateGST(amount, gstRate, isGSTApplicable);
+    
+    form.setFieldsValue({
+      gstAmount: gstValues.gstAmount,
+      cgstAmount: gstValues.cgstAmount,
+      sgstAmount: gstValues.sgstAmount,
+      totalAmount: gstValues.totalAmount
+    });
+  };
 
   // Income sources from the Excel template
   const incomeSources = [
@@ -78,16 +118,28 @@ const IncomeLog = () => {
 
   const handleCreate = async (values) => {
     try {
-      await incomeLogAPI.createIncomeLog({
+      console.log('Creating income log with values:', values);
+      const gstValues = calculateGST(values.amount, values.gstRate, values.isGSTApplicable);
+      
+      const dataToSend = {
         ...values,
-        date: values.date.toDate()
-      });
+        date: values.date.toDate(),
+        gstAmount: gstValues.gstAmount,
+        cgstAmount: gstValues.cgstAmount,
+        sgstAmount: gstValues.sgstAmount,
+        totalAmount: gstValues.totalAmount
+      };
+      
+      console.log('Sending data to API:', dataToSend);
+      
+      await incomeLogAPI.createIncomeLog(dataToSend);
       message.success('Income log created successfully');
       setCreateModalVisible(false);
       form.resetFields();
       fetchIncomeLogs();
       fetchStats();
     } catch (error) {
+      console.error('Error creating income log:', error);
       message.error('Failed to create income log');
     }
   };
@@ -121,6 +173,7 @@ const IncomeLog = () => {
   };
 
   const showCreateModal = () => {
+    console.log('Create modal button clicked!');
     setCreateModalVisible(true);
     form.resetFields();
   };
@@ -207,6 +260,26 @@ const IncomeLog = () => {
       render: (amount) => `₹${amount.toLocaleString()}`
     },
     {
+      title: 'GST',
+      key: 'gst',
+      width: 100,
+      render: (_, record) => {
+        if (record.isGSTApplicable) {
+          return (
+            <div>
+              <div style={{ fontSize: '12px', color: '#666' }}>
+                {record.gstRate}%
+              </div>
+              <div style={{ fontSize: '11px', color: '#999' }}>
+                ₹{record.gstAmount?.toLocaleString() || 0}
+              </div>
+            </div>
+          );
+        }
+        return <span style={{ color: '#ccc' }}>N/A</span>;
+      }
+    },
+    {
       title: 'Received From',
       dataIndex: 'receivedFrom',
       key: 'receivedFrom',
@@ -285,11 +358,14 @@ const IncomeLog = () => {
   return (
     <div style={{ padding: '24px' }}>
       <Card title="Income Log Management" extra={
-        user?.role === 'Accountant' && (
+        <Space>
+          <Button onClick={() => console.log('Test button clicked')}>
+            Test
+          </Button>
           <Button type="primary" icon={<PlusOutlined />} onClick={showCreateModal}>
             Add Income
           </Button>
-        )
+        </Space>
       }>
         {/* Statistics Row */}
         <Row gutter={16} style={{ marginBottom: 24 }}>
@@ -420,6 +496,9 @@ const IncomeLog = () => {
           form={form}
           layout="vertical"
           onFinish={handleCreate}
+          onFinishFailed={(errorInfo) => {
+            console.log('Form validation failed:', errorInfo);
+          }}
         >
           <Row gutter={16}>
             <Col span={12}>
@@ -467,6 +546,7 @@ const IncomeLog = () => {
                   placeholder="0.00"
                   formatter={value => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                   parser={value => value.replace(/₹\s?|(,*)/g, '')}
+                  onChange={handleGSTCalculation}
                 />
               </Form.Item>
             </Col>
@@ -502,6 +582,80 @@ const IncomeLog = () => {
                 rules={[{ required: true, message: 'Please enter receiver name' }]}
               >
                 <Input placeholder="Staff or department handling collection" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          {/* GST Section */}
+          <Row gutter={16}>
+            <Col span={8}>
+              <Form.Item
+                name="isGSTApplicable"
+                label="GST Applicable"
+                valuePropName="checked"
+              >
+                <Switch onChange={handleGSTCalculation} />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                name="gstRate"
+                label="GST Rate (%)"
+              >
+                <InputNumber
+                  style={{ width: '100%' }}
+                  min={0}
+                  max={100}
+                  placeholder="0"
+                  formatter={value => `${value}%`}
+                  parser={value => value.replace('%', '')}
+                  onChange={handleGSTCalculation}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                name="gstNumber"
+                label="GST Number"
+              >
+                <Input placeholder="GST Number (optional)" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          {/* GST Amount Display */}
+          <Row gutter={16}>
+            <Col span={6}>
+              <Form.Item name="gstAmount" label="GST Amount">
+                <Input
+                  disabled
+                  prefix="₹"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item name="cgstAmount" label="CGST Amount">
+                <Input
+                  disabled
+                  prefix="₹"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item name="sgstAmount" label="SGST Amount">
+                <Input
+                  disabled
+                  prefix="₹"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item name="totalAmount" label="Total Amount">
+                <Input
+                  disabled
+                  prefix="₹"
+                  style={{ fontWeight: 'bold', color: '#1890ff' }}
+                />
               </Form.Item>
             </Col>
           </Row>
@@ -624,6 +778,83 @@ const IncomeLog = () => {
             </Col>
           </Row>
 
+          {/* GST Section */}
+          <Row gutter={16}>
+            <Col span={8}>
+              <Form.Item
+                name="isGSTApplicable"
+                label="GST Applicable"
+                valuePropName="checked"
+              >
+                <Switch />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                name="gstRate"
+                label="GST Rate (%)"
+              >
+                <InputNumber
+                  style={{ width: '100%' }}
+                  min={0}
+                  max={100}
+                  placeholder="0"
+                  formatter={value => `${value}%`}
+                  parser={value => value.replace('%', '')}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                name="gstNumber"
+                label="GST Number"
+              >
+                <Input placeholder="GST Number (optional)" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          {/* GST Amount Display */}
+          <Row gutter={16}>
+            <Col span={6}>
+              <Form.Item label="GST Amount">
+                <Input
+                  value={form.getFieldValue('gstAmount') || 0}
+                  disabled
+                  prefix="₹"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item label="CGST Amount">
+                <Input
+                  value={form.getFieldValue('cgstAmount') || 0}
+                  disabled
+                  prefix="₹"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item label="SGST Amount">
+                <Input
+                  value={form.getFieldValue('sgstAmount') || 0}
+                  disabled
+                  prefix="₹"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item label="Total Amount">
+                <Input
+                  value={form.getFieldValue('totalAmount') || form.getFieldValue('amount') || 0}
+                  disabled
+                  prefix="₹"
+                  style={{ fontWeight: 'bold', color: '#1890ff' }}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
           <Form.Item
             name="remarks"
             label="Remarks"
@@ -702,6 +933,48 @@ const IncomeLog = () => {
                 <Badge status={getStatusColor(viewingIncome.status)} text={viewingIncome.status} />
               </Col>
             </Row>
+            {viewingIncome.isGSTApplicable && (
+              <>
+                <Divider />
+                <Row gutter={16}>
+                  <Col span={6}>
+                    <Typography.Text strong>GST Rate:</Typography.Text>
+                    <br />
+                    <Typography.Text>{viewingIncome.gstRate}%</Typography.Text>
+                  </Col>
+                  <Col span={6}>
+                    <Typography.Text strong>GST Amount:</Typography.Text>
+                    <br />
+                    <Typography.Text>₹{viewingIncome.gstAmount?.toLocaleString() || 0}</Typography.Text>
+                  </Col>
+                  <Col span={6}>
+                    <Typography.Text strong>CGST Amount:</Typography.Text>
+                    <br />
+                    <Typography.Text>₹{viewingIncome.cgstAmount?.toLocaleString() || 0}</Typography.Text>
+                  </Col>
+                  <Col span={6}>
+                    <Typography.Text strong>SGST Amount:</Typography.Text>
+                    <br />
+                    <Typography.Text>₹{viewingIncome.sgstAmount?.toLocaleString() || 0}</Typography.Text>
+                  </Col>
+                </Row>
+                <Divider />
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Typography.Text strong>Total Amount:</Typography.Text>
+                    <br />
+                    <Typography.Text style={{ fontSize: '18px', color: '#1890ff', fontWeight: 'bold' }}>
+                      ₹{viewingIncome.totalAmount?.toLocaleString() || viewingIncome.amount.toLocaleString()}
+                    </Typography.Text>
+                  </Col>
+                  <Col span={12}>
+                    <Typography.Text strong>GST Number:</Typography.Text>
+                    <br />
+                    <Typography.Text>{viewingIncome.gstNumber || 'N/A'}</Typography.Text>
+                  </Col>
+                </Row>
+              </>
+            )}
             <Divider />
             <Row gutter={16}>
               <Col span={12}>

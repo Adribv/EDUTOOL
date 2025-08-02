@@ -23,6 +23,27 @@ const teacherLeaveRequestSchema = new mongoose.Schema({
     type: String, 
     required: true 
   },
+  supportingDocuments: [{
+    documentName: {
+      type: String,
+      required: true
+    },
+    documentType: {
+      type: String,
+      enum: ['Medical Certificate', 'Travel Document', 'Family Function Invitation', 'Study Leave Document', 'Other'],
+      required: true
+    },
+    fileUrl: {
+      type: String,
+      required: true
+    },
+    uploadedAt: {
+      type: Date,
+      default: Date.now
+    },
+    description: String
+  }],
+  // Keep for backward compatibility
   attachmentUrl: String,
   status: { 
     type: String, 

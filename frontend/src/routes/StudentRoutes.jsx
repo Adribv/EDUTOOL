@@ -20,6 +20,8 @@ import LeaveRequests from '../pages/student/LeaveRequests';
 import ExamResults from '../pages/student/ExamResults';
 import ReportCards from '../pages/student/ReportCards';
 import PerformanceAnalytics from '../pages/student/PerformanceAnalytics';
+import OverallProgress from '../pages/student/OverallProgress';
+import ComprehensiveProgressTemplate from '../pages/student/ComprehensiveProgressTemplate';
 import LearningResources from '../pages/student/LearningResources';
 import ClassDiscussions from '../pages/student/ClassDiscussions';
 import PaymentReceipts from '../pages/student/PaymentReceipts';
@@ -50,6 +52,8 @@ const StudentRoutes = () => {
         <Route path="/exam-results" element={<ExamResults />} />
         <Route path="/report-cards" element={<ReportCards />} />
         <Route path="/performance-analytics" element={<PerformanceAnalytics />} />
+        <Route path="/overall-progress" element={<OverallProgress />} />
+        <Route path="/comprehensive-progress" element={<ComprehensiveProgressTemplate />} />
         
         {/* Attendance */}
         <Route path="/attendance" element={<Attendance />} />

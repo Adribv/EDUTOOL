@@ -50,6 +50,26 @@ const staffLeaveRequestSchema = new mongoose.Schema({
   },
   approvedAt: Date,
   comments: String,
+  supportingDocuments: [{
+    documentName: {
+      type: String,
+      required: true
+    },
+    documentType: {
+      type: String,
+      enum: ['Medical Certificate', 'Travel Document', 'Family Function Invitation', 'Other'],
+      required: true
+    },
+    fileUrl: {
+      type: String,
+      required: true
+    },
+    uploadedAt: {
+      type: Date,
+      default: Date.now
+    },
+    description: String
+  }],
   submittedAt: {
     type: Date,
     default: Date.now

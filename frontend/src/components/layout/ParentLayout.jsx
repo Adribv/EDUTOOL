@@ -40,6 +40,7 @@ const drawerWidth = 240;
 const navItems = [
   { text: 'Dashboard', icon: <Dashboard />, path: '/parent/dashboard' },
   { text: 'My Children', icon: <Person />, path: '/parent/children' },
+  { text: 'Child Progress', icon: <Psychology />, path: '/parent/overall-progress' },
   { text: 'Fees', icon: <Payment />, path: '/parent/fees' },
   { text: 'Events', icon: <Event />, path: '/parent/events' },
   { text: 'Messages', icon: <Message />, path: '/parent/messages' },

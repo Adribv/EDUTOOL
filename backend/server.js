@@ -121,6 +121,8 @@ app.use('/api/transport-forms', require('./routes/transportForm.routes'));
 app.use('/api/counselling-requests', counsellingRequestRoutes);
 app.use('/api/admin', require('./routes/Admin/adminRoutes'));
 app.use('/api/delegation-authority', require('./routes/delegationAuthorityRoutes'));
+// app.use('/api/student-progress', require('./routes/Student/studentProgressRoutes'));
+// app.use('/api/comprehensive-progress', require('./routes/Student/comprehensiveProgressRoutes'));
 
 // --- MOCK STAFF DATA AND PERMISSIONS ENDPOINT FOR DEMO ---
 let staffList = [
@@ -179,7 +181,7 @@ app.use('*', (req, res) => {
   });
 });
 
-const PORT = process.env.PORT || 5000 || 5001;
+const PORT = process.env.PORT || 5000;
 
 // Improved server startup with port conflict handling
 const startServer = () => {

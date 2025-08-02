@@ -4,6 +4,7 @@ import ParentDashboard from '../pages/parent/ParentDashboard';
 import Profile from '../pages/parent/Profile';
 import Children from '../pages/parent/Children';
 import ChildProgress from '../pages/parent/ChildProgress';
+import ChildOverallProgress from '../pages/parent/ChildOverallProgress';
 import Assignments from '../pages/parent/Assignments';
 import StudentDetails from '../pages/parent/StudentDetails';
 import FeeManagement from '../pages/parent/FeeManagement';
@@ -38,6 +39,7 @@ const ParentRoutes = () => {
         <Route path="profile" element={<Profile />} />
         <Route path="children" element={<Children />} />
         <Route path="children/:rollNumber/progress" element={<ChildProgress />} />
+        <Route path="overall-progress" element={<ChildOverallProgress />} />
         <Route path="children/:rollNumber/assignments" element={<Assignments />} />
         <Route path="children/:rollNumber/details" element={<StudentDetails />} />
         <Route path="fees" element={<FeeManagement />} />

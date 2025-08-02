@@ -54,6 +54,26 @@ const studentLeaveRequestSchema = new mongoose.Schema({
   },
   approvedAt: Date,
   comments: String,
+  supportingDocuments: [{
+    documentName: {
+      type: String,
+      required: true
+    },
+    documentType: {
+      type: String,
+      enum: ['Medical Certificate', 'Travel Document', 'Family Function Invitation', 'School Event', 'Other'],
+      required: true
+    },
+    fileUrl: {
+      type: String,
+      required: true
+    },
+    uploadedAt: {
+      type: Date,
+      default: Date.now
+    },
+    description: String
+  }],
   submittedAt: {
     type: Date,
     default: Date.now

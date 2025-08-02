@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: 'https://api.edulives.com/api',
+  baseURL: 'http://localhost:5001/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -98,6 +98,15 @@ export const studentAPI = {
   getAdmitCard: (examId) => api.get(`/students/exams/${examId}/admit-card`),
   getExamResults: () => api.get('/students/exam-results'),
   getReportCards: () => api.get('/students/report-cards'),
+  
+  // Progress Reports
+  getMyProgress: (params) => api.get('/student-progress/my-progress', { params }),
+  getMyAnalytics: (params) => api.get('/student-progress/my-analytics', { params }),
+  submitProgressFeedback: (progressId, feedback) => api.post(`/student-progress/feedback/${progressId}`, feedback),
+  
+  // Comprehensive Progress Reports
+  getMyComprehensiveReport: (params) => api.get('/comprehensive-progress/my-comprehensive-report', { params }),
+  submitComprehensiveFeedback: (reportId, feedback) => api.post(`/comprehensive-progress/feedback/${reportId}`, feedback),
   getPerformanceAnalytics: () => api.get('/students/performance-analytics'),
   
   // Fee Management
@@ -254,6 +263,15 @@ export const parentAPI = {
 
   // Test functions
   createTestParent: () => api.post('/parents/create-test-parent').then(res => res.data),
+  
+  // Progress Reports
+  getChildProgress: (childId, params) => api.get(`/student-progress/child/${childId}`, { params }),
+  getChildAnalytics: (childId, params) => api.get(`/student-progress/analytics/${childId}`, { params }),
+  submitProgressFeedback: (progressId, feedback) => api.post(`/student-progress/feedback/${progressId}`, feedback),
+  
+  // Comprehensive Progress Reports
+  getChildComprehensiveReport: (childId, params) => api.get(`/comprehensive-progress/child/${childId}/comprehensive-report`, { params }),
+  submitComprehensiveFeedback: (reportId, feedback) => api.post(`/comprehensive-progress/feedback/${reportId}`, feedback),
 };
 
 // Admin endpoints
@@ -1530,24 +1548,24 @@ export const teacherRemarksAPI = {
 
 // Expense Log Management
 export const expenseLogAPI = {
-  getExpenseLogs: (params) => api.get('/expense-logs', { params }).then(res => res.data),
+  getExpenseLogs: (params) => api.get('/expense-logs/test/logs', { params }).then(res => res.data),
   getExpenseLogById: (id) => api.get(`/expense-logs/${id}`).then(res => res.data),
   createExpenseLog: (data) => api.post('/expense-logs', data).then(res => res.data),
   updateExpenseLog: (id, data) => api.put(`/expense-logs/${id}`, data).then(res => res.data),
   deleteExpenseLog: (id) => api.delete(`/expense-logs/${id}`).then(res => res.data),
   updateExpenseLogStatus: (id, data) => api.patch(`/expense-logs/${id}/status`, data).then(res => res.data),
-  getExpenseLogStats: () => api.get('/expense-logs/stats').then(res => res.data),
+  getExpenseLogStats: () => api.get('/expense-logs/test/stats').then(res => res.data),
 };
 
 // Income Log Management
 export const incomeLogAPI = {
-  getIncomeLogs: (params) => api.get('/income-logs', { params }).then(res => res.data),
+  getIncomeLogs: (params) => api.get('/income-logs/test/logs', { params }).then(res => res.data),
   getIncomeLogById: (id) => api.get(`/income-logs/${id}`).then(res => res.data),
   createIncomeLog: (data) => api.post('/income-logs', data).then(res => res.data),
   updateIncomeLog: (id, data) => api.put(`/income-logs/${id}`, data).then(res => res.data),
   deleteIncomeLog: (id) => api.delete(`/income-logs/${id}`).then(res => res.data),
   updateIncomeLogStatus: (id, data) => api.patch(`/income-logs/${id}/status`, data).then(res => res.data),
-  getIncomeLogStats: () => api.get('/income-logs/stats').then(res => res.data),
+  getIncomeLogStats: () => api.get('/income-logs/test/stats').then(res => res.data),
 };
 
 // Meeting Minutes Management

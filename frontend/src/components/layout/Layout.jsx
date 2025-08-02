@@ -384,6 +384,8 @@ const Layout = () => {
               { text: 'Inspection Log', icon: <Search />, path: '/admin/inspection-log', activity: 'Inspection Log' },
         { text: 'Budget Approval', icon: <AccountBalance />, path: '/admin/budget-approval', activity: 'Budget Approval' },
         { text: 'Meeting Minutes', icon: <Event />, path: '/admin/meeting-minutes', activity: 'Meeting Minutes' },
+        { text: 'Income Log', icon: <Receipt />, path: '/admin/income-log', activity: 'Income Log' },
+        { text: 'Expense Log', icon: <Receipt />, path: '/admin/expense-log', activity: 'Expense Log' },
         { text: 'Salary Payroll', icon: <AccountBalance />, path: '/admin/salary-payroll', activity: 'Salary Payroll' },
       ],
       ITAdmin: [
@@ -419,6 +421,8 @@ const Layout = () => {
         { text: 'Inspection Log', icon: <Search />, path: '/admin/inspection-log', activity: 'Inspection Log' },
         { text: 'Budget Approval', icon: <AccountBalance />, path: '/admin/budget-approval', activity: 'Budget Approval' },
         { text: 'Meeting Minutes', icon: <Event />, path: '/admin/meeting-minutes', activity: 'Meeting Minutes' },
+        { text: 'Income Log', icon: <Receipt />, path: '/admin/income-log', activity: 'Income Log' },
+        { text: 'Expense Log', icon: <Receipt />, path: '/admin/expense-log', activity: 'Expense Log' },
       ],
       Counsellor: [
         { text: 'Counselling Requests', icon: <Psychology />, path: '/counselor/requests', activity: 'Counselling Requests' },
