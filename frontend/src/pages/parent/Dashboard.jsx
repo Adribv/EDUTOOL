@@ -693,6 +693,90 @@ const Dashboard = () => {
         </Card>
       </Box>
 
+      {/* Quick Navigation */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card 
+            sx={{ 
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              '&:hover': { transform: 'translateY(-4px)', boxShadow: 4 }
+            }}
+            onClick={() => navigate('/parent/comprehensive-progress')}
+          >
+            <CardContent sx={{ textAlign: 'center', p: 3 }}>
+              <Assessment color="primary" sx={{ fontSize: 50, mb: 2 }} />
+              <Typography variant="h6" gutterBottom>
+                Progress Report
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                View comprehensive academic progress
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card 
+            sx={{ 
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              '&:hover': { transform: 'translateY(-4px)', boxShadow: 4 }
+            }}
+            onClick={() => navigate('/parent/children')}
+          >
+            <CardContent sx={{ textAlign: 'center', p: 3 }}>
+              <Person color="primary" sx={{ fontSize: 50, mb: 2 }} />
+              <Typography variant="h6" gutterBottom>
+                My Children
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                Manage children information
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card 
+            sx={{ 
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              '&:hover': { transform: 'translateY(-4px)', boxShadow: 4 }
+            }}
+            onClick={() => navigate('/parent/fees')}
+          >
+            <CardContent sx={{ textAlign: 'center', p: 3 }}>
+              <Payment color="primary" sx={{ fontSize: 50, mb: 2 }} />
+              <Typography variant="h6" gutterBottom>
+                Fee Management
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                View and manage payments
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card 
+            sx={{ 
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              '&:hover': { transform: 'translateY(-4px)', boxShadow: 4 }
+            }}
+            onClick={() => navigate('/parent/communication')}
+          >
+            <CardContent sx={{ textAlign: 'center', p: 3 }}>
+              <Message color="primary" sx={{ fontSize: 50, mb: 2 }} />
+              <Typography variant="h6" gutterBottom>
+                Communication
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                Connect with teachers
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
       {/* Children Information */}
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>

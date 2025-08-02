@@ -29,6 +29,7 @@ import ParentTransportFormCreate from '../pages/parent/ParentTransportFormCreate
 import ParentTransportFormView from '../pages/parent/ParentTransportFormView';
 import TeacherRemarksView from '../pages/parent/TeacherRemarksView';
 import CounsellingRequestForm from '../components/CounsellingRequestForm';
+import ComprehensiveProgressTemplate from '../pages/student/ComprehensiveProgressTemplate';
 
 const ParentRoutes = () => {
   return (
@@ -40,6 +41,7 @@ const ParentRoutes = () => {
         <Route path="children" element={<Children />} />
         <Route path="children/:rollNumber/progress" element={<ChildProgress />} />
         <Route path="overall-progress" element={<ChildOverallProgress />} />
+        <Route path="comprehensive-progress" element={<ComprehensiveProgressTemplate />} />
         <Route path="children/:rollNumber/assignments" element={<Assignments />} />
         <Route path="children/:rollNumber/details" element={<StudentDetails />} />
         <Route path="fees" element={<FeeManagement />} />

@@ -668,6 +668,13 @@ const Dashboard = () => {
       color: '#5d4037',
       path: '/student/profile',
     },
+    {
+      title: 'Progress Report',
+      description: 'View comprehensive academic progress report',
+      icon: <Assessment color="primary" sx={{ fontSize: 40 }} />,
+      color: '#1976d2',
+      path: '/student/comprehensive-progress',
+    },
   ];
 
   // Task notification component
