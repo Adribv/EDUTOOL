@@ -701,7 +701,7 @@ const IncomeLogManager = () => {
     setFormData(updatedFormData);
   };
 
-  // GST calculation function
+  // GST calculation function - FIXED for accurate calculation
   const calculateGST = (amount, gstRate, isGSTApplicable) => {
     if (!isGSTApplicable || !amount || !gstRate) {
       return {
@@ -712,16 +712,17 @@ const IncomeLogManager = () => {
       };
     }
     
+    // Calculate GST amount accurately
     const gstAmount = (amount * gstRate) / 100;
     const cgstAmount = gstAmount / 2;
     const sgstAmount = gstAmount / 2;
     const totalAmount = amount + gstAmount;
     
     return {
-      gstAmount,
-      cgstAmount,
-      sgstAmount,
-      totalAmount
+      gstAmount: Math.round(gstAmount * 100) / 100, // Round to 2 decimal places
+      cgstAmount: Math.round(cgstAmount * 100) / 100,
+      sgstAmount: Math.round(sgstAmount * 100) / 100,
+      totalAmount: Math.round(totalAmount * 100) / 100
     };
   };
 
@@ -1434,7 +1435,29 @@ const ExpenseLogManager = () => {
   });
   const { user } = useAuth();
 
-  // GST calculation function
+  // Handle form field changes for expense logs
+  const handleFormChange = (field, value) => {
+    const updatedFormData = { ...formData, [field]: value };
+    
+    // Recalculate GST if amount, gstRate, or isGSTApplicable changes
+    if (field === 'amount' || field === 'gstRate' || field === 'isGSTApplicable') {
+      // Ensure proper number conversion
+      const amount = field === 'amount' ? parseFloat(value) || 0 : parseFloat(formData.amount) || 0;
+      const gstRate = field === 'gstRate' ? parseFloat(value) || 0 : parseFloat(formData.gstRate) || 0;
+      const isGSTApplicable = field === 'isGSTApplicable' ? value : formData.isGSTApplicable;
+      
+      const gstValues = calculateGST(amount, gstRate, isGSTApplicable);
+      
+      updatedFormData.gstAmount = gstValues.gstAmount;
+      updatedFormData.cgstAmount = gstValues.cgstAmount;
+      updatedFormData.sgstAmount = gstValues.sgstAmount;
+      updatedFormData.totalAmount = gstValues.totalAmount;
+    }
+    
+    setFormData(updatedFormData);
+  };
+
+  // GST calculation function - FIXED for accurate calculation
   const calculateGST = (amount, gstRate, isGSTApplicable) => {
     if (!isGSTApplicable || !amount || !gstRate) {
       return {
@@ -1445,16 +1468,17 @@ const ExpenseLogManager = () => {
       };
     }
     
+    // Calculate GST amount accurately
     const gstAmount = (amount * gstRate) / 100;
     const cgstAmount = gstAmount / 2;
     const sgstAmount = gstAmount / 2;
     const totalAmount = amount + gstAmount;
     
     return {
-      gstAmount,
-      cgstAmount,
-      sgstAmount,
-      totalAmount
+      gstAmount: Math.round(gstAmount * 100) / 100, // Round to 2 decimal places
+      cgstAmount: Math.round(cgstAmount * 100) / 100,
+      sgstAmount: Math.round(sgstAmount * 100) / 100,
+      totalAmount: Math.round(totalAmount * 100) / 100
     };
   };
 
@@ -1546,6 +1570,7 @@ const ExpenseLogManager = () => {
       if (response.ok) {
       toast.success('Expense log created successfully');
       setCreateModalVisible(false);
+      resetForm();
       fetchExpenseLogs();
       fetchStats();
       } else {
@@ -1585,7 +1610,29 @@ const ExpenseLogManager = () => {
     }
   };
 
+  const resetForm = () => {
+    setFormData({
+      date: new Date().toISOString().split('T')[0],
+      expenseCategory: '',
+      description: '',
+      amount: '',
+      paidTo: '',
+      voucherNo: '',
+      paymentMode: '',
+      approvedBy: '',
+      remarks: '',
+      isGSTApplicable: false,
+      gstRate: '',
+      gstNumber: '',
+      gstAmount: 0,
+      cgstAmount: 0,
+      sgstAmount: 0,
+      totalAmount: 0
+    });
+  };
+
   const showCreateModal = () => {
+    resetForm();
     setCreateModalVisible(true);
   };
 
@@ -1892,13 +1939,17 @@ const ExpenseLogManager = () => {
                 type="date"
                 fullWidth
                 InputLabelProps={{ shrink: true }}
-                defaultValue={new Date().toISOString().split('T')[0]}
+                value={formData.date}
+                onChange={(e) => handleFormChange('date', e.target.value)}
               />
             </Grid>
             <Grid item xs={12} md={6}>
               <FormControl fullWidth>
                 <InputLabel>Expense Category</InputLabel>
-                <Select value="">
+                <Select 
+                  value={formData.expenseCategory}
+                  onChange={(e) => handleFormChange('expenseCategory', e.target.value)}
+                >
                   {expenseCategories.map(category => (
                     <MenuItem key={category} value={category}>{category}</MenuItem>
                   ))}
@@ -1912,6 +1963,8 @@ const ExpenseLogManager = () => {
                 rows={3}
                 fullWidth
                 placeholder="Brief description of the expense"
+                value={formData.description}
+                onChange={(e) => handleFormChange('description', e.target.value)}
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -1919,6 +1972,8 @@ const ExpenseLogManager = () => {
                 label="Amount (₹)"
                 type="number"
                 fullWidth
+                value={formData.amount}
+                onChange={(e) => handleFormChange('amount', e.target.value)}
                 InputProps={{
                   startAdornment: <InputAdornment position="start">₹</InputAdornment>,
                 }}
@@ -1929,6 +1984,8 @@ const ExpenseLogManager = () => {
                 label="Paid To"
                 fullWidth
                 placeholder="Vendor or individual"
+                value={formData.paidTo}
+                onChange={(e) => handleFormChange('paidTo', e.target.value)}
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -1936,12 +1993,17 @@ const ExpenseLogManager = () => {
                 label="Voucher No"
                 fullWidth
                 placeholder="Internal voucher number"
+                value={formData.voucherNo}
+                onChange={(e) => handleFormChange('voucherNo', e.target.value)}
               />
             </Grid>
             <Grid item xs={12} md={6}>
               <FormControl fullWidth>
                 <InputLabel>Payment Mode</InputLabel>
-                <Select value="">
+                <Select 
+                  value={formData.paymentMode}
+                  onChange={(e) => handleFormChange('paymentMode', e.target.value)}
+                >
                   {paymentModes.map(mode => (
                     <MenuItem key={mode} value={mode}>{mode}</MenuItem>
                   ))}
@@ -1953,6 +2015,8 @@ const ExpenseLogManager = () => {
                 label="Approved By"
                 fullWidth
                 placeholder="Person authorizing payment"
+                value={formData.approvedBy}
+                onChange={(e) => handleFormChange('approvedBy', e.target.value)}
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -1960,6 +2024,8 @@ const ExpenseLogManager = () => {
                 label="Remarks"
                 fullWidth
                 placeholder="Additional notes"
+                value={formData.remarks}
+                onChange={(e) => handleFormChange('remarks', e.target.value)}
               />
             </Grid>
             
@@ -1969,7 +2035,12 @@ const ExpenseLogManager = () => {
             </Grid>
             <Grid item xs={12} md={4}>
               <FormControlLabel
-                control={<Switch />}
+                control={
+                  <Switch 
+                    checked={formData.isGSTApplicable}
+                    onChange={(e) => handleFormChange('isGSTApplicable', e.target.checked)}
+                  />
+                }
                 label="GST Applicable"
               />
             </Grid>
@@ -1978,6 +2049,8 @@ const ExpenseLogManager = () => {
                 label="GST Rate (%)"
                 type="number"
                 fullWidth
+                value={formData.gstRate}
+                onChange={(e) => handleFormChange('gstRate', e.target.value)}
                 InputProps={{
                   endAdornment: <InputAdornment position="end">%</InputAdornment>,
                 }}
@@ -1988,6 +2061,8 @@ const ExpenseLogManager = () => {
                 label="GST Number"
                 fullWidth
                 placeholder="GST Number (optional)"
+                value={formData.gstNumber}
+                onChange={(e) => handleFormChange('gstNumber', e.target.value)}
               />
             </Grid>
             <Grid item xs={12} md={3}>
@@ -1995,10 +2070,12 @@ const ExpenseLogManager = () => {
                 label="GST Amount"
                 type="number"
                 fullWidth
-                disabled
+                value={formData.gstAmount}
+                onChange={(e) => handleFormChange('gstAmount', e.target.value)}
                 InputProps={{
                   startAdornment: <InputAdornment position="start">₹</InputAdornment>,
                 }}
+                sx={{ backgroundColor: '#f5f5f5' }}
               />
             </Grid>
             <Grid item xs={12} md={3}>
@@ -2006,10 +2083,12 @@ const ExpenseLogManager = () => {
                 label="CGST Amount"
                 type="number"
                 fullWidth
-                disabled
+                value={formData.cgstAmount}
+                onChange={(e) => handleFormChange('cgstAmount', e.target.value)}
                 InputProps={{
                   startAdornment: <InputAdornment position="start">₹</InputAdornment>,
                 }}
+                sx={{ backgroundColor: '#f5f5f5' }}
               />
             </Grid>
             <Grid item xs={12} md={3}>
@@ -2017,10 +2096,12 @@ const ExpenseLogManager = () => {
                 label="SGST Amount"
                 type="number"
                 fullWidth
-                disabled
+                value={formData.sgstAmount}
+                onChange={(e) => handleFormChange('sgstAmount', e.target.value)}
                 InputProps={{
                   startAdornment: <InputAdornment position="start">₹</InputAdornment>,
                 }}
+                sx={{ backgroundColor: '#f5f5f5' }}
               />
             </Grid>
             <Grid item xs={12} md={3}>
@@ -2028,11 +2109,12 @@ const ExpenseLogManager = () => {
                 label="Total Amount"
                 type="number"
                 fullWidth
-                disabled
+                value={formData.totalAmount}
+                onChange={(e) => handleFormChange('totalAmount', e.target.value)}
                 InputProps={{
                   startAdornment: <InputAdornment position="start">₹</InputAdornment>,
                 }}
-                sx={{ fontWeight: 'bold', color: theme.palette.primary.main }}
+                sx={{ fontWeight: 'bold', color: theme.palette.primary.main, backgroundColor: '#e3f2fd' }}
               />
             </Grid>
           </Grid>
@@ -2042,22 +2124,27 @@ const ExpenseLogManager = () => {
           <Button 
             variant="contained" 
             onClick={() => {
-              // Handle form submission
-              const formData = {
-                date: new Date(),
-                expenseCategory: 'Maintenance',
-                description: 'Sample expense',
-                amount: 25000,
-                paidTo: 'Test Vendor',
-                voucherNo: 'VCH001',
-                paymentMode: 'Bank Transfer',
-                approvedBy: 'Principal',
-                remarks: 'Test entry',
-                isGSTApplicable: true,
-                gstRate: 18,
-                gstNumber: '27AABCA1234Z1Z5'
+              // Create expense log data from form state
+              const expenseData = {
+                date: new Date(formData.date),
+                expenseCategory: formData.expenseCategory,
+                description: formData.description,
+                amount: parseFloat(formData.amount) || 0,
+                paidTo: formData.paidTo,
+                voucherNo: formData.voucherNo,
+                paymentMode: formData.paymentMode,
+                approvedBy: formData.approvedBy,
+                remarks: formData.remarks,
+                isGSTApplicable: formData.isGSTApplicable,
+                gstRate: parseFloat(formData.gstRate) || 0,
+                gstNumber: formData.gstNumber,
+                gstAmount: parseFloat(formData.gstAmount) || 0,
+                cgstAmount: parseFloat(formData.cgstAmount) || 0,
+                sgstAmount: parseFloat(formData.sgstAmount) || 0,
+                totalAmount: parseFloat(formData.totalAmount) || 0
               };
-              handleCreate(formData);
+              
+              handleCreate(expenseData);
             }}
           >
             Create Expense Log
