@@ -60,9 +60,31 @@ router.get('/test/logs', (req, res) => {
         approvedBy: 'Principal',
         remarks: 'Quarterly maintenance',
         status: 'Approved'
+      },
+      {
+        _id: '3',
+        serialNumber: 3,
+        date: new Date(),
+        expenseCategory: 'Equipment',
+        description: 'Computer equipment purchase',
+        amount: 25000,
+        isGSTApplicable: true,
+        gstRate: 18,
+        gstAmount: 4500,
+        cgstAmount: 2250,
+        sgstAmount: 2250,
+        igstAmount: 0,
+        totalAmount: 29500,
+        gstNumber: '27AABCA1234Z1Z5',
+        paidTo: 'Tech Solutions Ltd',
+        voucherNo: 'VCH003',
+        paymentMode: 'Bank Transfer',
+        approvedBy: 'Principal',
+        remarks: 'New computers for lab',
+        status: 'Approved'
       }
     ],
-    totalDocs: 2,
+    totalDocs: 3,
     limit: 10,
     page: 1,
     totalPages: 1

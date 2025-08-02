@@ -1074,7 +1074,7 @@ const IncomeLogManager = () => {
           width: '100%', 
           overflowX: 'auto',
           '& .MuiTable-root': {
-            minWidth: 1200, // Minimum width to prevent squishing
+            minWidth: 1400, // Increased minimum width to accommodate GST columns
           }
         }}>
           <Table>
@@ -1090,6 +1090,9 @@ const IncomeLogManager = () => {
                 <TableCell sx={{ minWidth: 120 }}>Payment Mode</TableCell>
                 <TableCell sx={{ minWidth: 100 }}>Received By</TableCell>
                 <TableCell sx={{ minWidth: 100 }}>Remarks</TableCell>
+                <TableCell sx={{ minWidth: 80 }}>GST</TableCell>
+                <TableCell sx={{ minWidth: 100 }}>GST Amount</TableCell>
+                <TableCell sx={{ minWidth: 100 }}>Total Amount</TableCell>
                 <TableCell sx={{ minWidth: 120 }}>Upload Document</TableCell>
                 <TableCell sx={{ minWidth: 100 }}>Status</TableCell>
                 <TableCell sx={{ minWidth: 120 }}>Actions</TableCell>
@@ -1114,6 +1117,32 @@ const IncomeLogManager = () => {
                     <TableCell>{income.receivedBy || 'N/A'}</TableCell>
                     <TableCell sx={{ maxWidth: 100, wordWrap: 'break-word' }}>
                       {income.remarks || 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      {income.isGSTApplicable ? (
+                        <Chip label={`${income.gstRate}%`} size="small" color="success" />
+                      ) : (
+                        <Chip label="No GST" size="small" color="default" />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {income.isGSTApplicable ? (
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            ₹{income.gstAmount.toLocaleString('en-IN')}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            CGST: ₹{income.cgstAmount.toLocaleString('en-IN')} | SGST: ₹{income.sgstAmount.toLocaleString('en-IN')}
+                          </Typography>
+                        </Box>
+                      ) : (
+                        'N/A'
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: theme.palette.success.main }}>
+                        ₹{income.totalAmount.toLocaleString('en-IN')}
+                      </Typography>
                     </TableCell>
                     <TableCell>
                       {income.uploadDocument ? (
@@ -1148,7 +1177,7 @@ const IncomeLogManager = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={13} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={16} align="center" sx={{ py: 4 }}>
                     <Box sx={{ textAlign: 'center' }}>
                       <InfoIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
                       <Typography variant="h6" color="text.secondary" gutterBottom>
@@ -1831,7 +1860,7 @@ const ExpenseLogManager = () => {
           width: '100%', 
           overflowX: 'auto',
           '& .MuiTable-root': {
-            minWidth: 1200, // Minimum width to prevent squishing
+            minWidth: 1400, // Increased minimum width to accommodate GST columns
           }
         }}>
           <Table>
@@ -1847,6 +1876,9 @@ const ExpenseLogManager = () => {
                 <TableCell sx={{ minWidth: 120 }}>Payment Mode</TableCell>
                 <TableCell sx={{ minWidth: 100 }}>Approved By</TableCell>
                 <TableCell sx={{ minWidth: 100 }}>Remarks</TableCell>
+                <TableCell sx={{ minWidth: 80 }}>GST</TableCell>
+                <TableCell sx={{ minWidth: 100 }}>GST Amount</TableCell>
+                <TableCell sx={{ minWidth: 100 }}>Total Amount</TableCell>
                 <TableCell sx={{ minWidth: 120 }}>Upload Document</TableCell>
                 <TableCell sx={{ minWidth: 100 }}>Status</TableCell>
                 <TableCell sx={{ minWidth: 120 }}>Actions</TableCell>
@@ -1871,6 +1903,32 @@ const ExpenseLogManager = () => {
                     <TableCell>{expense.approvedBy || 'N/A'}</TableCell>
                     <TableCell sx={{ maxWidth: 100, wordWrap: 'break-word' }}>
                       {expense.remarks || 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      {expense.isGSTApplicable ? (
+                        <Chip label={`${expense.gstRate}%`} size="small" color="success" />
+                      ) : (
+                        <Chip label="No GST" size="small" color="default" />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {expense.isGSTApplicable ? (
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            ₹{expense.gstAmount.toLocaleString('en-IN')}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            CGST: ₹{expense.cgstAmount.toLocaleString('en-IN')} | SGST: ₹{expense.sgstAmount.toLocaleString('en-IN')}
+                          </Typography>
+                        </Box>
+                      ) : (
+                        'N/A'
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: theme.palette.success.main }}>
+                        ₹{expense.totalAmount.toLocaleString('en-IN')}
+                      </Typography>
                     </TableCell>
                     <TableCell>
                       {expense.uploadDocument ? (
@@ -1905,7 +1963,7 @@ const ExpenseLogManager = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={13} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={16} align="center" sx={{ py: 4 }}>
                     <Box sx={{ textAlign: 'center' }}>
                       <InfoIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
                       <Typography variant="h6" color="text.secondary" gutterBottom>

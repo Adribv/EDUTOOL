@@ -60,9 +60,31 @@ router.get('/test/logs', (req, res) => {
         receivedBy: 'Accountant',
         remarks: 'Annual sponsorship',
         status: 'Confirmed'
+      },
+      {
+        _id: '3',
+        serialNumber: 3,
+        date: new Date(),
+        incomeSource: 'Fees',
+        description: 'Student tuition fees with GST',
+        amount: 30000,
+        isGSTApplicable: true,
+        gstRate: 18,
+        gstAmount: 5400,
+        cgstAmount: 2700,
+        sgstAmount: 2700,
+        igstAmount: 0,
+        totalAmount: 35400,
+        gstNumber: '27AABCA1234Z1Z5',
+        receivedFrom: 'Student Parent',
+        receiptNo: 'RCP003',
+        paymentMode: 'Bank Transfer',
+        receivedBy: 'Accountant',
+        remarks: 'Monthly fees with 18% GST',
+        status: 'Confirmed'
       }
     ],
-    totalDocs: 2,
+    totalDocs: 3,
     limit: 10,
     page: 1,
     totalPages: 1
