@@ -42,6 +42,7 @@ import {
   ExpandLess,
   ExpandMore,
   Computer,
+  Assessment,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 

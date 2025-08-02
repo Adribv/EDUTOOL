@@ -64,6 +64,8 @@ import {
   Schedule,
   Person,
   SupportAgent,
+  Home,
+  ArrowBack,
 } from '@mui/icons-material';
 import { adminAPI } from '../../services/api';
 import { toast } from 'react-toastify';
@@ -400,6 +402,22 @@ function AdminDashboard() {
 
   return (
     <Box p={3}>
+      {/* Back Button */}
+      <Box sx={{ position: 'absolute', top: 20, left: 20, zIndex: 10 }}>
+        <IconButton
+          onClick={() => window.history.back()}
+          sx={{
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            color: '#1976d2',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 1)',
+            }
+          }}
+        >
+          <ArrowBack />
+        </IconButton>
+      </Box>
+
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Box>

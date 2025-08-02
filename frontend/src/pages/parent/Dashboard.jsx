@@ -35,6 +35,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  IconButton,
 } from '@mui/material';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -57,6 +58,8 @@ import {
   History,
   Visibility,
   Error,
+  Home,
+  ArrowBack,
 } from '@mui/icons-material';
 import { adminAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -384,6 +387,22 @@ const Dashboard = () => {
 
   return (
     <Box sx={{ flexGrow: 1, p: 3, backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
+      {/* Back Button */}
+      <Box sx={{ position: 'absolute', top: 20, left: 20, zIndex: 10 }}>
+        <IconButton
+          onClick={() => window.history.back()}
+          sx={{
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            color: '#1976d2',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 1)',
+            }
+          }}
+        >
+          <ArrowBack />
+        </IconButton>
+      </Box>
+
       {/* Enhanced Header Section */}
       <Box sx={{ 
         mb: 4, 
@@ -409,7 +428,7 @@ const Dashboard = () => {
           variant="h6" 
           sx={{ 
             color: '#666',
-            fontWeight: 500,
+            fontWeight: 600,
             lineHeight: 1.6
           }}
         >

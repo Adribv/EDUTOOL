@@ -124,7 +124,14 @@ const Home = () => {
   };
 
   const PortalCard = ({ portal, index }) => (
-    <Grid item xs={12} key={index} sx={{ flexBasis: { xs: '100%', sm: '50%', md: '33.3333%' } }}>
+    <Grid item xs={12} sm={6} md={6} key={index} sx={{ 
+      display: 'flex',
+      '& .MuiCard-root': {
+        width: '100%',
+        height: '100%',
+        minHeight: { xs: '280px', sm: '320px', md: '350px' }
+      }
+    }}>
       <motion.div
         variants={cardVariants}
         whileHover="hover"
@@ -134,6 +141,7 @@ const Home = () => {
       >
         <Card
           sx={{
+            width: '100%',
             height: '100%',
             display: 'flex',
             flexDirection: 'column',
@@ -142,6 +150,7 @@ const Home = () => {
             border: '1px solid rgba(255, 255, 255, 0.2)',
             transition: 'all 0.3s ease-in-out',
             cursor: 'pointer',
+            minHeight: { xs: '280px', sm: '320px', md: '350px' },
             '&:hover': {
               transform: 'translateY(-8px)',
               boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
@@ -157,7 +166,8 @@ const Home = () => {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
+            justifyContent: 'space-between',
+            minHeight: { xs: '200px', sm: '220px', md: '240px' },
           }}>
             <Box sx={{ 
               mb: 2,
@@ -352,7 +362,7 @@ const Home = () => {
                   Student & Parent Portals
                 </Typography>
               </Box>
-              <Grid container spacing={{ xs: 2, sm: 3 }} justifyContent="center">
+              <Grid container spacing={{ xs: 2, sm: 3 }} justifyContent="center" alignItems="stretch">
                 {studentParentPortals.map((portal, index) => (
                   <PortalCard key={index} portal={portal} index={index} />
                 ))}
@@ -376,7 +386,7 @@ const Home = () => {
                   Staff & Management Portal
                 </Typography>
               </Box>
-              <Grid container spacing={{ xs: 2, sm: 3 }} justifyContent="center">
+              <Grid container spacing={{ xs: 2, sm: 3 }} justifyContent="center" alignItems="stretch">
                 {managementPortals.map((portal, index) => (
                   <PortalCard key={index} portal={portal} index={index} />
                 ))}

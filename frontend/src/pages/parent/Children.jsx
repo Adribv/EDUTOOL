@@ -21,7 +21,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import parentService from '../../services/parentService';
-import { Person, Assessment, Assignment, Add, School } from '@mui/icons-material';
+import { Person, Assessment, Assignment, Add, School, ArrowBack } from '@mui/icons-material';
 import { useState } from 'react';
 import React from 'react';
 
@@ -92,6 +92,8 @@ const Children = () => {
 
   return (
     <Box p={3}>
+
+
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h4" gutterBottom>
           My Children

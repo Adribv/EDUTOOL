@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Grid,
@@ -61,6 +62,8 @@ import {
   TrendingDown,
   Settings,
   Assessment,
+  Home,
+  ArrowBack,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -83,6 +86,7 @@ function TabPanel({ children, value, index, ...other }) {
 
 const AccountantDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
   const [stats, setStats] = useState({
     totalRevenue: 0,
@@ -482,6 +486,22 @@ const AccountantDashboard = () => {
 
   return (
     <Box sx={{ flexGrow: 1, p: 3 }}>
+      {/* Back Button */}
+      <Box sx={{ position: 'absolute', top: 20, left: 20, zIndex: 10 }}>
+        <IconButton
+          onClick={() => window.history.back()}
+          sx={{
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            color: '#1976d2',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 1)',
+            }
+          }}
+        >
+          <ArrowBack />
+        </IconButton>
+      </Box>
+
       <Typography variant="h4" gutterBottom>
         Welcome, {user?.name || 'Accountant'}
       </Typography>

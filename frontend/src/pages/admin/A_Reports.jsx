@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -30,10 +31,12 @@ import {
   School as SchoolIcon,
   Person as PersonIcon,
   Event as EventIcon,
+  ArrowBack,
 } from '@mui/icons-material';
 import adminService from '../../services/adminService';
 
 const A_Reports = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [reports, setReports] = useState([]);
@@ -129,6 +132,8 @@ const A_Reports = () => {
 
   return (
     <Box>
+
+
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h4">Reports</Typography>
         <Button

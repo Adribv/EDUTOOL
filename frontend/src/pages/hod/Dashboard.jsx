@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -67,7 +68,9 @@ import {
   VisibilityOff,
   Security,
   Support,
-  Approval
+  Approval,
+  Home,
+  ArrowBack
 } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
@@ -150,6 +153,7 @@ const allHODTabs = [
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const queryClient = useQueryClient();
@@ -720,6 +724,22 @@ const Dashboard = () => {
 
   return (
     <Box sx={{ p: { xs: 1, md: 3 }, width: '100%', maxWidth: '1400px', mx: 'auto' }}>
+      {/* Back Button */}
+      <Box sx={{ position: 'absolute', top: 20, left: 20, zIndex: 10 }}>
+        <IconButton
+          onClick={() => window.history.back()}
+          sx={{
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            color: '#1976d2',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 1)',
+            }
+          }}
+        >
+          <ArrowBack />
+        </IconButton>
+      </Box>
+
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Box display="flex" alignItems="center">

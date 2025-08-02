@@ -24,6 +24,7 @@ import {
   Email as EmailIcon,
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
+  ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import logo from '../../assets/logo.png';
@@ -81,6 +82,28 @@ const AccountantLogin = () => {
       position: 'relative',
       overflow: 'hidden',
     }}>
+      {/* Back to Home Button */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 20,
+          left: 20,
+          zIndex: 10,
+        }}
+      >
+        <IconButton
+          onClick={() => navigate('/')}
+          sx={{
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            color: '#1976d2',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 1)',
+            }
+          }}
+        >
+          <ArrowBackIcon />
+        </IconButton>
+      </Box>
       {/* Background image */}
       <Box sx={{
         position: 'absolute',

@@ -24,7 +24,7 @@ import {
   SupervisorAccount, People, Cancel, Approval, RateReview, Computer, LibraryBooks, 
   DirectionsBus, EmojiEvents, SportsSoccer, LocalLibrary, AccountBalance, Support,
   HealthAndSafety, EventAvailable, PsychologyAlt, School as SchoolIcon, 
-  BusinessCenter, Engineering, Science, ArtTrack, MusicNote, TheaterComedy, Build
+  BusinessCenter, Engineering, Science, ArtTrack, MusicNote, TheaterComedy, Build, Home, ArrowBack
 } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { teacherAPI, staffAPI, api } from '../../services/api';
@@ -1673,6 +1673,22 @@ export default function TeacherDashboard() {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      {/* Back Button */}
+      <Box sx={{ position: 'absolute', top: 20, left: 20, zIndex: 10 }}>
+        <IconButton
+          onClick={() => window.history.back()}
+          sx={{
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            color: '#1976d2',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 1)',
+            }
+          }}
+        >
+          <ArrowBack />
+        </IconButton>
+      </Box>
+
       {/* App Bar */}
       <AppBar position="static">
         <Toolbar>

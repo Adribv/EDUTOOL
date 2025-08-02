@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -77,7 +78,8 @@ import {
   Save,
   FilterList,
   Refresh,
-  Quiz
+  Quiz,
+  ArrowBack
 } from '@mui/icons-material';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { teacherAPI } from '../../services/api';
@@ -86,6 +88,7 @@ import { useAuth } from '../../context/AuthContext';
 
 const Assignments = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState(0);
   const [createDialog, setCreateDialog] = useState(false);
   const [editDialog, setEditDialog] = useState(false);
@@ -326,6 +329,8 @@ const Assignments = () => {
 
   return (
     <Box>
+
+
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4">

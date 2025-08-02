@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -84,6 +85,8 @@ import {
   History,
   Visibility,
   Error,
+  Home,
+  ArrowBack,
 } from '@mui/icons-material';
 import studentService from '../../services/studentService';
 import axios from 'axios';
@@ -93,6 +96,7 @@ import { toast } from 'react-toastify';
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -1127,6 +1131,22 @@ const Dashboard = () => {
   return (
     <Container maxWidth="xl">
       <Box sx={{ py: 3 }}>
+              {/* Back Button */}
+      <Box sx={{ position: 'absolute', top: 20, left: 20, zIndex: 10 }}>
+        <IconButton
+          onClick={() => window.history.back()}
+          sx={{
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            color: '#1976d2',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 1)',
+            }
+          }}
+        >
+          <ArrowBack />
+        </IconButton>
+      </Box>
+
         {/* Welcome Section with Enhanced Student Details */}
         <Box sx={{ mb: 4 }}>
           <Box display="flex" alignItems="center" mb={2}>

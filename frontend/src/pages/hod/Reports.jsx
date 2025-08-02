@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Paper,
@@ -24,9 +25,11 @@ import {
   Download as DownloadIcon,
   BarChart as BarChartIcon,
   PieChart as PieChartIcon,
+  ArrowBack,
 } from '@mui/icons-material';
 
 const Reports = () => {
+  const navigate = useNavigate();
   const [reportType, setReportType] = useState('');
 
   const handleReportTypeChange = (event) => {

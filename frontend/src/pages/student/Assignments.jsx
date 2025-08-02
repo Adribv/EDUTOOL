@@ -45,7 +45,9 @@ import {
   School,
   Subject,
   CalendarToday,
-  Quiz as QuizIcon
+  Quiz as QuizIcon,
+  Home,
+  ArrowBack
 } from '@mui/icons-material';
 import { studentAPI } from '../../services/api';
 import { toast } from 'react-toastify';
@@ -239,6 +241,8 @@ const Assignments = () => {
 
   return (
     <Box sx={{ flexGrow: 1, p: 3 }}>
+
+
       <Typography variant="h4" gutterBottom>
         My Assignments
       </Typography>

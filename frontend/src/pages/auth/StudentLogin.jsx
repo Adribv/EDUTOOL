@@ -24,6 +24,7 @@ import SchoolIcon from '@mui/icons-material/School';
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const validationSchema = yup.object({
   rollNumber: yup
@@ -107,6 +108,28 @@ function StudentLogin() {
         overflow: 'hidden',
       }}
     >
+      {/* Back to Home Button */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 20,
+          left: 20,
+          zIndex: 10,
+        }}
+      >
+        <IconButton
+          onClick={() => navigate('/')}
+          sx={{
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            color: '#1976d2',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 1)',
+            }
+          }}
+        >
+          <ArrowBackIcon />
+        </IconButton>
+      </Box>
       {/* Background image for all screen sizes */}
       <Box
         sx={{
