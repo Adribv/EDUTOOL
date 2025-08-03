@@ -750,7 +750,7 @@ const IncomeLogManager = () => {
     setLoading(true);
     try {
       // Use local backend API
-      const response = await fetch('http://localhost:50001/api/income-logs/test/logs');
+      const response = await fetch('https://api.edulives.com/api/income-logs/test/logs');
       const data = await response.json();
       
       setIncomeLogs(data.docs || []);
@@ -770,7 +770,7 @@ const IncomeLogManager = () => {
   const fetchStats = async () => {
     try {
       // Use local backend API
-      const response = await fetch('http://localhost:50001/api/income-logs/test/stats');
+      const response = await fetch('https://api.edulives.com/api/income-logs/test/stats');
       const data = await response.json();
       setStats(data);
     } catch (error) {
@@ -804,7 +804,7 @@ const IncomeLogManager = () => {
       console.log('Sending data to API:', dataToSend);
       
       // Use local backend API for creation (test endpoint)
-      const response = await fetch('http://localhost:50001/api/income-logs/test/create', {
+      const response = await fetch('https://api.edulives.com/api/income-logs/test/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1719,7 +1719,7 @@ const ExpenseLogManager = () => {
     setLoading(true);
     try {
       // Use local backend API
-      const response = await fetch('http://localhost:50001/api/expense-logs/test/logs');
+      const response = await fetch('https://api.edulives.com/api/expense-logs/test/logs');
       const data = await response.json();
       
       setExpenseLogs(data.docs || []);
@@ -1739,7 +1739,7 @@ const ExpenseLogManager = () => {
   const fetchStats = async () => {
     try {
       // Use local backend API
-      const response = await fetch('http://localhost:50001/api/expense-logs/test/stats');
+      const response = await fetch('https://api.edulives.com/api/expense-logs/test/stats');
       const data = await response.json();
       setStats(data);
     } catch (error) {
@@ -1773,7 +1773,7 @@ const ExpenseLogManager = () => {
       console.log('Sending data to API:', dataToSend);
       
       // Use local backend API for creation (test endpoint)
-      const response = await fetch('http://localhost:50001/api/expense-logs/test/create', {
+      const response = await fetch('https://api.edulives.com/api/expense-logs/test/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
