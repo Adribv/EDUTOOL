@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: 'http://localhost:5001/api',
+  baseURL: 'https://api.edulives.com/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -1585,9 +1585,9 @@ export const meetingMinutesAPI = {
   getMeetingMinutesStats: () => api.get('/meeting-minutes/stats').then(res => res.data),
 };
 
-export const getStudentFeeStatus = () => fetch('http://localhost:50001/api/accountant/fee-status').then(res => res.json());
-export const getFeeStats = () => fetch('http://localhost:50001/api/accountant/fee-stats').then(res => res.json());
-export const getTransactionLog = () => fetch('http://localhost:50001/api/accountant/transaction-log').then(res => res.json());
+export const getStudentFeeStatus = () => fetch('https://api.edulives.com/api/accountant/fee-status').then(res => res.json());
+export const getFeeStats = () => fetch('https://api.edulives.com/api/accountant/fee-stats').then(res => res.json());
+export const getTransactionLog = () => fetch('https://api.edulives.com/api/accountant/transaction-log').then(res => res.json());
 
 export const vpAPI = {
   // Dashboard
