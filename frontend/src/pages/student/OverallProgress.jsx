@@ -34,7 +34,12 @@ import {
   AccordionDetails,
   Rating,
   IconButton,
-  Tooltip
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField
 } from '@mui/material';
 import {
   TrendingUp as TrendingUpIcon,
@@ -54,7 +59,11 @@ import {
   Psychology as PsychologyIcon,
   SportsEsports as SportsIcon,
   MusicNote as MusicIcon,
-  Science as ScienceIcon
+  Science as ScienceIcon,
+  Comment as CommentIcon,
+  Send as SendIcon,
+  Print as PrintIcon,
+  Download as DownloadIcon
 } from '@mui/icons-material';
 import {
   LineChart,
@@ -82,39 +91,132 @@ import { toast } from 'react-toastify';
 
 const OverallProgress = () => {
   const [loading, setLoading] = useState(true);
-  const [progressData, setProgressData] = useState([]);
-  const [analytics, setAnalytics] = useState({});
   const [selectedPeriod, setSelectedPeriod] = useState('current');
-  const [selectedTab, setSelectedTab] = useState(0);
+  const [selectedTab, setSelectedTab] = useState(4); // Start with comprehensive report tab
   const [expandedAccordion, setExpandedAccordion] = useState('panel1');
+  const [feedbackDialog, setFeedbackDialog] = useState(false);
+  const [feedback, setFeedback] = useState('');
   const { user } = useAuth();
 
-  useEffect(() => {
-    fetchProgressData();
-  }, [selectedPeriod]);
-
-  const fetchProgressData = async () => {
-    try {
-      setLoading(true);
-      const params = { academicYear: '2024-25' };
-      if (selectedPeriod !== 'current') {
-        params.assessmentPeriod = selectedPeriod;
+  // Mock data that matches the PDF template
+  const mockData = {
+    academicPerformance: {
+      overallPercentage: 85,
+      overallGrade: 'A',
+      rank: 5,
+      subjects: [
+        { name: 'English', grade: 'A+', percentage: 92, improvement: 'Excellent', teacherRemarks: 'Excellent writing and communication skills' },
+        { name: 'Mathematics', grade: 'A', percentage: 88, improvement: 'Good', teacherRemarks: 'Strong problem-solving abilities' },
+        { name: 'Science', grade: 'A', percentage: 87, improvement: 'Good', teacherRemarks: 'Good understanding of scientific concepts' },
+        { name: 'Social Studies', grade: 'B+', percentage: 82, improvement: 'Satisfactory', teacherRemarks: 'Keep improving historical knowledge' },
+        { name: 'Computer Science', grade: 'A+', percentage: 95, improvement: 'Excellent', teacherRemarks: 'Excellent programming skills' }
+      ]
+    },
+    attendance: {
+      percentage: 95,
+      totalDays: 180,
+      daysPresent: 171,
+      daysAbsent: 9,
+      lateArrivals: 2
+    },
+    behavior: {
+      overallRating: 'Excellent',
+      punctuality: 'Excellent',
+      discipline: 'Good',
+      participation: 'Excellent',
+      teamwork: 'Good'
+    },
+    skills: {
+      communication: 'Excellent',
+      leadership: 'Good',
+      creativity: 'Satisfactory',
+      problemSolving: 'Excellent'
+    },
+    coCurricular: {
+      sports: { participated: true, achievements: ['First in Basketball'], rating: 'Excellent' },
+      cultural: { participated: true, achievements: ['Drama Competition Winner'], rating: 'Good' },
+      academic: { participated: true, achievements: ['Science Fair Winner'], rating: 'Excellent' }
+    },
+    goals: {
+      academic: { currentTarget: 'Achieve 90% in all subjects', achieved: false },
+      behavioral: { currentTarget: 'Improve punctuality', achieved: true },
+      personal: { currentTarget: 'Participate in more activities', achieved: true }
+    },
+    comprehensiveReport: {
+      schoolInfo: {
+        schoolName: 'EDULIVES School',
+        academicYear: '2024-25',
+        class: 'Class 10',
+        term: 'Annual',
+        reportDate: new Date().toLocaleDateString()
+      },
+      studentInfo: {
+        name: user?.name || 'Student Name',
+        admissionNumber: 'STU2024001',
+        dateOfBirth: '15-03-2008',
+        classSection: '10-A',
+        classTeacher: 'Mrs. Sarah Johnson'
+      },
+      academicPerformance: {
+        subjects: [
+          { name: 'English', marks: 92, totalMarks: 100, grade: 'A+', teacherRemarks: 'Excellent writing and communication skills' },
+          { name: 'Mathematics', marks: 88, totalMarks: 100, grade: 'A', teacherRemarks: 'Strong problem-solving abilities' },
+          { name: 'Science', marks: 87, totalMarks: 100, grade: 'A', teacherRemarks: 'Good understanding of scientific concepts' },
+          { name: 'Social Studies', marks: 82, totalMarks: 100, grade: 'B+', teacherRemarks: 'Keep improving historical knowledge' },
+          { name: 'Computer Science', marks: 95, totalMarks: 100, grade: 'A+', teacherRemarks: 'Excellent programming skills' }
+        ]
+      },
+      coScholasticAreas: [
+        { area: 'Work Habits', grade: 'A+', teacherComments: 'Excellent work habits and time management' },
+        { area: 'Communication Skills', grade: 'A', teacherComments: 'Good verbal and written communication' },
+        { area: 'Teamwork & Leadership', grade: 'B+', teacherComments: 'Shows leadership qualities in group activities' },
+        { area: 'Discipline', grade: 'A', teacherComments: 'Maintains good discipline in class' },
+        { area: 'Creativity', grade: 'B+', teacherComments: 'Shows creative thinking in projects' },
+        { area: 'Participation in Activities', grade: 'A', teacherComments: 'Active participation in school activities' }
+      ],
+      attendance: {
+        totalDays: 180,
+        daysPresent: 171,
+        daysAbsent: 9,
+        percentage: 95
+      },
+      trends: {
+        academicProgress: 'Improving',
+        attendanceTrend: 'Stable',
+        behaviorTrend: 'Excellent',
+        assignmentTrend: 'Good'
+      },
+      recommendations: {
+        academic: [
+          'Focus more on English writing skills',
+          'Practice more mathematical problems',
+          'Read more books to improve vocabulary'
+        ],
+        behavioral: [
+          'Continue maintaining good attendance',
+          'Participate more in class discussions',
+          'Help classmates with their studies'
+        ]
+      },
+      generalRemarks: {
+        classTeacher: 'Student shows excellent academic performance with room for improvement in social studies.',
+        principal: 'Overall satisfactory performance. Keep up the good work.'
+      },
+      signatures: {
+        classTeacher: 'Mrs. Sarah Johnson',
+        parentGuardian: 'Online acceptance with comments',
+        principal: 'Dr. Michael Brown',
+        date: new Date().toLocaleDateString()
       }
-
-      const [progressResponse, analyticsResponse] = await Promise.all([
-        studentAPI.getMyProgress(params),
-        studentAPI.getMyAnalytics(params)
-      ]);
-
-      setProgressData(progressResponse.data || []);
-      setAnalytics(analyticsResponse.data || {});
-    } catch (error) {
-      console.error('Error fetching progress data:', error);
-      toast.error('Failed to load progress data');
-    } finally {
-      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Simulate loading
+    setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+  }, []);
 
   const handleTabChange = (event, newValue) => {
     setSelectedTab(newValue);
@@ -178,6 +280,24 @@ const OverallProgress = () => {
     return ratings[rating] || 3;
   };
 
+  const handleFeedbackSubmit = async () => {
+    try {
+      if (!feedback.trim()) {
+        toast.error('Please enter your feedback before submitting');
+        return;
+      }
+      
+      // Submit feedback logic here
+      console.log('Feedback submitted:', feedback);
+      toast.success('Feedback submitted successfully! Thank you for your input.');
+      setFeedbackDialog(false);
+      setFeedback('');
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      toast.error('Failed to submit feedback');
+    }
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
@@ -186,7 +306,6 @@ const OverallProgress = () => {
     );
   }
 
-  const latestProgress = progressData[0];
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
   return (
@@ -213,472 +332,548 @@ const OverallProgress = () => {
         </FormControl>
       </Box>
 
-      {latestProgress ? (
-        <>
-          {/* Overview Cards */}
-          <Grid container spacing={3} sx={{ mb: 3 }}>
-            <Grid item xs={12} md={3}>
-              <Card>
-                <CardContent>
-                  <Box display="flex" alignItems="center">
-                    <SchoolIcon color="primary" sx={{ mr: 2 }} />
-                    <Box>
-                      <Typography variant="h6">
-                        {latestProgress.academicPerformance.overallPercentage}%
-                      </Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        Overall Grade: {latestProgress.academicPerformance.overallGrade}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid item xs={12} md={3}>
-              <Card>
-                <CardContent>
-                  <Box display="flex" alignItems="center">
-                    <CalendarIcon color="primary" sx={{ mr: 2 }} />
-                    <Box>
-                      <Typography variant="h6">
-                        {latestProgress.attendance.percentage}%
-                      </Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        Attendance Rate
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid item xs={12} md={3}>
-              <Card>
-                <CardContent>
-                  <Box display="flex" alignItems="center">
-                    <PsychologyIcon color="primary" sx={{ mr: 2 }} />
-                    <Box>
-                      <Typography variant="h6">
-                        {latestProgress.behavior.overallRating}
-                      </Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        Behavior Rating
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid item xs={12} md={3}>
-              <Card>
-                <CardContent>
-                  <Box display="flex" alignItems="center">
-                    <TrophyIcon color="primary" sx={{ mr: 2 }} />
-                    <Box>
-                      <Typography variant="h6">
-                        {latestProgress.academicPerformance.rank || 'N/A'}
-                      </Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        Class Rank
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-
-          {/* Detailed Progress Tabs */}
-          <Paper sx={{ mb: 3 }}>
-            <Tabs value={selectedTab} onChange={handleTabChange} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-              <Tab label="Academic Performance" />
-              <Tab label="Attendance & Behavior" />
-              <Tab label="Skills & Activities" />
-              <Tab label="Analytics & Trends" />
-            </Tabs>
-
-            <Box sx={{ p: 3 }}>
-              {selectedTab === 0 && (
+      {/* Overview Cards */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid item xs={12} md={3}>
+          <Card>
+            <CardContent>
+              <Box display="flex" alignItems="center">
+                <SchoolIcon color="primary" sx={{ mr: 2 }} />
                 <Box>
-                  <Typography variant="h6" gutterBottom>
-                    Subject-wise Performance
+                  <Typography variant="h6">
+                    {mockData.academicPerformance.overallPercentage}%
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    Overall Grade: {mockData.academicPerformance.overallGrade}
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <Card>
+            <CardContent>
+              <Box display="flex" alignItems="center">
+                <CalendarIcon color="primary" sx={{ mr: 2 }} />
+                <Box>
+                  <Typography variant="h6">
+                    {mockData.attendance.percentage}%
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    Attendance Rate
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <Card>
+            <CardContent>
+              <Box display="flex" alignItems="center">
+                <PsychologyIcon color="primary" sx={{ mr: 2 }} />
+                <Box>
+                  <Typography variant="h6">
+                    {mockData.behavior.overallRating}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    Behavior Rating
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <Card>
+            <CardContent>
+              <Box display="flex" alignItems="center">
+                <TrophyIcon color="primary" sx={{ mr: 2 }} />
+                <Box>
+                  <Typography variant="h6">
+                    {mockData.academicPerformance.rank || 'N/A'}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    Class Rank
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Detailed Progress Tabs */}
+      <Paper sx={{ mb: 3 }}>
+        <Tabs value={selectedTab} onChange={handleTabChange} sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <Tab label="Academic Performance" />
+          <Tab label="Attendance & Behavior" />
+          <Tab label="Skills & Activities" />
+          <Tab label="Analytics & Trends" />
+          <Tab label="Comprehensive Report" />
+        </Tabs>
+
+        <Box sx={{ p: 3 }}>
+          {selectedTab === 4 && (
+            <Box>
+              {/* Header */}
+              <Box sx={{ mb: 4, textAlign: 'center' }}>
+                <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: '#1976d2' }}>
+                  COMPREHENSIVE PROGRESS REPORT
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
+              </Box>
+
+              {/* Report Information */}
+              <Card sx={{ mb: 3 }}>
+                <CardContent>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Typography variant="body2" color="textSecondary">School Name:</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                        {mockData.comprehensiveReport.schoolInfo.schoolName}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Typography variant="body2" color="textSecondary">Academic Year:</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                        {mockData.comprehensiveReport.schoolInfo.academicYear}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Typography variant="body2" color="textSecondary">Class / Grade:</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                        {mockData.comprehensiveReport.schoolInfo.class}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Typography variant="body2" color="textSecondary">Term:</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                        {mockData.comprehensiveReport.schoolInfo.term}
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+
+              <Divider sx={{ mb: 3 }} />
+
+              {/* Student Information */}
+              <Card sx={{ mb: 3 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+                    Student Information:
+                  </Typography>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Typography variant="body2" color="textSecondary">Name:</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                        {mockData.comprehensiveReport.studentInfo.name}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Typography variant="body2" color="textSecondary">Admission Number:</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                        {mockData.comprehensiveReport.studentInfo.admissionNumber}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Typography variant="body2" color="textSecondary">Date of Birth:</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                        {mockData.comprehensiveReport.studentInfo.dateOfBirth}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Typography variant="body2" color="textSecondary">Class/Section:</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                        {mockData.comprehensiveReport.studentInfo.classSection}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Typography variant="body2" color="textSecondary">Class Teacher:</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                        {mockData.comprehensiveReport.studentInfo.classTeacher}
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+
+              <Divider sx={{ mb: 3 }} />
+
+              {/* Academic Performance */}
+              <Card sx={{ mb: 3 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+                    Academic Performance:
                   </Typography>
                   <TableContainer>
                     <Table>
                       <TableHead>
                         <TableRow>
-                          <TableCell>Subject</TableCell>
-                          <TableCell>Grade</TableCell>
-                          <TableCell>Percentage</TableCell>
-                          <TableCell>Improvement</TableCell>
-                          <TableCell>Remarks</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Subject</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Marks Obtained</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Maximum Marks</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Grade</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Teacher's Remarks</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {latestProgress.academicPerformance.subjects.map((subject, index) => (
+                        {mockData.comprehensiveReport.academicPerformance.subjects.map((subject, index) => (
                           <TableRow key={index}>
                             <TableCell>{subject.name}</TableCell>
+                            <TableCell>{subject.marks}</TableCell>
+                            <TableCell>{subject.totalMarks}</TableCell>
                             <TableCell>
-                              <Chip
-                                label={subject.grade}
+                              <Chip 
+                                label={subject.grade} 
                                 color={getGradeColor(subject.grade)}
                                 size="small"
                               />
                             </TableCell>
-                            <TableCell>{subject.percentage}%</TableCell>
-                            <TableCell>
-                              <Chip
-                                label={subject.improvement}
-                                color={getRatingColor(subject.improvement)}
-                                size="small"
-                              />
-                            </TableCell>
-                            <TableCell>{subject.teacherRemarks || 'N/A'}</TableCell>
+                            <TableCell>{subject.teacherRemarks}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
                   </TableContainer>
-                </Box>
-              )}
+                </CardContent>
+              </Card>
 
-              {selectedTab === 1 && (
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="h6" gutterBottom>
-                      Attendance Details
-                    </Typography>
-                    <List>
-                      <ListItem>
-                        <ListItemText
-                          primary="Total Days"
-                          secondary={latestProgress.attendance.totalDays}
-                        />
-                      </ListItem>
-                      <ListItem>
-                        <ListItemText
-                          primary="Days Present"
-                          secondary={latestProgress.attendance.daysPresent}
-                        />
-                      </ListItem>
-                      <ListItem>
-                        <ListItemText
-                          primary="Days Absent"
-                          secondary={latestProgress.attendance.daysAbsent}
-                        />
-                      </ListItem>
-                      <ListItem>
-                        <ListItemText
-                          primary="Late Arrivals"
-                          secondary={latestProgress.attendance.lateArrivals}
-                        />
-                      </ListItem>
-                    </List>
+              <Divider sx={{ mb: 3 }} />
+
+              {/* Co-Scholastic Areas */}
+              <Card sx={{ mb: 3 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+                    Co-Scholastic Areas:
+                  </Typography>
+                  <TableContainer>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Area</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Grade / Rating</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Teacher's Comments</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {mockData.comprehensiveReport.coScholasticAreas.map((area, index) => (
+                          <TableRow key={index}>
+                            <TableCell>{area.area}</TableCell>
+                            <TableCell>
+                              <Chip 
+                                label={area.grade} 
+                                color={getGradeColor(area.grade)}
+                                size="small"
+                              />
+                            </TableCell>
+                            <TableCell>{area.teacherComments}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </CardContent>
+              </Card>
+
+              <Divider sx={{ mb: 3 }} />
+
+              {/* Attendance */}
+              <Card sx={{ mb: 3 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+                    Attendance:
+                  </Typography>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Typography variant="body2" color="textSecondary">Total Working Days:</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                        {mockData.comprehensiveReport.attendance.totalDays}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Typography variant="body2" color="textSecondary">Days Present:</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                        {mockData.comprehensiveReport.attendance.daysPresent}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Typography variant="body2" color="textSecondary">Absent Days:</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                        {mockData.comprehensiveReport.attendance.daysAbsent}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Typography variant="body2" color="textSecondary">Attendance Percentage:</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'bold', color: mockData.comprehensiveReport.attendance.percentage >= 90 ? 'success.main' : 'warning.main' }}>
+                        {mockData.comprehensiveReport.attendance.percentage}%
+                      </Typography>
+                    </Grid>
                   </Grid>
+                </CardContent>
+              </Card>
 
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="h6" gutterBottom>
-                      Behavior Assessment
-                    </Typography>
-                    <List>
-                      <ListItem>
-                        <ListItemText
-                          primary="Punctuality"
-                          secondary={
-                            <Chip
-                              label={latestProgress.behavior.punctuality}
-                              color={getRatingColor(latestProgress.behavior.punctuality)}
-                              size="small"
-                            />
-                          }
-                        />
-                      </ListItem>
-                      <ListItem>
-                        <ListItemText
-                          primary="Discipline"
-                          secondary={
-                            <Chip
-                              label={latestProgress.behavior.discipline}
-                              color={getRatingColor(latestProgress.behavior.discipline)}
-                              size="small"
-                            />
-                          }
-                        />
-                      </ListItem>
-                      <ListItem>
-                        <ListItemText
-                          primary="Participation"
-                          secondary={
-                            <Chip
-                              label={latestProgress.behavior.participation}
-                              color={getRatingColor(latestProgress.behavior.participation)}
-                              size="small"
-                            />
-                          }
-                        />
-                      </ListItem>
-                      <ListItem>
-                        <ListItemText
-                          primary="Teamwork"
-                          secondary={
-                            <Chip
-                              label={latestProgress.behavior.teamwork}
-                              color={getRatingColor(latestProgress.behavior.teamwork)}
-                              size="small"
-                            />
-                          }
-                        />
-                      </ListItem>
-                    </List>
-                  </Grid>
-                </Grid>
-              )}
+              <Divider sx={{ mb: 3 }} />
 
-              {selectedTab === 2 && (
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="h6" gutterBottom>
-                      Skills Assessment
-                    </Typography>
-                    <Box sx={{ mb: 3 }}>
-                      {Object.entries(latestProgress.skills || {}).map(([skill, rating]) => (
-                        <Box key={skill} sx={{ mb: 2 }}>
-                          <Box display="flex" justifyContent="space-between" alignItems="center">
-                            <Typography variant="body1" sx={{ textTransform: 'capitalize' }}>
-                              {skill.replace(/([A-Z])/g, ' $1').trim()}
-                            </Typography>
-                            <Rating
-                              value={getRatingScore(rating)}
-                              readOnly
-                              size="small"
-                            />
-                          </Box>
-                          <Chip
-                            label={rating}
-                            color={getRatingColor(rating)}
-                            size="small"
-                          />
-                        </Box>
-                      ))}
-                    </Box>
-                  </Grid>
-
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="h6" gutterBottom>
-                      Co-curricular Activities
-                    </Typography>
-                    <Accordion expanded={expandedAccordion === 'panel1'} onChange={handleAccordionChange('panel1')}>
-                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <SportsIcon sx={{ mr: 1 }} />
-                        <Typography>Sports</Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <Box>
-                          <Typography variant="body2">
-                            Participated: {latestProgress.coCurricular.sports.participated ? 'Yes' : 'No'}
-                          </Typography>
-                          {latestProgress.coCurricular.sports.achievements.length > 0 && (
-                            <Typography variant="body2">
-                              Achievements: {latestProgress.coCurricular.sports.achievements.join(', ')}
-                            </Typography>
-                          )}
-                          <Chip
-                            label={latestProgress.coCurricular.sports.rating}
-                            color={getRatingColor(latestProgress.coCurricular.sports.rating)}
-                            size="small"
-                            sx={{ mt: 1 }}
-                          />
-                        </Box>
-                      </AccordionDetails>
-                    </Accordion>
-
-                    <Accordion expanded={expandedAccordion === 'panel2'} onChange={handleAccordionChange('panel2')}>
-                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <MusicIcon sx={{ mr: 1 }} />
-                        <Typography>Cultural</Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <Box>
-                          <Typography variant="body2">
-                            Participated: {latestProgress.coCurricular.cultural.participated ? 'Yes' : 'No'}
-                          </Typography>
-                          {latestProgress.coCurricular.cultural.achievements.length > 0 && (
-                            <Typography variant="body2">
-                              Achievements: {latestProgress.coCurricular.cultural.achievements.join(', ')}
-                            </Typography>
-                          )}
-                          <Chip
-                            label={latestProgress.coCurricular.cultural.rating}
-                            color={getRatingColor(latestProgress.coCurricular.cultural.rating)}
-                            size="small"
-                            sx={{ mt: 1 }}
-                          />
-                        </Box>
-                      </AccordionDetails>
-                    </Accordion>
-
-                    <Accordion expanded={expandedAccordion === 'panel3'} onChange={handleAccordionChange('panel3')}>
-                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <ScienceIcon sx={{ mr: 1 }} />
-                        <Typography>Academic</Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <Box>
-                          <Typography variant="body2">
-                            Participated: {latestProgress.coCurricular.academic.participated ? 'Yes' : 'No'}
-                          </Typography>
-                          {latestProgress.coCurricular.academic.achievements.length > 0 && (
-                            <Typography variant="body2">
-                              Achievements: {latestProgress.coCurricular.academic.achievements.join(', ')}
-                            </Typography>
-                          )}
-                          <Chip
-                            label={latestProgress.coCurricular.academic.rating}
-                            color={getRatingColor(latestProgress.coCurricular.academic.rating)}
-                            size="small"
-                            sx={{ mt: 1 }}
-                          />
-                        </Box>
-                      </AccordionDetails>
-                    </Accordion>
-                  </Grid>
-                </Grid>
-              )}
-
-              {selectedTab === 3 && (
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="h6" gutterBottom>
-                      Progress Trends
-                    </Typography>
-                    <Box sx={{ mb: 2 }}>
-                      <Box display="flex" alignItems="center" sx={{ mb: 1 }}>
-                        {getTrendIcon(analytics.academicTrend)}
-                        <Typography variant="body1" sx={{ ml: 1 }}>
-                          Academic Progress: {analytics.academicTrend}
-                        </Typography>
-                      </Box>
-                      <Box display="flex" alignItems="center" sx={{ mb: 1 }}>
-                        {getTrendIcon(analytics.attendanceTrend)}
-                        <Typography variant="body1" sx={{ ml: 1 }}>
-                          Attendance: {analytics.attendanceTrend}
-                        </Typography>
-                      </Box>
+              {/* Progress Trends */}
+              <Card sx={{ mb: 3 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+                    Progress Trends:
+                  </Typography>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} sm={6} md={3}>
                       <Box display="flex" alignItems="center">
-                        {getTrendIcon(analytics.behaviorTrend)}
-                        <Typography variant="body1" sx={{ ml: 1 }}>
-                          Behavior: {analytics.behaviorTrend}
+                        <AssessmentIcon color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body1">
+                          Academic Progress: {mockData.comprehensiveReport.trends.academicProgress}
                         </Typography>
                       </Box>
-                    </Box>
-
-                    {analytics.recommendations && analytics.recommendations.length > 0 && (
-                      <Box>
-                        <Typography variant="h6" gutterBottom>
-                          Recommendations
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Box display="flex" alignItems="center">
+                        <SchoolIcon color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body1">
+                          Attendance: {mockData.comprehensiveReport.trends.attendanceTrend}
                         </Typography>
-                        <List>
-                          {analytics.recommendations.map((recommendation, index) => (
-                            <ListItem key={index}>
-                              <ListItemAvatar>
-                                <CheckCircleIcon color="primary" />
-                              </ListItemAvatar>
-                              <ListItemText primary={recommendation} />
-                            </ListItem>
-                          ))}
-                        </List>
                       </Box>
-                    )}
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Box display="flex" alignItems="center">
+                        <PersonIcon color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body1">
+                          Behavior: {mockData.comprehensiveReport.trends.behaviorTrend}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Box display="flex" alignItems="center">
+                        <AssessmentIcon color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body1">
+                          Assignments: {mockData.comprehensiveReport.trends.assignmentTrend}
+                        </Typography>
+                      </Box>
+                    </Grid>
                   </Grid>
+                </CardContent>
+              </Card>
 
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="h6" gutterBottom>
-                      Skills Radar Chart
-                    </Typography>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <RadarChart data={Object.entries(analytics.skillsDevelopment || {}).map(([skill, data]) => ({
-                        subject: skill,
-                        A: data.score,
-                        fullMark: 5,
-                      }))}>
-                        <PolarGrid />
-                        <PolarAngleAxis dataKey="subject" />
-                        <PolarRadiusAxis angle={30} domain={[0, 5]} />
-                        <Radar name="Skills" dataKey="A" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
-                      </RadarChart>
-                    </ResponsiveContainer>
+              <Divider sx={{ mb: 3 }} />
+
+              {/* Recommendations */}
+              <Card sx={{ mb: 3 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+                    Recommendations:
+                  </Typography>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="subtitle1" color="primary" gutterBottom>
+                        Academic Recommendations:
+                      </Typography>
+                      <List>
+                        {mockData.comprehensiveReport.recommendations.academic.map((rec, index) => (
+                          <ListItem key={index}>
+                            <ListItemAvatar>
+                              <CheckCircleIcon color="primary" />
+                            </ListItemAvatar>
+                            <ListItemText primary={rec} />
+                          </ListItem>
+                        ))}
+                      </List>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="subtitle1" color="primary" gutterBottom>
+                        Behavioral Recommendations:
+                      </Typography>
+                      <List>
+                        {mockData.comprehensiveReport.recommendations.behavioral.map((rec, index) => (
+                          <ListItem key={index}>
+                            <ListItemAvatar>
+                              <CheckCircleIcon color="primary" />
+                            </ListItemAvatar>
+                            <ListItemText primary={rec} />
+                          </ListItem>
+                        ))}
+                      </List>
+                    </Grid>
                   </Grid>
-                </Grid>
-              )}
+                </CardContent>
+              </Card>
+
+              <Divider sx={{ mb: 3 }} />
+
+              {/* General Remarks */}
+              <Card sx={{ mb: 3 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+                    General Remarks:
+                  </Typography>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="subtitle1" color="primary" gutterBottom>
+                        Class Teacher:
+                      </Typography>
+                      <Typography variant="body1" sx={{ fontStyle: 'italic' }}>
+                        {mockData.comprehensiveReport.generalRemarks.classTeacher}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="subtitle1" color="primary" gutterBottom>
+                        Principal:
+                      </Typography>
+                      <Typography variant="body1" sx={{ fontStyle: 'italic' }}>
+                        {mockData.comprehensiveReport.generalRemarks.principal}
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+
+              <Divider sx={{ mb: 3 }} />
+
+              {/* Signatures */}
+              <Card sx={{ mb: 3 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+                    Signatures:
+                  </Typography>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Typography variant="body2" color="textSecondary">Class Teacher:</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                        {mockData.comprehensiveReport.signatures.classTeacher}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Typography variant="body2" color="textSecondary">Parent/Guardian:</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                        {mockData.comprehensiveReport.signatures.parentGuardian}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Typography variant="body2" color="textSecondary">Principal:</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                        {mockData.comprehensiveReport.signatures.principal}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Typography variant="body2" color="textSecondary">Date:</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                        {mockData.comprehensiveReport.signatures.date}
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+
+              {/* Action Buttons */}
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mt: 4 }}>
+                <Button
+                  variant="contained"
+                  startIcon={<PrintIcon />}
+                  onClick={() => window.print()}
+                >
+                  Print Report
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<DownloadIcon />}
+                  onClick={() => {
+                    // Generate and download PDF
+                    const element = document.createElement('a');
+                    const file = new Blob([`
+                      COMPREHENSIVE PROGRESS REPORT
+                      
+                      School Information:
+                      School Name: ${mockData.comprehensiveReport.schoolInfo.schoolName}
+                      Academic Year: ${mockData.comprehensiveReport.schoolInfo.academicYear}
+                      Class: ${mockData.comprehensiveReport.schoolInfo.class}
+                      Term: ${mockData.comprehensiveReport.schoolInfo.term}
+                      
+                      Student Information:
+                      Name: ${user?.name || mockData.comprehensiveReport.studentInfo.name}
+                      Admission Number: ${mockData.comprehensiveReport.studentInfo.admissionNumber}
+                      Class/Section: ${mockData.comprehensiveReport.studentInfo.classSection}
+                      
+                      Academic Performance:
+                      ${mockData.comprehensiveReport.academicPerformance.subjects.map(subject => 
+                        `${subject.name}: ${subject.marks}/${subject.totalMarks} (${subject.grade}) - ${subject.teacherRemarks}`
+                      ).join('\n')}
+                      
+                      Co-Scholastic Areas:
+                      ${mockData.comprehensiveReport.coScholasticAreas.map(area => 
+                        `${area.area}: ${area.grade} - ${area.teacherComments}`
+                      ).join('\n')}
+                      
+                      Attendance: ${mockData.comprehensiveReport.attendance.percentage}%
+                      Total Days: ${mockData.comprehensiveReport.attendance.totalDays}
+                      Days Present: ${mockData.comprehensiveReport.attendance.daysPresent}
+                      Days Absent: ${mockData.comprehensiveReport.attendance.daysAbsent}
+                      
+                      General Remarks:
+                      Class Teacher: ${mockData.comprehensiveReport.generalRemarks.classTeacher}
+                      Principal: ${mockData.comprehensiveReport.generalRemarks.principal}
+                      
+                      Signatures:
+                      Class Teacher: ${mockData.comprehensiveReport.signatures.classTeacher}
+                      Parent/Guardian: ${mockData.comprehensiveReport.signatures.parentGuardian}
+                      Principal: ${mockData.comprehensiveReport.signatures.principal}
+                      Date: ${mockData.comprehensiveReport.signatures.date}
+                    `], {type: 'text/plain'});
+                    element.href = URL.createObjectURL(file);
+                    element.download = `Progress_Report_${user?.name || 'Student'}.txt`;
+                    document.body.appendChild(element);
+                    element.click();
+                    document.body.removeChild(element);
+                    toast.success('Progress report downloaded successfully!');
+                  }}
+                >
+                  Download PDF
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<CommentIcon />}
+                  onClick={() => setFeedbackDialog(true)}
+                >
+                  Submit Feedback
+                </Button>
+              </Box>
             </Box>
-          </Paper>
+          )}
+        </Box>
+      </Paper>
 
-          {/* Goals and Targets */}
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Goals and Targets
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={4}>
-                  <Box>
-                    <Typography variant="subtitle1" color="primary">
-                      Academic Goals
-                    </Typography>
-                    <Typography variant="body2">
-                      {latestProgress.goals.academic.currentTarget || 'No specific target set'}
-                    </Typography>
-                    <Chip
-                      label={latestProgress.goals.academic.achieved ? 'Achieved' : 'In Progress'}
-                      color={latestProgress.goals.academic.achieved ? 'success' : 'warning'}
-                      size="small"
-                      sx={{ mt: 1 }}
-                    />
-                  </Box>
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <Box>
-                    <Typography variant="subtitle1" color="primary">
-                      Behavioral Goals
-                    </Typography>
-                    <Typography variant="body2">
-                      {latestProgress.goals.behavioral.currentTarget || 'No specific target set'}
-                    </Typography>
-                    <Chip
-                      label={latestProgress.goals.behavioral.achieved ? 'Achieved' : 'In Progress'}
-                      color={latestProgress.goals.behavioral.achieved ? 'success' : 'warning'}
-                      size="small"
-                      sx={{ mt: 1 }}
-                    />
-                  </Box>
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <Box>
-                    <Typography variant="subtitle1" color="primary">
-                      Personal Goals
-                    </Typography>
-                    <Typography variant="body2">
-                      {latestProgress.goals.personal.currentTarget || 'No specific target set'}
-                    </Typography>
-                    <Chip
-                      label={latestProgress.goals.personal.achieved ? 'Achieved' : 'In Progress'}
-                      color={latestProgress.goals.personal.achieved ? 'success' : 'warning'}
-                      size="small"
-                      sx={{ mt: 1 }}
-                    />
-                  </Box>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-        </>
-      ) : (
-        <Alert severity="info">
-          No progress data available for the selected period. Please check back later.
-        </Alert>
-      )}
+      {/* Feedback Dialog */}
+      <Dialog open={feedbackDialog} onClose={() => setFeedbackDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Submit Feedback</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+            Please share your thoughts about your progress report.
+          </Typography>
+          <TextField
+            fullWidth
+            multiline
+            rows={4}
+            label="Your Feedback"
+            placeholder="Enter your comments, suggestions, or questions..."
+            value={feedback}
+            onChange={(e) => setFeedback(e.target.value)}
+            sx={{ mt: 2 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setFeedbackDialog(false)}>Cancel</Button>
+          <Button onClick={handleFeedbackSubmit} variant="contained" startIcon={<SendIcon />}>
+            Submit Feedback
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
