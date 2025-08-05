@@ -14,6 +14,7 @@ import {
   Alert,
   Link,
 } from '@mui/material';
+import { useTheme as useAppTheme } from '../../context/ThemeContext';
 import { Person, Email, Lock, ChildCare } from '@mui/icons-material';
 import { authAPI } from '../../services/api';
 import { toast } from 'react-toastify';
@@ -31,6 +32,7 @@ const validationSchema = Yup.object({
 const ParentRegister = () => {
   const navigate = useNavigate();
   const [error, setError] = useState('');
+  const { isDark } = useAppTheme();
 
   const registerMutation = useMutation({
     mutationFn: (values) => {
@@ -63,9 +65,25 @@ const ParentRegister = () => {
   });
 
   return (
-    <Container component="main" maxWidth="xs">
-      <Paper elevation={3} sx={{ mt: 8, p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Typography component="h1" variant="h5">
+    <Container component="main" maxWidth="xs" sx={{ 
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      backgroundColor: isDark ? '#1e293b' : '#f0f8ff',
+    }}>
+      <Paper elevation={3} sx={{ 
+        mt: 8, 
+        p: 4, 
+        display: 'flex', 
+        flexDirection: 'column', 
+        alignItems: 'center',
+        backgroundColor: isDark ? '#334155' : '#ffffff',
+        borderRadius: 3,
+      }}>
+        <Typography component="h1" variant="h5" sx={{ 
+          color: isDark ? '#ffffff' : '#1e293b',
+          fontWeight: 600,
+        }}>
           Parent Registration
         </Typography>
         {error && <Alert severity="error" sx={{ width: '100%', mt: 2 }}>{error}</Alert>}
@@ -84,6 +102,20 @@ const ParentRegister = () => {
             error={formik.touched.name && Boolean(formik.errors.name)}
             helperText={formik.touched.name && formik.errors.name}
             InputProps={{ startAdornment: <Person /> }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                backgroundColor: isDark ? '#475569' : '#f8fafc',
+                '&:hover fieldset': {
+                  borderColor: 'primary.main',
+                },
+              },
+              '& .MuiInputLabel-root': {
+                color: isDark ? '#e2e8f0' : 'text.primary',
+              },
+              '& .MuiOutlinedInput-input': {
+                color: isDark ? '#ffffff' : 'text.primary',
+              },
+            }}
           />
           <TextField
             margin="normal"
@@ -98,6 +130,20 @@ const ParentRegister = () => {
             error={formik.touched.email && Boolean(formik.errors.email)}
             helperText={formik.touched.email && formik.errors.email}
             InputProps={{ startAdornment: <Email /> }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                backgroundColor: isDark ? '#475569' : '#f8fafc',
+                '&:hover fieldset': {
+                  borderColor: 'primary.main',
+                },
+              },
+              '& .MuiInputLabel-root': {
+                color: isDark ? '#e2e8f0' : 'text.primary',
+              },
+              '& .MuiOutlinedInput-input': {
+                color: isDark ? '#ffffff' : 'text.primary',
+              },
+            }}
           />
           <TextField
             margin="normal"
@@ -113,6 +159,20 @@ const ParentRegister = () => {
             error={formik.touched.password && Boolean(formik.errors.password)}
             helperText={formik.touched.password && formik.errors.password}
             InputProps={{ startAdornment: <Lock /> }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                backgroundColor: isDark ? '#475569' : '#f8fafc',
+                '&:hover fieldset': {
+                  borderColor: 'primary.main',
+                },
+              },
+              '& .MuiInputLabel-root': {
+                color: isDark ? '#e2e8f0' : 'text.primary',
+              },
+              '& .MuiOutlinedInput-input': {
+                color: isDark ? '#ffffff' : 'text.primary',
+              },
+            }}
           />
           <TextField
             margin="normal"
@@ -127,6 +187,20 @@ const ParentRegister = () => {
             error={formik.touched.confirmPassword && Boolean(formik.errors.confirmPassword)}
             helperText={formik.touched.confirmPassword && formik.errors.confirmPassword}
             InputProps={{ startAdornment: <Lock /> }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                backgroundColor: isDark ? '#475569' : '#f8fafc',
+                '&:hover fieldset': {
+                  borderColor: 'primary.main',
+                },
+              },
+              '& .MuiInputLabel-root': {
+                color: isDark ? '#e2e8f0' : 'text.primary',
+              },
+              '& .MuiOutlinedInput-input': {
+                color: isDark ? '#ffffff' : 'text.primary',
+              },
+            }}
           />
           <TextField
             margin="normal"
@@ -140,17 +214,44 @@ const ParentRegister = () => {
             error={formik.touched.childRollNumbers && Boolean(formik.errors.childRollNumbers)}
             helperText={formik.touched.childRollNumbers && formik.errors.childRollNumbers}
             InputProps={{ startAdornment: <ChildCare /> }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                backgroundColor: isDark ? '#475569' : '#f8fafc',
+                '&:hover fieldset': {
+                  borderColor: 'primary.main',
+                },
+              },
+              '& .MuiInputLabel-root': {
+                color: isDark ? '#e2e8f0' : 'text.primary',
+              },
+              '& .MuiOutlinedInput-input': {
+                color: isDark ? '#ffffff' : 'text.primary',
+              },
+            }}
           />
           <Button
             type="submit"
             fullWidth
             variant="contained"
-            sx={{ mt: 3, mb: 2 }}
+            sx={{ 
+              mt: 3, 
+              mb: 2,
+              backgroundColor: isDark ? '#3b82f6' : '#1a237e',
+              '&:hover': {
+                backgroundColor: isDark ? '#2563eb' : '#0d47a1',
+              },
+            }}
             disabled={registerMutation.isPending}
           >
             {registerMutation.isPending ? <CircularProgress size={24} /> : 'Register'}
           </Button>
-          <Link component={RouterLink} to="/parent-login" variant="body2">
+          <Link component={RouterLink} to="/parent-login" variant="body2" sx={{
+            color: isDark ? '#60a5fa' : '#1a237e',
+            textDecoration: 'none',
+            '&:hover': {
+              textDecoration: 'underline',
+            },
+          }}>
             Already have an account? Sign in
           </Link>
         </Box>

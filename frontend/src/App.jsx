@@ -172,7 +172,6 @@ function App() {
                   draggable
                   pauseOnHover
                 />
-                <FloatingThemeToggle />
               </ThemeAwareWrapper>
               </StaffPermissionProvider>
             </AuthProvider>

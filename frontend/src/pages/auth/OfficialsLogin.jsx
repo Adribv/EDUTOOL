@@ -27,6 +27,7 @@ import {
   VisibilityOff as VisibilityOffIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme as useAppTheme } from '../../context/ThemeContext';
 import { toast } from 'react-toastify';
 import logo from '../../assets/logo.png';
 
@@ -43,6 +44,7 @@ const OfficialsLogin = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const theme = useTheme();
+  const { isDark } = useAppTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -110,7 +112,7 @@ const OfficialsLogin = () => {
         gap: '50',
         display: 'flex',
         flexDirection: { xs: 'column', md: 'row' },
-        backgroundColor: '#f8fafc',
+        backgroundColor: isDark ? '#1e293b' : '#f0f8ff',
         position: 'relative',
         overflow: 'hidden',
       }}
@@ -161,12 +163,12 @@ const OfficialsLogin = () => {
             />
           </Box>
           <Box display="flex" alignItems="center" justifyContent="center" mb={2}>
-            <SecurityIcon sx={{ fontSize: 40, color: 'white', mr: 1 }} />
+                        <SecurityIcon sx={{ fontSize: 40, color: isDark ? '#ffffff' : '#1e293b', mr: 1 }} />
             <Typography
               variant="h2"
               sx={{
                 fontWeight: 700,
-                color: 'white',
+                color: isDark ? '#ffffff' : '#1e293b',
                 mb: 0,
                 letterSpacing: '-0.01em',
                 fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
@@ -183,11 +185,11 @@ const OfficialsLogin = () => {
               fontWeight: 400,
               opacity: 0.9,
               lineHeight: 1.6,
-              color: 'white',
+              color: isDark ? '#ffffff' : '#1e293b',
             }}
           >
             Secure access for Principal, Vice Principal, HOD, and Counselor. Your role will be automatically detected.
-          </Typography>
+            </Typography>
         </motion.div>
       </Box>
       {/* Right side - Login Form */}
@@ -213,9 +215,9 @@ const OfficialsLogin = () => {
               sx={{
                 p: { xs: 3, sm: 4, md: 5 },
                 borderRadius: 3,
-                background: 'rgba(255, 255, 255, 0.95)',
+                background: isDark ? 'rgba(51, 65, 85, 0.95)' : 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
+                border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.2)',
               }}
             >
               <Box sx={{ textAlign: 'center', mb: 4 }}>
@@ -224,7 +226,7 @@ const OfficialsLogin = () => {
                   variant="h4"
                   sx={{
                     fontWeight: 700,
-                    color: 'text.primary',
+                    color: isDark ? '#ffffff' : 'text.primary',
                     mb: 1,
                   }}
                 >
@@ -233,7 +235,7 @@ const OfficialsLogin = () => {
                 <Typography
                   variant="body1"
                   sx={{
-                    color: 'text.secondary',
+                    color: isDark ? '#e2e8f0' : 'text.secondary',
                     fontSize: '1rem',
                   }}
                 >

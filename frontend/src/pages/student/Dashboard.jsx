@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Box,
   Typography,
@@ -93,6 +94,11 @@ import axios from 'axios';
 import { Alert as MuiAlert } from '@mui/material';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
+import GlassCard from '../../components/GlassCard';
+import StatCard from '../../components/StatCard';
+import AnimatedButton from '../../components/AnimatedButton';
+import LoadingSpinner from '../../components/LoadingSpinner';
+import backgroundVideo from '../../assets/background.mp4';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -108,11 +114,31 @@ const Dashboard = () => {
   const [upcomingExams, setUpcomingExams] = useState([]);
   const [messages, setMessages] = useState([]);
   const [homework, setHomework] = useState([]);
-  // eslint-disable-next-line no-unused-vars
   const [feeStatus, setFeeStatus] = useState(null);
-  const [showFeePopup, setShowFeePopup] = useState(false);
   const [learningResources, setLearningResources] = useState([]);
   const [leaveRequests, setLeaveRequests] = useState([]);
+  const [dashboardData, setDashboardData] = useState({
+    attendance: [],
+    assignments: [],
+    exams: [],
+    events: [],
+    notifications: [],
+    feeStatus: {},
+    serviceRequests: [],
+    remarks: [],
+    lessons: [],
+    transportDetails: {},
+    libraryBooks: [],
+    academicCalendar: [],
+    communication: [],
+    documents: [],
+    resources: [],
+    progress: {},
+    activities: [],
+    coScholastic: [],
+    teacherRemarks: [],
+    comprehensiveProgress: {},
+  });
   
   // New state variables for enhanced features
   const [ongoingLessons, setOngoingLessons] = useState([]);
@@ -744,25 +770,395 @@ const Dashboard = () => {
     );
   };
 
-  if (loading) {
-    return (
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        duration: 0.8,
+        staggerChildren: 0.15,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.6,
+        ease: [0.25, 0.46, 0.45, 0.94],
+      },
+    },
+  };
+
+  // Enhanced StatCard component with modern design
+  const ModernStatCard = ({ title, value, icon: Icon, color = 'primary', subtitle, trend, delay = 0 }) => (
+    <motion.div
+      initial={{ opacity: 0, y: 50, scale: 0.8 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.8, delay, ease: "easeOut" }}
+      whileHover={{ 
+        y: -12,
+        scale: 1.05,
+        transition: { duration: 0.4, ease: "easeOut" }
+      }}
+      whileTap={{ 
+        scale: 0.98,
+        transition: { duration: 0.1 }
+      }}
+    >
+      <GlassCard
+        delay={delay}
+        sx={{
+          height: { xs: '140px', sm: '160px', md: '180px' },
+          background: `linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)`,
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: `linear-gradient(135deg, ${color === 'primary' ? '#6366f1' : color === 'secondary' ? '#f59e0b' : color === 'success' ? '#10b981' : '#3b82f6'}20 0%, ${color === 'primary' ? '#6366f1' : color === 'secondary' ? '#f59e0b' : color === 'success' ? '#10b981' : '#3b82f6'}10 100%)`,
+            zIndex: -1,
+          },
+        }}
+      >
       <Box
         sx={{
           display: 'flex',
-          justifyContent: 'center',
+            flexDirection: 'column',
+            height: '100%',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+            <Box
+              sx={{
+                display: 'flex',
           alignItems: 'center',
-          minHeight: '60vh',
+                justifyContent: 'center',
+                width: 48,
+                height: 48,
+                borderRadius: 2,
+                background: `linear-gradient(135deg, ${color === 'primary' ? '#6366f1' : color === 'secondary' ? '#f59e0b' : color === 'success' ? '#10b981' : '#3b82f6'} 0%, ${color === 'primary' ? '#818cf8' : color === 'secondary' ? '#fbbf24' : color === 'success' ? '#34d399' : '#60a5fa'} 100%)`,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+              }}
+            >
+              <Icon sx={{ color: '#ffffff', fontSize: 24 }} />
+      </Box>
+            
+            {trend && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: trend === 'up' ? 'success.main' : 'error.main',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                  }}
+                >
+                  {trend === 'up' ? '↗' : '↘'} {trend}
+          </Typography>
+        </Box>
+            )}
+          </Box>
+
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 700,
+              color: 'text.primary',
+              mb: 0.5,
+              fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
+            }}
+          >
+            {value}
+                </Typography>
+
+          <Typography
+            variant="body2"
+            sx={{
+              color: 'text.secondary',
+              fontWeight: 500,
+              mb: 1,
+            }}
+          >
+            {title}
+                </Typography>
+
+          {subtitle && (
+            <Typography
+              variant="caption"
+              sx={{
+                color: 'text.disabled',
+                fontWeight: 500,
+              }}
+            >
+              {subtitle}
+                </Typography>
+            )}
+          </Box>
+      </GlassCard>
+    </motion.div>
+  );
+
+  // Enhanced NavigationCard component
+  const ModernNavigationCard = ({ title, description, icon: Icon, color, path, count, delay = 0 }) => (
+    <motion.div
+      initial={{ opacity: 0, x: -50, rotateY: -15 }}
+      animate={{ opacity: 1, x: 0, rotateY: 0 }}
+      transition={{ duration: 0.8, delay, ease: "easeOut" }}
+      whileHover={{ 
+        y: -15,
+        scale: 1.08,
+        rotateY: 5,
+        transition: { duration: 0.4, ease: "easeOut" }
+      }}
+      whileTap={{ 
+        scale: 0.95,
+        transition: { duration: 0.1 }
+      }}
+    >
+      <GlassCard
+        onClick={() => navigate(path)}
+        delay={delay}
+      sx={{ 
+          height: { xs: '120px', sm: '140px', md: '160px' },
+        cursor: 'pointer',
+          background: `linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)`,
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+        position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: `linear-gradient(135deg, ${color}20 0%, ${color}10 100%)`,
+            zIndex: -1,
+          },
         }}
       >
-        <CircularProgress />
-      </Box>
-    );
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 48,
+                height: 48,
+                borderRadius: 2,
+                background: `linear-gradient(135deg, ${color} 0%, ${color}dd 100%)`,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+              }}
+            >
+              <Icon sx={{ color: '#ffffff', fontSize: 24 }} />
+            </Box>
+            
+            {count !== undefined && (
+            <Chip
+              label={count}
+              size="small"
+              sx={{
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  color: 'text.primary',
+                  fontWeight: 600,
+              }}
+            />
+          )}
+        </Box>
+
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 600,
+              color: 'text.primary',
+              mb: 1,
+              fontSize: { xs: '1rem', sm: '1.125rem' },
+            }}
+          >
+          {title}
+        </Typography>
+
+          <Typography
+            variant="body2"
+            sx={{
+              color: 'text.secondary',
+              lineHeight: 1.4,
+              fontSize: { xs: '0.875rem', sm: '1rem' },
+            }}
+          >
+          {description}
+        </Typography>
+        </Box>
+      </GlassCard>
+    </motion.div>
+  );
+
+  // Enhanced ListCard component
+  const ModernListCard = ({ title, items, icon: Icon, emptyMessage = "No items to display", emptyAction, delay = 0 }) => (
+    <motion.div
+      initial={{ opacity: 0, y: 30, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.8, delay, ease: "easeOut" }}
+      whileHover={{ 
+        y: -10,
+        scale: 1.03,
+        transition: { duration: 0.4, ease: "easeOut" }
+      }}
+      whileTap={{ 
+        scale: 0.97,
+        transition: { duration: 0.1 }
+      }}
+    >
+      <GlassCard
+        delay={delay}
+        sx={{
+          height: { xs: '300px', sm: '320px', md: '340px' },
+          background: `linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)`,
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+        }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            mb: 2,
+            pb: 1,
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+          }}
+        >
+          <Icon sx={{ color: 'primary.main', fontSize: 20 }} />
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 600,
+              color: 'text.primary',
+            }}
+          >
+            {title}
+              </Typography>
+          </Box>
+          
+        {items && items.length > 0 ? (
+          <Box sx={{ maxHeight: 'calc(100% - 60px)', overflow: 'auto' }}>
+            <List sx={{ p: 0 }}>
+              {items.map((item, index) => (
+                <ListItem
+                  key={index}
+                sx={{
+                    px: 0,
+                    py: 1,
+                    borderBottom: index < items.length - 1 ? '1px solid rgba(255, 255, 255, 0.05)' : 'none',
+                    '&:hover': {
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      borderRadius: 1,
+                    },
+                  }}
+                >
+                  <ListItemText
+                    primary={
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: 500,
+                          color: 'text.primary',
+                          mb: 0.5,
+                        }}
+                      >
+                        {item.title || item.name}
+                      </Typography>
+                    }
+                    secondary={
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: 'text.secondary',
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        {item.description || item.details}
+                      </Typography>
+                    }
+                  />
+                  {item.status && (
+                    <Chip
+                      label={item.status}
+                      size="small"
+                          sx={{
+                        background: item.status === 'Completed' ? 'success.main' : 
+                                   item.status === 'Pending' ? 'warning.main' : 
+                                   item.status === 'Overdue' ? 'error.main' : 'info.main',
+                        color: '#ffffff',
+                        fontWeight: 600,
+                      }}
+                    />
+                  )}
+                </ListItem>
+              ))}
+            </List>
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: 'calc(100% - 60px)',
+              color: 'text.secondary',
+            }}
+          >
+            <Icon sx={{ fontSize: 48, mb: 2, opacity: 0.5 }} />
+            <Typography variant="body2" sx={{ textAlign: 'center', mb: 2 }}>
+              {emptyMessage}
+            </Typography>
+            {emptyAction && (
+              <AnimatedButton
+                variant="outlined"
+                size="small"
+                onClick={emptyAction.onClick}
+                startIcon={emptyAction.icon}
+              >
+                {emptyAction.text}
+              </AnimatedButton>
+            )}
+          </Box>
+        )}
+      </GlassCard>
+    </motion.div>
+  );
+
+  if (loading) {
+    return <LoadingSpinner message="Loading your dashboard..." fullScreen />;
   }
 
   if (error) {
-    return (
-      <Container maxWidth="xl">
-        <Box sx={{ py: 3 }}>
+  return (
+    <Container maxWidth="xl">
+      <Box sx={{ py: 3 }}>
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
@@ -774,1324 +1170,465 @@ const Dashboard = () => {
     );
   }
 
-  const StatCard = ({ title, value, icon, color = 'primary', subtitle }) => (
-    <Card sx={{ 
-      height: { xs: '140px', sm: '160px', md: '180px' },
-      display: 'flex',
-      flexDirection: 'column',
-      transition: 'transform 0.2s', 
-      '&:hover': { transform: 'translateY(-4px)' },
-      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-      borderRadius: 2,
-    }}>
-      <CardContent sx={{ 
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        p: { xs: 2, sm: 2.5 },
-      }}>
-        <Box display="flex" alignItems="center" mb={2} sx={{ flexShrink: 0 }}>
-          <Box sx={{ 
-            color: `${color}.main`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 40,
-            height: 40,
-            borderRadius: '50%',
-            backgroundColor: `${color}.50`,
-            mr: 1.5,
-          }}>
-            {icon}
-          </Box>
-          <Typography variant="h6" component="div" sx={{ 
-            fontWeight: 600,
-            fontSize: { xs: '0.875rem', sm: '1rem' },
-            lineHeight: 1.2,
-          }}>
-            {title}
-          </Typography>
-        </Box>
-        <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <Typography variant="h4" component="div" color={color} sx={{ 
-            fontWeight: 700,
-            fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
-            mb: 0.5,
-          }}>
-            {value}
-          </Typography>
-          {subtitle && (
-            <Typography variant="body2" color="textSecondary" sx={{ 
-              mt: 0.5,
-              fontSize: { xs: '0.75rem', sm: '0.875rem' },
-              opacity: 0.8,
-            }}>
-              {subtitle}
-            </Typography>
-          )}
-        </Box>
-      </CardContent>
-    </Card>
-  );
-
-  const ListCard = ({ title, items, icon, emptyMessage = "No items to display", emptyAction }) => {
-    const safeItems = Array.isArray(items) ? items : [];
-    
-    return (
-      <Card sx={{ height: '100%' }}>
-        <CardContent>
-          <Box display="flex" alignItems="center" mb={2}>
-            {icon}
-            <Typography variant="h6" component="div" sx={{ ml: 1 }}>
-              {title}
-            </Typography>
-          </Box>
-          {safeItems.length > 0 ? (
-          <List>
-            {safeItems.map((item, index) => (
-              <div key={index}>
-                <ListItem>
-                  <ListItemText
-                    primary={item.title || item.subject || item.name}
-                    secondary={item.date || item.status || item.description}
-                  />
-                  {item.grade && (
-                    <Chip
-                      label={`${item.grade}%`}
-                      color={getGradeColor(item.grade)}
-                      size="small"
-                    />
-                  )}
-                </ListItem>
-                {index < safeItems.length - 1 && <Divider />}
-              </div>
-            ))}
-          </List>
-        ) : (
-          <Box sx={{ textAlign: 'center', py: 3 }}>
-            <Box sx={{ mb: 2 }}>
-              {icon}
-            </Box>
-            <Typography variant="h6" color="textSecondary" gutterBottom>
-              {emptyMessage}
-            </Typography>
-            {title === "Recent Assignments" && (
-              <>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                  Great job! You're all caught up with your assignments.
-                </Typography>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-                  Check back regularly for new assignments from your teachers.
-                </Typography>
-                <Button 
-                  variant="outlined" 
-                  color="primary" 
-                  size="small"
-                  onClick={() => window.location.href = '/student/assignments'}
-                  startIcon={<Assignment />}
-                >
-                  View All Assignments
-                </Button>
-              </>
-            )}
-            {title === "Recent Announcements" && (
-              <>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                  No announcements at the moment.
-                </Typography>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-                  Important updates from your school will appear here.
-                </Typography>
-                <Button 
-                  variant="outlined" 
-                  color="primary" 
-                  size="small"
-                  onClick={() => window.location.href = '/student/announcements'}
-                  startIcon={<Notifications />}
-                >
-                  View All Announcements
-                </Button>
-              </>
-            )}
-            {title === "Upcoming Exams" && (
-              <>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                  No upcoming exams scheduled.
-                </Typography>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-                  This is a great time to review your study materials and prepare ahead.
-                </Typography>
-                <Button 
-                  variant="outlined" 
-                  color="primary" 
-                  size="small"
-                  onClick={() => window.location.href = '/student/study-materials'}
-                  startIcon={<LibraryBooks />}
-                >
-                  Study Materials
-                </Button>
-              </>
-            )}
-            {title === "Recent Messages" && (
-              <>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                  No new messages.
-                </Typography>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-                  Stay connected with your teachers and classmates.
-                </Typography>
-                <Button 
-                  variant="outlined" 
-                  color="primary" 
-                  size="small"
-                  onClick={() => window.location.href = '/student/communication'}
-                  startIcon={<Message />}
-                >
-                  Send Message
-                </Button>
-              </>
-            )}
-            {!["Recent Assignments", "Recent Announcements", "Upcoming Exams", "Recent Messages"].includes(title) && (
-              <>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                  {emptyMessage}
-                </Typography>
-                {emptyAction && (
-                  <Button 
-                    variant="outlined" 
-                    color="primary" 
-                    size="small"
-                    onClick={emptyAction.onClick}
-                    startIcon={emptyAction.icon}
-                  >
-                    {emptyAction.text}
-                  </Button>
-                )}
-              </>
-            )}
-          </Box>
-        )}
-      </CardContent>
-    </Card>
-    );
-  };
-
-  const NavigationCard = ({ title, description, icon, color, path, count }) => (
-    <Card 
-      sx={{ 
-        height: '100%', 
-        cursor: 'pointer',
-        transition: 'all 0.3s ease',
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-        borderRadius: 2,
-        '&:hover': { 
-          transform: 'translateY(-8px)',
-          boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
-          backgroundColor: `${color}08`
-        }
-      }}
-      onClick={() => window.location.href = path}
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.8 }}
     >
-      <CardContent sx={{ 
-        textAlign: 'center', 
-        p: { xs: 2, sm: 2.5 },
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100%',
-      }}>
-        <Box display="flex" justifyContent="center" mb={2} position="relative" sx={{ flexShrink: 0 }}>
-          <Box sx={{
-            width: { xs: 40, sm: 50 },
-            height: { xs: 40, sm: 50 },
-            borderRadius: '50%',
-            backgroundColor: `${color}20`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: `${color}main`,
-          }}>
-            {icon}
-          </Box>
-          {count > 0 && (
-            <Chip
-              label={count}
-              size="small"
-              color="error"
-              sx={{
-                position: 'absolute',
-                top: -8,
-                right: -8,
-                minWidth: 20,
-                height: 20,
-                fontSize: '0.75rem',
-              }}
-            />
-          )}
-        </Box>
-        <Typography variant="h6" component="div" gutterBottom sx={{ 
-          fontWeight: 600,
-          fontSize: { xs: '0.875rem', sm: '1rem' },
-          lineHeight: 1.2,
-          mb: 1,
-        }}>
-          {title}
-        </Typography>
-        <Typography variant="body2" color="textSecondary" sx={{ 
-          fontSize: { xs: '0.75rem', sm: '0.875rem' },
-          opacity: 0.8,
-          textAlign: 'center',
-        }}>
-          {description}
-        </Typography>
-      </CardContent>
-    </Card>
-  );
+      <Box
+        sx={{
+          minHeight: '100vh',
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(226, 232, 240, 0.8) 50%, rgba(203, 213, 225, 0.8) 100%)',
+            zIndex: 1,
+          },
+        }}
+      >
+      {/* Video Background */}
+      <video
+        autoPlay
+        muted
+        loop
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          zIndex: 0,
+        }}
+      >
+        <source src={backgroundVideo} type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
 
-  // Carousel component for ongoing lessons and student details
-  const LessonCarousel = ({ lessons }) => {
-    // Ensure lessons is always an array
-    const safeLessons = Array.isArray(lessons) ? lessons : [];
-    const maxSteps = safeLessons.length;
-    
-    if (maxSteps === 0) {
-      return (
-        <Card sx={{ 
-          mb: 3,
-          height: { xs: '200px', sm: '240px', md: '280px' },
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-          borderRadius: 2,
-        }}>
-          <CardContent sx={{ 
-            textAlign: 'center', 
-            py: { xs: 3, sm: 4 },
-            px: { xs: 2, sm: 3 },
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100%',
-          }}>
-            <Box sx={{
-              width: { xs: 60, sm: 80 },
-              height: { xs: 60, sm: 80 },
+      {/* Floating Particles Animation */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 2,
+          pointerEvents: 'none',
+          overflow: 'hidden',
+        }}
+      >
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={i}
+            style={{
+              position: 'absolute',
+              width: '4px',
+              height: '4px',
+              background: 'linear-gradient(45deg, #6366f1, #8b5cf6)',
               borderRadius: '50%',
-              backgroundColor: 'primary.50',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              mb: { xs: 2, sm: 3 },
-              color: 'primary.main',
-            }}>
-              <Schedule sx={{ fontSize: { xs: 32, sm: 40 } }} />
-            </Box>
-            <Typography variant="h6" gutterBottom sx={{ 
-              fontWeight: 700,
-              fontSize: { xs: '1.125rem', sm: '1.25rem' },
-              mb: 1,
-            }}>
-              No Ongoing Lessons
-            </Typography>
-            <Typography variant="body2" color="textSecondary" sx={{ 
-              fontSize: { xs: '0.875rem', sm: '1rem' },
-              opacity: 0.8,
-              maxWidth: 300,
-            }}>
-              Check your timetable for upcoming classes
-            </Typography>
-          </CardContent>
-        </Card>
-      );
-    }
-
-    return (
-      <Card sx={{ mb: 3, position: 'relative' }}>
-        <CardContent sx={{ p: 0 }}>
-          <Box sx={{ p: 3, pb: 1 }}>
-            <Box display="flex" alignItems="center" mb={2}>
-              <Schedule color="primary" />
-              <Typography variant="h6" sx={{ ml: 1 }}>
-                Ongoing Lessons & Schedule
-              </Typography>
-            </Box>
-          </Box>
-          
-          <Box sx={{ position: 'relative', height: 200 }}>
-            {safeLessons.map((lesson, index) => (
-              <Box
-                key={lesson.id}
-                sx={{
-                  position: 'absolute',
-                  width: '100%',
-                  height: '100%',
-                  display: index === activeStep ? 'block' : 'none',
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              y: [0, -100, -200],
+              x: [0, Math.random() * 50 - 25],
+              opacity: [0, 1, 0],
+              scale: [0, 1, 0],
+            }}
+            transition={{
+              duration: 8 + Math.random() * 4,
+              repeat: Infinity,
+              delay: Math.random() * 5,
+              ease: "easeInOut",
+            }}
+          />
+        ))}
+      </Box>
+      <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 2, py: 4 }}>
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.2 }}
+        >
+          {/* Header Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+          >
+            <Box sx={{ mb: 4 }}>
+              <motion.div
+                animate={{ 
+                  scale: [1, 1.02, 1],
+                  textShadow: [
+                    "0 0 0px rgba(99, 102, 241, 0)",
+                    "0 0 20px rgba(99, 102, 241, 0.3)",
+                    "0 0 0px rgba(99, 102, 241, 0)"
+                  ]
+                }}
+                transition={{ 
+                  duration: 3, 
+                  repeat: Infinity,
+                  ease: "easeInOut"
                 }}
               >
-                <Box sx={{ p: 3, pt: 0 }}>
-                  <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-                    <Box>
-                      <Typography variant="h5" gutterBottom>
-                        {lesson.subject}
-                      </Typography>
-                      <Typography variant="body2" color="textSecondary" gutterBottom>
-                        {lesson.topic}
-                      </Typography>
-                    </Box>
-                    <Chip
-                      label={lesson.status}
-                      color={lesson.status === 'ongoing' ? 'success' : lesson.status === 'upcoming' ? 'warning' : 'default'}
-                      size="small"
-                    />
-                  </Box>
-                  
-                  <Grid container spacing={2} sx={{ mb: 2 }}>
-                    <Grid item xs={6}>
-                      <Box display="flex" alignItems="center">
-                        <PersonOutline sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
-                        <Typography variant="body2">
-                          {lesson.teacher}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <Box display="flex" alignItems="center">
-                        <LocationOn sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
-                        <Typography variant="body2">
-                          {lesson.room}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <Box display="flex" alignItems="center">
-                        <AccessTime sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
-                        <Typography variant="body2">
-                          {lesson.startTime} - {lesson.endTime}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <Box display="flex" alignItems="center">
-                        <Subject sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
-                        <Typography variant="body2">
-                          {lesson.subject}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                  </Grid>
-                  
-                  {lesson.status === 'ongoing' && lesson.progress > 0 && (
-                    <Box sx={{ mt: 2 }}>
-                      <Box display="flex" justifyContent="space-between" mb={1}>
-                        <Typography variant="body2" color="textSecondary">
-                          Progress
-                        </Typography>
-                        <Typography variant="body2" color="textSecondary">
-                          {lesson.progress}%
-                        </Typography>
-                      </Box>
-                      <Box sx={{ width: '100%', bgcolor: 'grey.200', borderRadius: 1, height: 8 }}>
-                        <Box
-                          sx={{
-                            width: `${lesson.progress}%`,
-                            bgcolor: 'primary.main',
-                            height: 8,
-                            borderRadius: 1,
-                            transition: 'width 0.3s ease',
-                          }}
-                        />
-                      </Box>
-                    </Box>
-                  )}
-                </Box>
-              </Box>
-            ))}
-          </Box>
-          
-          <MobileStepper
-            steps={maxSteps}
-            position="static"
-            activeStep={activeStep}
-            sx={{ bgcolor: 'transparent', px: 2, py: 1 }}
-            nextButton={
-              <IconButton
-                size="small"
-                onClick={handleNext}
-                disabled={activeStep === maxSteps - 1}
-              >
-                <KeyboardArrowRight />
-              </IconButton>
-            }
-            backButton={
-              <IconButton
-                size="small"
-                onClick={handleBack}
-                disabled={activeStep === 0}
-              >
-                <KeyboardArrowLeft />
-              </IconButton>
-            }
-          />
-        </CardContent>
-      </Card>
-    );
-  };
-
-  return (
-    <Container maxWidth="xl">
-      <Box sx={{ py: 3 }}>
-              {/* Back Button */}
-      <Box sx={{ position: 'absolute', top: 20, left: 20, zIndex: 10 }}>
-        <IconButton
-          onClick={() => window.history.back()}
-          sx={{
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-            color: '#1976d2',
-            '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 1)',
-            }
-          }}
-        >
-          <ArrowBack />
-        </IconButton>
-      </Box>
-
-        {/* Welcome Section with Enhanced Student Details */}
-        <Box sx={{ mb: 4 }}>
-          <Box display="flex" alignItems="center" mb={2}>
-            <Avatar
-              sx={{ width: 80, height: 80, mr: 3 }}
-              src={profile?.profilePicture}
-            >
-              {profile?.name?.charAt(0)}
-            </Avatar>
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="h4" gutterBottom>
-                Welcome back, {profile?.name || 'Student'}!
-              </Typography>
-              {/* Temporary test button - remove in production */}
-              <Button 
-                onClick={clearFeePopupFlag}
-                size="small"
-                variant="outlined"
-                sx={{ mb: 2 }}
-              >
-                Clear Fee Popup Flag (Test)
-              </Button>
-              <Typography variant="body1" color="textSecondary" gutterBottom>
-                Student ID: {profile?.studentId} | Class: {profile?.class} {profile?.section}
-              </Typography>
-              {performance?.averageGrade && (
-                <Typography variant="body2" color="primary" sx={{ mt: 1 }}>
-                  Current Average: {performance.averageGrade}%
+                <Typography
+                  variant="h3"
+                  sx={{
+                    fontWeight: 800,
+                    color: 'text.primary',
+                    mb: 1,
+                    fontSize: { xs: '1.75rem', sm: '2rem', md: '2.5rem' },
+                    background: 'linear-gradient(135deg, #6366f1 0%, #f59e0b 100%)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}
+                >
+                  Welcome back, {user?.name || 'Student'}! 👋
                 </Typography>
-              )}
-            </Box>
-            <Box sx={{ textAlign: 'right' }}>
-              <IconButton
-                color="primary"
-                onClick={() => setShowNotifications(true)}
-                sx={{ position: 'relative' }}
+              </motion.div>
+              <Typography
+                variant="h6"
+                sx={{
+                  color: 'text.secondary',
+                  fontWeight: 500,
+                }}
               >
-                <Badge badgeContent={taskNotifications.length} color="error">
-                  <Notifications />
-                </Badge>
-              </IconButton>
+                Here's what's happening with your academics today
+              </Typography>
             </Box>
-          </Box>
-        </Box>
+          </motion.div>
 
-        {/* Task Notifications */}
-        <TaskNotifications notifications={taskNotifications} />
-
-        {/* Ongoing Lessons Carousel */}
-        <LessonCarousel lessons={ongoingLessons} />
-
-        {/* Statistics Cards */}
-        <Typography variant="h5" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
+          {/* Quick Stats Section */}
+          <motion.div variants={itemVariants}>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 600,
+                color: 'text.primary',
+                mb: 3,
+              }}
+            >
           Quick Overview
         </Typography>
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' },
-            gap: { xs: 2, sm: 3 },
-            mb: 4,
-            '& > *': {
-              height: { xs: '140px', sm: '160px', md: '180px' },
-            }
-          }}
-        >
-          <StatCard
-            title="Pending Assignments"
-            value={Array.isArray(assignments) ? assignments.filter(a => a.status === 'pending').length : 0}
-            icon={<Assignment />}
-            subtitle="Due soon"
-          />
-          <StatCard
-            title="Upcoming Exams"
-            value={Array.isArray(upcomingExams) ? upcomingExams.length : 0}
-            icon={<School />}
-            subtitle="Next 30 days"
-          />
-          <StatCard
-            title="Attendance Rate"
-            value={`${getAttendanceRate()}%`}
-            icon={<Event />}
-            subtitle="This month"
-          />
-          <StatCard
-            title="Unread Messages"
-            value={Array.isArray(messages) ? messages.filter(m => !m.read).length : 0}
-            icon={<Message />}
-            subtitle="New notifications"
-          />
-        </Box>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' },
+                gap: 3,
+                mb: 4,
+                '& > *': {
+                  height: { xs: '140px', sm: '160px', md: '180px' },
+                }
+              }}
+            >
+              <ModernStatCard
+              title="Attendance Rate"
+              value={`${getAttendanceRate()}%`}
+                icon={Person}
+                color="primary"
+              subtitle="This month"
+                delay={0}
+              />
+              <ModernStatCard
+                title="Assignments"
+                value={dashboardData.assignments?.length || 0}
+                icon={Assignment}
+                color="secondary"
+                subtitle="Pending tasks"
+                delay={1}
+              />
+              <ModernStatCard
+                title="Average Grade"
+                value={dashboardData.progress?.averageGrade || 'A'}
+                icon={Grade}
+                color="success"
+                subtitle="Current semester"
+                delay={2}
+              />
+              <ModernStatCard
+                title="Events"
+                value={dashboardData.events?.length || 0}
+                icon={Event}
+                color="info"
+                subtitle="Upcoming"
+                delay={3}
+              />
+            </Box>
+          </motion.div>
 
-        {/* Navigation Grid */}
-        <Typography variant="h5" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
+          {/* Quick Access Section */}
+          <motion.div variants={itemVariants}>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 600,
+                color: 'text.primary',
+                mb: 3,
+              }}
+            >
           Quick Access
         </Typography>
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr', lg: '1fr 1fr 1fr 1fr' },
-            gap: { xs: 2, sm: 3 },
-            mb: 4,
-            '& > *': {
-              height: { xs: '120px', sm: '140px', md: '160px' },
-            }
-          }}
-        >
-          {navigationCards.map((card, index) => (
-            <NavigationCard key={index} {...card} />
-          ))}
-        </Box>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr', lg: '1fr 1fr 1fr 1fr' },
+                gap: 3,
+                mb: 4,
+                '& > *': {
+                  height: { xs: '120px', sm: '140px', md: '160px' },
+                }
+              }}
+            >
+              <ModernNavigationCard
+                title="Assignments"
+                description="View and submit your assignments"
+                icon={Assignment}
+                color="#6366f1"
+                path="/student/assignments"
+                count={dashboardData.assignments?.length || 0}
+                delay={0}
+              />
+              <ModernNavigationCard
+                title="Attendance"
+                description="Check your attendance records"
+                icon={Person}
+                color="#10b981"
+                path="/student/attendance"
+                delay={1}
+              />
+              <ModernNavigationCard
+                title="Exams"
+                description="View exam schedules and results"
+                icon={Quiz}
+                color="#f59e0b"
+                path="/student/exams"
+                count={dashboardData.exams?.length || 0}
+                delay={2}
+              />
+              <ModernNavigationCard
+                title="Documents"
+                description="Access your academic documents"
+                icon={DocumentScanner}
+                color="#3b82f6"
+                path="/student/documents"
+                delay={3}
+              />
+                    </Box>
+          </motion.div>
 
-        {/* Recent Activity */}
-        <Typography variant="h5" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
-          Recent Activity
-        </Typography>
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-            gap: { xs: 2, sm: 3 },
-            mb: 4,
-            '& > *': {
-              height: { xs: '300px', sm: '320px', md: '340px' },
-            }
-          }}
-        >
-          <ListCard
-            title="Recent Assignments"
-            items={Array.isArray(assignments) ? assignments.slice(0, 5) : []}
-            icon={<Assignment color="primary" />}
-            emptyMessage="No recent assignments"
-          />
-          <ListCard
-            title="Recent Announcements"
-            items={Array.isArray(announcements) ? announcements.slice(0, 5) : []}
-            icon={<Notifications color="primary" />}
-            emptyMessage="No recent announcements"
-          />
-          <ListCard
-            title="Upcoming Exams"
-            items={Array.isArray(upcomingExams) ? upcomingExams.slice(0, 5) : []}
-            icon={<School color="primary" />}
-            emptyMessage="No upcoming exams"
-          />
-          <ListCard
-            title="Recent Messages"
-            items={Array.isArray(messages) ? messages.slice(0, 5) : []}
-            icon={<Message color="primary" />}
-            emptyMessage="No recent messages"
-          />
-        </Box>
-
-        {/* Performance Overview */}
-        {performance && (
-          <Box sx={{ mt: 4 }}>
-            <Typography variant="h5" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
-              Performance Overview
-            </Typography>
+          {/* Recent Activity Section */}
+          <motion.div variants={itemVariants}>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 600,
+                color: 'text.primary',
+                mb: 3,
+              }}
+            >
+              Recent Activity
+          </Typography>
             <Box
               sx={{
                 display: 'grid',
                 gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-                gap: { xs: 2, sm: 3 },
+                gap: 3,
+                mb: 4,
+                '& > *': {
+                  height: { xs: '300px', sm: '320px', md: '340px' },
+                }
+              }}
+            >
+              <ModernListCard
+                title="Recent Assignments"
+                items={dashboardData.assignments?.slice(0, 5) || []}
+                icon={Assignment}
+                emptyMessage="No recent assignments"
+                delay={0}
+              />
+              <ModernListCard
+                title="Upcoming Events"
+                items={dashboardData.events?.slice(0, 5) || []}
+                icon={Event}
+                emptyMessage="No upcoming events"
+                delay={1}
+              />
+            </Box>
+          </motion.div>
+
+          {/* Performance Overview Section */}
+          <motion.div variants={itemVariants}>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 600,
+                color: 'text.primary',
+                mb: 3,
+              }}
+            >
+              Performance Overview
+        </Typography>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                gap: 3,
                 '& > *': {
                   height: { xs: '200px', sm: '220px', md: '240px' },
                 }
               }}
             >
-              <Card sx={{ height: '100%' }}>
-                <CardContent>
-                  <Box display="flex" alignItems="center" mb={2}>
-                    <TrendingUp color="primary" />
-                    <Typography variant="h6" component="div" sx={{ ml: 1, fontWeight: 600 }}>
-                      Academic Performance
-                    </Typography>
-                  </Box>
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Typography variant="h4" color="primary" sx={{ fontWeight: 700 }}>
-                      {performance.averageGrade || 0}%
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary">
-                      Average Grade
-                    </Typography>
-                  </Box>
-                  <Typography variant="body2" color="textSecondary">
-                    Total Subjects: {performance.totalSubjects || 0}
-                  </Typography>
-                </CardContent>
-              </Card>
-              <Card sx={{ height: '100%' }}>
-                <CardContent>
-                  <Box display="flex" alignItems="center" mb={2}>
-                    <Event color="primary" />
-                    <Typography variant="h6" component="div" sx={{ ml: 1, fontWeight: 600 }}>
-                      Attendance Summary
-                    </Typography>
-                  </Box>
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Box>
-                      <Typography variant="h4" color="success.main" sx={{ fontWeight: 700 }}>
-                        {performance.daysPresent || 0}
-                      </Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        Days Present
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="h4" color="error.main" sx={{ fontWeight: 700 }}>
-                        {performance.daysAbsent || 0}
-                      </Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        Days Absent
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Box>
-          </Box>
-        )}
+              <GlassCard
+                delay={0}
+                sx={{
+                  background: `linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)`,
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                }}
+              >
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '100%',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 48,
+                        height: 48,
+                        borderRadius: 2,
+                        background: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                      }}
+                    >
+                      <TrendingUp sx={{ color: '#ffffff', fontSize: 24 }} />
+              </Box>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontWeight: 600,
+                        color: 'text.primary',
+                      }}
+                    >
+                      Academic Progress
+        </Typography>
       </Box>
 
-      {/* Notification Modal */}
-      <Snackbar
-        open={showNotifications}
-        autoHideDuration={6000}
-        onClose={handleNotificationClose}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={handleNotificationClose}
-          severity="info"
-          sx={{ width: '100%' }}
-        >
-          <Typography variant="h6" gutterBottom>
-            All Notifications ({Array.isArray(taskNotifications) ? taskNotifications.length : 0})
-          </Typography>
-          <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
-            {Array.isArray(taskNotifications) ? taskNotifications.map((notification) => (
-              <Box key={notification.id} sx={{ mb: 2, p: 1, border: '1px solid #e0e0e0', borderRadius: 1 }}>
-                <Box display="flex" alignItems="center" justifyContent="space-between">
-                  <Box display="flex" alignItems="center">
-                    {getNotificationIcon(notification.type)}
-                    <Box sx={{ ml: 1 }}>
-                      <Typography variant="subtitle2">
-                        {notification.title}
+                  <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Typography
+                        variant="h2"
+                        sx={{
+                          fontWeight: 800,
+                          color: 'primary.main',
+                          mb: 1,
+                        }}
+                      >
+                        {dashboardData.progress?.overallScore || 85}%
                       </Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        Due: {new Date(notification.dueDate).toLocaleDateString()}
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: 'text.secondary',
+                          fontWeight: 500,
+                        }}
+                      >
+                        Overall Performance
                       </Typography>
-                    </Box>
                   </Box>
-                  <Chip
-                    label={notification.priority}
-                    color={getPriorityColor(notification.priority)}
-                    size="small"
-                  />
+                  </Box>
+          </Box>
+              </GlassCard>
+
+              <GlassCard
+                delay={1}
+                sx={{
+                  background: `linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)`,
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                }}
+              >
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '100%',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 48,
+                        height: 48,
+                        borderRadius: 2,
+                        background: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                      }}
+                    >
+                      <Schedule sx={{ color: '#ffffff', fontSize: 24 }} />
+                  </Box>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontWeight: 600,
+                        color: 'text.primary',
+                      }}
+                    >
+                      Attendance
+                      </Typography>
+                  </Box>
+
+                  <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Typography
+                        variant="h2"
+                        sx={{
+                          fontWeight: 800,
+                          color: 'secondary.main',
+                          mb: 1,
+                        }}
+                      >
+                        {getAttendanceRate()}%
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: 'text.secondary',
+                          fontWeight: 500,
+                        }}
+                      >
+                        This Month
+                      </Typography>
+                  </Box>
+                  </Box>
                 </Box>
-              </Box>
-            )) : []}
-          </Box>
-        </Alert>
-      </Snackbar>
-
-      {/* Auto-show notification for new tasks */}
-      {Array.isArray(taskNotifications) && taskNotifications.length > 0 && (
-        <Snackbar
-          open={true}
-          autoHideDuration={4000}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        >
-          <Alert
-            severity="info"
-            action={
-              <IconButton
-                color="inherit"
-                size="small"
-                onClick={() => setShowNotifications(true)}
-              >
-                <Close fontSize="inherit" />
-              </IconButton>
-            }
-          >
-            {taskNotifications.length} new task{taskNotifications.length > 1 ? 's' : ''} assigned!
-          </Alert>
-        </Snackbar>
-      )}
-
-      {/* Fee Due Modal Popup */}
-      <Dialog open={showFeePopup} onClose={() => setShowFeePopup(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>
-          <Box display="flex" alignItems="center">
-            <Payment color="error" sx={{ mr: 1 }} />
-            Fee Payment Due
-          </Box>
-        </DialogTitle>
-        <DialogContent>
-          {feeStatus ? (
-            <Box>
-              <MuiAlert severity="warning" sx={{ mb: 2 }}>
-                You have a pending fee payment. Please pay as soon as possible to avoid penalties.
-              </MuiAlert>
-              <Typography variant="h6" color="error.main" gutterBottom>
-                Amount Due: ₹{feeStatus.dueAmount}
-              </Typography>
-              {feeStatus.totalFee && (
-                <Typography variant="body2" gutterBottom>
-                  Total Fee: ₹{feeStatus.totalFee}
-                </Typography>
-              )}
-              {feeStatus.term && (
-                <Typography variant="body2" gutterBottom>
-                  Term: {feeStatus.term}
-                </Typography>
-              )}
-              <Typography variant="body2" gutterBottom>
-                Due Date: {feeStatus.dueDate}
-              </Typography>
-              {feeStatus.paymentStatus && (
-                <Chip
-                  label={feeStatus.paymentStatus}
-                  color={feeStatus.paymentStatus === 'Overdue' ? 'error' : 'warning'}
-                  sx={{ mb: 2 }}
-                />
-              )}
-              <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>
-                Payment History
-              </Typography>
-              {Array.isArray(feeStatus.paymentHistory) && feeStatus.paymentHistory.length > 0 ? (
-                <List dense>
-                  {feeStatus.paymentHistory.map((ph, idx) => (
-                    <ListItem key={ph.id || idx}>
-                      <ListItemText
-                        primary={`${ph.description} - ₹${ph.amount}`}
-                        secondary={`Date: ${ph.date} | Method: ${ph.method}`}
-                      />
-                      <Chip
-                        label={ph.status}
-                        color={ph.status === 'Completed' ? 'success' : 'warning'}
-                        size="small"
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-              ) : (
-                <Typography variant="body2" color="textSecondary">
-                  No payments made yet.
-                </Typography>
-              )}
+              </GlassCard>
             </Box>
-          ) : (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight={100}>
-              <CircularProgress />
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowFeePopup(false)} color="primary" variant="contained">
-            Close
-          </Button>
-          <Button
-            onClick={() => {
-              setShowFeePopup(false);
-              window.location.href = '/student/fees';
-            }}
-            color="error"
-            variant="outlined"
-            startIcon={<Payment />}
-          >
-            Pay Now
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Service Requests Section */}
-      <Box sx={{ my: 4 }}>
-        <Typography variant="h5" gutterBottom>
-          Service Requests
-        </Typography>
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-              <Typography variant="h6">Submit Service Requests</Typography>
-              <Button
-                variant="contained"
-                startIcon={<Send />}
-                onClick={() => setCreateRequestDialog(true)}
-              >
-                Create Request
-              </Button>
-            </Box>
-            
-            <Tabs 
-              value={serviceRequestsTab} 
-              onChange={(_, v) => setServiceRequestsTab(v)}
-              sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}
-            >
-              <Tab label="IT Support Requests" icon={<Computer />} />
-              <Tab label="General Service Requests" icon={<Build />} />
-            </Tabs>
-
-            {loadingRequests ? (
-              <Box display="flex" justifyContent="center" p={3}>
-                <CircularProgress />
-              </Box>
-            ) : (
-              <TableContainer component={Paper}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Request Number</TableCell>
-                      <TableCell>Type</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Priority</TableCell>
-                      <TableCell>Date</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {serviceRequests
-                      .filter(request => 
-                        serviceRequestsTab === 0 
-                          ? request.requestType === 'ITSupportRequest'
-                          : request.requestType === 'GeneralServiceRequest'
-                      )
-                      .map((request) => (
-                      <TableRow key={request._id}>
-                        <TableCell>{request.requestNumber || 'Pending'}</TableCell>
-                        <TableCell>
-                          <Box display="flex" alignItems="center" gap={1}>
-                            {getRequestTypeIcon(request.requestType)}
-                            {request.requestType === 'ITSupportRequest' ? 'IT Support' : 'General Service'}
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Chip 
-                            label={request.status} 
-                            color={getStatusColor(request.status)}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {request.priorityLevel || 'N/A'}
-                        </TableCell>
-                        <TableCell>
-                          {new Date(request.createdAt).toLocaleDateString()}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            )}
-          </CardContent>
-        </Card>
-      </Box>
-
-      {/* Teacher Remarks Form Structure */}
-      <Box sx={{ my: 4 }}>
-        <Typography variant="h5" gutterBottom>
-          Teacher Remarks Form Structure
-        </Typography>
-        {schemaLoading ? (
-          <CircularProgress />
-        ) : schemaError ? (
-          <Alert severity="error">{schemaError}</Alert>
-        ) : (
-          <Paper sx={{ p: 2, overflow: 'auto' }}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Field Name</TableCell>
-                  <TableCell>Type</TableCell>
-                  <TableCell>Required</TableCell>
-                  <TableCell>Options</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {remarksSchema.map((field) => (
-                  <TableRow key={field.name}>
-                    <TableCell>{field.name}</TableCell>
-                    <TableCell>{field.type}</TableCell>
-                    <TableCell>{field.required ? 'Yes' : 'No'}</TableCell>
-                    <TableCell>
-                      {Array.isArray(field.enum)
-                        ? field.enum.join(', ')
-                        : '-'}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Paper>
-        )}
-      </Box>
-
-      {/* Create Request Dialog */}
-      <Dialog 
-        open={createRequestDialog} 
-        onClose={() => setCreateRequestDialog(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="h6">Create Service Request</Typography>
-            <FormControl size="small" sx={{ minWidth: 200 }}>
-              <InputLabel>Request Type</InputLabel>
-              <Select
-                value={requestType}
-                onChange={(e) => setRequestType(e.target.value)}
-                label="Request Type"
-              >
-                <MenuItem value="ITSupportRequest">
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <Computer />
-                    IT Support Request
-                  </Box>
-                </MenuItem>
-                <MenuItem value="GeneralServiceRequest">
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <Build />
-                    General Service Request
-                  </Box>
-                </MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-        </DialogTitle>
-        <DialogContent>
-          {requestType === 'ITSupportRequest' ? (
-            <form onSubmit={handleSubmit}>
-              <Grid container spacing={3}>
-                {/* Device Information */}
-                <Grid item xs={12}>
-                  <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                    Device Information
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth error={!!errors['deviceEquipmentInfo.typeOfDevice']}>
-                    <InputLabel>Type of Device *</InputLabel>
-                    <Select
-                      value={itSupportForm.deviceEquipmentInfo.typeOfDevice}
-                      onChange={(e) => handleInputChange('itSupport', 'deviceEquipmentInfo.typeOfDevice', e.target.value)}
-                      label="Type of Device *"
-                    >
-                      <MenuItem value="Desktop">Desktop</MenuItem>
-                      <MenuItem value="Laptop">Laptop</MenuItem>
-                      <MenuItem value="Printer">Printer</MenuItem>
-                      <MenuItem value="Projector">Projector</MenuItem>
-                      <MenuItem value="Network">Network</MenuItem>
-                      <MenuItem value="Software">Software</MenuItem>
-                      <MenuItem value="Other">Other</MenuItem>
-                    </Select>
-                    {errors['deviceEquipmentInfo.typeOfDevice'] && (
-                      <Typography variant="caption" color="error" sx={{ mt: 1, ml: 2 }}>
-                        {errors['deviceEquipmentInfo.typeOfDevice']}
-                      </Typography>
-                    )}
-                  </FormControl>
-                </Grid>
-                
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Device Asset ID"
-                    value={itSupportForm.deviceEquipmentInfo.deviceAssetId}
-                    onChange={(e) => handleInputChange('itSupport', 'deviceEquipmentInfo.deviceAssetId', e.target.value)}
-                    fullWidth
-                  />
-                </Grid>
-                
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Operating System"
-                    value={itSupportForm.deviceEquipmentInfo.operatingSystem}
-                    onChange={(e) => handleInputChange('itSupport', 'deviceEquipmentInfo.operatingSystem', e.target.value)}
-                    fullWidth
-                  />
-                </Grid>
-                
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Other Device Type"
-                    value={itSupportForm.deviceEquipmentInfo.otherDeviceType}
-                    onChange={(e) => handleInputChange('itSupport', 'deviceEquipmentInfo.otherDeviceType', e.target.value)}
-                    fullWidth
-                    disabled={itSupportForm.deviceEquipmentInfo.typeOfDevice !== 'Other'}
-                  />
-                </Grid>
-
-                {/* Issue Details */}
-                <Grid item xs={12}>
-                  <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                    Issue Details
-                  </Typography>
-                </Grid>
-                
-                <Grid item xs={12}>
-                  <TextField
-                    label="Issue Description *"
-                    value={itSupportForm.issueDescription}
-                    onChange={(e) => handleInputChange('itSupport', 'issueDescription', e.target.value)}
-                    fullWidth
-                    multiline
-                    rows={4}
-                    error={!!errors.issueDescription}
-                    helperText={errors.issueDescription}
-                  />
-                </Grid>
-                
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth error={!!errors.priorityLevel}>
-                    <InputLabel>Priority Level *</InputLabel>
-                    <Select
-                      value={itSupportForm.priorityLevel}
-                      onChange={(e) => handleInputChange('itSupport', 'priorityLevel', e.target.value)}
-                      label="Priority Level *"
-                    >
-                      {priorityLevels.map((level) => (
-                        <MenuItem key={level} value={level}>{level}</MenuItem>
-                      ))}
-                    </Select>
-                    {errors.priorityLevel && (
-                      <Typography variant="caption" color="error" sx={{ mt: 1, ml: 2 }}>
-                        {errors.priorityLevel}
-                      </Typography>
-                    )}
-                  </FormControl>
-                </Grid>
-                
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth error={!!errors.requestedAction}>
-                    <InputLabel>Requested Action *</InputLabel>
-                    <Select
-                      value={itSupportForm.requestedAction}
-                      onChange={(e) => handleInputChange('itSupport', 'requestedAction', e.target.value)}
-                      label="Requested Action *"
-                    >
-                      {requestedActions.map((action) => (
-                        <MenuItem key={action} value={action}>{action}</MenuItem>
-                      ))}
-                    </Select>
-                    {errors.requestedAction && (
-                      <Typography variant="caption" color="error" sx={{ mt: 1, ml: 2 }}>
-                        {errors.requestedAction}
-                      </Typography>
-                    )}
-                  </FormControl>
-                </Grid>
-                
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Preferred Contact Time"
-                    value={itSupportForm.preferredContactTime}
-                    onChange={(e) => handleInputChange('itSupport', 'preferredContactTime', e.target.value)}
-                    fullWidth
-                    placeholder="e.g., 9:00 AM - 5:00 PM"
-                  />
-                </Grid>
-                
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Digital Signature *"
-                    value={itSupportForm.requesterSignature}
-                    onChange={(e) => handleInputChange('itSupport', 'requesterSignature', e.target.value)}
-                    fullWidth
-                    error={!!errors.requesterSignature}
-                    helperText={errors.requesterSignature}
-                    placeholder="Type your full name as digital signature"
-                  />
-                </Grid>
-                
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={itSupportForm.acknowledgment}
-                        onChange={(e) => handleInputChange('itSupport', 'acknowledgment', e.target.checked)}
-                        color="primary"
-                      />
-                    }
-                    label="I acknowledge that this request will be processed according to IT support policies and procedures."
-                  />
-                  {errors.acknowledgment && (
-                    <Typography variant="caption" color="error" sx={{ mt: 1, ml: 2 }}>
-                      {errors.acknowledgment}
-                    </Typography>
-                  )}
-                </Grid>
-                
-                <Grid item xs={12}>
-                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
-                    <Button
-                      type="submit"
-                      variant="contained"
-                      size="large"
-                      disabled={loadingRequests}
-                      startIcon={loadingRequests ? <CircularProgress size={20} /> : <Send />}
-                      sx={{ minWidth: 200 }}
-                    >
-                      {loadingRequests ? 'Submitting...' : 'Submit IT Support Request'}
-                    </Button>
-                  </Box>
-                </Grid>
-              </Grid>
-            </form>
-          ) : (
-            <form onSubmit={handleSubmit}>
-              <Grid container spacing={3}>
-                {/* Service Category */}
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth error={!!errors.serviceCategory}>
-                    <InputLabel>Service Category *</InputLabel>
-                    <Select
-                      value={generalServiceForm.serviceCategory}
-                      onChange={(e) => handleInputChange('general', 'serviceCategory', e.target.value)}
-                      label="Service Category *"
-                    >
-                      {serviceCategories.map((category) => (
-                        <MenuItem key={category} value={category}>{category}</MenuItem>
-                      ))}
-                    </Select>
-                    {errors.serviceCategory && (
-                      <Typography variant="caption" color="error" sx={{ mt: 1, ml: 2 }}>
-                        {errors.serviceCategory}
-                      </Typography>
-                    )}
-                  </FormControl>
-                </Grid>
-                
-                {/* Service Location */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Service Location *"
-                    value={generalServiceForm.serviceLocation}
-                    onChange={(e) => handleInputChange('general', 'serviceLocation', e.target.value)}
-                    fullWidth
-                    error={!!errors.serviceLocation}
-                    helperText={errors.serviceLocation}
-                  />
-                </Grid>
-                
-                {/* Preferred Date and Time */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Preferred Date"
-                    type="date"
-                    value={generalServiceForm.preferredDate}
-                    onChange={(e) => handleInputChange('general', 'preferredDate', e.target.value)}
-                    fullWidth
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </Grid>
-                
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Preferred Time"
-                    value={generalServiceForm.preferredTime}
-                    onChange={(e) => handleInputChange('general', 'preferredTime', e.target.value)}
-                    fullWidth
-                    placeholder="e.g., 9:00 AM - 5:00 PM"
-                  />
-                </Grid>
-                
-                {/* Description */}
-                <Grid item xs={12}>
-                  <TextField
-                    label="Service Description *"
-                    value={generalServiceForm.description}
-                    onChange={(e) => handleInputChange('general', 'description', e.target.value)}
-                    fullWidth
-                    multiline
-                    rows={4}
-                    error={!!errors.description}
-                    helperText={errors.description}
-                  />
-                </Grid>
-                
-                {/* Urgency */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Urgency Level"
-                    value={generalServiceForm.urgencyLevel}
-                    onChange={(e) => handleInputChange('general', 'urgencyLevel', e.target.value)}
-                    fullWidth
-                    placeholder="e.g., Low, Medium, High"
-                  />
-                </Grid>
-                
-                {/* Special Requirements */}
-                <Grid item xs={12}>
-                  <TextField
-                    label="Special Requirements"
-                    value={generalServiceForm.specialRequirements}
-                    onChange={(e) => handleInputChange('general', 'specialRequirements', e.target.value)}
-                    fullWidth
-                    multiline
-                    rows={3}
-                    placeholder="Any special requirements or additional information"
-                  />
-                </Grid>
-                
-                <Grid item xs={12}>
-                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
-                    <Button
-                      type="submit"
-                      variant="contained"
-                      size="large"
-                      disabled={loadingRequests}
-                      startIcon={loadingRequests ? <CircularProgress size={20} /> : <Send />}
-                      sx={{ minWidth: 200 }}
-                    >
-                      {loadingRequests ? 'Submitting...' : 'Submit General Service Request'}
-                    </Button>
-                  </Box>
-                </Grid>
-              </Grid>
-            </form>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCreateRequestDialog(false)}>Cancel</Button>
-        </DialogActions>
-      </Dialog>
+          </motion.div>
+        </motion.div>
     </Container>
+    </Box>
+      </motion.div>
   );
 };
 

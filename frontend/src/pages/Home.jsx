@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { color, motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useMemo, useCallback, useState } from 'react';
 import {
   Container,
@@ -16,6 +16,7 @@ import {
   Paper,
   Tabs,
   Tab,
+  IconButton,
 } from '@mui/material';
 import SchoolIcon from '@mui/icons-material/School';
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
@@ -27,8 +28,16 @@ import PsychologyIcon from '@mui/icons-material/Psychology';
 import BusinessIcon from '@mui/icons-material/Business';
 import GroupIcon from '@mui/icons-material/Group';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import School from '@mui/icons-material/School';
+import Book from '@mui/icons-material/Book';
+import Assignment from '@mui/icons-material/Assignment';
+import Event from '@mui/icons-material/Event';
 import logo from '../assets/logo.png';
+import backgroundVideo from '../assets/background.mp4';
 import { useTheme as useAppTheme } from '../context/ThemeContext';
+import ThemeToggle from '../components/ThemeToggle';
+import GlassCard from '../components/GlassCard';
+import AnimatedButton from '../components/AnimatedButton';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -41,18 +50,18 @@ const Home = () => {
     {
       title: 'Student Portal',
       description: 'Access your academic dashboard, assignments, and grades',
-      icon: <AutoStoriesIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: '#1E3A8A' }} />,
-      color: '#1E3A8A',
+      icon: <AutoStoriesIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: '#ffffff' }} />,
+      color: '#2563eb',
       path: '/student-login',
-      gradient: 'linear-gradient(135deg, #1E3A8A 0%, #14285B 100%)',
+      gradient: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)',
     },
     {
       title: 'Parent Portal',
       description: 'Monitor your child\'s progress and stay connected',
-      icon: <FamilyRestroomIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: '#F97316' }} />,
-      color: '#F97316',
+      icon: <FamilyRestroomIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: '#ffffff' }} />,
+      color: '#dc2626',
       path: '/parent-login',
-      gradient: 'linear-gradient(135deg, #F97316 0%, #C45A12 100%)',
+      gradient: 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)',
     },
   ];
 
@@ -60,18 +69,18 @@ const Home = () => {
     {
       title: 'Staff Login',
       description: 'Login for all teaching and non-teaching staff, principals, HODs, and officials',
-      icon: <BusinessIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: '#7c3aed' }} />,
-      color: '#7c3aed',
+      icon: <BusinessIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: '#ffffff' }} />,
+      color: '#0891b2',
       path: '/management-login',
-      gradient: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+      gradient: 'linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)',
     },
     {
       title: 'Accountant Login',
       description: 'Access financial dashboard and manage school expenses',
-      icon: <AccountBalanceWalletIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: '#f59e0b' }} />,
-      color: '#f59e0b',
+      icon: <AccountBalanceWalletIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: '#ffffff' }} />,
+      color: '#d97706',
       path: '/accountant-login',
-      gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+      gradient: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)',
     },
   ], []);
 
@@ -88,141 +97,176 @@ const Home = () => {
     visible: {
       opacity: 1,
       transition: {
-        duration: 0.6,
-        staggerChildren: 0.1,
+        duration: 0.8,
+        staggerChildren: 0.15,
       },
     },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: { opacity: 0, y: 30 },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.2,
-        ease: "easeInOut",
-      },
-    },
-  };
-
-  const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.3,
-        ease: "easeOut",
-      },
-    },
-    hover: {
-      y: -8,
-      transition: {
-        duration: 0.2,
-        ease: "easeInOut",
+        duration: 0.6,
+        ease: [0.25, 0.46, 0.45, 0.94],
       },
     },
   };
 
   const PortalCard = ({ portal, index }) => (
     <motion.div
-      variants={cardVariants}
-      whileHover="hover"
-      initial="hidden"
-      animate="visible"
-      transition={{ delay: index * 0.1 }}
-      style={{ 
-        width: '100%', 
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column'
+      initial={{ opacity: 0, y: 30, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.6, delay: 0.1 * index, ease: "easeOut" }}
+      whileHover={{ 
+        y: -10,
+        scale: 1.02,
+        transition: { duration: 0.2 }
+      }}
+      whileTap={{ 
+        scale: 0.98,
+        transition: { duration: 0.1 }
       }}
     >
       <Card
+        onClick={() => handlePortalClick(portal.path)}
         sx={{
-          width: '100%',
-          height: '100%',
+          height: { xs: '320px', sm: '380px', md: '420px' },
           display: 'flex',
           flexDirection: 'column',
           background: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(10px)',
-          border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.2)',
+          backdropFilter: 'blur(20px)',
+          border: isDark ? '1px solid rgba(148, 163, 184, 0.2)' : '1px solid rgba(37, 99, 235, 0.2)',
+          borderRadius: 3,
+          boxShadow: isDark ? '0 8px 32px rgba(0, 0, 0, 0.3)' : '0 8px 32px rgba(37, 99, 235, 0.1)',
           transition: 'all 0.3s ease-in-out',
           cursor: 'pointer',
-          minHeight: { xs: '280px', sm: '320px', md: '360px' },
+          position: 'relative',
+          overflow: 'hidden',
           '&:hover': {
             transform: 'translateY(-8px)',
-            boxShadow: isDark ? '0 20px 40px rgba(0,0,0,0.3)' : '0 20px 40px rgba(0,0,0,0.15)',
-            background: isDark ? 'rgba(30, 41, 59, 0.98)' : 'rgba(255, 255, 255, 0.98)',
+            boxShadow: isDark ? '0 20px 40px rgba(0, 0, 0, 0.4)' : '0 20px 40px rgba(37, 99, 235, 0.15)',
           },
         }}
-        onClick={() => handlePortalClick(portal.path)}
       >
         <CardContent sx={{ 
-          flexGrow: 1, 
-          textAlign: 'center', 
-          p: { xs: 2, sm: 3 },
+          flex: 1, 
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
           justifyContent: 'space-between',
-          height: '100%',
-          minHeight: { xs: '200px', sm: '220px', md: '240px' },
+          p: 3,
+          position: 'relative',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'linear-gradient(45deg, transparent 30%, rgba(59, 130, 246, 0.05) 50%, transparent 70%)',
+            backgroundSize: '200% 200%',
+            animation: 'shimmer 3s ease-in-out infinite',
+            borderRadius: 'inherit',
+            zIndex: 0,
+          }
         }}>
-          <Box sx={{ 
-            mb: 2,
-            p: 2,
-            borderRadius: '50%',
-            background: isDark 
-              ? `linear-gradient(135deg, ${portal.color}20 0%, ${portal.color}30 100%)`
-              : `linear-gradient(135deg, ${portal.color}15 0%, ${portal.color}25 100%)`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}>
-            {portal.icon}
+          <Box>
+            <motion.div
+              whileHover={{ 
+                scale: 1.1,
+                transition: { duration: 0.2 }
+              }}
+              whileTap={{ 
+                scale: 0.95,
+                transition: { duration: 0.1 }
+              }}
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 100,
+                  height: 100,
+                  borderRadius: 3,
+                  background: portal.gradient,
+                  mb: 4,
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
+                  position: 'relative',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: -2,
+                    left: -2,
+                    right: -2,
+                    bottom: -2,
+                    background: 'linear-gradient(45deg, #3b82f6, #8b5cf6, #ec4899, #3b82f6)',
+                    borderRadius: 'inherit',
+                    zIndex: -1,
+                    opacity: 0,
+                    transition: 'opacity 0.3s ease-in-out',
+                  },
+                  '&:hover::before': {
+                    opacity: 1,
+                  }
+                }}
+              >
+                <motion.div
+                  animate={{ 
+                    scale: [1, 1.05, 1]
+                  }}
+                  transition={{ 
+                    duration: 2, 
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                >
+                  {portal.icon}
+                </motion.div>
+              </Box>
+            </motion.div>
+            
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 700,
+                color: isDark ? '#ffffff' : 'text.primary',
+                mb: 3,
+                fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
+                textShadow: isDark ? '0 1px 2px rgba(0, 0, 0, 0.5)' : 'none',
+              }}
+            >
+              {portal.title}
+            </Typography>
+            
+            <Typography
+              variant="body2"
+              sx={{
+                color: isDark ? '#e2e8f0' : 'text.secondary',
+                lineHeight: 1.6,
+                fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' },
+                fontWeight: isDark ? 500 : 400,
+                textShadow: isDark ? '0 1px 2px rgba(0, 0, 0, 0.3)' : 'none',
+                minHeight: '4rem',
+                display: 'flex',
+                alignItems: 'flex-start',
+              }}
+            >
+              {portal.description}
+            </Typography>
           </Box>
-          <Typography
-            variant="h5"
-            component="h2"
-            sx={{
-              fontWeight: 700,
-              mb: 1.5,
-              color: isDark ? '#ffffff' : portal.color,
-              fontSize: { xs: '1.125rem', sm: '1.25rem' },
-              flexShrink: 0,
-            }}
-          >
-            {portal.title}
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{ 
-              mb: 2,
-              fontSize: { xs: '0.875rem', sm: '0.9rem' },
-              lineHeight: 1.5,
-              flexGrow: 1,
-              display: 'flex',
-              alignItems: 'center',
-              color: isDark ? '#cbd5e1' : '#64748b',
-            }}
-          >
-            {portal.description}
-          </Typography>
-        </CardContent>
-        <CardActions sx={{ p: { xs: 2, sm: 3 }, pt: 0, flexShrink: 0 }}>
+          
           <Button
-            fullWidth
             variant="contained"
             sx={{
               background: portal.gradient,
               color: 'white',
-              py: { xs: 1, sm: 1.5 },
+              mt: 0,
+              py: 1.5,
               fontWeight: 600,
               textTransform: 'none',
-              fontSize: { xs: '0.875rem', sm: '0.9rem' },
               borderRadius: 2,
               '&:hover': {
                 background: portal.gradient,
@@ -233,7 +277,7 @@ const Home = () => {
           >
             Access Portal
           </Button>
-        </CardActions>
+        </CardContent>
       </Card>
     </motion.div>
   );
@@ -242,13 +286,6 @@ const Home = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: isDark 
-          ? `linear-gradient(135deg, #0f172a 0%, #1e293b 100%)`
-          : `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
-        display: 'flex',
-        alignItems: 'center',
-        py: { xs: 2, sm: 4 },
-        px: { xs: 1, sm: 2 },
         position: 'relative',
         overflow: 'hidden',
         '&::before': {
@@ -258,209 +295,388 @@ const Home = () => {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
-          opacity: 0.3,
+          background: isDark 
+            ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.6) 0%, rgba(30, 41, 59, 0.6) 50%, rgba(51, 65, 85, 0.6) 100%)'
+            : 'linear-gradient(135deg, rgba(15, 23, 42, 0.4) 0%, rgba(30, 41, 59, 0.4) 50%, rgba(51, 65, 85, 0.4) 100%)',
+          zIndex: 1,
         },
       }}
     >
-      <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
+      {/* Theme Toggle Button */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 20,
+          right: 20,
+          zIndex: 9999,
+          pointerEvents: 'auto',
+        }}
+      >
+        <IconButton
+          sx={{
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.95)',
+            color: isDark ? '#ffffff' : '#1976d2',
+            border: isDark ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid rgba(0, 0, 0, 0.1)',
+            backdropFilter: 'blur(10px)',
+            width: 48,
+            height: 48,
+            '&:hover': {
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 1)',
+              transform: 'scale(1.05)',
+            }
+          }}
+        >
+          <ThemeToggle />
+        </IconButton>
+      </Box>
+      {/* Video Background */}
+      <video
+        autoPlay
+        muted
+        loop
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          zIndex: 0,
+        }}
+      >
+        <source src={backgroundVideo} type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+
+      {/* Simple Floating Icons */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 1,
+          pointerEvents: 'none',
+          overflow: 'hidden',
+        }}
+      >
+        {[...Array(4)].map((_, i) => (
+          <motion.div
+            key={i}
+            style={{
+              position: 'absolute',
+              left: `${20 + (i * 20)}%`,
+              top: `${30 + (i * 15)}%`,
+              color: isDark ? '#ffffff' : '#1e293b',
+              opacity: 0.05,
+            }}
+            animate={{
+              y: [0, -10, 0],
+            }}
+            transition={{
+              duration: 4,
+              repeat: Infinity,
+              delay: i * 0.5,
+              ease: "easeInOut",
+            }}
+          >
+            {i % 4 === 0 ? <School sx={{ fontSize: 24 }} /> :
+             i % 4 === 1 ? <Book sx={{ fontSize: 20 }} /> :
+             i % 4 === 2 ? <Assignment sx={{ fontSize: 22 }} /> :
+             <Event sx={{ fontSize: 18 }} />}
+          </motion.div>
+        ))}
+      </Box>
+      <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2 }}>
         <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
+          {/* Header Section */}
           <motion.div variants={itemVariants}>
-            <Box sx={{ textAlign: 'center', mb: { xs: 4, sm: 6 } }}>
-              <Box sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                mb: 3,
-                flexDirection: { xs: 'column', sm: 'row' }
-              }}>
-                <img 
-                  src={logo} 
-                  alt="EDULIVES Logo" 
-                  style={{ 
-                    height: isMobile ? 60 : 80, 
-                    width: 'auto', 
-                    marginRight: isMobile ? 0 : 16, 
-                    marginBottom: isMobile ? 16 : 0,
-                    objectFit: 'contain',
-                    maxWidth: '100%',
-                    maxHeight: '100%'
-                  }} 
-                />
-              </Box>
-              <Typography
-                variant="h2"
+            <Box
+              sx={{
+                textAlign: 'center',
+                py: { xs: 4, md: 6 },
+                mb: 4,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+                          <motion.div
+              initial={{ opacity: 0, scale: 0.5, y: -30 }}
+              animate={{ 
+                opacity: 1, 
+                scale: 1, 
+                y: 0
+              }}
+              transition={{ 
+                duration: 0.8, 
+                ease: "easeOut"
+              }}
+              whileHover={{ 
+                scale: 1.1,
+                transition: { duration: 0.2 }
+              }}
+              whileTap={{ 
+                scale: 0.95,
+                transition: { duration: 0.1 }
+              }}
+            >
+              <Box
+                component="img"
+                src={logo}
+                alt="School Logo"
                 sx={{
-                  fontSize: { xs: '1.25rem', sm: '1.5rem', md: '2rem' },
-                  fontWeight: 700,
-                  color: '#ffffff',
-                  mb: 2,
-                  opacity: 1,
-                  textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
+                  height: { xs: 80, sm: 100, md: 120 },
+                  width: 'auto',
+                  maxWidth: '100%',
+                  objectFit: 'contain',
+                  mb: 3,
+                  filter: 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2))',
+                  display: 'block',
+                  margin: '0 auto',
+                  cursor: 'pointer',
                 }}
-              >
-                Educational Excellence Platform
-              </Typography>
-              <Typography
-                variant="h5"
-                sx={{
-                  fontSize: { xs: '0.875rem', sm: '1rem' },
-                  color: '#f1f5f9',
-                  opacity: 0.95,
-                  maxWidth: 600,
-                  mx: 'auto',
-                  px: { xs: 1, sm: 0 },
-                  fontWeight: 500,
-                  textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
-                }}
-              >
-                Choose your portal to access the comprehensive school management system
-              </Typography>
+              />
+            </motion.div>
+              
+                              <motion.div
+                  initial={{ opacity: 0, y: 50, scale: 0.8 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 1.2, delay: 0.5, ease: "easeOut" }}
+                >
+                  <motion.div
+                    animate={{ 
+                      y: [0, -5, 0]
+                    }}
+                    transition={{ 
+                      duration: 3, 
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                  >
+                    <Box sx={{ position: 'relative', display: 'inline-block' }}>
+                      <Typography
+                        variant="h1"
+                        sx={{
+                          fontWeight: 900,
+                          mb: 2,
+                          fontSize: { xs: '2.5rem', sm: '3.5rem', md: '4rem' },
+                          background: isDark 
+                            ? 'linear-gradient(135deg, #ffffff 0%, #e2e8f0 50%, #cbd5e1 100%)'
+                            : 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 50%, #e2e8f0 100%)',
+                          backgroundClip: 'text',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          letterSpacing: '-0.02em',
+                          filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3))',
+                          position: 'relative',
+                          cursor: 'pointer',
+                          '&::before': {
+                            content: '""',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            background: 'linear-gradient(45deg, transparent 30%, rgba(59, 130, 246, 0.1) 50%, transparent 70%)',
+                            backgroundSize: '200% 200%',
+                            animation: 'shimmer 3s ease-in-out infinite',
+                          }
+                        }}
+                      >
+                        Welcome to EduTool
+                      </Typography>
+                      
+                      {/* Simple Glow Effect */}
+                      <motion.div
+                        style={{
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          width: '100%',
+                          height: '100%',
+                          background: 'radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%)',
+                          borderRadius: '50%',
+                          transform: 'translate(-50%, -50%)',
+                        }}
+                        animate={{ 
+                          scale: [1, 1.2, 1],
+                          opacity: [0.3, 0.6, 0.3],
+                        }}
+                        transition={{
+                          duration: 3,
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
+                      />
+                    </Box>
+                  </motion.div>
+                </motion.div>
+              
+                              <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.4 }}
+                >
+                  <motion.div
+                    animate={{ 
+                      opacity: [0.95, 1, 0.95],
+                      scale: [1, 1.01, 1]
+                    }}
+                    transition={{ 
+                      duration: 3, 
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                  >
+                                         <Box
+                       sx={{
+                         background: isDark 
+                           ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%)'
+                           : 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(147, 51, 234, 0.05) 100%)',
+                         backdropFilter: 'blur(10px)',
+                         border: isDark 
+                           ? '1px solid rgba(59, 130, 246, 0.2)'
+                           : '1px solid rgba(59, 130, 246, 0.1)',
+                         borderRadius: 2,
+                         padding: '1rem 2rem',
+                         position: 'relative',
+                         overflow: 'hidden',
+                       }}
+                     >
+                      <Typography
+                        variant="h5"
+                        sx={{
+                          color: isDark ? '#e2e8f0' : '#ffffff',
+                          fontWeight: 600,
+                          mb: 4,
+                          fontSize: { xs: '1.1rem', sm: '1.3rem', md: '1.5rem' },
+                          maxWidth: '800px',
+                          margin: '0 auto',
+                          lineHeight: 1.4,
+                          textShadow: isDark 
+                            ? '0 2px 4px rgba(255, 255, 255, 0.2)'
+                            : '0 2px 4px rgba(0, 0, 0, 0.7)',
+                          filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3))',
+                          position: 'relative',
+                          zIndex: 1,
+                        }}
+                      >
+                        Your comprehensive educational management platform.
+                      </Typography>
+                    </Box>
+                  </motion.div>
+                </motion.div>
             </Box>
           </motion.div>
 
-          <motion.div variants={itemVariants}>
-            <Paper 
-              sx={{ 
-                background: isDark ? 'rgba(30, 41, 59, 0.1)' : 'rgba(255, 255, 255, 0.1)', 
-                backdropFilter: 'blur(10px)',
-                border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.2)',
+          {/* Portal Selection Tabs */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+          >
+            <Paper
+              sx={{
+                background: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                backdropFilter: 'blur(20px)',
+                border: isDark ? '1px solid rgba(148, 163, 184, 0.2)' : '1px solid rgba(37, 99, 235, 0.2)',
                 borderRadius: 3,
-                mb: 4
+                mb: 4,
+                overflow: 'hidden',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
               }}
             >
-              <Tabs 
-                value={selectedTab} 
+              <Tabs
+                value={selectedTab}
                 onChange={handleTabChange}
                 variant="fullWidth"
                 sx={{
+                  '& .MuiTabs-indicator': {
+                    height: 3,
+                    background: 'linear-gradient(135deg, #2563eb 0%, #dc2626 100%)',
+                  },
                   '& .MuiTab-root': {
-                    color: isDark ? '#e2e8f0' : '#ffffff',
-                    fontSize: { xs: '0.875rem', sm: '1rem' },
+                    color: isDark ? '#94a3b8' : '#64748b',
                     fontWeight: 600,
+                    fontSize: { xs: '0.875rem', sm: '1rem' },
                     textTransform: 'none',
                     py: 2,
-                    opacity: 0.8,
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      opacity: 1,
-                      color: isDark ? '#ffffff' : '#ffffff',
+                    '&.Mui-selected': {
+                      color: isDark ? '#ffffff' : '#2563eb',
+                      fontWeight: 700,
                     },
-                  },
-                  '& .Mui-selected': {
-                    color: '#ffffff !important',
-                    opacity: 1,
-                    fontWeight: 700,
-                  },
-                  '& .MuiTabs-indicator': {
-                    backgroundColor: '#ffffff',
-                    height: 3,
+                    '&:hover': {
+                      color: isDark ? '#cbd5e1' : '#475569',
+                    },
                   },
                 }}
               >
-                <Tab 
-                  icon={<GroupIcon sx={{ fontSize: { xs: 20, sm: 24 }, color: 'inherit' }} />} 
-                  label="Students & Parents" 
-                  iconPosition="start"
-                />
-                <Tab 
-                  icon={<BusinessIcon sx={{ fontSize: { xs: 20, sm: 24 }, color: 'inherit' }} />} 
-                  label="Staff & Management" 
-                  iconPosition="start"
-                />
+                <Tab label="Students & Parents" />
+                <Tab label="Management" />
               </Tabs>
             </Paper>
           </motion.div>
 
-          {selectedTab === 0 && (
-            <motion.div variants={itemVariants}>
-              <Box sx={{ mb: 4 }}>
-                <Typography
-                  variant="h4"
-                  sx={{
-                    textAlign: 'center',
-                    color: '#ffffff',
-                    fontWeight: 700,
-                    mb: 2,
-                    fontSize: { xs: '1.5rem', sm: '2rem' },
-                    textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
-                  }}
+          {/* Portal Cards */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+          >
+            <AnimatePresence mode="wait">
+              {selectedTab === 0 ? (
+                <motion.div
+                  key="students-parents"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
                 >
-                  Student & Parent Portals
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-                  gap: { xs: 2, sm: 3 },
-                  maxWidth: '800px',
-                  mx: 'auto',
-                  '& > *': {
-                    height: { xs: '280px', sm: '320px', md: '360px' },
-                  }
-                }}
-              >
-                {studentParentPortals.map((portal, index) => (
-                  <PortalCard key={index} portal={portal} index={index} />
-                ))}
-              </Box>
-            </motion.div>
-          )}
-
-          {selectedTab === 1 && (
-            <motion.div variants={itemVariants}>
-              <Box sx={{ mb: 4 }}>
-                <Typography
-                  variant="h4"
-                  sx={{
-                    textAlign: 'center',
-                    color: '#ffffff',
-                    fontWeight: 700,
-                    mb: 2,
-                    fontSize: { xs: '1.5rem', sm: '2rem' },
-                    textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
-                  }}
+                  <Box
+                    sx={{
+                      display: 'grid',
+                      gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                      gap: 3,
+                      maxWidth: 800,
+                      mx: 'auto',
+                    }}
+                  >
+                    {studentParentPortals.map((portal, index) => (
+                      <PortalCard key={portal.title} portal={portal} index={index} />
+                    ))}
+                  </Box>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="management"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.3 }}
                 >
-                  Staff & Management Portal
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-                  gap: { xs: 2, sm: 3 },
-                  maxWidth: '800px',
-                  mx: 'auto',
-                  '& > *': {
-                    height: { xs: '280px', sm: '320px', md: '360px' },
-                  }
-                }}
-              >
-                {managementPortals.map((portal, index) => (
-                  <PortalCard key={index} portal={portal} index={index} />
-                ))}
-              </Box>
-            </motion.div>
-          )}
-
-          <motion.div variants={itemVariants}>
-            <Box sx={{ textAlign: 'center', mt: { xs: 4, sm: 6 } }}>
-              <Typography
-                variant="body2"
-                sx={{
-                  color: 'white',
-                  opacity: 0.7,
-                  fontSize: '0.875rem',
-                }}
-              >
-                © 2024 EDULIVES. All rights reserved.
-              </Typography>
-            </Box>
+                  <Box
+                    sx={{
+                      display: 'grid',
+                      gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                      gap: 3,
+                      maxWidth: 800,
+                      mx: 'auto',
+                    }}
+                  >
+                    {managementPortals.map((portal, index) => (
+                      <PortalCard key={portal.title} portal={portal} index={index} />
+                    ))}
+                  </Box>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         </motion.div>
       </Container>

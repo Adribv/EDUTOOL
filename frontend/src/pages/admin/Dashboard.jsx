@@ -71,10 +71,12 @@ import { adminAPI } from '../../services/api';
 import { toast } from 'react-toastify';
 import { roleConfig } from './roleConfig';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 
 function AdminDashboard() {
   const { user } = useAuth();
+  const { isDark } = useTheme();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -402,15 +404,34 @@ function AdminDashboard() {
 
   return (
     <Box p={3}>
-      {/* Back Button */}
-      <Box sx={{ position: 'absolute', top: 20, left: 20, zIndex: 10 }}>
+      {/* Back Button - Minimal Design */}
+      <Box sx={{ 
+        position: 'fixed', 
+        top: 15, 
+        left: 15, 
+        zIndex: 1201,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 48,
+        height: 48,
+        bgcolor: isDark ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+        borderRadius: '50%',
+        backdropFilter: 'blur(10px)',
+        border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.1)',
+        boxShadow: isDark 
+          ? '0 4px 12px rgba(0, 0, 0, 0.3)' 
+          : '0 4px 12px rgba(0, 0, 0, 0.1)',
+      }}>
         <IconButton
           onClick={() => window.history.back()}
           sx={{
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-            color: '#1976d2',
+            color: isDark ? '#f1f5f9' : '#1e293b',
+            width: 40,
+            height: 40,
             '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 1)',
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.04)',
+              transform: 'scale(1.05)',
             }
           }}
         >
@@ -447,110 +468,119 @@ function AdminDashboard() {
       </Box>
 
       {/* Statistics Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
+      <Grid 
+        container 
+        spacing={{ xs: 2, sm: 3, md: 3 }} 
+        sx={{ 
+          mb: 4,
+          '& .MuiGrid-item': {
+            minHeight: { xs: '120px', sm: '140px', md: '160px' }
+          }
+        }}
+      >
+        <Grid item xs={6} sm={4} md={3} lg={2}>
+          <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
-                  <Typography color="textSecondary" gutterBottom>
+                  <Typography color="textSecondary" gutterBottom sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                     Total Students
                   </Typography>
-                  <Typography variant="h4">
+                  <Typography variant="h4" sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}>
                     {stats.totalStudents}
                   </Typography>
                 </Box>
-                <People color="primary" sx={{ fontSize: 40 }} />
+                <People color="primary" sx={{ fontSize: { xs: 28, sm: 32, md: 40 } }} />
               </Box>
             </CardContent>
           </Card>
         </Grid>
         
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
+        <Grid item xs={6} sm={4} md={3} lg={2}>
+          <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
-                  <Typography color="textSecondary" gutterBottom>
+                  <Typography color="textSecondary" gutterBottom sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                     Total Staff
                   </Typography>
-                  <Typography variant="h4">
+                  <Typography variant="h4" sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}>
                     {stats.totalStaff}
                   </Typography>
                 </Box>
-                <GroupIcon color="secondary" sx={{ fontSize: 40 }} />
+                <GroupIcon color="secondary" sx={{ fontSize: { xs: 28, sm: 32, md: 40 } }} />
               </Box>
             </CardContent>
           </Card>
         </Grid>
         
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
+        <Grid item xs={6} sm={4} md={3} lg={2}>
+          <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
-                  <Typography color="textSecondary" gutterBottom>
+                  <Typography color="textSecondary" gutterBottom sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                     Total Classes
                   </Typography>
-                  <Typography variant="h4">
+                  <Typography variant="h4" sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}>
                     {stats.totalClasses}
                   </Typography>
                 </Box>
-                <School color="success" sx={{ fontSize: 40 }} />
+                <School color="success" sx={{ fontSize: { xs: 28, sm: 32, md: 40 } }} />
               </Box>
             </CardContent>
           </Card>
         </Grid>
         
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
+        <Grid item xs={6} sm={4} md={3} lg={2}>
+          <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
-                  <Typography color="textSecondary" gutterBottom>
+                  <Typography color="textSecondary" gutterBottom sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                     Upcoming Events
                   </Typography>
-                  <Typography variant="h4">
+                  <Typography variant="h4" sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}>
                     {stats.upcomingEvents?.length || 0}
                   </Typography>
                 </Box>
-                <Event color="warning" sx={{ fontSize: 40 }} />
+                <Event color="warning" sx={{ fontSize: { xs: 28, sm: 32, md: 40 } }} />
               </Box>
             </CardContent>
           </Card>
         </Grid>
         
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
+        <Grid item xs={6} sm={4} md={3} lg={2}>
+          <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
-                  <Typography color="textSecondary" gutterBottom>
+                  <Typography color="textSecondary" gutterBottom sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                     Budget Requests
                   </Typography>
-                  <Typography variant="h4">
+                  <Typography variant="h4" sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}>
                     0
                   </Typography>
                 </Box>
-                <AccountBalance color="info" sx={{ fontSize: 40 }} />
+                <AccountBalance color="info" sx={{ fontSize: { xs: 28, sm: 32, md: 40 } }} />
               </Box>
             </CardContent>
           </Card>
         </Grid>
         
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
+        <Grid item xs={6} sm={4} md={3} lg={2}>
+          <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
-                  <Typography color="textSecondary" gutterBottom>
+                  <Typography color="textSecondary" gutterBottom sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                     Meeting Minutes
                   </Typography>
-                  <Typography variant="h4">
+                  <Typography variant="h4" sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}>
                     0
                   </Typography>
                 </Box>
-                <Assignment color="success" sx={{ fontSize: 40 }} />
+                <Assignment color="success" sx={{ fontSize: { xs: 28, sm: 32, md: 40 } }} />
               </Box>
             </CardContent>
           </Card>
