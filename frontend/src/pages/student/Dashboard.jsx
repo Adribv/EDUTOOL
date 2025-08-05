@@ -768,22 +768,62 @@ const Dashboard = () => {
   }
 
   const StatCard = ({ title, value, icon, color = 'primary', subtitle }) => (
-    <Card sx={{ height: '100%', transition: 'transform 0.2s', '&:hover': { transform: 'translateY(-4px)' } }}>
-      <CardContent>
-        <Box display="flex" alignItems="center" mb={2}>
-          {icon}
-          <Typography variant="h6" component="div" sx={{ ml: 1 }}>
+    <Card sx={{ 
+      height: { xs: '140px', sm: '160px', md: '180px' },
+      display: 'flex',
+      flexDirection: 'column',
+      transition: 'transform 0.2s', 
+      '&:hover': { transform: 'translateY(-4px)' },
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+      borderRadius: 2,
+    }}>
+      <CardContent sx={{ 
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        p: { xs: 2, sm: 2.5 },
+      }}>
+        <Box display="flex" alignItems="center" mb={2} sx={{ flexShrink: 0 }}>
+          <Box sx={{ 
+            color: `${color}.main`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            backgroundColor: `${color}.50`,
+            mr: 1.5,
+          }}>
+            {icon}
+          </Box>
+          <Typography variant="h6" component="div" sx={{ 
+            fontWeight: 600,
+            fontSize: { xs: '0.875rem', sm: '1rem' },
+            lineHeight: 1.2,
+          }}>
             {title}
           </Typography>
         </Box>
-        <Typography variant="h4" component="div" color={color}>
-          {value}
-        </Typography>
-        {subtitle && (
-          <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-            {subtitle}
+        <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <Typography variant="h4" component="div" color={color} sx={{ 
+            fontWeight: 700,
+            fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
+            mb: 0.5,
+          }}>
+            {value}
           </Typography>
-        )}
+          {subtitle && (
+            <Typography variant="body2" color="textSecondary" sx={{ 
+              mt: 0.5,
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              opacity: 0.8,
+            }}>
+              {subtitle}
+            </Typography>
+          )}
+        </Box>
       </CardContent>
     </Card>
   );
@@ -937,17 +977,42 @@ const Dashboard = () => {
         cursor: 'pointer',
         transition: 'all 0.3s ease',
         position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+        borderRadius: 2,
         '&:hover': { 
           transform: 'translateY(-8px)',
-          boxShadow: 4,
+          boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
           backgroundColor: `${color}08`
         }
       }}
       onClick={() => window.location.href = path}
     >
-      <CardContent sx={{ textAlign: 'center', p: 3 }}>
-        <Box display="flex" justifyContent="center" mb={2} position="relative">
-          {icon}
+      <CardContent sx={{ 
+        textAlign: 'center', 
+        p: { xs: 2, sm: 2.5 },
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100%',
+      }}>
+        <Box display="flex" justifyContent="center" mb={2} position="relative" sx={{ flexShrink: 0 }}>
+          <Box sx={{
+            width: { xs: 40, sm: 50 },
+            height: { xs: 40, sm: 50 },
+            borderRadius: '50%',
+            backgroundColor: `${color}20`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: `${color}main`,
+          }}>
+            {icon}
+          </Box>
           {count > 0 && (
             <Chip
               label={count}
@@ -964,10 +1029,19 @@ const Dashboard = () => {
             />
           )}
         </Box>
-        <Typography variant="h6" component="div" gutterBottom>
+        <Typography variant="h6" component="div" gutterBottom sx={{ 
+          fontWeight: 600,
+          fontSize: { xs: '0.875rem', sm: '1rem' },
+          lineHeight: 1.2,
+          mb: 1,
+        }}>
           {title}
         </Typography>
-        <Typography variant="body2" color="textSecondary">
+        <Typography variant="body2" color="textSecondary" sx={{ 
+          fontSize: { xs: '0.75rem', sm: '0.875rem' },
+          opacity: 0.8,
+          textAlign: 'center',
+        }}>
           {description}
         </Typography>
       </CardContent>
@@ -982,13 +1056,51 @@ const Dashboard = () => {
     
     if (maxSteps === 0) {
       return (
-        <Card sx={{ mb: 3 }}>
-          <CardContent sx={{ textAlign: 'center', py: 4 }}>
-            <Schedule color="primary" sx={{ fontSize: 60, mb: 2 }} />
-            <Typography variant="h6" gutterBottom>
+        <Card sx={{ 
+          mb: 3,
+          height: { xs: '200px', sm: '240px', md: '280px' },
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          borderRadius: 2,
+        }}>
+          <CardContent sx={{ 
+            textAlign: 'center', 
+            py: { xs: 3, sm: 4 },
+            px: { xs: 2, sm: 3 },
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+          }}>
+            <Box sx={{
+              width: { xs: 60, sm: 80 },
+              height: { xs: 60, sm: 80 },
+              borderRadius: '50%',
+              backgroundColor: 'primary.50',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mb: { xs: 2, sm: 3 },
+              color: 'primary.main',
+            }}>
+              <Schedule sx={{ fontSize: { xs: 32, sm: 40 } }} />
+            </Box>
+            <Typography variant="h6" gutterBottom sx={{ 
+              fontWeight: 700,
+              fontSize: { xs: '1.125rem', sm: '1.25rem' },
+              mb: 1,
+            }}>
               No Ongoing Lessons
             </Typography>
-            <Typography variant="body2" color="textSecondary">
+            <Typography variant="body2" color="textSecondary" sx={{ 
+              fontSize: { xs: '0.875rem', sm: '1rem' },
+              opacity: 0.8,
+              maxWidth: 300,
+            }}>
               Check your timetable for upcoming classes
             </Typography>
           </CardContent>
@@ -1199,163 +1311,173 @@ const Dashboard = () => {
         <LessonCarousel lessons={ongoingLessons} />
 
         {/* Statistics Cards */}
-        <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
+        <Typography variant="h5" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
           Quick Overview
         </Typography>
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <StatCard
-              title="Pending Assignments"
-              value={Array.isArray(assignments) ? assignments.filter(a => a.status === 'pending').length : 0}
-              icon={<Assignment color="primary" />}
-              subtitle="Due soon"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <StatCard
-              title="Upcoming Exams"
-              value={Array.isArray(upcomingExams) ? upcomingExams.length : 0}
-              icon={<School color="primary" />}
-              subtitle="Next 30 days"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <StatCard
-              title="Attendance Rate"
-              value={`${getAttendanceRate()}%`}
-              icon={<Event color="primary" />}
-              subtitle="This month"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <StatCard
-              title="Unread Messages"
-              value={Array.isArray(messages) ? messages.filter(m => !m.read).length : 0}
-              icon={<Message color="primary" />}
-              subtitle="New notifications"
-            />
-          </Grid>
-        </Grid>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' },
+            gap: { xs: 2, sm: 3 },
+            mb: 4,
+            '& > *': {
+              height: { xs: '140px', sm: '160px', md: '180px' },
+            }
+          }}
+        >
+          <StatCard
+            title="Pending Assignments"
+            value={Array.isArray(assignments) ? assignments.filter(a => a.status === 'pending').length : 0}
+            icon={<Assignment />}
+            subtitle="Due soon"
+          />
+          <StatCard
+            title="Upcoming Exams"
+            value={Array.isArray(upcomingExams) ? upcomingExams.length : 0}
+            icon={<School />}
+            subtitle="Next 30 days"
+          />
+          <StatCard
+            title="Attendance Rate"
+            value={`${getAttendanceRate()}%`}
+            icon={<Event />}
+            subtitle="This month"
+          />
+          <StatCard
+            title="Unread Messages"
+            value={Array.isArray(messages) ? messages.filter(m => !m.read).length : 0}
+            icon={<Message />}
+            subtitle="New notifications"
+          />
+        </Box>
 
         {/* Navigation Grid */}
-        <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
+        <Typography variant="h5" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
           Quick Access
         </Typography>
-        <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr', lg: '1fr 1fr 1fr 1fr' },
+            gap: { xs: 2, sm: 3 },
+            mb: 4,
+            '& > *': {
+              height: { xs: '120px', sm: '140px', md: '160px' },
+            }
+          }}
+        >
           {navigationCards.map((card, index) => (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
-              <NavigationCard {...card} />
-            </Grid>
+            <NavigationCard key={index} {...card} />
           ))}
-        </Grid>
+        </Box>
 
         {/* Recent Activity */}
-        <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
+        <Typography variant="h5" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
           Recent Activity
         </Typography>
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
-            <ListCard
-              title="Recent Assignments"
-              items={Array.isArray(assignments) ? assignments.slice(0, 5) : []}
-              icon={<Assignment color="primary" />}
-              emptyMessage="No recent assignments"
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <ListCard
-              title="Recent Announcements"
-              items={Array.isArray(announcements) ? announcements.slice(0, 5) : []}
-              icon={<Notifications color="primary" />}
-              emptyMessage="No recent announcements"
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <ListCard
-              title="Upcoming Exams"
-              items={Array.isArray(upcomingExams) ? upcomingExams.slice(0, 5) : []}
-              icon={<School color="primary" />}
-              emptyMessage="No upcoming exams"
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <ListCard
-              title="Recent Messages"
-              items={Array.isArray(messages) ? messages.slice(0, 5) : []}
-              icon={<Message color="primary" />}
-              emptyMessage="No recent messages"
-            />
-          </Grid>
-        </Grid>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+            gap: { xs: 2, sm: 3 },
+            mb: 4,
+            '& > *': {
+              height: { xs: '300px', sm: '320px', md: '340px' },
+            }
+          }}
+        >
+          <ListCard
+            title="Recent Assignments"
+            items={Array.isArray(assignments) ? assignments.slice(0, 5) : []}
+            icon={<Assignment color="primary" />}
+            emptyMessage="No recent assignments"
+          />
+          <ListCard
+            title="Recent Announcements"
+            items={Array.isArray(announcements) ? announcements.slice(0, 5) : []}
+            icon={<Notifications color="primary" />}
+            emptyMessage="No recent announcements"
+          />
+          <ListCard
+            title="Upcoming Exams"
+            items={Array.isArray(upcomingExams) ? upcomingExams.slice(0, 5) : []}
+            icon={<School color="primary" />}
+            emptyMessage="No upcoming exams"
+          />
+          <ListCard
+            title="Recent Messages"
+            items={Array.isArray(messages) ? messages.slice(0, 5) : []}
+            icon={<Message color="primary" />}
+            emptyMessage="No recent messages"
+          />
+        </Box>
 
         {/* Performance Overview */}
         {performance && (
           <Box sx={{ mt: 4 }}>
-            <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
+            <Typography variant="h5" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
               Performance Overview
             </Typography>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <Card>
-                  <CardContent>
-                    <Box display="flex" alignItems="center" mb={2}>
-                      <TrendingUp color="primary" />
-                      <Typography variant="h6" sx={{ ml: 1 }}>
-                        Academic Performance
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                gap: { xs: 2, sm: 3 },
+                '& > *': {
+                  height: { xs: '200px', sm: '220px', md: '240px' },
+                }
+              }}
+            >
+              <Card sx={{ height: '100%' }}>
+                <CardContent>
+                  <Box display="flex" alignItems="center" mb={2}>
+                    <TrendingUp color="primary" />
+                    <Typography variant="h6" component="div" sx={{ ml: 1, fontWeight: 600 }}>
+                      Academic Performance
+                    </Typography>
+                  </Box>
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                    <Typography variant="h4" color="primary" sx={{ fontWeight: 700 }}>
+                      {performance.averageGrade || 0}%
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary">
+                      Average Grade
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" color="textSecondary">
+                    Total Subjects: {performance.totalSubjects || 0}
+                  </Typography>
+                </CardContent>
+              </Card>
+              <Card sx={{ height: '100%' }}>
+                <CardContent>
+                  <Box display="flex" alignItems="center" mb={2}>
+                    <Event color="primary" />
+                    <Typography variant="h6" component="div" sx={{ ml: 1, fontWeight: 600 }}>
+                      Attendance Summary
+                    </Typography>
+                  </Box>
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                    <Box>
+                      <Typography variant="h4" color="success.main" sx={{ fontWeight: 700 }}>
+                        {performance.daysPresent || 0}
+                      </Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        Days Present
                       </Typography>
                     </Box>
-                    <Grid container spacing={2}>
-                      <Grid item xs={6}>
-                        <Typography variant="body2" color="textSecondary">
-                          Average Grade
-                        </Typography>
-                        <Typography variant="h4" color="primary">
-                          {performance.averageGrade || 0}%
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Typography variant="body2" color="textSecondary">
-                          Total Subjects
-                        </Typography>
-                        <Typography variant="h4" color="primary">
-                          {Array.isArray(subjects) ? subjects.length : 0}
-                        </Typography>
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Card>
-                  <CardContent>
-                    <Box display="flex" alignItems="center" mb={2}>
-                      <Assessment color="primary" />
-                      <Typography variant="h6" sx={{ ml: 1 }}>
-                        Attendance Summary
+                    <Box>
+                      <Typography variant="h4" color="error.main" sx={{ fontWeight: 700 }}>
+                        {performance.daysAbsent || 0}
+                      </Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        Days Absent
                       </Typography>
                     </Box>
-                    <Grid container spacing={2}>
-                      <Grid item xs={6}>
-                        <Typography variant="body2" color="textSecondary">
-                          Present Days
-                        </Typography>
-                        <Typography variant="h4" color="success.main">
-                          {Array.isArray(attendance) ? attendance.filter(a => a.status === 'present').length : 0}
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Typography variant="body2" color="textSecondary">
-                          Absent Days
-                        </Typography>
-                        <Typography variant="h4" color="error.main">
-                          {Array.isArray(attendance) ? attendance.filter(a => a.status === 'absent').length : 0}
-                        </Typography>
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Box>
           </Box>
         )}
       </Box>

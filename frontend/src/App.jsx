@@ -1,16 +1,16 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, CssBaseline, CircularProgress, Box, useTheme } from '@mui/material';
+import { CircularProgress, Box, useTheme } from '@mui/material';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastContainer } from 'react-toastify';
 import { lazy, Suspense } from 'react';
 import 'react-toastify/dist/ReactToastify.css';
 
-// Theme
-import theme from './theme';
-
 // Context
 import { AuthProvider } from './context/AuthContext';
 import { StaffPermissionProvider } from './context/StaffPermissionContext';
+import { ThemeProvider } from './context/ThemeContext';
+import ThemeAwareWrapper from './components/ThemeAwareWrapper';
+import FloatingThemeToggle from './components/FloatingThemeToggle';
 
 // Components
 import Layout from './components/layout/Layout';
@@ -89,13 +89,13 @@ function App() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
+        <ThemeProvider>
           <Router>
             <AuthProvider>
               <StaffPermissionProvider>
-                <Suspense fallback={<LoadingSpinner />}>
-                  <Routes>
+                <ThemeAwareWrapper>
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <Routes>
                     {/* Public Routes */}
                     <Route path="/" element={<Home />} />
                     {/* Public Auth Routes */}
@@ -172,6 +172,8 @@ function App() {
                   draggable
                   pauseOnHover
                 />
+                <FloatingThemeToggle />
+              </ThemeAwareWrapper>
               </StaffPermissionProvider>
             </AuthProvider>
           </Router>

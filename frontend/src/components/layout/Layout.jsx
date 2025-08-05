@@ -60,6 +60,8 @@ import { useAuth } from '../../context/AuthContext';
 import Logo from './Logo';
 import { roleConfig } from '../../pages/admin/roleConfig';
 import { api, staffActivitiesControlAPI } from '../../services/api';
+import ThemeToggle from '../ThemeToggle';
+import { useTheme as useAppTheme } from '../../context/ThemeContext';
 import { 
   getUserActivitiesControl, 
   hasAnyActivityAccess, 
@@ -79,6 +81,7 @@ const Layout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
+  const { isDark } = useAppTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   // Fetch user's activities control on component mount
@@ -686,26 +689,44 @@ const Layout = () => {
       <AppBar
         position="fixed"
         sx={{
-          width: { md: user?.role === 'HOD' ? '100%' : `calc(100% - ${currentDrawerWidth}px)` },
-          ml: { md: user?.role === 'HOD' ? 0 : `${currentDrawerWidth}px` },
-          bgcolor: 'white',
-          color: 'text.primary',
-          boxShadow: '0px 1px 3px rgba(0, 0, 0, 0.1), 0px 1px 2px rgba(0, 0, 0, 0.06)',
-          borderBottom: '1px solid #e2e8f0',
-          transition: theme.transitions.create(['width', 'margin'], {
+          width: { 
+            xs: '100%',
+            md: user?.role === 'HOD' ? '100%' : `calc(100% - ${currentDrawerWidth}px)` 
+          },
+          ml: { 
+            xs: 0,
+            md: user?.role === 'HOD' ? 0 : `${currentDrawerWidth}px` 
+          },
+          bgcolor: isDark ? '#1e293b' : 'white',
+          color: isDark ? '#f1f5f9' : 'text.primary',
+          boxShadow: isDark 
+            ? '0px 1px 3px rgba(0, 0, 0, 0.3), 0px 1px 2px rgba(0, 0, 0, 0.2)' 
+            : '0px 1px 3px rgba(0, 0, 0, 0.1), 0px 1px 2px rgba(0, 0, 0, 0.06)',
+          borderBottom: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+          transition: theme.transitions.create(['width', 'margin', 'background-color', 'color'], {
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.leavingScreen,
           }),
+          zIndex: 1200,
         }}
       >
-        <Toolbar sx={{ minHeight: 64 }}>
+        <Toolbar sx={{ 
+          minHeight: { xs: 56, md: 64 },
+          px: { xs: 1, sm: 2 },
+          py: { xs: 0.5, md: 0 }
+        }}>
           {user?.role !== 'HOD' && (
             <IconButton
               color="inherit"
               aria-label="open drawer"
               edge="start"
               onClick={handleDrawerToggle}
-              sx={{ mr: 2, display: { md: 'block' } }}
+              sx={{ 
+                mr: { xs: 1, sm: 2 }, 
+                display: { xs: 'block', md: 'block' },
+                minWidth: { xs: 48, md: 40 },
+                minHeight: { xs: 48, md: 40 }
+              }}
             >
               <MenuIcon />
             </IconButton>
@@ -717,7 +738,12 @@ const Layout = () => {
             sx={{ 
               flexGrow: 1,
               fontWeight: 600,
-              color: '#1e293b'
+              color: isDark ? '#f1f5f9' : '#1e293b',
+              fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' },
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              transition: 'color 0.3s ease'
             }}
           >
             {user?.role === 'AdminStaff' && user?.designation 
@@ -730,29 +756,66 @@ const Layout = () => {
                 label={`VP Controlled - ${userActivitiesControl.activityAssignments?.filter(a => a.accessLevel !== 'Unauthorized').length || 0} features accessible`}
                 size="small"
                 color="success"
-                sx={{ ml: 2, fontSize: '0.7rem' }}
+                sx={{ 
+                  ml: { xs: 1, sm: 2 }, 
+                  fontSize: { xs: '0.6rem', sm: '0.7rem' },
+                  display: { xs: 'none', sm: 'inline-flex' }
+                }}
               />
             )}
           </Typography>
           
-          <IconButton color="inherit" sx={{ mr: 1 }}>
+          <IconButton 
+            color="inherit" 
+            sx={{ 
+              mr: { xs: 0.5, sm: 1 },
+              minWidth: { xs: 48, md: 40 },
+              minHeight: { xs: 48, md: 40 },
+              color: isDark ? '#f1f5f9' : 'inherit',
+              '&:hover': {
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.04)',
+              }
+            }}
+          >
             <Badge badgeContent={3} color="error">
               <Notifications />
             </Badge>
           </IconButton>
           
+          <ThemeToggle 
+            sx={{ 
+              mr: { xs: 0.5, sm: 1 },
+              minWidth: { xs: 48, md: 40 },
+              minHeight: { xs: 48, md: 40 },
+              color: isDark ? '#f1f5f9' : 'inherit',
+              '&:hover': {
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.04)',
+              }
+            }}
+          />
+          
           <IconButton
             onClick={handleProfileMenuOpen}
             size="small"
             sx={{ 
-              ml: 1,
-              border: '2px solid #e2e8f0',
+              ml: { xs: 0.5, sm: 1 },
+              border: isDark ? '2px solid #475569' : '2px solid #e2e8f0',
+              minWidth: { xs: 48, md: 40 },
+              minHeight: { xs: 48, md: 40 },
               '&:hover': {
-                borderColor: '#3b82f6',
-              }
+                borderColor: isDark ? '#60a5fa' : '#3b82f6',
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.04)',
+              },
+              transition: 'all 0.3s ease'
             }}
           >
-            <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
+            <Avatar sx={{ 
+              width: { xs: 32, md: 32 }, 
+              height: { xs: 32, md: 32 }, 
+              bgcolor: isDark ? '#3b82f6' : 'primary.main',
+              color: '#ffffff',
+              fontSize: { xs: '0.875rem', md: '1rem' }
+            }}>
               {user?.name?.charAt(0) || 'U'}
             </Avatar>
           </IconButton>
@@ -785,8 +848,9 @@ const Layout = () => {
               '& .MuiDrawer-paper': {
                 boxSizing: 'border-box',
                 width: drawerWidth,
-                bgcolor: '#0f172a',
-                borderRight: 'none',
+                bgcolor: isDark ? '#0f172a' : '#ffffff',
+                borderRight: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+                transition: 'background-color 0.3s ease, border-color 0.3s ease',
               },
             }}
           >
@@ -801,9 +865,10 @@ const Layout = () => {
               '& .MuiDrawer-paper': {
                 boxSizing: 'border-box',
                 width: currentDrawerWidth,
-                bgcolor: '#0f172a',
+                bgcolor: isDark ? '#0f172a' : '#ffffff',
                 border: 'none',
-                transition: theme.transitions.create('width', {
+                borderRight: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+                transition: theme.transitions.create(['width', 'background-color', 'border-color'], {
                   easing: theme.transitions.easing.sharp,
                   duration: theme.transitions.duration.enteringScreen,
                 }),
@@ -820,12 +885,18 @@ const Layout = () => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: { xs: 2, md: 3 },
-          width: { md: user?.role === 'HOD' ? '100%' : `calc(100% - ${currentDrawerWidth}px)` },
+          p: { xs: 1, sm: 2, md: 3 },
+          width: { 
+            xs: '100%',
+            md: user?.role === 'HOD' ? '100%' : `calc(100% - ${currentDrawerWidth}px)` 
+          },
           transition: theme.transitions.create(['width', 'margin'], {
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.leavingScreen,
           }),
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         <Toolbar sx={{ minHeight: 64 }} />

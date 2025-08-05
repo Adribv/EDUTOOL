@@ -201,15 +201,44 @@ const Documents = () => {
 
       {/* Document Type Tabs */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs
-          value={selectedTab}
-          onChange={(e, newValue) => setSelectedTab(newValue)}
-        >
-          <Tab icon={<School />} label="School Policies" />
-          <Tab icon={<Receipt />} label="Certificates" />
-          <Tab icon={<Assignment />} label="Reports" />
-          <Tab icon={<Article />} label="Forms" />
-        </Tabs>
+        <Box sx={{ overflowX: 'auto', '&::-webkit-scrollbar': { height: 8 }, '&::-webkit-scrollbar-track': { backgroundColor: '#f1f1f1', borderRadius: 4 }, '&::-webkit-scrollbar-thumb': { backgroundColor: '#c1c1c1', borderRadius: 4 }, '&::-webkit-scrollbar-thumb:hover': { backgroundColor: '#a8a8a8' } }}>
+          <Tabs
+            value={selectedTab}
+            onChange={(e, newValue) => setSelectedTab(newValue)}
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
+            sx={{
+              minWidth: 'fit-content',
+              '& .MuiTab-root': {
+                minWidth: { xs: 120, sm: 140 },
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                padding: { xs: '8px 12px', sm: '12px 16px' },
+                textTransform: 'none',
+                fontWeight: 600,
+                '&.Mui-selected': {
+                  color: 'primary.main',
+                  fontWeight: 700,
+                },
+              },
+              '& .MuiTabs-indicator': {
+                backgroundColor: 'primary.main',
+                height: 3,
+              },
+              '& .MuiTabs-scrollButtons': {
+                color: 'primary.main',
+                '&.Mui-disabled': {
+                  opacity: 0.3,
+                },
+              },
+            }}
+          >
+            <Tab icon={<School />} label="School Policies" />
+            <Tab icon={<Receipt />} label="Certificates" />
+            <Tab icon={<Assignment />} label="Reports" />
+            <Tab icon={<Article />} label="Forms" />
+          </Tabs>
+        </Box>
       </Box>
 
       {/* Documents List */}

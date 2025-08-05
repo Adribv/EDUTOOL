@@ -27,6 +27,7 @@ import {
   ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme as useAppTheme } from '../../context/ThemeContext';
 import { toast } from 'react-toastify';
 import logo from '../../assets/logo.png';
 import { roleConfig } from '../admin/roleConfig';
@@ -44,6 +45,7 @@ const StaffLogin = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const theme = useTheme();
+  const { isDark } = useAppTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -159,11 +161,12 @@ const StaffLogin = () => {
         <IconButton
           onClick={() => navigate('/')}
           sx={{
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-            color: '#1976d2',
+            backgroundColor: isDark ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+            color: isDark ? '#60a5fa' : '#1976d2',
             '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 1)',
-            }
+              backgroundColor: isDark ? 'rgba(30, 41, 59, 1)' : 'rgba(255, 255, 255, 1)',
+            },
+            transition: 'all 0.3s ease'
           }}
         >
           <ArrowBackIcon />
@@ -177,10 +180,13 @@ const StaffLogin = () => {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url("https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=1470&auto=format&fit=crop")',
+          backgroundImage: isDark 
+            ? 'linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), url("https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=1470&auto=format&fit=crop")'
+            : 'linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url("https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=1470&auto=format&fit=crop")',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           zIndex: 0,
+          transition: 'background-image 0.3s ease',
         }}
       />
 
@@ -277,9 +283,10 @@ const StaffLogin = () => {
               sx={{
                 p: { xs: 3, sm: 4, md: 5 },
                 borderRadius: 3,
-                background: 'rgba(255, 255, 255, 0.95)',
+                background: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
+                border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.2)',
+                transition: 'all 0.3s ease',
               }}
             >
               <Box sx={{ textAlign: 'center', mb: 4 }}>

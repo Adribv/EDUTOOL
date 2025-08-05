@@ -28,10 +28,12 @@ import BusinessIcon from '@mui/icons-material/Business';
 import GroupIcon from '@mui/icons-material/Group';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import logo from '../assets/logo.png';
+import { useTheme as useAppTheme } from '../context/ThemeContext';
 
 const Home = () => {
   const navigate = useNavigate();
   const theme = useTheme();
+  const { isDark } = useAppTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [selectedTab, setSelectedTab] = useState(0);
 
@@ -39,18 +41,18 @@ const Home = () => {
     {
       title: 'Student Portal',
       description: 'Access your academic dashboard, assignments, and grades',
-      icon: <AutoStoriesIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: '#2563eb' }} />,
-      color: '#2563eb',
+      icon: <AutoStoriesIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: '#1E3A8A' }} />,
+      color: '#1E3A8A',
       path: '/student-login',
-      gradient: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+      gradient: 'linear-gradient(135deg, #1E3A8A 0%, #14285B 100%)',
     },
     {
       title: 'Parent Portal',
       description: 'Monitor your child\'s progress and stay connected',
-      icon: <FamilyRestroomIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: '#10b981' }} />,
-      color: '#10b981',
+      icon: <FamilyRestroomIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: '#F97316' }} />,
+      color: '#F97316',
       path: '/parent-login',
-      gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+      gradient: 'linear-gradient(135deg, #F97316 0%, #C45A12 100%)',
     },
   ];
 
@@ -98,24 +100,24 @@ const Home = () => {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.5,
-        ease: "easeOut",
+        duration: 0.2,
+        ease: "easeInOut",
       },
     },
   };
 
   const cardVariants = {
-    hidden: { opacity: 0, scale: 0.9 },
+    hidden: { opacity: 0, y: 20 },
     visible: {
       opacity: 1,
-      scale: 1,
+      y: 0,
       transition: {
-        duration: 0.4,
+        duration: 0.3,
         ease: "easeOut",
       },
     },
     hover: {
-      scale: 1.02,
+      y: -8,
       transition: {
         duration: 0.2,
         ease: "easeInOut",
@@ -124,118 +126,125 @@ const Home = () => {
   };
 
   const PortalCard = ({ portal, index }) => (
-    <Grid item xs={12} sm={6} md={6} key={index} sx={{ 
-      display: 'flex',
-      '& .MuiCard-root': {
-        width: '100%',
+    <motion.div
+      variants={cardVariants}
+      whileHover="hover"
+      initial="hidden"
+      animate="visible"
+      transition={{ delay: index * 0.1 }}
+      style={{ 
+        width: '100%', 
         height: '100%',
-        minHeight: { xs: '280px', sm: '320px', md: '350px' }
-      }
-    }}>
-      <motion.div
-        variants={cardVariants}
-        whileHover="hover"
-        initial="hidden"
-        animate="visible"
-        transition={{ delay: index * 0.1 }}
+        display: 'flex',
+        flexDirection: 'column'
+      }}
+    >
+      <Card
+        sx={{
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          background: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(10px)',
+          border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.2)',
+          transition: 'all 0.3s ease-in-out',
+          cursor: 'pointer',
+          minHeight: { xs: '280px', sm: '320px', md: '360px' },
+          '&:hover': {
+            transform: 'translateY(-8px)',
+            boxShadow: isDark ? '0 20px 40px rgba(0,0,0,0.3)' : '0 20px 40px rgba(0,0,0,0.15)',
+            background: isDark ? 'rgba(30, 41, 59, 0.98)' : 'rgba(255, 255, 255, 0.98)',
+          },
+        }}
+        onClick={() => handlePortalClick(portal.path)}
       >
-        <Card
-          sx={{
-            width: '100%',
-            height: '100%',
+        <CardContent sx={{ 
+          flexGrow: 1, 
+          textAlign: 'center', 
+          p: { xs: 2, sm: 3 },
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          height: '100%',
+          minHeight: { xs: '200px', sm: '220px', md: '240px' },
+        }}>
+          <Box sx={{ 
+            mb: 2,
+            p: 2,
+            borderRadius: '50%',
+            background: isDark 
+              ? `linear-gradient(135deg, ${portal.color}20 0%, ${portal.color}30 100%)`
+              : `linear-gradient(135deg, ${portal.color}15 0%, ${portal.color}25 100%)`,
             display: 'flex',
-            flexDirection: 'column',
-            background: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            transition: 'all 0.3s ease-in-out',
-            cursor: 'pointer',
-            minHeight: { xs: '280px', sm: '320px', md: '350px' },
-            '&:hover': {
-              transform: 'translateY(-8px)',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
-              background: 'rgba(255, 255, 255, 0.98)',
-            },
-          }}
-          onClick={() => handlePortalClick(portal.path)}
-        >
-          <CardContent sx={{ 
-            flexGrow: 1, 
-            textAlign: 'center', 
-            p: { xs: 2, sm: 3 },
-            display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'space-between',
-            minHeight: { xs: '200px', sm: '220px', md: '240px' },
+            justifyContent: 'center',
+            flexShrink: 0,
           }}>
-            <Box sx={{ 
+            {portal.icon}
+          </Box>
+          <Typography
+            variant="h5"
+            component="h2"
+            sx={{
+              fontWeight: 700,
+              mb: 1.5,
+              color: isDark ? '#ffffff' : portal.color,
+              fontSize: { xs: '1.125rem', sm: '1.25rem' },
+              flexShrink: 0,
+            }}
+          >
+            {portal.title}
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{ 
               mb: 2,
-              p: 2,
-              borderRadius: '50%',
-              background: `linear-gradient(135deg, ${portal.color}15 0%, ${portal.color}25 100%)`,
+              fontSize: { xs: '0.875rem', sm: '0.9rem' },
+              lineHeight: 1.5,
+              flexGrow: 1,
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              {portal.icon}
-            </Box>
-            <Typography
-              variant="h5"
-              component="h2"
-              sx={{
-                fontWeight: 700,
-                mb: 1.5,
-                color: portal.color,
-                fontSize: { xs: '1.125rem', sm: '1.25rem' },
-              }}
-            >
-              {portal.title}
-            </Typography>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ 
-                mb: 2,
-                fontSize: { xs: '0.875rem', sm: '0.9rem' },
-                lineHeight: 1.5,
-              }}
-            >
-              {portal.description}
-            </Typography>
-          </CardContent>
-          <CardActions sx={{ p: { xs: 2, sm: 3 }, pt: 0 }}>
-            <Button
-              fullWidth
-              variant="contained"
-              sx={{
+              color: isDark ? '#cbd5e1' : '#64748b',
+            }}
+          >
+            {portal.description}
+          </Typography>
+        </CardContent>
+        <CardActions sx={{ p: { xs: 2, sm: 3 }, pt: 0, flexShrink: 0 }}>
+          <Button
+            fullWidth
+            variant="contained"
+            sx={{
+              background: portal.gradient,
+              color: 'white',
+              py: { xs: 1, sm: 1.5 },
+              fontWeight: 600,
+              textTransform: 'none',
+              fontSize: { xs: '0.875rem', sm: '0.9rem' },
+              borderRadius: 2,
+              '&:hover': {
                 background: portal.gradient,
-                color: 'white',
-                py: { xs: 1, sm: 1.5 },
-                fontWeight: 600,
-                textTransform: 'none',
-                fontSize: { xs: '0.875rem', sm: '0.9rem' },
-                borderRadius: 2,
-                '&:hover': {
-                  background: portal.gradient,
-                  opacity: 0.9,
-                  transform: 'translateY(-1px)',
-                },
-              }}
-            >
-              Access Portal
-            </Button>
-          </CardActions>
-        </Card>
-      </motion.div>
-    </Grid>
+                opacity: 0.9,
+                transform: 'translateY(-1px)',
+              },
+            }}
+          >
+            Access Portal
+          </Button>
+        </CardActions>
+      </Card>
+    </motion.div>
   );
 
   return (
     <Box
       sx={{
         minHeight: '100vh',
-        background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
+        background: isDark 
+          ? `linear-gradient(135deg, #0f172a 0%, #1e293b 100%)`
+          : `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
         display: 'flex',
         alignItems: 'center',
         py: { xs: 2, sm: 4 },
@@ -269,16 +278,29 @@ const Home = () => {
                 mb: 3,
                 flexDirection: { xs: 'column', sm: 'row' }
               }}>
-                <img src={logo} alt="EDULIVES Logo" style={{ height: isMobile ? 60 : 80, width: 'auto', marginRight: isMobile ? 0 : 16, marginBottom: isMobile ? 16 : 0 }} />
+                <img 
+                  src={logo} 
+                  alt="EDULIVES Logo" 
+                  style={{ 
+                    height: isMobile ? 60 : 80, 
+                    width: 'auto', 
+                    marginRight: isMobile ? 0 : 16, 
+                    marginBottom: isMobile ? 16 : 0,
+                    objectFit: 'contain',
+                    maxWidth: '100%',
+                    maxHeight: '100%'
+                  }} 
+                />
               </Box>
               <Typography
                 variant="h2"
                 sx={{
                   fontSize: { xs: '1.25rem', sm: '1.5rem', md: '2rem' },
-                  fontWeight: 600,
-                  color: 'white',
+                  fontWeight: 700,
+                  color: '#ffffff',
                   mb: 2,
-                  opacity: 0.9,
+                  opacity: 1,
+                  textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
                 }}
               >
                 Educational Excellence Platform
@@ -287,11 +309,13 @@ const Home = () => {
                 variant="h5"
                 sx={{
                   fontSize: { xs: '0.875rem', sm: '1rem' },
-                  color: 'white',
-                  opacity: 0.8,
+                  color: '#f1f5f9',
+                  opacity: 0.95,
                   maxWidth: 600,
                   mx: 'auto',
                   px: { xs: 1, sm: 0 },
+                  fontWeight: 500,
+                  textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
                 }}
               >
                 Choose your portal to access the comprehensive school management system
@@ -302,9 +326,9 @@ const Home = () => {
           <motion.div variants={itemVariants}>
             <Paper 
               sx={{ 
-                background: 'rgba(255, 255, 255, 0.1)', 
+                background: isDark ? 'rgba(30, 41, 59, 0.1)' : 'rgba(255, 255, 255, 0.1)', 
                 backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
+                border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.2)',
                 borderRadius: 3,
                 mb: 4
               }}
@@ -315,32 +339,38 @@ const Home = () => {
                 variant="fullWidth"
                 sx={{
                   '& .MuiTab-root': {
-                    color: 'white',
+                    color: isDark ? '#e2e8f0' : '#ffffff',
                     fontSize: { xs: '0.875rem', sm: '1rem' },
                     fontWeight: 600,
                     textTransform: 'none',
                     py: 2,
+                    opacity: 0.8,
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      opacity: 1,
+                      color: isDark ? '#ffffff' : '#ffffff',
+                    },
                   },
                   '& .Mui-selected': {
-                    color: 'white',
+                    color: '#ffffff !important',
+                    opacity: 1,
+                    fontWeight: 700,
                   },
                   '& .MuiTabs-indicator': {
-                    backgroundColor: 'white',
+                    backgroundColor: '#ffffff',
                     height: 3,
                   },
                 }}
               >
                 <Tab 
-                  icon={<GroupIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />} 
+                  icon={<GroupIcon sx={{ fontSize: { xs: 20, sm: 24 }, color: 'inherit' }} />} 
                   label="Students & Parents" 
                   iconPosition="start"
-                  sx={{ '&.Mui-selected': { color: 'gray' } }}
                 />
                 <Tab 
-                  icon={<BusinessIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />} 
+                  icon={<BusinessIcon sx={{ fontSize: { xs: 20, sm: 24 }, color: 'inherit' }} />} 
                   label="Staff & Management" 
                   iconPosition="start"
-                  sx={{ '&.Mui-selected': { color: 'gray' } }}
                 />
               </Tabs>
             </Paper>
@@ -353,20 +383,32 @@ const Home = () => {
                   variant="h4"
                   sx={{
                     textAlign: 'center',
-                    color: 'white',
-                    fontWeight: 600,
+                    color: '#ffffff',
+                    fontWeight: 700,
                     mb: 2,
                     fontSize: { xs: '1.5rem', sm: '2rem' },
+                    textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
                   }}
                 >
                   Student & Parent Portals
                 </Typography>
               </Box>
-              <Grid container spacing={{ xs: 2, sm: 3 }} justifyContent="center" alignItems="stretch">
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                  gap: { xs: 2, sm: 3 },
+                  maxWidth: '800px',
+                  mx: 'auto',
+                  '& > *': {
+                    height: { xs: '280px', sm: '320px', md: '360px' },
+                  }
+                }}
+              >
                 {studentParentPortals.map((portal, index) => (
                   <PortalCard key={index} portal={portal} index={index} />
                 ))}
-              </Grid>
+              </Box>
             </motion.div>
           )}
 
@@ -377,20 +419,32 @@ const Home = () => {
                   variant="h4"
                   sx={{
                     textAlign: 'center',
-                    color: 'white',
-                    fontWeight: 600,
+                    color: '#ffffff',
+                    fontWeight: 700,
                     mb: 2,
                     fontSize: { xs: '1.5rem', sm: '2rem' },
+                    textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
                   }}
                 >
                   Staff & Management Portal
                 </Typography>
               </Box>
-              <Grid container spacing={{ xs: 2, sm: 3 }} justifyContent="center" alignItems="stretch">
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                  gap: { xs: 2, sm: 3 },
+                  maxWidth: '800px',
+                  mx: 'auto',
+                  '& > *': {
+                    height: { xs: '280px', sm: '320px', md: '360px' },
+                  }
+                }}
+              >
                 {managementPortals.map((portal, index) => (
                   <PortalCard key={index} portal={portal} index={index} />
                 ))}
-              </Grid>
+              </Box>
             </motion.div>
           )}
 
