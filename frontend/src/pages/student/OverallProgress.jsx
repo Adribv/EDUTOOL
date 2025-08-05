@@ -785,53 +785,206 @@ const OverallProgress = () => {
                   variant="outlined"
                   startIcon={<DownloadIcon />}
                   onClick={() => {
-                    // Generate and download PDF
-                    const element = document.createElement('a');
-                    const file = new Blob([`
-                      COMPREHENSIVE PROGRESS REPORT
-                      
-                      School Information:
-                      School Name: ${mockData.comprehensiveReport.schoolInfo.schoolName}
-                      Academic Year: ${mockData.comprehensiveReport.schoolInfo.academicYear}
-                      Class: ${mockData.comprehensiveReport.schoolInfo.class}
-                      Term: ${mockData.comprehensiveReport.schoolInfo.term}
-                      
-                      Student Information:
-                      Name: ${user?.name || mockData.comprehensiveReport.studentInfo.name}
-                      Admission Number: ${mockData.comprehensiveReport.studentInfo.admissionNumber}
-                      Class/Section: ${mockData.comprehensiveReport.studentInfo.classSection}
-                      
-                      Academic Performance:
-                      ${mockData.comprehensiveReport.academicPerformance.subjects.map(subject => 
-                        `${subject.name}: ${subject.marks}/${subject.totalMarks} (${subject.grade}) - ${subject.teacherRemarks}`
-                      ).join('\n')}
-                      
-                      Co-Scholastic Areas:
-                      ${mockData.comprehensiveReport.coScholasticAreas.map(area => 
-                        `${area.area}: ${area.grade} - ${area.teacherComments}`
-                      ).join('\n')}
-                      
-                      Attendance: ${mockData.comprehensiveReport.attendance.percentage}%
-                      Total Days: ${mockData.comprehensiveReport.attendance.totalDays}
-                      Days Present: ${mockData.comprehensiveReport.attendance.daysPresent}
-                      Days Absent: ${mockData.comprehensiveReport.attendance.daysAbsent}
-                      
-                      General Remarks:
-                      Class Teacher: ${mockData.comprehensiveReport.generalRemarks.classTeacher}
-                      Principal: ${mockData.comprehensiveReport.generalRemarks.principal}
-                      
-                      Signatures:
-                      Class Teacher: ${mockData.comprehensiveReport.signatures.classTeacher}
-                      Parent/Guardian: ${mockData.comprehensiveReport.signatures.parentGuardian}
-                      Principal: ${mockData.comprehensiveReport.signatures.principal}
-                      Date: ${mockData.comprehensiveReport.signatures.date}
-                    `], {type: 'text/plain'});
-                    element.href = URL.createObjectURL(file);
-                    element.download = `Progress_Report_${user?.name || 'Student'}.txt`;
-                    document.body.appendChild(element);
-                    element.click();
-                    document.body.removeChild(element);
-                    toast.success('Progress report downloaded successfully!');
+                    // Generate PDF using browser print functionality
+                    const printContent = `
+                      <!DOCTYPE html>
+                      <html>
+                      <head>
+                        <title>Comprehensive Progress Report</title>
+                        <style>
+                          body { font-family: Arial, sans-serif; margin: 20px; }
+                          .header { text-align: center; margin-bottom: 30px; }
+                          .section { margin-bottom: 20px; }
+                          .section h3 { color: #1976d2; border-bottom: 2px solid #1976d2; padding-bottom: 5px; }
+                          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+                          .info-item { margin: 5px 0; }
+                          .label { font-weight: bold; color: #666; }
+                          .value { font-weight: bold; }
+                          table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+                          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                          th { background-color: #f5f5f5; font-weight: bold; }
+                          .grade { padding: 2px 8px; border-radius: 3px; font-size: 12px; }
+                          .grade-A { background-color: #4caf50; color: white; }
+                          .grade-B { background-color: #ff9800; color: white; }
+                          .grade-C { background-color: #f44336; color: white; }
+                          .signatures { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 30px; }
+                          .signature-item { text-align: center; }
+                          @media print {
+                            body { margin: 0; }
+                            .no-print { display: none; }
+                          }
+                        </style>
+                      </head>
+                      <body>
+                        <div class="header">
+                          <h1>COMPREHENSIVE PROGRESS REPORT</h1>
+                          <p>Academic Year: ${mockData.comprehensiveReport.schoolInfo.academicYear}</p>
+                        </div>
+
+                        <div class="section">
+                          <h3>School Information</h3>
+                          <div class="info-grid">
+                            <div class="info-item">
+                              <span class="label">School Name:</span>
+                              <span class="value">${mockData.comprehensiveReport.schoolInfo.schoolName}</span>
+                            </div>
+                            <div class="info-item">
+                              <span class="label">Class:</span>
+                              <span class="value">${mockData.comprehensiveReport.schoolInfo.class}</span>
+                            </div>
+                            <div class="info-item">
+                              <span class="label">Term:</span>
+                              <span class="value">${mockData.comprehensiveReport.schoolInfo.term}</span>
+                            </div>
+                            <div class="info-item">
+                              <span class="label">Report Date:</span>
+                              <span class="value">${mockData.comprehensiveReport.schoolInfo.reportDate}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="section">
+                          <h3>Student Information</h3>
+                          <div class="info-grid">
+                            <div class="info-item">
+                              <span class="label">Name:</span>
+                              <span class="value">${user?.name || mockData.comprehensiveReport.studentInfo.name}</span>
+                            </div>
+                            <div class="info-item">
+                              <span class="label">Admission Number:</span>
+                              <span class="value">${mockData.comprehensiveReport.studentInfo.admissionNumber}</span>
+                            </div>
+                            <div class="info-item">
+                              <span class="label">Class/Section:</span>
+                              <span class="value">${mockData.comprehensiveReport.studentInfo.classSection}</span>
+                            </div>
+                            <div class="info-item">
+                              <span class="label">Class Teacher:</span>
+                              <span class="value">${mockData.comprehensiveReport.studentInfo.classTeacher}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="section">
+                          <h3>Academic Performance</h3>
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Subject</th>
+                                <th>Marks Obtained</th>
+                                <th>Maximum Marks</th>
+                                <th>Grade</th>
+                                <th>Teacher's Remarks</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              ${mockData.comprehensiveReport.academicPerformance.subjects.map(subject => `
+                                <tr>
+                                  <td>${subject.name}</td>
+                                  <td>${subject.marks}</td>
+                                  <td>${subject.totalMarks}</td>
+                                  <td><span class="grade grade-${subject.grade.charAt(0)}">${subject.grade}</span></td>
+                                  <td>${subject.teacherRemarks}</td>
+                                </tr>
+                              `).join('')}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        <div class="section">
+                          <h3>Co-Scholastic Areas</h3>
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Area</th>
+                                <th>Grade</th>
+                                <th>Teacher's Comments</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              ${mockData.comprehensiveReport.coScholasticAreas.map(area => `
+                                <tr>
+                                  <td>${area.area}</td>
+                                  <td><span class="grade grade-${area.grade.charAt(0)}">${area.grade}</span></td>
+                                  <td>${area.teacherComments}</td>
+                                </tr>
+                              `).join('')}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        <div class="section">
+                          <h3>Attendance Summary</h3>
+                          <div class="info-grid">
+                            <div class="info-item">
+                              <span class="label">Total Working Days:</span>
+                              <span class="value">${mockData.comprehensiveReport.attendance.totalDays}</span>
+                            </div>
+                            <div class="info-item">
+                              <span class="label">Days Present:</span>
+                              <span class="value">${mockData.comprehensiveReport.attendance.daysPresent}</span>
+                            </div>
+                            <div class="info-item">
+                              <span class="label">Days Absent:</span>
+                              <span class="value">${mockData.comprehensiveReport.attendance.daysAbsent}</span>
+                            </div>
+                            <div class="info-item">
+                              <span class="label">Attendance Percentage:</span>
+                              <span class="value">${mockData.comprehensiveReport.attendance.percentage}%</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="section">
+                          <h3>General Remarks</h3>
+                          <div class="info-grid">
+                            <div class="info-item">
+                              <span class="label">Class Teacher:</span>
+                              <span class="value">${mockData.comprehensiveReport.generalRemarks.classTeacher}</span>
+                            </div>
+                            <div class="info-item">
+                              <span class="label">Principal:</span>
+                              <span class="value">${mockData.comprehensiveReport.generalRemarks.principal}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="section">
+                          <h3>Signatures</h3>
+                          <div class="signatures">
+                            <div class="signature-item">
+                              <div class="label">Class Teacher</div>
+                              <div class="value">${mockData.comprehensiveReport.signatures.classTeacher}</div>
+                            </div>
+                            <div class="signature-item">
+                              <div class="label">Parent/Guardian</div>
+                              <div class="value">${mockData.comprehensiveReport.signatures.parentGuardian}</div>
+                            </div>
+                            <div class="signature-item">
+                              <div class="label">Principal</div>
+                              <div class="value">${mockData.comprehensiveReport.signatures.principal}</div>
+                            </div>
+                          </div>
+                          <div style="text-align: center; margin-top: 10px;">
+                            <span class="label">Date: </span>
+                            <span class="value">${mockData.comprehensiveReport.signatures.date}</span>
+                          </div>
+                        </div>
+                      </body>
+                      </html>
+                    `;
+
+                    const printWindow = window.open('', '_blank');
+                    printWindow.document.write(printContent);
+                    printWindow.document.close();
+                    
+                    // Wait for content to load then print
+                    printWindow.onload = function() {
+                      printWindow.print();
+                      printWindow.close();
+                    };
+                    
+                    toast.success('PDF generation started! Check your print dialog.');
                   }}
                 >
                   Download PDF
