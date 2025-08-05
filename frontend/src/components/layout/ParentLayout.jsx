@@ -149,6 +149,13 @@ const ParentLayout = () => {
           </ListItem>
         ))}
       </List>
+      
+      {/* Debug Info */}
+      <Box sx={{ p: 2, mt: 'auto', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem' }}>
+          Parent Portal v1.0
+        </Typography>
+      </Box>
     </Box>
   );
 

@@ -30,6 +30,7 @@ import ParentTransportFormView from '../pages/parent/ParentTransportFormView';
 import TeacherRemarksView from '../pages/parent/TeacherRemarksView';
 import CounsellingRequestForm from '../components/CounsellingRequestForm';
 import ComprehensiveProgressTemplate from '../pages/student/ComprehensiveProgressTemplate';
+import TestPage from '../pages/parent/TestPage';
 
 const ParentRoutes = () => {
   return (
@@ -71,6 +72,7 @@ const ParentRoutes = () => {
         <Route path="transport-forms/:formId/edit" element={<ParentTransportFormCreate />} />
         
         <Route path="counselling-request" element={<CounsellingRequestForm />} />
+        <Route path="test" element={<TestPage />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

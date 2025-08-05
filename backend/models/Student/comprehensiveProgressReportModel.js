@@ -73,7 +73,7 @@ const comprehensiveProgressReportSchema = new mongoose.Schema({
     }],
     rank: Number,
     totalStudents: Number,
-    previousRank: Number,
+
     rankImprovement: Number
   },
 
