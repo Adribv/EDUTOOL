@@ -95,60 +95,220 @@ const SyllabusView = () => {
       </Typography>
 
       {/* Statistics Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center">
-                <Assessment color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Total Units</Typography>
+      <Typography variant="h5" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
+        Subject wise syllabus completion format
+      </Typography>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' },
+          gap: { xs: 2, sm: 3 },
+          mb: 4,
+          '& > *': {
+            height: { xs: '140px', sm: '160px', md: '180px' },
+          }
+        }}
+      >
+        <Card sx={{ 
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+          borderRadius: 2,
+          transition: 'transform 0.2s',
+          '&:hover': { transform: 'translateY(-4px)' }
+        }}>
+          <CardContent sx={{ 
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            p: { xs: 2, sm: 2.5 },
+          }}>
+            <Box display="flex" alignItems="center" mb={2} sx={{ flexShrink: 0 }}>
+              <Box sx={{ 
+                color: 'primary.main',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                backgroundColor: 'primary.50',
+                mr: 1.5,
+              }}>
+                <Assessment />
               </Box>
-              <Typography variant="h4" color="primary">
+              <Typography variant="h6" sx={{ 
+                fontWeight: 600,
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+                lineHeight: 1.2,
+              }}>
+                Total Units
+              </Typography>
+            </Box>
+            <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <Typography variant="h4" color="primary" sx={{ 
+                fontWeight: 700,
+                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
+                mb: 0.5,
+              }}>
                 {totalEntries}
               </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center">
-                <CheckCircle color="success" sx={{ mr: 1 }} />
-                <Typography variant="h6">Completed</Typography>
+            </Box>
+          </CardContent>
+        </Card>
+
+        <Card sx={{ 
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+          borderRadius: 2,
+          transition: 'transform 0.2s',
+          '&:hover': { transform: 'translateY(-4px)' }
+        }}>
+          <CardContent sx={{ 
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            p: { xs: 2, sm: 2.5 },
+          }}>
+            <Box display="flex" alignItems="center" mb={2} sx={{ flexShrink: 0 }}>
+              <Box sx={{ 
+                color: 'success.main',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                backgroundColor: 'success.50',
+                mr: 1.5,
+              }}>
+                <CheckCircle />
               </Box>
-              <Typography variant="h4" color="success">
+              <Typography variant="h6" sx={{ 
+                fontWeight: 600,
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+                lineHeight: 1.2,
+              }}>
+                Completed Units
+              </Typography>
+            </Box>
+            <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <Typography variant="h4" color="success" sx={{ 
+                fontWeight: 700,
+                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
+                mb: 0.5,
+              }}>
                 {completedEntries}
               </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center">
-                <Schedule color="info" sx={{ mr: 1 }} />
-                <Typography variant="h6">In Progress</Typography>
+            </Box>
+          </CardContent>
+        </Card>
+
+        <Card sx={{ 
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+          borderRadius: 2,
+          transition: 'transform 0.2s',
+          '&:hover': { transform: 'translateY(-4px)' }
+        }}>
+          <CardContent sx={{ 
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            p: { xs: 2, sm: 2.5 },
+          }}>
+            <Box display="flex" alignItems="center" mb={2} sx={{ flexShrink: 0 }}>
+              <Box sx={{ 
+                color: 'info.main',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                backgroundColor: 'info.50',
+                mr: 1.5,
+              }}>
+                <Schedule />
               </Box>
-              <Typography variant="h4" color="info">
+              <Typography variant="h6" sx={{ 
+                fontWeight: 600,
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+                lineHeight: 1.2,
+              }}>
+                In Progress
+              </Typography>
+            </Box>
+            <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <Typography variant="h4" color="info" sx={{ 
+                fontWeight: 700,
+                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
+                mb: 0.5,
+              }}>
                 {inProgressEntries}
               </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center">
-                <Warning color="warning" sx={{ mr: 1 }} />
-                <Typography variant="h6">Completion Rate</Typography>
+            </Box>
+          </CardContent>
+        </Card>
+
+        <Card sx={{ 
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+          borderRadius: 2,
+          transition: 'transform 0.2s',
+          '&:hover': { transform: 'translateY(-4px)' }
+        }}>
+          <CardContent sx={{ 
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            p: { xs: 2, sm: 2.5 },
+          }}>
+            <Box display="flex" alignItems="center" mb={2} sx={{ flexShrink: 0 }}>
+              <Box sx={{ 
+                color: 'warning.main',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                backgroundColor: 'warning.50',
+                mr: 1.5,
+              }}>
+                <Warning />
               </Box>
-              <Typography variant="h4" color="warning">
-                {overallCompletion}%
+              <Typography variant="h6" sx={{ 
+                fontWeight: 600,
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+                lineHeight: 1.2,
+              }}>
+                Delayed Units
               </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+            </Box>
+            <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <Typography variant="h4" color="warning" sx={{ 
+                fontWeight: 700,
+                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
+                mb: 0.5,
+              }}>
+                {delayedEntries}
+              </Typography>
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
 
       {/* Filters */}
       <Paper sx={{ p: 2, mb: 3 }}>

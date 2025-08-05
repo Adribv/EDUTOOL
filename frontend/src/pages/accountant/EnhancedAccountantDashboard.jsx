@@ -750,7 +750,7 @@ const IncomeLogManager = () => {
     setLoading(true);
     try {
       // Use local backend API
-      const response = await fetch('https://api.edulives.com/api/income-logs/test/logs');
+              const response = await fetch('https://api.edulives.com/api/income-logs/test/logs');
       const data = await response.json();
       
       setIncomeLogs(data.docs || []);
@@ -770,7 +770,7 @@ const IncomeLogManager = () => {
   const fetchStats = async () => {
     try {
       // Use local backend API
-      const response = await fetch('https://api.edulives.com/api/income-logs/test/stats');
+              const response = await fetch('https://api.edulives.com/api/income-logs/test/stats');
       const data = await response.json();
       setStats(data);
     } catch (error) {
@@ -804,7 +804,7 @@ const IncomeLogManager = () => {
       console.log('Sending data to API:', dataToSend);
       
       // Use local backend API for creation (test endpoint)
-      const response = await fetch('https://api.edulives.com/api/income-logs/test/create', {
+              const response = await fetch('https://api.edulives.com/api/income-logs/test/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1719,7 +1719,7 @@ const ExpenseLogManager = () => {
     setLoading(true);
     try {
       // Use local backend API
-      const response = await fetch('https://api.edulives.com/api/expense-logs/test/logs');
+              const response = await fetch('https://api.edulives.com/api/expense-logs/test/logs');
       const data = await response.json();
       
       setExpenseLogs(data.docs || []);
@@ -1739,7 +1739,7 @@ const ExpenseLogManager = () => {
   const fetchStats = async () => {
     try {
       // Use local backend API
-      const response = await fetch('https://api.edulives.com/api/expense-logs/test/stats');
+              const response = await fetch('https://api.edulives.com/api/expense-logs/test/stats');
       const data = await response.json();
       setStats(data);
     } catch (error) {
@@ -1773,7 +1773,7 @@ const ExpenseLogManager = () => {
       console.log('Sending data to API:', dataToSend);
       
       // Use local backend API for creation (test endpoint)
-      const response = await fetch('https://api.edulives.com/api/expense-logs/test/create', {
+              const response = await fetch('https://api.edulives.com/api/expense-logs/test/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2889,16 +2889,91 @@ const EnhancedAccountantDashboard = () => {
 
         {/* Main Content Tabs */}
         <Paper sx={{ mb: 3 }}>
-          <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
-            <Tab label="Overview" icon={<TimelineIcon />} />
-            <Tab label="Staff Salaries" icon={<PeopleIcon />} />
-            <Tab label="Salary Templates" icon={<SettingsIcon />} />
-            <Tab label="Pending Approvals" icon={<HistoryIcon />} />
-            <Tab label="Student Fee Status" icon={<AssessmentIcon />} />
-            <Tab label="Transaction Log" icon={<HistoryIcon />} />
-            <Tab label="Income Log" icon={<TrendingUpIcon />} />
-            <Tab label="Expense Log" icon={<TrendingDownIcon />} />
-          </Tabs>
+          <Box sx={{ 
+            overflowX: 'auto',
+            '&::-webkit-scrollbar': {
+              height: '6px',
+            },
+            '&::-webkit-scrollbar-track': {
+              backgroundColor: '#f1f1f1',
+              borderRadius: '3px',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              backgroundColor: '#c1c1c1',
+              borderRadius: '3px',
+              '&:hover': {
+                backgroundColor: '#a8a8a8',
+              },
+            },
+          }}>
+            <Tabs 
+              value={activeTab} 
+              onChange={(e, newValue) => setActiveTab(newValue)}
+              variant="scrollable"
+              scrollButtons="auto"
+              allowScrollButtonsMobile
+              sx={{
+                minWidth: { xs: '100%', sm: 'auto' },
+                '& .MuiTab-root': {
+                  minWidth: { xs: 120, sm: 140, md: 160 },
+                  fontSize: { xs: '0.75rem', sm: '0.875rem', md: '1rem' },
+                  padding: { xs: '8px 12px', sm: '12px 16px', md: '16px 24px' },
+                  textTransform: 'none',
+                  fontWeight: 600,
+                },
+                '& .MuiTabs-scrollButtons': {
+                  display: { xs: 'flex', sm: 'flex' },
+                  '&.Mui-disabled': {
+                    opacity: 0.3,
+                  },
+                },
+                '& .MuiTabs-indicator': {
+                  height: 3,
+                },
+              }}
+            >
+              <Tab 
+                label="Overview" 
+                icon={<TimelineIcon sx={{ fontSize: { xs: 18, sm: 20, md: 24 } }} />} 
+                iconPosition="start"
+              />
+              <Tab 
+                label="Staff Salaries" 
+                icon={<PeopleIcon sx={{ fontSize: { xs: 18, sm: 20, md: 24 } }} />} 
+                iconPosition="start"
+              />
+              <Tab 
+                label="Salary Templates" 
+                icon={<SettingsIcon sx={{ fontSize: { xs: 18, sm: 20, md: 24 } }} />} 
+                iconPosition="start"
+              />
+              <Tab 
+                label="Pending Approvals" 
+                icon={<HistoryIcon sx={{ fontSize: { xs: 18, sm: 20, md: 24 } }} />} 
+                iconPosition="start"
+              />
+              <Tab 
+                label="Student Fee Status" 
+                icon={<AssessmentIcon sx={{ fontSize: { xs: 18, sm: 20, md: 24 } }} />} 
+                iconPosition="start"
+              />
+              <Tab 
+                label="Transaction Log" 
+                icon={<HistoryIcon sx={{ fontSize: { xs: 18, sm: 20, md: 24 } }} />} 
+                iconPosition="start"
+              />
+              <Tab 
+                label="Income Log" 
+                icon={<TrendingUpIcon sx={{ fontSize: { xs: 18, sm: 20, md: 24 } }} />} 
+                iconPosition="start"
+              />
+              <Tab 
+                label="Expense Log" 
+                icon={<TrendingDownIcon sx={{ fontSize: { xs: 18, sm: 20, md: 24 } }} />} 
+                iconPosition="start"
+              />
+            </Tabs>
+          </Box>
         </Paper>
 
         {/* Tab Content */}
@@ -2979,12 +3054,23 @@ const EnhancedAccountantDashboard = () => {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+              <Box sx={{ 
+                mb: 3, 
+                display: 'flex', 
+                gap: { xs: 1, sm: 2 }, 
+                flexWrap: 'wrap',
+                flexDirection: { xs: 'column', sm: 'row' }
+              }}>
                 <Button
                   variant="contained"
                   startIcon={<Add />}
                   onClick={() => setSalaryDialog(true)}
-                  sx={{ px: 3, py: 1.5 }}
+                  sx={{ 
+                    px: { xs: 2, sm: 3 }, 
+                    py: { xs: 1, sm: 1.5 },
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    minHeight: { xs: 40, sm: 48 }
+                  }}
                 >
                   Create Salary Record
                 </Button>
@@ -2992,71 +3078,101 @@ const EnhancedAccountantDashboard = () => {
                   variant="outlined"
                   startIcon={<SettingsIcon />}
                   onClick={() => setTemplateDialog(true)}
+                  sx={{ 
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    minHeight: { xs: 40, sm: 48 }
+                  }}
                 >
                   Salary Templates
                 </Button>
                 <Button
                   variant="outlined"
                   startIcon={<UploadIcon />}
+                  sx={{ 
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    minHeight: { xs: 40, sm: 48 }
+                  }}
                 >
                   Bulk Import
                 </Button>
                 <Button
                   variant="outlined"
                   startIcon={<DownloadIcon />}
+                  sx={{ 
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    minHeight: { xs: 40, sm: 48 }
+                  }}
                 >
                   Export Report
                 </Button>
               </Box>
 
               {/* Staff List */}
-              <Paper sx={{ p: 3 }}>
-                <Typography variant="h6" sx={{ mb: 2 }}>Staff Members</Typography>
+              <Paper sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
+                <Typography variant="h6" sx={{ mb: 2, fontSize: { xs: '1rem', sm: '1.25rem' } }}>Staff Members</Typography>
                 {loadingStaff ? (
                   <CircularProgress />
                 ) : (
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Name</TableCell>
-                        <TableCell>Employee ID</TableCell>
-                        <TableCell>Role</TableCell>
-                        <TableCell>Department</TableCell>
-                        <TableCell>Basic Salary</TableCell>
-                        <TableCell>Last Payment</TableCell>
-                        <TableCell>Status</TableCell>
-                        <TableCell>Actions</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {staffList?.map((staff) => (
-                        <TableRow key={staff._id}>
-                          <TableCell>{staff.name}</TableCell>
-                          <TableCell>{staff.employeeId}</TableCell>
-                          <TableCell>
-                            <Chip label={staff.role} size="small" color="primary" />
-                          </TableCell>
-                          <TableCell>{staff.department?.name || 'N/A'}</TableCell>
-                          <TableCell>₹{salaryTemplates?.[staff.role]?.basicSalary?.toLocaleString('en-IN') || 'N/A'}</TableCell>
-                          <TableCell>N/A</TableCell>
-                          <TableCell>
-                            <Chip label="Active" size="small" color="success" />
-                          </TableCell>
-                          <TableCell>
-                            <IconButton size="small" onClick={() => setSelectedStaff(staff)}>
-                              <ViewIcon />
-                            </IconButton>
-                            <IconButton size="small" onClick={() => {
-                              setSelectedStaff(staff);
-                              setSalaryDialog(true);
-                            }}>
-                              <EditIcon />
-                            </IconButton>
-                          </TableCell>
+                  <Box sx={{ 
+                    overflowX: 'auto',
+                    '&::-webkit-scrollbar': {
+                      height: '6px',
+                    },
+                    '&::-webkit-scrollbar-track': {
+                      backgroundColor: '#f1f1f1',
+                      borderRadius: '3px',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      backgroundColor: '#c1c1c1',
+                      borderRadius: '3px',
+                      '&:hover': {
+                        backgroundColor: '#a8a8a8',
+                      },
+                    },
+                  }}>
+                    <Table sx={{ minWidth: { xs: 600, sm: 800, md: 'auto' } }}>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>Name</TableCell>
+                          <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>Employee ID</TableCell>
+                          <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>Role</TableCell>
+                          <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>Department</TableCell>
+                          <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>Basic Salary</TableCell>
+                          <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>Last Payment</TableCell>
+                          <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>Status</TableCell>
+                          <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>Actions</TableCell>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHead>
+                      <TableBody>
+                        {staffList?.map((staff) => (
+                          <TableRow key={staff._id}>
+                            <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>{staff.name}</TableCell>
+                            <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>{staff.employeeId}</TableCell>
+                            <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>
+                              <Chip label={staff.role} size="small" color="primary" sx={{ fontSize: { xs: '0.625rem', sm: '0.75rem' } }} />
+                            </TableCell>
+                            <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>{staff.department?.name || 'N/A'}</TableCell>
+                            <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>₹{salaryTemplates?.[staff.role]?.basicSalary?.toLocaleString('en-IN') || 'N/A'}</TableCell>
+                            <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>N/A</TableCell>
+                            <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>
+                              <Chip label="Active" size="small" color="success" sx={{ fontSize: { xs: '0.625rem', sm: '0.75rem' } }} />
+                            </TableCell>
+                            <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>
+                              <IconButton size="small" onClick={() => setSelectedStaff(staff)} sx={{ minWidth: { xs: 32, sm: 40 }, minHeight: { xs: 32, sm: 40 } }}>
+                                <ViewIcon sx={{ fontSize: { xs: 16, sm: 20 } }} />
+                              </IconButton>
+                              <IconButton size="small" onClick={() => {
+                                setSelectedStaff(staff);
+                                setSalaryDialog(true);
+                              }} sx={{ minWidth: { xs: 32, sm: 40 }, minHeight: { xs: 32, sm: 40 } }}>
+                                <EditIcon sx={{ fontSize: { xs: 16, sm: 20 } }} />
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </Box>
                 )}
               </Paper>
             </motion.div>
@@ -3070,12 +3186,23 @@ const EnhancedAccountantDashboard = () => {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+              <Box sx={{ 
+                mb: 3, 
+                display: 'flex', 
+                gap: { xs: 1, sm: 2 }, 
+                flexWrap: 'wrap',
+                flexDirection: { xs: 'column', sm: 'row' }
+              }}>
                 <Button
                   variant="contained"
                   startIcon={<Add />}
                   onClick={() => setTemplateDialog(true)}
-                  sx={{ px: 3, py: 1.5 }}
+                  sx={{ 
+                    px: { xs: 2, sm: 3 }, 
+                    py: { xs: 1, sm: 1.5 },
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    minHeight: { xs: 40, sm: 48 }
+                  }}
                 >
                   Create Template
                 </Button>
@@ -3083,12 +3210,20 @@ const EnhancedAccountantDashboard = () => {
                   variant="outlined"
                   startIcon={<SettingsIcon />}
                   onClick={() => window.open('/accountant/salary-template-creator', '_blank')}
+                  sx={{ 
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    minHeight: { xs: 40, sm: 48 }
+                  }}
                 >
                   Advanced Template Creator
                 </Button>
                 <Button
                   variant="outlined"
                   startIcon={<DownloadIcon />}
+                  sx={{ 
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    minHeight: { xs: 40, sm: 48 }
+                  }}
                 >
                   Export Templates
                 </Button>
@@ -3155,45 +3290,63 @@ const EnhancedAccountantDashboard = () => {
 
           {activeTab === 5 && (
             <motion.div key="transaction-log" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
-              <Paper sx={{ p: 3 }}>
-                <Typography variant="h6" sx={{ mb: 2 }}>Transaction Log</Typography>
+              <Paper sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
+                <Typography variant="h6" sx={{ mb: 2, fontSize: { xs: '1rem', sm: '1.25rem' } }}>Transaction Log</Typography>
                 {loadingTransactionLog ? <CircularProgress /> : (
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Type</TableCell>
-                        <TableCell>Name</TableCell>
-                        <TableCell>ID</TableCell>
-                        <TableCell>Amount</TableCell>
-                        <TableCell>Date</TableCell>
-                        <TableCell>Method</TableCell>
-                        <TableCell>Reference</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {Array.isArray(transactionLog) ? transactionLog.map((log, idx) => (
-                        <TableRow key={idx}>
-                          <TableCell>
-                            <Chip label={log.type} color={log.type === 'Salary Credited' ? 'success' : 'error'} />
-                          </TableCell>
-                          <TableCell>{log.name}</TableCell>
-                          <TableCell>{log.id}</TableCell>
-                          <TableCell>₹{log.amount}</TableCell>
-                          <TableCell>{log.date ? new Date(log.date).toLocaleDateString() : ''}</TableCell>
-                          <TableCell>{log.method}</TableCell>
-                          <TableCell>{log.ref}</TableCell>
-                        </TableRow>
-                      )) : (
+                  <Box sx={{ 
+                    overflowX: 'auto',
+                    '&::-webkit-scrollbar': {
+                      height: '6px',
+                    },
+                    '&::-webkit-scrollbar-track': {
+                      backgroundColor: '#f1f1f1',
+                      borderRadius: '3px',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      backgroundColor: '#c1c1c1',
+                      borderRadius: '3px',
+                      '&:hover': {
+                        backgroundColor: '#a8a8a8',
+                      },
+                    },
+                  }}>
+                    <Table sx={{ minWidth: { xs: 600, sm: 800, md: 'auto' } }}>
+                      <TableHead>
                         <TableRow>
-                          <TableCell colSpan={7} align="center">
-                            <Typography variant="body2" color="text.secondary">
-                              No transaction logs available
-                            </Typography>
-                          </TableCell>
+                          <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>Type</TableCell>
+                          <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>Name</TableCell>
+                          <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>ID</TableCell>
+                          <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>Amount</TableCell>
+                          <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>Date</TableCell>
+                          <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>Method</TableCell>
+                          <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>Reference</TableCell>
                         </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                      </TableHead>
+                      <TableBody>
+                        {Array.isArray(transactionLog) ? transactionLog.map((log, idx) => (
+                          <TableRow key={idx}>
+                            <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>
+                              <Chip label={log.type} color={log.type === 'Salary Credited' ? 'success' : 'error'} size="small" sx={{ fontSize: { xs: '0.625rem', sm: '0.75rem' } }} />
+                            </TableCell>
+                            <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>{log.name}</TableCell>
+                            <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>{log.id}</TableCell>
+                            <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>₹{log.amount}</TableCell>
+                            <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>{log.date ? new Date(log.date).toLocaleDateString() : ''}</TableCell>
+                            <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>{log.method}</TableCell>
+                            <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, padding: { xs: '8px 4px', sm: '16px' } }}>{log.ref}</TableCell>
+                          </TableRow>
+                        )) : (
+                          <TableRow>
+                            <TableCell colSpan={7} align="center">
+                              <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                                No transaction logs available
+                              </Typography>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </Box>
                 )}
               </Paper>
             </motion.div>
