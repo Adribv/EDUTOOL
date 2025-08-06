@@ -280,6 +280,49 @@ const OverallProgress = () => {
     return ratings[rating] || 3;
   };
 
+  // Helper function to get trend color
+  const getTrendColor = (trend) => {
+    switch (trend) {
+      case 'Improving':
+        return 'success.main';
+      case 'Stable':
+        return 'info.main';
+      case 'Declining':
+        return 'error.main';
+      case 'Excellent':
+        return 'success.main';
+      case 'Good':
+        return 'info.main';
+      default:
+        return 'text.primary';
+    }
+  };
+
+  // Helper function to get recommendation priority color
+  const getRecommendationPriorityColor = (recommendation, index) => {
+    // Academic recommendations are high priority
+    if (recommendation.includes('Focus') || recommendation.includes('Practice') || recommendation.includes('improve')) {
+      return 'error.main';
+    }
+    // Behavioral recommendations are medium priority
+    if (recommendation.includes('Continue') || recommendation.includes('Participate')) {
+      return 'warning.main';
+    }
+    // General recommendations are low priority
+    return 'info.main';
+  };
+
+  // Helper function to get recommendation priority
+  const getRecommendationPriority = (recommendation) => {
+    if (recommendation.includes('Focus') || recommendation.includes('Practice') || recommendation.includes('improve')) {
+      return 'High';
+    }
+    if (recommendation.includes('Continue') || recommendation.includes('Participate')) {
+      return 'Medium';
+    }
+    return 'Low';
+  };
+
   const handleFeedbackSubmit = async () => {
     try {
       if (!feedback.trim()) {
@@ -337,7 +380,7 @@ const OverallProgress = () => {
         <Grid item xs={12} md={3}>
           <Card>
             <CardContent>
-              <Box display="flex" alignItems="center">
+              <Box display="flex" alignItems="center" sx={{ mb: 2 }}>
                 <SchoolIcon color="primary" sx={{ mr: 2 }} />
                 <Box>
                   <Typography variant="h6">
@@ -348,6 +391,18 @@ const OverallProgress = () => {
                   </Typography>
                 </Box>
               </Box>
+              {/* Academic Performance Bar Graph */}
+              <Box sx={{ mt: 2 }}>
+                <ResponsiveContainer width="100%" height={60}>
+                  <BarChart data={[
+                    { subject: 'Overall', score: mockData.academicPerformance.overallPercentage }
+                  ]}>
+                    <XAxis dataKey="subject" />
+                    <YAxis />
+                    <Bar dataKey="score" fill="#1976d2" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Box>
             </CardContent>
           </Card>
         </Grid>
@@ -355,7 +410,7 @@ const OverallProgress = () => {
         <Grid item xs={12} md={3}>
           <Card>
             <CardContent>
-              <Box display="flex" alignItems="center">
+              <Box display="flex" alignItems="center" sx={{ mb: 2 }}>
                 <CalendarIcon color="primary" sx={{ mr: 2 }} />
                 <Box>
                   <Typography variant="h6">
@@ -366,6 +421,19 @@ const OverallProgress = () => {
                   </Typography>
                 </Box>
               </Box>
+              {/* Attendance Bar Graph */}
+              <Box sx={{ mt: 2 }}>
+                <ResponsiveContainer width="100%" height={60}>
+                  <BarChart data={[
+                    { status: 'Present', days: mockData.attendance.daysPresent, color: '#4caf50' },
+                    { status: 'Absent', days: mockData.attendance.daysAbsent, color: '#f44336' }
+                  ]}>
+                    <XAxis dataKey="status" />
+                    <YAxis />
+                    <Bar dataKey="days" fill={(entry) => entry.color} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Box>
             </CardContent>
           </Card>
         </Grid>
@@ -373,7 +441,7 @@ const OverallProgress = () => {
         <Grid item xs={12} md={3}>
           <Card>
             <CardContent>
-              <Box display="flex" alignItems="center">
+              <Box display="flex" alignItems="center" sx={{ mb: 2 }}>
                 <PsychologyIcon color="primary" sx={{ mr: 2 }} />
                 <Box>
                   <Typography variant="h6">
@@ -384,6 +452,18 @@ const OverallProgress = () => {
                   </Typography>
                 </Box>
               </Box>
+              {/* Behavior Rating Bar Graph */}
+              <Box sx={{ mt: 2 }}>
+                <ResponsiveContainer width="100%" height={60}>
+                  <BarChart data={[
+                    { aspect: 'Overall', rating: getRatingScore(mockData.behavior.overallRating), color: getRatingColor(mockData.behavior.overallRating) }
+                  ]}>
+                    <XAxis dataKey="aspect" />
+                    <YAxis />
+                    <Bar dataKey="rating" fill={(entry) => entry.color} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Box>
             </CardContent>
           </Card>
         </Grid>
@@ -391,7 +471,7 @@ const OverallProgress = () => {
         <Grid item xs={12} md={3}>
           <Card>
             <CardContent>
-              <Box display="flex" alignItems="center">
+              <Box display="flex" alignItems="center" sx={{ mb: 2 }}>
                 <TrophyIcon color="primary" sx={{ mr: 2 }} />
                 <Box>
                   <Typography variant="h6">
@@ -401,6 +481,18 @@ const OverallProgress = () => {
                     Class Rank
                   </Typography>
                 </Box>
+              </Box>
+              {/* Class Rank Visualization */}
+              <Box sx={{ mt: 2 }}>
+                <ResponsiveContainer width="100%" height={60}>
+                  <BarChart data={[
+                    { metric: 'Rank', value: mockData.academicPerformance.rank || 0, color: '#ff9800' }
+                  ]}>
+                    <XAxis dataKey="metric" />
+                    <YAxis />
+                    <Bar dataKey="value" fill={(entry) => entry.color} />
+                  </BarChart>
+                </ResponsiveContainer>
               </Box>
             </CardContent>
           </Card>
@@ -418,16 +510,353 @@ const OverallProgress = () => {
         </Tabs>
 
         <Box sx={{ p: 3 }}>
+          {/* Academic Performance Tab */}
+          {selectedTab === 0 && (
+            <Box>
+              <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
+                Academic Performance
+              </Typography>
+              
+              {/* Subject Performance */}
+              <Card sx={{ mb: 3 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+                    Subject-wise Performance
+                  </Typography>
+                  <Grid container spacing={3}>
+                    {mockData.academicPerformance.subjects.map((subject, index) => (
+                      <Grid item xs={12} sm={6} md={4} key={index}>
+                        <Card variant="outlined">
+                          <CardContent>
+                            <Typography variant="h6" sx={{ color: getGradeColor(subject.grade) }}>
+                              {subject.name}
+                            </Typography>
+                            <Typography variant="h4" sx={{ color: getGradeColor(subject.grade), fontWeight: 'bold' }}>
+                              {subject.grade}
+                            </Typography>
+                            <Typography variant="body2" color="textSecondary">
+                              {subject.percentage}% | {subject.marks}/{subject.totalMarks}
+                            </Typography>
+                            <Box sx={{ mt: 1 }}>
+                              <LinearProgress 
+                                variant="determinate" 
+                                value={subject.percentage} 
+                                sx={{ 
+                                  height: 8, 
+                                  borderRadius: 4,
+                                  backgroundColor: 'grey.200',
+                                  '& .MuiLinearProgress-bar': {
+                                    backgroundColor: getGradeColor(subject.grade)
+                                  }
+                                }} 
+                              />
+                            </Box>
+                            <Typography variant="caption" color="textSecondary">
+                              {subject.teacherRemarks}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </CardContent>
+              </Card>
+
+              {/* Performance Chart */}
+              <Card sx={{ mb: 3 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+                    Performance Trends
+                  </Typography>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={mockData.academicPerformance.subjects.map(subject => ({
+                      subject: subject.name,
+                      percentage: subject.percentage,
+                      grade: subject.grade
+                    }))}>
+                      <XAxis dataKey="subject" />
+                      <YAxis />
+                      <RechartsTooltip />
+                      <Bar dataKey="percentage" fill="#1976d2" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </Box>
+          )}
+
+          {/* Attendance & Behavior Tab */}
+          {selectedTab === 1 && (
+            <Box>
+              <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
+                Attendance & Behavior
+              </Typography>
+              
+              {/* Attendance Details */}
+              <Card sx={{ mb: 3 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+                    Attendance Details
+                  </Typography>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="subtitle1" gutterBottom>Monthly Attendance</Typography>
+                      <ResponsiveContainer width="100%" height={200}>
+                        <BarChart data={[
+                          { month: 'Jan', present: 22, absent: 2 },
+                          { month: 'Feb', present: 20, absent: 1 },
+                          { month: 'Mar', present: 23, absent: 0 },
+                          { month: 'Apr', present: 21, absent: 1 },
+                          { month: 'May', present: 22, absent: 1 },
+                          { month: 'Jun', present: 20, absent: 2 }
+                        ]}>
+                          <XAxis dataKey="month" />
+                          <YAxis />
+                          <RechartsTooltip />
+                          <Legend />
+                          <Bar dataKey="present" fill="#4caf50" />
+                          <Bar dataKey="absent" fill="#f44336" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="subtitle1" gutterBottom>Behavior Assessment</Typography>
+                      <Box>
+                        {Object.entries(mockData.behavior).map(([key, value]) => (
+                          <Box key={key} sx={{ mb: 2 }}>
+                            <Box display="flex" justifyContent="space-between" alignItems="center">
+                              <Typography variant="body1" sx={{ textTransform: 'capitalize' }}>
+                                {key.replace(/([A-Z])/g, ' $1').trim()}
+                              </Typography>
+                              <Typography variant="body1" sx={{ fontWeight: 'bold', color: getRatingColor(value) }}>
+                                {value}
+                              </Typography>
+                            </Box>
+                            <LinearProgress 
+                              variant="determinate" 
+                              value={getRatingScore(value) * 20} 
+                              sx={{ 
+                                height: 6, 
+                                borderRadius: 3,
+                                backgroundColor: 'grey.200',
+                                '& .MuiLinearProgress-bar': {
+                                  backgroundColor: getRatingColor(value)
+                                }
+                              }} 
+                            />
+                          </Box>
+                        ))}
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Box>
+          )}
+
+          {/* Skills & Activities Tab */}
+          {selectedTab === 2 && (
+            <Box>
+              <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
+                Skills & Activities
+              </Typography>
+              
+              {/* Skills Assessment */}
+              <Card sx={{ mb: 3 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+                    Skills Assessment
+                  </Typography>
+                  <Grid container spacing={3}>
+                    {Object.entries(mockData.skills).map(([skill, rating]) => (
+                      <Grid item xs={12} sm={6} md={4} key={skill}>
+                        <Card variant="outlined">
+                          <CardContent>
+                            <Typography variant="h6" sx={{ textTransform: 'capitalize', mb: 1 }}>
+                              {skill.replace(/([A-Z])/g, ' $1').trim()}
+                            </Typography>
+                            <Typography variant="h4" sx={{ color: getRatingColor(rating), fontWeight: 'bold' }}>
+                              {rating}
+                            </Typography>
+                            <Box sx={{ mt: 1 }}>
+                              <LinearProgress 
+                                variant="determinate" 
+                                value={getRatingScore(rating) * 20} 
+                                sx={{ 
+                                  height: 8, 
+                                  borderRadius: 4,
+                                  backgroundColor: 'grey.200',
+                                  '& .MuiLinearProgress-bar': {
+                                    backgroundColor: getRatingColor(rating)
+                                  }
+                                }} 
+                              />
+                            </Box>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </CardContent>
+              </Card>
+
+              {/* Co-Scholastic Activities */}
+              <Card sx={{ mb: 3 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+                    Co-Scholastic Activities
+                  </Typography>
+                  <TableContainer>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Activity</TableCell>
+                          <TableCell>Grade</TableCell>
+                          <TableCell>Teacher's Comments</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {mockData.comprehensiveReport.coScholasticAreas.map((activity, index) => (
+                          <TableRow key={index}>
+                            <TableCell>{activity.area}</TableCell>
+                            <TableCell>
+                              <Chip 
+                                label={activity.grade} 
+                                color={getGradeColor(activity.grade) === 'success.main' ? 'success' : 'primary'}
+                                size="small"
+                              />
+                            </TableCell>
+                            <TableCell>{activity.teacherComments}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </CardContent>
+              </Card>
+            </Box>
+          )}
+
+          {/* Analytics & Trends Tab */}
+          {selectedTab === 3 && (
+            <Box>
+              <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
+                Analytics & Trends
+              </Typography>
+              
+              {/* Performance Analytics */}
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <Card>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+                        Academic Performance Trends
+                      </Typography>
+                      <ResponsiveContainer width="100%" height={250}>
+                        <LineChart data={[
+                          { month: 'Jan', score: 82 },
+                          { month: 'Feb', score: 85 },
+                          { month: 'Mar', score: 87 },
+                          { month: 'Apr', score: 84 },
+                          { month: 'May', score: 88 },
+                          { month: 'Jun', score: 85 }
+                        ]}>
+                          <XAxis dataKey="month" />
+                          <YAxis />
+                          <RechartsTooltip />
+                          <Line type="monotone" dataKey="score" stroke="#1976d2" strokeWidth={2} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <Card>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+                        Attendance Trends
+                      </Typography>
+                      <ResponsiveContainer width="100%" height={250}>
+                        <LineChart data={[
+                          { month: 'Jan', attendance: 92 },
+                          { month: 'Feb', attendance: 95 },
+                          { month: 'Mar', attendance: 98 },
+                          { month: 'Apr', attendance: 94 },
+                          { month: 'May', attendance: 96 },
+                          { month: 'Jun', attendance: 95 }
+                        ]}>
+                          <XAxis dataKey="month" />
+                          <YAxis />
+                          <RechartsTooltip />
+                          <Line type="monotone" dataKey="attendance" stroke="#4caf50" strokeWidth={2} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+
+              {/* Progress Indicators */}
+              <Card sx={{ mt: 3 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+                    Progress Indicators
+                  </Typography>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Box textAlign="center">
+                        <Typography variant="h4" sx={{ color: 'success.main', fontWeight: 'bold' }}>
+                          {mockData.academicPerformance.overallPercentage}%
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          Academic Performance
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Box textAlign="center">
+                        <Typography variant="h4" sx={{ color: 'info.main', fontWeight: 'bold' }}>
+                          {mockData.attendance.percentage}%
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          Attendance Rate
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Box textAlign="center">
+                        <Typography variant="h4" sx={{ color: 'success.main', fontWeight: 'bold' }}>
+                          {getRatingScore(mockData.behavior.overallRating) * 20}%
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          Behavior Rating
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Box textAlign="center">
+                        <Typography variant="h4" sx={{ color: 'warning.main', fontWeight: 'bold' }}>
+                          {mockData.academicPerformance.rank || 'N/A'}
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          Class Rank
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Box>
+          )}
+
+          {/* Comprehensive Report Tab */}
           {selectedTab === 4 && (
             <Box>
-              {/* Header */}
-              <Box sx={{ mb: 4, textAlign: 'center' }}>
-                <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: '#1976d2' }}>
-                  COMPREHENSIVE PROGRESS REPORT
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-              </Box>
-
+              <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
+                Comprehensive Report
+              </Typography>
+              
               {/* Report Information */}
               <Card sx={{ mb: 3 }}>
                 <CardContent>
@@ -615,6 +1044,32 @@ const OverallProgress = () => {
                       </Typography>
                     </Grid>
                   </Grid>
+                  
+                  {/* Attendance Bar Graph */}
+                  <Box sx={{ mt: 3 }}>
+                    <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
+                      Attendance Overview:
+                    </Typography>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <BarChart data={[
+                        { 
+                          category: 'Present', 
+                          days: mockData.comprehensiveReport.attendance.daysPresent,
+                          color: '#4caf50'
+                        },
+                        { 
+                          category: 'Absent', 
+                          days: mockData.comprehensiveReport.attendance.daysAbsent,
+                          color: '#f44336'
+                        }
+                      ]}>
+                        <XAxis dataKey="category" />
+                        <YAxis />
+                        <RechartsTooltip />
+                        <Bar dataKey="days" fill={(entry) => entry.color} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </Box>
                 </CardContent>
               </Card>
 
@@ -631,7 +1086,18 @@ const OverallProgress = () => {
                       <Box display="flex" alignItems="center">
                         <AssessmentIcon color="primary" sx={{ mr: 1 }} />
                         <Typography variant="body1">
-                          Academic Progress: {mockData.comprehensiveReport.trends.academicProgress}
+                          Academic Progress: 
+                          <Typography 
+                            component="span" 
+                            variant="body1" 
+                            sx={{ 
+                              fontWeight: 'bold', 
+                              color: getTrendColor(mockData.comprehensiveReport.trends.academicProgress),
+                              ml: 1
+                            }}
+                          >
+                            {mockData.comprehensiveReport.trends.academicProgress}
+                          </Typography>
                         </Typography>
                       </Box>
                     </Grid>
@@ -639,7 +1105,18 @@ const OverallProgress = () => {
                       <Box display="flex" alignItems="center">
                         <SchoolIcon color="primary" sx={{ mr: 1 }} />
                         <Typography variant="body1">
-                          Attendance: {mockData.comprehensiveReport.trends.attendanceTrend}
+                          Attendance: 
+                          <Typography 
+                            component="span" 
+                            variant="body1" 
+                            sx={{ 
+                              fontWeight: 'bold', 
+                              color: getTrendColor(mockData.comprehensiveReport.trends.attendanceTrend),
+                              ml: 1
+                            }}
+                          >
+                            {mockData.comprehensiveReport.trends.attendanceTrend}
+                          </Typography>
                         </Typography>
                       </Box>
                     </Grid>
@@ -647,7 +1124,18 @@ const OverallProgress = () => {
                       <Box display="flex" alignItems="center">
                         <PersonIcon color="primary" sx={{ mr: 1 }} />
                         <Typography variant="body1">
-                          Behavior: {mockData.comprehensiveReport.trends.behaviorTrend}
+                          Behavior: 
+                          <Typography 
+                            component="span" 
+                            variant="body1" 
+                            sx={{ 
+                              fontWeight: 'bold', 
+                              color: getTrendColor(mockData.comprehensiveReport.trends.behaviorTrend),
+                              ml: 1
+                            }}
+                          >
+                            {mockData.comprehensiveReport.trends.behaviorTrend}
+                          </Typography>
                         </Typography>
                       </Box>
                     </Grid>
@@ -655,7 +1143,18 @@ const OverallProgress = () => {
                       <Box display="flex" alignItems="center">
                         <AssessmentIcon color="primary" sx={{ mr: 1 }} />
                         <Typography variant="body1">
-                          Assignments: {mockData.comprehensiveReport.trends.assignmentTrend}
+                          Assignments: 
+                          <Typography 
+                            component="span" 
+                            variant="body1" 
+                            sx={{ 
+                              fontWeight: 'bold', 
+                              color: getTrendColor(mockData.comprehensiveReport.trends.assignmentTrend),
+                              ml: 1
+                            }}
+                          >
+                            {mockData.comprehensiveReport.trends.assignmentTrend}
+                          </Typography>
                         </Typography>
                       </Box>
                     </Grid>
@@ -680,9 +1179,36 @@ const OverallProgress = () => {
                         {mockData.comprehensiveReport.recommendations.academic.map((rec, index) => (
                           <ListItem key={index}>
                             <ListItemAvatar>
-                              <CheckCircleIcon color="primary" />
+                              <CheckCircleIcon 
+                                sx={{ 
+                                  color: getRecommendationPriorityColor(rec, index) 
+                                }} 
+                              />
                             </ListItemAvatar>
-                            <ListItemText primary={rec} />
+                            <ListItemText 
+                              primary={
+                                <Box>
+                                  <Typography 
+                                    variant="body1" 
+                                    sx={{ 
+                                      color: getRecommendationPriorityColor(rec, index),
+                                      fontWeight: 'bold'
+                                    }}
+                                  >
+                                    {rec}
+                                  </Typography>
+                                  <Typography 
+                                    variant="caption" 
+                                    sx={{ 
+                                      color: 'text.secondary',
+                                      fontStyle: 'italic'
+                                    }}
+                                  >
+                                    Priority: {getRecommendationPriority(rec)}
+                                  </Typography>
+                                </Box>
+                              } 
+                            />
                           </ListItem>
                         ))}
                       </List>
@@ -695,9 +1221,36 @@ const OverallProgress = () => {
                         {mockData.comprehensiveReport.recommendations.behavioral.map((rec, index) => (
                           <ListItem key={index}>
                             <ListItemAvatar>
-                              <CheckCircleIcon color="primary" />
+                              <CheckCircleIcon 
+                                sx={{ 
+                                  color: getRecommendationPriorityColor(rec, index) 
+                                }} 
+                              />
                             </ListItemAvatar>
-                            <ListItemText primary={rec} />
+                            <ListItemText 
+                              primary={
+                                <Box>
+                                  <Typography 
+                                    variant="body1" 
+                                    sx={{ 
+                                      color: getRecommendationPriorityColor(rec, index),
+                                      fontWeight: 'bold'
+                                    }}
+                                  >
+                                    {rec}
+                                  </Typography>
+                                  <Typography 
+                                    variant="caption" 
+                                    sx={{ 
+                                      color: 'text.secondary',
+                                      fontStyle: 'italic'
+                                    }}
+                                  >
+                                    Priority: {getRecommendationPriority(rec)}
+                                  </Typography>
+                                </Box>
+                              } 
+                            />
                           </ListItem>
                         ))}
                       </List>

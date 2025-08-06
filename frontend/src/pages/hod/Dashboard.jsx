@@ -75,7 +75,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme as useAppTheme } from '../../context/ThemeContext';
+import { useTheme as useCustomTheme } from '../../context/ThemeContext';
 import { 
   filterDashboardTabsByActivitiesControl, 
   useUserActivitiesControl,
@@ -154,7 +154,7 @@ const allHODTabs = [
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const { isDark } = useAppTheme();
+  const { isDark } = useCustomTheme();
   const navigate = useNavigate();
   const theme = useMuiTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
