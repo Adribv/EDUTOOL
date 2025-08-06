@@ -881,8 +881,8 @@ const Dashboard = () => {
               fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
             }}
           >
-            {value}
-                </Typography>
+          {value}
+        </Typography>
 
           <Typography
             variant="body2"
@@ -895,7 +895,7 @@ const Dashboard = () => {
             {title}
                 </Typography>
 
-          {subtitle && (
+        {subtitle && (
             <Typography
               variant="caption"
               sx={{
@@ -903,9 +903,9 @@ const Dashboard = () => {
                 fontWeight: 500,
               }}
             >
-              {subtitle}
-                </Typography>
-            )}
+            {subtitle}
+          </Typography>
+        )}
           </Box>
       </GlassCard>
     </motion.div>
@@ -973,12 +973,12 @@ const Dashboard = () => {
               }}
             >
               <Icon sx={{ color: '#ffffff', fontSize: 24 }} />
-            </Box>
+          </Box>
             
             {count !== undefined && (
-            <Chip
+                    <Chip
               label={count}
-              size="small"
+                      size="small"
               sx={{
                   background: 'rgba(255, 255, 255, 0.2)',
                   color: 'text.primary',
@@ -986,7 +986,7 @@ const Dashboard = () => {
               }}
             />
           )}
-        </Box>
+            </Box>
 
           <Typography
             variant="h6"
@@ -998,7 +998,7 @@ const Dashboard = () => {
             }}
           >
           {title}
-        </Typography>
+            </Typography>
 
           <Typography
             variant="body2"
@@ -1009,7 +1009,7 @@ const Dashboard = () => {
             }}
           >
           {description}
-        </Typography>
+                </Typography>
         </Box>
       </GlassCard>
     </motion.div>
@@ -1059,7 +1059,7 @@ const Dashboard = () => {
             }}
           >
             {title}
-              </Typography>
+                </Typography>
           </Box>
           
         {items && items.length > 0 ? (
@@ -1089,7 +1089,7 @@ const Dashboard = () => {
                         }}
                       >
                         {item.title || item.name}
-                      </Typography>
+                </Typography>
                     }
                     secondary={
                       <Typography
@@ -1100,13 +1100,13 @@ const Dashboard = () => {
                         }}
                       >
                         {item.description || item.details}
-                      </Typography>
+                </Typography>
                     }
                   />
                   {item.status && (
                     <Chip
                       label={item.status}
-                      size="small"
+                  size="small"
                           sx={{
                         background: item.status === 'Completed' ? 'success.main' : 
                                    item.status === 'Pending' ? 'warning.main' : 
@@ -1133,16 +1133,16 @@ const Dashboard = () => {
           >
             <Icon sx={{ fontSize: 48, mb: 2, opacity: 0.5 }} />
             <Typography variant="body2" sx={{ textAlign: 'center', mb: 2 }}>
-              {emptyMessage}
-            </Typography>
-            {emptyAction && (
+                  {emptyMessage}
+                </Typography>
+                {emptyAction && (
               <AnimatedButton
-                variant="outlined"
-                size="small"
-                onClick={emptyAction.onClick}
-                startIcon={emptyAction.icon}
-              >
-                {emptyAction.text}
+                    variant="outlined" 
+                    size="small"
+                    onClick={emptyAction.onClick}
+                    startIcon={emptyAction.icon}
+                  >
+                    {emptyAction.text}
               </AnimatedButton>
             )}
           </Box>
@@ -1156,7 +1156,7 @@ const Dashboard = () => {
   }
 
   if (error) {
-  return (
+      return (
     <Container maxWidth="xl">
       <Box sx={{ py: 3 }}>
           <Alert severity="error" sx={{ mb: 2 }}>
@@ -1167,23 +1167,23 @@ const Dashboard = () => {
           </Button>
         </Box>
       </Container>
-    );
-  }
+      );
+    }
 
-  return (
+    return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8 }}
     >
       <Box
-        sx={{
+                sx={{
           minHeight: '100vh',
           position: 'relative',
           overflow: 'hidden',
           '&::before': {
             content: '""',
-            position: 'absolute',
+                  position: 'absolute',
             top: 0,
             left: 0,
             right: 0,
@@ -1202,8 +1202,8 @@ const Dashboard = () => {
           position: 'absolute',
           top: 0,
           left: 0,
-          width: '100%',
-          height: '100%',
+                  width: '100%',
+                  height: '100%',
           objectFit: 'cover',
           zIndex: 0,
         }}
@@ -1213,8 +1213,8 @@ const Dashboard = () => {
       </video>
 
       {/* Floating Particles Animation */}
-      <Box
-        sx={{
+                        <Box
+                          sx={{
           position: 'absolute',
           top: 0,
           left: 0,
@@ -1250,8 +1250,8 @@ const Dashboard = () => {
               ease: "easeInOut",
             }}
           />
-        ))}
-      </Box>
+            ))}
+          </Box>
       <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 2, py: 4 }}>
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -1282,7 +1282,7 @@ const Dashboard = () => {
               >
                 <Typography
                   variant="h3"
-                  sx={{
+          sx={{
                     fontWeight: 800,
                     color: 'text.primary',
                     mb: 1,
@@ -1294,7 +1294,7 @@ const Dashboard = () => {
                   }}
                 >
                   Welcome back, {user?.name || 'Student'}! 👋
-                </Typography>
+              </Typography>
               </motion.div>
               <Typography
                 variant="h6"

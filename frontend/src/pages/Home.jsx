@@ -116,7 +116,7 @@ const Home = () => {
   };
 
   const PortalCard = ({ portal, index }) => (
-    <motion.div
+      <motion.div
       initial={{ opacity: 0, y: 30, scale: 0.9 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.6, delay: 0.1 * index, ease: "easeOut" }}
@@ -129,33 +129,33 @@ const Home = () => {
         scale: 0.98,
         transition: { duration: 0.1 }
       }}
-    >
-      <Card
+      >
+        <Card
         onClick={() => handlePortalClick(portal.path)}
-        sx={{
+          sx={{
           height: { xs: '320px', sm: '380px', md: '420px' },
-          display: 'flex',
-          flexDirection: 'column',
+            display: 'flex',
+            flexDirection: 'column',
           background: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
           backdropFilter: 'blur(20px)',
           border: isDark ? '1px solid rgba(148, 163, 184, 0.2)' : '1px solid rgba(37, 99, 235, 0.2)',
           borderRadius: 3,
           boxShadow: isDark ? '0 8px 32px rgba(0, 0, 0, 0.3)' : '0 8px 32px rgba(37, 99, 235, 0.1)',
-          transition: 'all 0.3s ease-in-out',
-          cursor: 'pointer',
+            transition: 'all 0.3s ease-in-out',
+            cursor: 'pointer',
           position: 'relative',
           overflow: 'hidden',
-          '&:hover': {
-            transform: 'translateY(-8px)',
+            '&:hover': {
+              transform: 'translateY(-8px)',
             boxShadow: isDark ? '0 20px 40px rgba(0, 0, 0, 0.4)' : '0 20px 40px rgba(37, 99, 235, 0.15)',
-          },
-        }}
-      >
-        <CardContent sx={{ 
+            },
+          }}
+        >
+          <CardContent sx={{ 
           flex: 1, 
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
           p: 3,
           position: 'relative',
           '&::before': {
@@ -185,9 +185,9 @@ const Home = () => {
             >
               <Box
                 sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
                   width: 100,
                   height: 100,
                   borderRadius: 3,
@@ -223,9 +223,9 @@ const Home = () => {
                     ease: "easeInOut"
                   }}
                 >
-                  {portal.icon}
+              {portal.icon}
                 </motion.div>
-              </Box>
+            </Box>
             </motion.div>
             
             <Typography
@@ -243,7 +243,7 @@ const Home = () => {
             
             <Typography
               variant="body2"
-              sx={{
+              sx={{ 
                 color: isDark ? '#e2e8f0' : 'text.secondary',
                 lineHeight: 1.6,
                 fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' },
@@ -258,28 +258,28 @@ const Home = () => {
             </Typography>
           </Box>
           
-          <Button
-            variant="contained"
-            sx={{
-              background: portal.gradient,
-              color: 'white',
+            <Button
+              variant="contained"
+              sx={{
+                background: portal.gradient,
+                color: 'white',
               mt: 0,
               py: 1.5,
-              fontWeight: 600,
-              textTransform: 'none',
-              borderRadius: 2,
-              '&:hover': {
-                background: portal.gradient,
-                opacity: 0.9,
-                transform: 'translateY(-1px)',
-              },
-            }}
-          >
-            Access Portal
-          </Button>
+                fontWeight: 600,
+                textTransform: 'none',
+                borderRadius: 2,
+                '&:hover': {
+                  background: portal.gradient,
+                  opacity: 0.9,
+                  transform: 'translateY(-1px)',
+                },
+              }}
+            >
+              Access Portal
+            </Button>
         </CardContent>
-      </Card>
-    </motion.div>
+        </Card>
+      </motion.div>
   );
 
   return (
@@ -401,10 +401,10 @@ const Home = () => {
                 textAlign: 'center',
                 py: { xs: 4, md: 6 },
                 mb: 4,
-                display: 'flex',
+                display: 'flex', 
                 flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
+                alignItems: 'center', 
+                justifyContent: 'center', 
               }}
             >
                           <motion.div
@@ -491,7 +491,7 @@ const Home = () => {
                         }}
                       >
                         Welcome to EduTool
-                      </Typography>
+              </Typography>
                       
                       {/* Simple Glow Effect */}
                       <motion.div
@@ -550,9 +550,9 @@ const Home = () => {
                          overflow: 'hidden',
                        }}
                      >
-                      <Typography
-                        variant="h5"
-                        sx={{
+              <Typography
+                variant="h5"
+                sx={{
                           color: isDark ? '#e2e8f0' : '#ffffff',
                           fontWeight: 600,
                           mb: 4,
@@ -569,7 +569,7 @@ const Home = () => {
                         }}
                       >
                         Your comprehensive educational management platform.
-                      </Typography>
+              </Typography>
                     </Box>
                   </motion.div>
                 </motion.div>
@@ -582,8 +582,8 @@ const Home = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}
           >
-            <Paper
-              sx={{
+            <Paper 
+              sx={{ 
                 background: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(20px)',
                 border: isDark ? '1px solid rgba(148, 163, 184, 0.2)' : '1px solid rgba(37, 99, 235, 0.2)',
@@ -593,8 +593,8 @@ const Home = () => {
                 boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
               }}
             >
-              <Tabs
-                value={selectedTab}
+              <Tabs 
+                value={selectedTab} 
                 onChange={handleTabChange}
                 variant="fullWidth"
                 sx={{
@@ -611,10 +611,10 @@ const Home = () => {
                     '&.Mui-selected': {
                       color: isDark ? '#ffffff' : '#2563eb',
                       fontWeight: 700,
-                    },
+                  },
                     '&:hover': {
                       color: isDark ? '#cbd5e1' : '#475569',
-                    },
+                  },
                   },
                 }}
               >
@@ -640,7 +640,7 @@ const Home = () => {
                   transition={{ duration: 0.5, ease: "easeOut" }}
                 >
                   <Box
-                    sx={{
+                  sx={{
                       display: 'grid',
                       gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
                       gap: 3,
@@ -648,11 +648,11 @@ const Home = () => {
                       mx: 'auto',
                     }}
                   >
-                    {studentParentPortals.map((portal, index) => (
+                {studentParentPortals.map((portal, index) => (
                       <PortalCard key={portal.title} portal={portal} index={index} />
-                    ))}
+                ))}
                   </Box>
-                </motion.div>
+            </motion.div>
               ) : (
                 <motion.div
                   key="management"
@@ -662,7 +662,7 @@ const Home = () => {
                   transition={{ duration: 0.3 }}
                 >
                   <Box
-                    sx={{
+                  sx={{
                       display: 'grid',
                       gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
                       gap: 3,
@@ -670,12 +670,12 @@ const Home = () => {
                       mx: 'auto',
                     }}
                   >
-                    {managementPortals.map((portal, index) => (
+                {managementPortals.map((portal, index) => (
                       <PortalCard key={portal.title} portal={portal} index={index} />
-                    ))}
+                ))}
                   </Box>
-                </motion.div>
-              )}
+            </motion.div>
+          )}
             </AnimatePresence>
           </motion.div>
         </motion.div>

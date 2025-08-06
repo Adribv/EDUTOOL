@@ -22,7 +22,7 @@ import {
   IconButton,
   Menu,
   MenuItem,
-  useTheme,
+  useTheme as useMuiTheme,
   useMediaQuery,
   LinearProgress,
   Table,
@@ -75,7 +75,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme as useAppTheme } from '../../context/ThemeContext';
 import { 
   filterDashboardTabsByActivitiesControl, 
   useUserActivitiesControl,
@@ -154,9 +154,9 @@ const allHODTabs = [
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const { isDark } = useTheme();
+  const { isDark } = useAppTheme();
   const navigate = useNavigate();
-  const theme = useTheme();
+  const theme = useMuiTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const queryClient = useQueryClient();
   
