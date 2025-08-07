@@ -282,7 +282,7 @@ const Home = () => {
                   src={logo} 
                   alt="EDULIVES Logo" 
                   style={{ 
-                    height: isMobile ? 60 : 80, 
+                    height: isMobile ? 180 : 240, 
                     width: 'auto', 
                     marginRight: isMobile ? 0 : 16, 
                     marginBottom: isMobile ? 16 : 0,
