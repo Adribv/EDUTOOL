@@ -15,6 +15,7 @@ import {
   InputAdornment,
   IconButton,
 } from '@mui/material';
+import { useTheme as useAppTheme } from '../../context/ThemeContext';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { useMutation } from '@tanstack/react-query';
@@ -26,6 +27,7 @@ import axios from 'axios';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ThemeToggle from '../../components/ThemeToggle';
 
 const validationSchema = yup.object({
   email: yup
@@ -63,6 +65,7 @@ function ParentLogin() {
   const handleClickShowPassword = () => setShowPassword(!showPassword);
   const handleMouseDownPassword = (e) => e.preventDefault();
   const theme = useTheme();
+  const { isDark } = useAppTheme();
 
   const loginMutation = useMutation({
     mutationFn: async (values) => {
@@ -110,7 +113,7 @@ function ParentLogin() {
         minHeight: '100vh',
         display: 'flex',
         flexDirection: { xs: 'column', md: 'row' },
-        backgroundColor: '#f8fafc',
+        backgroundColor: isDark ? '#1e293b' : '#f0f8ff',
         position: 'relative',
         overflow: 'hidden',
       }}
@@ -127,14 +130,37 @@ function ParentLogin() {
         <IconButton
           onClick={() => navigate('/')}
           sx={{
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-            color: '#1976d2',
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.9)',
+            color: isDark ? '#ffffff' : '#1976d2',
             '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 1)',
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 1)',
             }
           }}
         >
           <ArrowBackIcon />
+        </IconButton>
+      </Box>
+
+      {/* Theme Toggle Button */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 20,
+          right: 20,
+          zIndex: 10,
+        }}
+      >
+        <IconButton
+          sx={{
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.95)',
+            color: isDark ? '#ffffff' : '#1976d2',
+            border: isDark ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid rgba(0, 0, 0, 0.1)',
+            '&:hover': {
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 1)',
+            }
+          }}
+        >
+          <ThemeToggle />
         </IconButton>
       </Box>
       {/* Background image for all screen sizes */}
@@ -188,7 +214,8 @@ function ParentLogin() {
                 fontWeight: 700,
                 mb: 3,
                 letterSpacing: '-0.02em',
-                color: 'white',
+                color: isDark ? '#ffffff' : '#ffffff',
+                textShadow: isDark ? '0 2px 4px rgba(0, 0, 0, 0.5)' : '0 2px 4px rgba(0, 0, 0, 0.7)',
               }}
             >
               EDULIVES
@@ -200,7 +227,8 @@ function ParentLogin() {
                 fontWeight: 600,
                 mb: 4,
                 letterSpacing: '-0.01em',
-                color: 'white',
+                color: isDark ? '#ffffff' : '#ffffff',
+                textShadow: isDark ? '0 2px 4px rgba(0, 0, 0, 0.5)' : '0 2px 4px rgba(0, 0, 0, 0.7)',
               }}
             >
               PARENT PORTAL
@@ -212,7 +240,8 @@ function ParentLogin() {
                 fontWeight: 400,
                 opacity: 0.9,
                 lineHeight: 1.6,
-                color: 'white',
+                color: isDark ? '#ffffff' : '#ffffff',
+                textShadow: isDark ? '0 2px 4px rgba(0, 0, 0, 0.5)' : '0 2px 4px rgba(0, 0, 0, 0.7)',
               }}
             >
               Stay Connected with Your Child's Education
@@ -226,10 +255,14 @@ function ParentLogin() {
             flex: '1 1 auto',
             maxWidth: { xs: '100%', sm: '450px', md: '400px' },
             width: '100%',
-            backgroundColor: 'white',
+            backgroundColor: isDark ? 'rgba(51, 65, 85, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(10px)',
+            border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.2)',
             borderRadius: 3,
             p: { xs: 3, sm: 4 },
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            boxShadow: isDark 
+              ? '0 8px 32px rgba(0, 0, 0, 0.3)' 
+              : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
           }}
         >
           <motion.div
@@ -240,7 +273,7 @@ function ParentLogin() {
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
               <FamilyRestroomIcon sx={{ 
                 fontSize: { xs: 32, sm: 40 }, 
-                color: '#2e7d32', 
+                color: isDark ? '#ffffff' : '#1976d2', 
                 mr: 2 
               }} />
               <Typography
@@ -248,7 +281,7 @@ function ParentLogin() {
                 sx={{
                   fontSize: { xs: '1.75rem', sm: '2rem' },
                   fontWeight: 700,
-                  color: '#2e7d32',
+                  color: isDark ? '#ffffff' : '#000000',
                 }}
               >
                 Parent Login
@@ -258,9 +291,10 @@ function ParentLogin() {
             <Typography
               variant="body1"
               sx={{
-                color: 'text.secondary',
+                color: isDark ? '#ffffff' : '#000000',
                 mb: 4,
                 fontSize: { xs: '0.875rem', sm: '1rem' },
+                fontWeight: 500,
               }}
             >
               Welcome back! Please enter your details
@@ -291,10 +325,18 @@ function ParentLogin() {
                     mb: 2,
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 1.5,
-                      backgroundColor: '#f8fafc',
+                      backgroundColor: isDark ? '#94a3b8' : '#e2e8f0',
                       '&:hover fieldset': {
                         borderColor: 'primary.main',
                       },
+                    },
+                    '& .MuiInputLabel-root': {
+                      color: isDark ? '#ffffff' : '#000000',
+                      fontWeight: 500,
+                    },
+                    '& .MuiOutlinedInput-input': {
+                      color: isDark ? '#ffffff' : '#000000',
+                      fontWeight: 500,
                     },
                   }}
                 />
@@ -332,10 +374,18 @@ function ParentLogin() {
                     mb: 3,
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 1.5,
-                      backgroundColor: '#f8fafc',
+                      backgroundColor: isDark ? '#94a3b8' : '#e2e8f0',
                       '&:hover fieldset': {
                         borderColor: 'primary.main',
                       },
+                    },
+                    '& .MuiInputLabel-root': {
+                      color: isDark ? '#ffffff' : '#000000',
+                      fontWeight: 500,
+                    },
+                    '& .MuiOutlinedInput-input': {
+                      color: isDark ? '#ffffff' : '#000000',
+                      fontWeight: 500,
                     },
                   }}
                 />
@@ -353,14 +403,14 @@ function ParentLogin() {
                     fontWeight: 600,
                     textTransform: 'none',
                     borderRadius: 1.5,
-                    backgroundColor: '#2e7d32',
+                    backgroundColor: '#1976d2',
                     '&:hover': {
-                      backgroundColor: '#1b5e20',
+                      backgroundColor: '#1565c0',
                     },
                     mb: 3,
                   }}
                 >
-                  {loginMutation.isPending ? 'Signing in...' : 'Sign in'}
+                  {loginMutation.isPending ? 'Signing in...' : 'SIGN IN TO PARENT PORTAL'}
                 </Button>
               </motion.div>
 
@@ -369,8 +419,9 @@ function ParentLogin() {
                   <Typography
                     variant="body2"
                     sx={{
-                      color: 'text.secondary',
+                      color: isDark ? '#ffffff' : '#000000',
                       fontSize: { xs: '0.875rem', sm: '1rem' },
+                      fontWeight: 500,
                     }}
                   >
                     Don't have an account?{' '}
@@ -378,7 +429,7 @@ function ParentLogin() {
                       component={RouterLink}
                       to="/parent-register"
                       sx={{
-                        color: '#2e7d32',
+                        color: isDark ? '#4ade80' : '#2e7d32',
                         fontWeight: 600,
                         textDecoration: 'none',
                         '&:hover': {

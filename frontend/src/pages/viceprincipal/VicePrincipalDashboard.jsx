@@ -32,6 +32,8 @@ import React from 'react';
 import CommentIcon from '@mui/icons-material/Comment';
 import ActivitiesControl from './ActivitiesControl';
 import DelegationAuthorityNotice from '../../components/DelegationAuthorityNotice';
+import { useTheme as useAppTheme } from '../../context/ThemeContext';
+import ThemeToggle from '../../components/ThemeToggle';
 
 // API service for Vice Principal using axios instance (token auto-attached)
 const vpAPI = {
@@ -99,6 +101,7 @@ const vpAPI = {
 };
 
 export default function VicePrincipalDashboard() {
+  const { isDark } = useAppTheme();
   const [mainTab, setMainTab] = useState(0);
   const [subTab, setSubTab] = useState(0);
   const [editDialog, setEditDialog] = useState(false);
@@ -612,18 +615,35 @@ export default function VicePrincipalDashboard() {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ 
+      p: 3, 
+      minHeight: '100vh',
+      background: isDark ? '#1e293b' : '#f8fafc'
+    }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Box display="flex" alignItems="center">
           <SecurityIcon color="primary" sx={{ fontSize: 40, mr: 2 }} />
-          <Typography variant="h4" fontWeight={700}>Vice Principal Dashboard</Typography>
+          <Typography sx={{ 
+            variant: 'h4',
+            fontWeight: 700,
+            color: isDark ? '#ffffff' : '#1e293b',
+            textShadow: isDark ? '0 2px 4px rgba(0,0,0,0.3)' : '0 2px 4px rgba(0,0,0,0.1)'
+          }}>
+            Vice Principal Dashboard
+          </Typography>
           <Chip label="Secured" color="success" sx={{ ml: 2 }} />
         </Box>
         
         <Box display="flex" alignItems="center" gap={2}>
-          <Typography variant="body2" color="textSecondary">
+          <Typography sx={{ 
+            color: isDark ? '#e2e8f0' : '#374151',
+            fontWeight: 500
+          }}>
             Welcome, {user?.name}
           </Typography>
+          <IconButton sx={{ color: isDark ? '#e2e8f0' : '#374151' }}>
+            <ThemeToggle />
+          </IconButton>
           <IconButton
             onClick={(e) => setProfileMenuAnchor(e.currentTarget)}
             sx={{ ml: 1 }}
@@ -666,7 +686,20 @@ export default function VicePrincipalDashboard() {
         </Box>
       </Box>
       
-      <Tabs value={mainTab} onChange={handleMainTabChange} sx={{ mb: 3 }}>
+      <Tabs value={mainTab} onChange={handleMainTabChange} sx={{ 
+        mb: 3,
+        '& .MuiTab-root': {
+          color: isDark ? '#94a3b8' : '#6b7280',
+          fontWeight: 600,
+          '&.Mui-selected': {
+            color: isDark ? '#60a5fa' : '#2563eb',
+            fontWeight: 'bold'
+          }
+        },
+        '& .MuiTabs-indicator': {
+          backgroundColor: isDark ? '#60a5fa' : '#2563eb',
+        }
+      }}>
         {tabConfig.map((tab, index) => (
           <Tab key={index} label={tab.name} icon={tab.icon} />
         ))}
@@ -678,11 +711,21 @@ export default function VicePrincipalDashboard() {
           <Grid item xs={12} md={6}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Department Overview</Typography>
+                <Typography sx={{ 
+                  color: isDark ? '#e2e8f0' : '#374151',
+                  fontWeight: 600,
+                  fontSize: '1.1rem',
+                  mb: 1
+                }}>
+                  Department Overview
+                </Typography>
                 <Typography variant="h4" color="primary" gutterBottom>
                   {departments?.length || 0} Departments
                 </Typography>
-                <Typography variant="body2" color="textSecondary">
+                <Typography sx={{ 
+                  color: isDark ? '#94a3b8' : '#6b7280',
+                  fontWeight: 500
+                }}>
                   Total departments under management
                 </Typography>
               </CardContent>
@@ -692,11 +735,21 @@ export default function VicePrincipalDashboard() {
           <Grid item xs={12} md={6}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>HOD Management</Typography>
+                <Typography sx={{ 
+                  color: isDark ? '#e2e8f0' : '#374151',
+                  fontWeight: 600,
+                  fontSize: '1.1rem',
+                  mb: 1
+                }}>
+                  HOD Management
+                </Typography>
                 <Typography variant="h4" color="secondary" gutterBottom>
                   {hods?.length || 0} HODs
                 </Typography>
-                <Typography variant="body2" color="textSecondary">
+                <Typography sx={{ 
+                  color: isDark ? '#94a3b8' : '#6b7280',
+                  fontWeight: 500
+                }}>
                   Total Heads of Departments
                 </Typography>
               </CardContent>

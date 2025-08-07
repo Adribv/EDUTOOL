@@ -66,8 +66,10 @@ import {
   ArrowBack,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { toast } from 'react-toastify';
 import { api, incomeLogAPI, expenseLogAPI } from '../../services/api';
+import ThemeToggle from '../../components/ThemeToggle';
 
 // Tab Panel Component
 function TabPanel({ children, value, index, ...other }) {
@@ -86,6 +88,7 @@ function TabPanel({ children, value, index, ...other }) {
 
 const AccountantDashboard = () => {
   const { user } = useAuth();
+  const { isDark } = useTheme();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
   const [stats, setStats] = useState({
@@ -486,15 +489,34 @@ const AccountantDashboard = () => {
 
   return (
     <Box sx={{ flexGrow: 1, p: 3 }}>
-      {/* Back Button */}
-      <Box sx={{ position: 'absolute', top: 20, left: 20, zIndex: 10 }}>
+      {/* Back Button - Minimal Design */}
+      <Box sx={{ 
+        position: 'fixed', 
+        top: 15, 
+        left: 15, 
+        zIndex: 1201,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 48,
+        height: 48,
+        bgcolor: isDark ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+        borderRadius: '50%',
+        backdropFilter: 'blur(10px)',
+        border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.1)',
+        boxShadow: isDark 
+          ? '0 4px 12px rgba(0, 0, 0, 0.3)' 
+          : '0 4px 12px rgba(0, 0, 0, 0.1)',
+      }}>
         <IconButton
           onClick={() => window.history.back()}
           sx={{
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-            color: '#1976d2',
+            color: isDark ? '#f1f5f9' : '#1e293b',
+            width: 40,
+            height: 40,
             '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 1)',
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.04)',
+              transform: 'scale(1.05)',
             }
           }}
         >
@@ -502,15 +524,51 @@ const AccountantDashboard = () => {
         </IconButton>
       </Box>
 
-      <Typography variant="h4" gutterBottom>
+      {/* Theme Toggle Button */}
+      <Box sx={{ 
+        position: 'fixed', 
+        top: 15, 
+        right: 15, 
+        zIndex: 1201,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 48,
+        height: 48,
+        bgcolor: isDark ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+        borderRadius: '50%',
+        backdropFilter: 'blur(10px)',
+        border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.1)',
+        boxShadow: isDark 
+          ? '0 4px 12px rgba(0, 0, 0, 0.3)' 
+          : '0 4px 12px rgba(0, 0, 0, 0.1)',
+      }}>
+        <ThemeToggle />
+      </Box>
+
+      <Typography variant="h4" gutterBottom sx={{ 
+        color: isDark ? '#ffffff' : '#1e293b', 
+        fontWeight: 'bold',
+        textShadow: isDark ? '0 2px 4px rgba(0,0,0,0.3)' : '0 2px 4px rgba(0,0,0,0.1)'
+      }}>
         Welcome, {user?.name || 'Accountant'}
       </Typography>
       
       
-      <Typography variant="h6" color="primary" sx={{ mb: 1, fontWeight: 'bold' }}>
+      <Typography variant="h6" sx={{ 
+        mb: 1, 
+        fontWeight: 'bold',
+        color: isDark ? '#60a5fa' : '#2563eb',
+        textShadow: isDark ? '0 1px 2px rgba(0,0,0,0.3)' : '0 1px 2px rgba(0,0,0,0.1)'
+      }}>
         🔍 LOOK FOR THESE TABS: INCOME LOG TAB and EXPENSE LOG TAB (Should be visible after Transaction Log)
       </Typography>
-      <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+      <Typography sx={{ 
+        mb: 1,
+        color: isDark ? '#94a3b8' : '#6b7280',
+        fontWeight: 500,
+        fontSize: '0.95rem'
+      }}>
         Total Tabs: 8 (Overview, Staff Salaries, Salary Templates, Pending Approvals, Student Fee Status, Transaction Log, INCOME LOG TAB, EXPENSE LOG TAB)
       </Typography>
       
@@ -523,10 +581,15 @@ const AccountantDashboard = () => {
             minWidth: 'auto',
             padding: '12px 16px',
             fontSize: '14px',
-            fontWeight: 500
+            fontWeight: 600,
+            color: isDark ? '#94a3b8' : '#6b7280',
+            '&.Mui-selected': {
+              color: isDark ? '#60a5fa' : '#2563eb',
+              fontWeight: 'bold'
+            }
           },
           '& .MuiTabs-indicator': {
-            backgroundColor: '#1976d2',
+            backgroundColor: isDark ? '#60a5fa' : '#2563eb',
             height: 3
           }
         }}
@@ -548,13 +611,13 @@ const AccountantDashboard = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="textSecondary" gutterBottom>
+                <Typography sx={{ color: isDark ? '#e2e8f0' : '#374151', fontWeight: 600, fontSize: '1rem' }} gutterBottom>
                   Total Income
                 </Typography>
-                <Typography variant="h5" sx={{ color: '#52c41a' }}>
+                <Typography variant="h5" sx={{ color: '#52c41a', fontWeight: 'bold' }}>
                   ₹{incomeStats.overview?.totalIncome?.toLocaleString() || '48,00,000'}
                 </Typography>
-                <Typography variant="body2" color="textSecondary">
+                <Typography sx={{ color: isDark ? '#94a3b8' : '#6b7280', fontWeight: 500 }}>
                   From fee collections
                 </Typography>
               </CardContent>
@@ -564,13 +627,13 @@ const AccountantDashboard = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="textSecondary" gutterBottom>
+                <Typography sx={{ color: isDark ? '#e2e8f0' : '#374151', fontWeight: 600, fontSize: '1rem' }} gutterBottom>
                   Total Expenses
                 </Typography>
-                <Typography variant="h5" sx={{ color: '#ff4d4f' }}>
+                <Typography variant="h5" sx={{ color: '#ff4d4f', fontWeight: 'bold' }}>
                   ₹{expenseStats.overview?.totalExpenses?.toLocaleString() || '32,24,652'}
                 </Typography>
-                <Typography variant="body2" color="textSecondary">
+                <Typography sx={{ color: isDark ? '#94a3b8' : '#6b7280', fontWeight: 500 }}>
                   Operational costs
                 </Typography>
               </CardContent>
@@ -580,13 +643,13 @@ const AccountantDashboard = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="textSecondary" gutterBottom>
+                <Typography sx={{ color: isDark ? '#e2e8f0' : '#374151', fontWeight: 600, fontSize: '1rem' }} gutterBottom>
                   Salary Paid
                 </Typography>
-                <Typography variant="h5" sx={{ color: '#1890ff' }}>
+                <Typography variant="h5" sx={{ color: '#1890ff', fontWeight: 'bold' }}>
                   ₹0
                 </Typography>
-                <Typography variant="body2" color="textSecondary">
+                <Typography sx={{ color: isDark ? '#94a3b8' : '#6b7280', fontWeight: 500 }}>
                   4 staff members
                 </Typography>
               </CardContent>
@@ -596,13 +659,13 @@ const AccountantDashboard = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="textSecondary" gutterBottom>
+                <Typography sx={{ color: isDark ? '#e2e8f0' : '#374151', fontWeight: 600, fontSize: '1rem' }} gutterBottom>
                   Net Profit
                 </Typography>
-                <Typography variant="h5" sx={{ color: '#fa8c16' }}>
+                <Typography variant="h5" sx={{ color: '#fa8c16', fontWeight: 'bold' }}>
                   ₹{((incomeStats.overview?.totalIncome || 4800000) - (expenseStats.overview?.totalExpenses || 3224652)).toLocaleString()}
                 </Typography>
-                <Typography variant="body2" color="textSecondary">
+                <Typography sx={{ color: isDark ? '#94a3b8' : '#6b7280', fontWeight: 500 }}>
                   After all expenses
                 </Typography>
               </CardContent>

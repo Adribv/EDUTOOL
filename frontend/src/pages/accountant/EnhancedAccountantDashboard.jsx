@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { accountantAPI, incomeLogAPI, expenseLogAPI } from '../../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTheme as useAppTheme } from '../../context/ThemeContext';
+import ThemeToggle from '../../components/ThemeToggle';
 import {
   Box,
   Grid,
@@ -111,103 +113,137 @@ import { getStudentFeeStatus, getFeeStats, getTransactionLog } from '../../servi
 import dayjs from 'dayjs';
 
 // Animated Stat Card Component
-const AnimatedStatCard = ({ icon: Icon, label, value, color, subtitle, trend, delay = 0 }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20, scale: 0.9 }}
-    animate={{ opacity: 1, y: 0, scale: 1 }}
-    transition={{ duration: 0.6, delay }}
-    whileHover={{ scale: 1.02, y: -5 }}
-  >
-    <Paper 
-      elevation={6} 
-      sx={{ 
-        p: 3, 
-        borderRadius: 3, 
-        background: `linear-gradient(135deg, ${color}15, ${color}05)`,
-        border: `1px solid ${color}20`,
-        position: 'relative',
-        overflow: 'hidden'
-      }}
+const AnimatedStatCard = ({ icon: Icon, label, value, color, subtitle, trend, delay = 0 }) => {
+  const { isDark } = useAppTheme();
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.6, delay }}
+      whileHover={{ scale: 1.02, y: -5 }}
     >
-      <Box sx={{ position: 'absolute', top: 0, right: 0, p: 1 }}>
-        <Icon sx={{ fontSize: 40, color: `${color}40` }} />
-      </Box>
-      <Box sx={{ mt: 2 }}>
-        <Typography variant="h6" sx={{ color: 'text.secondary', mb: 1 }}>{label}</Typography>
-        <Typography variant="h4" sx={{ fontWeight: 700, color: color }}>
-          ₹{value.toLocaleString('en-IN')}
-        </Typography>
-        {subtitle && (
-          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
-            {subtitle}
+      <Paper 
+        elevation={6} 
+        sx={{ 
+          p: 3, 
+          borderRadius: 3, 
+          background: `linear-gradient(135deg, ${color}15, ${color}05)`,
+          border: `1px solid ${color}20`,
+          position: 'relative',
+          overflow: 'hidden'
+        }}
+      >
+        <Box sx={{ position: 'absolute', top: 0, right: 0, p: 1 }}>
+          <Icon sx={{ fontSize: 40, color: `${color}40` }} />
+        </Box>
+        <Box sx={{ mt: 2 }}>
+          <Typography sx={{ 
+            color: isDark ? '#e2e8f0' : '#374151', 
+            fontWeight: 600, 
+            fontSize: '1rem',
+            mb: 1 
+          }}>
+            {label}
           </Typography>
-        )}
-        {trend && (
-          <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-            {trend > 0 ? (
-              <TrendingUpIcon sx={{ fontSize: 16, color: 'success.main', mr: 0.5 }} />
-            ) : (
-              <TrendingDownIcon sx={{ fontSize: 16, color: 'error.main', mr: 0.5 }} />
-            )}
-            <Typography variant="body2" sx={{ color: trend > 0 ? 'success.main' : 'error.main' }}>
-              {Math.abs(trend)}% from last month
+          <Typography variant="h4" sx={{ fontWeight: 700, color: color }}>
+            ₹{value.toLocaleString('en-IN')}
+          </Typography>
+          {subtitle && (
+            <Typography sx={{ 
+              color: isDark ? '#94a3b8' : '#6b7280', 
+              fontWeight: 500,
+              mt: 1 
+            }}>
+              {subtitle}
             </Typography>
-          </Box>
-        )}
-      </Box>
-    </Paper>
-  </motion.div>
-);
+          )}
+          {trend && (
+            <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+              {trend > 0 ? (
+                <TrendingUpIcon sx={{ fontSize: 16, color: 'success.main', mr: 0.5 }} />
+              ) : (
+                <TrendingDownIcon sx={{ fontSize: 16, color: 'error.main', mr: 0.5 }} />
+              )}
+              <Typography sx={{ 
+                color: trend > 0 ? 'success.main' : 'error.main',
+                fontWeight: 500
+              }}>
+                {Math.abs(trend)}% from last month
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      </Paper>
+    </motion.div>
+  );
+};
 
 // Salary Template Card Component
-const SalaryTemplateCard = ({ role, template, onSelect, isSelected }) => (
-  <motion.div
-    whileHover={{ scale: 1.02 }}
-    whileTap={{ scale: 0.98 }}
-  >
-    <Card 
-      sx={{ 
-        cursor: 'pointer',
-        border: isSelected ? '2px solid' : '1px solid',
-        borderColor: isSelected ? 'primary.main' : 'divider',
-        bgcolor: isSelected ? 'primary.50' : 'background.paper'
-      }}
-      onClick={() => onSelect(role, template)}
+const SalaryTemplateCard = ({ role, template, onSelect, isSelected }) => {
+  const { isDark } = useAppTheme();
+  return (
+    <motion.div
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
     >
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          {role === 'Teacher' && <SchoolIcon color="primary" />}
-          {role === 'HOD' && <BusinessIcon color="primary" />}
-          {role === 'AdminStaff' && <AdminIcon color="primary" />}
-          {role === 'Accountant' && <MoneyIcon color="primary" />}
-          {role === 'Principal' && <PersonIcon color="primary" />}
-          {role === 'VicePrincipal' && <EngineeringIcon color="primary" />}
-          <Typography variant="h6" sx={{ ml: 1, fontWeight: 600 }}>
-            {role}
+      <Card 
+        sx={{ 
+          cursor: 'pointer',
+          border: isSelected ? '2px solid' : '1px solid',
+          borderColor: isSelected ? 'primary.main' : 'divider',
+          bgcolor: isSelected ? 'primary.50' : 'background.paper'
+        }}
+        onClick={() => onSelect(role, template)}
+      >
+        <CardContent>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            {role === 'Teacher' && <SchoolIcon color="primary" />}
+            {role === 'HOD' && <BusinessIcon color="primary" />}
+            {role === 'AdminStaff' && <AdminIcon color="primary" />}
+            {role === 'Accountant' && <MoneyIcon color="primary" />}
+            {role === 'Principal' && <PersonIcon color="primary" />}
+            {role === 'VicePrincipal' && <EngineeringIcon color="primary" />}
+            <Typography sx={{ 
+              ml: 1, 
+              fontWeight: 600,
+              color: isDark ? '#e2e8f0' : '#374151'
+            }}>
+              {role}
+            </Typography>
+          </Box>
+          <Typography variant="h5" sx={{ fontWeight: 700, color: 'primary.main', mb: 1 }}>
+            ₹{template.basicSalary.toLocaleString('en-IN')}
           </Typography>
-        </Box>
-        <Typography variant="h5" sx={{ fontWeight: 700, color: 'primary.main', mb: 1 }}>
-          ₹{template.basicSalary.toLocaleString('en-IN')}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Basic Salary
-        </Typography>
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="body2" color="success.main">
-            + ₹{Object.values(template.allowances).reduce((sum, val) => sum + val, 0).toLocaleString('en-IN')} Allowances
+          <Typography sx={{ 
+            color: isDark ? '#94a3b8' : '#6b7280',
+            fontWeight: 500
+          }}>
+            Basic Salary
           </Typography>
-          <Typography variant="body2" color="error.main">
-            - ₹{Object.values(template.deductions).reduce((sum, val) => sum + val, 0).toLocaleString('en-IN')} Deductions
-          </Typography>
-        </Box>
-      </CardContent>
-    </Card>
-  </motion.div>
-);
+          <Box sx={{ mt: 2 }}>
+            <Typography sx={{ 
+              color: 'success.main',
+              fontWeight: 500
+            }}>
+              + ₹{Object.values(template.allowances).reduce((sum, val) => sum + val, 0).toLocaleString('en-IN')} Allowances
+            </Typography>
+            <Typography sx={{ 
+              color: 'error.main',
+              fontWeight: 500
+            }}>
+              - ₹{Object.values(template.deductions).reduce((sum, val) => sum + val, 0).toLocaleString('en-IN')} Deductions
+            </Typography>
+          </Box>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+};
 
 // Student Fee Status Manager Component
 const StudentFeeStatusManager = () => {
   const theme = useTheme();
+  const { isDark } = useAppTheme();
   const [studentsData, setStudentsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -326,7 +362,14 @@ const StudentFeeStatusManager = () => {
 
       {/* Filters */}
       <Paper sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h6" sx={{ mb: 2 }}>Filters</Typography>
+        <Typography sx={{ 
+          mb: 2,
+          color: isDark ? '#e2e8f0' : '#374151',
+          fontWeight: 600,
+          fontSize: '1.1rem'
+        }}>
+          Filters
+        </Typography>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6} md={3}>
             <TextField
@@ -645,6 +688,7 @@ const StudentFeeStatusManager = () => {
 // Income Log Manager Component
 const IncomeLogManager = () => {
   const theme = useTheme();
+  const { isDark } = useAppTheme();
   const [incomeLogs, setIncomeLogs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({});
@@ -1613,6 +1657,7 @@ const IncomeLogManager = () => {
 // Expense Log Manager Component
 const ExpenseLogManager = () => {
   const theme = useTheme();
+  const { isDark } = useAppTheme();
   const [expenseLogs, setExpenseLogs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({});
@@ -2615,6 +2660,7 @@ const ExpenseLogManager = () => {
 // Enhanced Accountant Dashboard
 const EnhancedAccountantDashboard = () => {
   const theme = useTheme();
+  const { isDark } = useAppTheme();
   const navigate = useNavigate();
   const { logout } = useAuth();
   const queryClient = useQueryClient();
@@ -2781,7 +2827,7 @@ const EnhancedAccountantDashboard = () => {
   const { income = 0, expenses = 0, profitLoss = 0, dues = 0, salaryStats = {} } = summary || {};
 
   return (
-    <Box sx={{ minHeight: '100vh', background: theme.palette.grey[50] }}>
+    <Box sx={{ minHeight: '100vh', background: isDark ? '#1e293b' : '#f8fafc' }}>
       {/* Header */}
       <Box sx={{ 
         background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
@@ -2824,6 +2870,11 @@ const EnhancedAccountantDashboard = () => {
             gap: 1,
             justifyContent: { xs: 'center', sm: 'flex-end' }
           }}>
+            <Tooltip title="Toggle Theme">
+              <IconButton sx={{ color: 'white' }}>
+                <ThemeToggle />
+              </IconButton>
+            </Tooltip>
             <Tooltip title="Profile">
               <IconButton onClick={() => navigate('/accountant/profile')} sx={{ color: 'white' }}>
                 <AccountCircle />
@@ -2920,6 +2971,11 @@ const EnhancedAccountantDashboard = () => {
                   padding: { xs: '8px 12px', sm: '12px 16px', md: '16px 24px' },
                   textTransform: 'none',
                   fontWeight: 600,
+                  color: isDark ? '#94a3b8' : '#6b7280',
+                  '&.Mui-selected': {
+                    color: isDark ? '#60a5fa' : '#2563eb',
+                    fontWeight: 'bold'
+                  }
                 },
                 '& .MuiTabs-scrollButtons': {
                   display: { xs: 'flex', sm: 'flex' },
@@ -2929,6 +2985,7 @@ const EnhancedAccountantDashboard = () => {
                 },
                 '& .MuiTabs-indicator': {
                   height: 3,
+                  backgroundColor: isDark ? '#60a5fa' : '#2563eb',
                 },
               }}
             >
@@ -2989,7 +3046,14 @@ const EnhancedAccountantDashboard = () => {
               <Grid container spacing={3}>
                 <Grid item xs={12} md={8}>
                   <Paper sx={{ p: 3, height: 400 }}>
-                    <Typography variant="h6" sx={{ mb: 2 }}>Financial Overview</Typography>
+                    <Typography sx={{ 
+                      mb: 2,
+                      color: isDark ? '#e2e8f0' : '#374151',
+                      fontWeight: 600,
+                      fontSize: '1.1rem'
+                    }}>
+                      Financial Overview
+                    </Typography>
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={[
                         { month: 'Jan', income: (incomeStats?.totalIncome || 0) * 0.2, expenses: (expenseStats?.totalExpenses || 0) * 0.2, salary: (salaryStats.totalSalaryPaid || 0) * 0.2 },

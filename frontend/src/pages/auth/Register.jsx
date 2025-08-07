@@ -14,6 +14,7 @@ import {
   Grid,
   useTheme,
 } from '@mui/material';
+import { useTheme as useAppTheme } from '../../context/ThemeContext';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { useMutation } from '@tanstack/react-query';
@@ -77,6 +78,7 @@ function Register() {
   const [error, setError] = useState('');
   const [showAdminWarning, setShowAdminWarning] = useState(false);
   const theme = useTheme();
+  const { isDark } = useAppTheme();
 
   const registerMutation = useMutation({
     mutationFn: async (values) => {
@@ -119,7 +121,7 @@ function Register() {
         minWidth: '100vw',
         display: 'flex',
         flexDirection: { xs: 'column', md: 'row' },
-        backgroundColor: '#f8fafc',
+        backgroundColor: isDark ? '#1e293b' : '#f0f8ff',
         position: 'relative',
         overflow: 'hidden',
       }}
@@ -175,7 +177,7 @@ function Register() {
                 fontWeight: 700,
                 mb: 3,
                 letterSpacing: '-0.02em',
-                color: 'white',
+                color: isDark ? '#ffffff' : '#1e293b',
               }}
             >
               EDULIVES
@@ -187,7 +189,7 @@ function Register() {
                 fontWeight: 600,
                 mb: 4,
                 letterSpacing: '-0.01em',
-                color: 'white',
+                color: isDark ? '#ffffff' : '#1e293b',
               }}
             >
               JOIN OUR COMMUNITY
@@ -199,7 +201,7 @@ function Register() {
                 fontWeight: 400,
                 opacity: 0.9,
                 lineHeight: 1.6,
-                color: 'white',
+                color: isDark ? '#ffffff' : '#1e293b',
               }}
             >
               Begin Your Educational Journey Today
@@ -213,7 +215,7 @@ function Register() {
             flex: '1 1 auto',
             maxWidth: { xs: '100%', sm: '450px', md: '400px' },
             width: '100%',
-            backgroundColor: 'white',
+            backgroundColor: isDark ? '#334155' : '#ffffff',
             borderRadius: 3,
             p: { xs: 3, sm: 4 },
             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',

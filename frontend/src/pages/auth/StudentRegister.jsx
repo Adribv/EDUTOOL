@@ -13,6 +13,7 @@ import {
   Grid,
   useTheme,
 } from '@mui/material';
+import { useTheme as useAppTheme } from '../../context/ThemeContext';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { useMutation } from '@tanstack/react-query';
@@ -65,6 +66,7 @@ function StudentRegister() {
   const navigate = useNavigate();
   const [error, setError] = useState('');
   const theme = useTheme();
+  const { isDark } = useAppTheme();
 
   const registerMutation = useMutation({
     mutationFn: async (values) => {
@@ -106,7 +108,7 @@ function StudentRegister() {
         minHeight: '100vh',
         display: 'flex',
         flexDirection: { xs: 'column', md: 'row' },
-        backgroundColor: '#f8fafc',
+        backgroundColor: isDark ? '#1e293b' : '#f0f8ff',
         position: 'relative',
         overflow: 'hidden',
       }}
@@ -162,7 +164,7 @@ function StudentRegister() {
                 fontWeight: 700,
                 mb: 3,
                 letterSpacing: '-0.02em',
-                color: 'white',
+                color: isDark ? '#ffffff' : '#1e293b',
               }}
             >
               EDULIVES
@@ -174,7 +176,7 @@ function StudentRegister() {
                 fontWeight: 600,
                 mb: 4,
                 letterSpacing: '-0.01em',
-                color: 'white',
+                color: isDark ? '#ffffff' : '#1e293b',
               }}
             >
               JOIN OUR COMMUNITY
@@ -186,7 +188,7 @@ function StudentRegister() {
                 fontWeight: 400,
                 opacity: 0.9,
                 lineHeight: 1.6,
-                color: 'white',
+                color: isDark ? '#ffffff' : '#1e293b',
               }}
             >
               Begin Your Educational Journey Today
@@ -200,7 +202,7 @@ function StudentRegister() {
             flex: '1 1 auto',
             maxWidth: { xs: '100%', sm: '450px', md: '400px' },
             width: '100%',
-            backgroundColor: 'white',
+            backgroundColor: isDark ? '#334155' : '#ffffff',
             borderRadius: 3,
             p: { xs: 3, sm: 4 },
             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
@@ -214,7 +216,7 @@ function StudentRegister() {
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
               <HowToRegIcon sx={{ 
                 fontSize: { xs: 32, sm: 40 }, 
-                color: '#1a237e', 
+                color: isDark ? '#ffffff' : '#1a237e', 
                 mr: 2 
               }} />
               <Typography
@@ -222,7 +224,7 @@ function StudentRegister() {
                 sx={{
                   fontSize: { xs: '1.75rem', sm: '2rem' },
                   fontWeight: 700,
-                  color: '#1a237e',
+                  color: isDark ? '#ffffff' : '#1a237e',
                 }}
               >
                 Student Registration
@@ -232,7 +234,7 @@ function StudentRegister() {
             <Typography
               variant="body1"
               sx={{
-                color: 'text.secondary',
+                color: isDark ? '#e2e8f0' : 'text.secondary',
                 mb: 4,
                 fontSize: { xs: '0.875rem', sm: '1rem' },
               }}
@@ -265,10 +267,16 @@ function StudentRegister() {
                     mb: 2,
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 1.5,
-                      backgroundColor: '#f8fafc',
+                      backgroundColor: isDark ? '#475569' : '#f8fafc',
                       '&:hover fieldset': {
                         borderColor: 'primary.main',
                       },
+                    },
+                    '& .MuiInputLabel-root': {
+                      color: isDark ? '#e2e8f0' : 'text.primary',
+                    },
+                    '& .MuiOutlinedInput-input': {
+                      color: isDark ? '#ffffff' : 'text.primary',
                     },
                   }}
                 />
@@ -291,10 +299,16 @@ function StudentRegister() {
                     mb: 2,
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 1.5,
-                      backgroundColor: '#f8fafc',
+                      backgroundColor: isDark ? '#475569' : '#f8fafc',
                       '&:hover fieldset': {
                         borderColor: 'primary.main',
                       },
+                    },
+                    '& .MuiInputLabel-root': {
+                      color: isDark ? '#e2e8f0' : 'text.primary',
+                    },
+                    '& .MuiOutlinedInput-input': {
+                      color: isDark ? '#ffffff' : 'text.primary',
                     },
                   }}
                 />
@@ -318,10 +332,16 @@ function StudentRegister() {
                         mb: 2,
                         '& .MuiOutlinedInput-root': {
                           borderRadius: 1.5,
-                          backgroundColor: '#f8fafc',
+                          backgroundColor: isDark ? '#475569' : '#f8fafc',
                           '&:hover fieldset': {
                             borderColor: 'primary.main',
                           },
+                        },
+                        '& .MuiInputLabel-root': {
+                          color: isDark ? '#e2e8f0' : 'text.primary',
+                        },
+                        '& .MuiOutlinedInput-input': {
+                          color: isDark ? '#ffffff' : 'text.primary',
                         },
                       }}
                     />
@@ -344,10 +364,16 @@ function StudentRegister() {
                         mb: 2,
                         '& .MuiOutlinedInput-root': {
                           borderRadius: 1.5,
-                          backgroundColor: '#f8fafc',
+                          backgroundColor: isDark ? '#475569' : '#f8fafc',
                           '&:hover fieldset': {
                             borderColor: 'primary.main',
                           },
+                        },
+                        '& .MuiInputLabel-root': {
+                          color: isDark ? '#e2e8f0' : 'text.primary',
+                        },
+                        '& .MuiOutlinedInput-input': {
+                          color: isDark ? '#ffffff' : 'text.primary',
                         },
                       }}
                     />
@@ -371,10 +397,16 @@ function StudentRegister() {
                     mb: 2,
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 1.5,
-                      backgroundColor: '#f8fafc',
+                      backgroundColor: isDark ? '#475569' : '#f8fafc',
                       '&:hover fieldset': {
                         borderColor: 'primary.main',
                       },
+                    },
+                    '& .MuiInputLabel-root': {
+                      color: isDark ? '#e2e8f0' : 'text.primary',
+                    },
+                    '& .MuiOutlinedInput-input': {
+                      color: isDark ? '#ffffff' : 'text.primary',
                     },
                   }}
                 />
@@ -398,10 +430,16 @@ function StudentRegister() {
                     mb: 3,
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 1.5,
-                      backgroundColor: '#f8fafc',
+                      backgroundColor: isDark ? '#475569' : '#f8fafc',
                       '&:hover fieldset': {
                         borderColor: 'primary.main',
                       },
+                    },
+                    '& .MuiInputLabel-root': {
+                      color: isDark ? '#e2e8f0' : 'text.primary',
+                    },
+                    '& .MuiOutlinedInput-input': {
+                      color: isDark ? '#ffffff' : 'text.primary',
                     },
                   }}
                 />
@@ -419,9 +457,9 @@ function StudentRegister() {
                     fontWeight: 600,
                     textTransform: 'none',
                     borderRadius: 1.5,
-                    backgroundColor: '#1a237e',
+                    backgroundColor: isDark ? '#3b82f6' : '#1a237e',
                     '&:hover': {
-                      backgroundColor: '#0d47a1',
+                      backgroundColor: isDark ? '#2563eb' : '#0d47a1',
                     },
                     mb: 3,
                   }}
@@ -435,7 +473,7 @@ function StudentRegister() {
                   <Typography
                     variant="body2"
                     sx={{
-                      color: 'text.secondary',
+                      color: isDark ? '#e2e8f0' : 'text.secondary',
                       fontSize: { xs: '0.875rem', sm: '1rem' },
                     }}
                   >
@@ -444,7 +482,7 @@ function StudentRegister() {
                       component={RouterLink}
                       to="/student-login"
                       sx={{
-                        color: '#1a237e',
+                        color: isDark ? '#60a5fa' : '#1a237e',
                         fontWeight: 600,
                         textDecoration: 'none',
                         '&:hover': {

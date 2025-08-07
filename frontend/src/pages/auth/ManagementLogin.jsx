@@ -28,6 +28,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme as useAppTheme } from '../../context/ThemeContext';
+import ThemeToggle from '../../components/ThemeToggle';
 import { toast } from 'react-toastify';
 import logo from '../../assets/logo.png';
 import { roleConfig } from '../admin/roleConfig';
@@ -144,7 +145,7 @@ const StaffLogin = () => {
         gap: '50',
         display: 'flex',
         flexDirection: { xs: 'column', md: 'row' },
-        backgroundColor: '#f8fafc',
+        backgroundColor: isDark ? '#1e293b' : '#f0f8ff',
         position: 'relative',
         overflow: 'hidden',
       }}
@@ -170,6 +171,29 @@ const StaffLogin = () => {
           }}
         >
           <ArrowBackIcon />
+        </IconButton>
+      </Box>
+
+      {/* Theme Toggle Button */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 20,
+          right: 20,
+          zIndex: 10,
+        }}
+      >
+        <IconButton
+          sx={{
+            backgroundColor: isDark ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+            color: isDark ? '#60a5fa' : '#1976d2',
+            '&:hover': {
+              backgroundColor: isDark ? 'rgba(30, 41, 59, 1)' : 'rgba(255, 255, 255, 1)',
+            },
+            transition: 'all 0.3s ease'
+          }}
+        >
+          <ThemeToggle />
         </IconButton>
       </Box>
       {/* Background image for all screen sizes */}

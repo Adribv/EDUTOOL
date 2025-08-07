@@ -63,10 +63,13 @@ import {
 } from '@mui/icons-material';
 import { adminAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { toast } from 'react-toastify';
+import backgroundVideo from '../../assets/background.mp4';
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const { isDark } = useTheme();
   const navigate = useNavigate();
   const [childrenFeeStatus, setChildrenFeeStatus] = useState([]);
   const [showFeePopup, setShowFeePopup] = useState(false);
@@ -386,16 +389,69 @@ const Dashboard = () => {
   }
 
   return (
-    <Box sx={{ flexGrow: 1, p: 3, backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
-      {/* Back Button */}
-      <Box sx={{ position: 'absolute', top: 20, left: 20, zIndex: 10 }}>
+    <Box sx={{ 
+      flexGrow: 1, 
+      p: 3, 
+      minHeight: '100vh',
+      position: 'relative',
+      overflow: 'hidden',
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'linear-gradient(135deg, rgba(248, 249, 250, 0.8) 0%, rgba(240, 242, 245, 0.8) 50%, rgba(233, 236, 239, 0.8) 100%)',
+        zIndex: 1,
+      },
+    }}>
+      {/* Video Background */}
+      <video
+        autoPlay
+        muted
+        loop
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          zIndex: 0,
+        }}
+      >
+        <source src={backgroundVideo} type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+      {/* Back Button - Minimal Design */}
+              <Box sx={{ 
+          position: 'fixed', 
+          top: 15, 
+          left: 15, 
+          zIndex: 1202,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 48,
+        height: 48,
+        bgcolor: isDark ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+        borderRadius: '50%',
+        backdropFilter: 'blur(10px)',
+        border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.1)',
+        boxShadow: isDark 
+          ? '0 4px 12px rgba(0, 0, 0, 0.3)' 
+          : '0 4px 12px rgba(0, 0, 0, 0.1)',
+      }}>
         <IconButton
           onClick={() => window.history.back()}
           sx={{
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-            color: '#1976d2',
+            color: isDark ? '#f1f5f9' : '#1e293b',
+            width: 40,
+            height: 40,
             '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 1)',
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.04)',
+              transform: 'scale(1.05)',
             }
           }}
         >

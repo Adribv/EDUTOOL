@@ -549,7 +549,7 @@ const Layout = () => {
         {!isMobile && (
           <IconButton
             onClick={toggleDrawerCollapse}
-            sx={{ color: 'white' }}
+            sx={{ color: isDark ? '#ffffff' : '#374151' }}
             size="small"
           >
             {drawerCollapsed ? <ChevronRight /> : <ChevronLeft />}
@@ -557,16 +557,22 @@ const Layout = () => {
         )}
       </Toolbar>
       
-      <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
+      <Divider sx={{ borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />
       
       <List sx={{ flex: 1, px: 1, py: 2 }}>
         {userActivitiesControl && (
           <Box sx={{ mb: 2, px: 2 }}>
-            <Alert severity="info" sx={{ fontSize: '0.75rem', py: 0.5 }}>
-              <Typography variant="caption">
+            <Alert severity="info" sx={{ 
+              fontSize: '0.75rem', 
+              py: 0.5,
+              '& .MuiAlert-message': {
+                color: isDark ? '#e2e8f0' : '#374151'
+              }
+            }}>
+              <Typography variant="caption" sx={{ color: 'inherit' }}>
                 VP Controlled Access
               </Typography>
-              <Typography variant="caption" display="block">
+              <Typography variant="caption" display="block" sx={{ color: 'inherit' }}>
                 {userActivitiesControl.activityAssignments?.filter(a => a.accessLevel !== 'Unauthorized').length || 0} features available
               </Typography>
             </Alert>
@@ -612,18 +618,19 @@ const Layout = () => {
                 borderRadius: 2,
                 mb: 0.5,
                 minHeight: 48,
+                color: isDark ? '#e2e8f0' : '#374151',
                 '&.Mui-selected': {
-                  backgroundColor: 'rgba(59, 130, 246, 0.25)',
-                  color: 'white',
+                  backgroundColor: isDark ? 'rgba(59, 130, 246, 0.25)' : 'rgba(59, 130, 246, 0.15)',
+                  color: isDark ? '#ffffff' : '#1e293b',
                   '&:hover': {
-                    backgroundColor: 'rgba(59, 130, 246, 0.3)',
+                    backgroundColor: isDark ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)',
                   },
                   '& .MuiListItemIcon-root': {
-                    color: 'white',
+                    color: isDark ? '#ffffff' : '#1e293b',
                   },
                 },
                 '&:hover': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
                 },
               }}
             >
@@ -632,7 +639,7 @@ const Layout = () => {
                   minWidth: drawerCollapsed ? 0 : 40,
                   mr: drawerCollapsed ? 0 : 1,
                   justifyContent: 'center',
-                  color: 'rgba(255, 255, 255, 0.7)',
+                  color: isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(55, 65, 81, 0.7)',
                 }}
               >
                 {item.icon}
@@ -644,7 +651,7 @@ const Layout = () => {
                     '& .MuiListItemText-primary': {
                       fontSize: '0.875rem',
                       fontWeight: 500,
-                      color: 'white',
+                      color: isDark ? '#ffffff' : '#374151',
                     },
                   }}
                 />
@@ -670,10 +677,15 @@ const Layout = () => {
           </Avatar>
           {!drawerCollapsed && (
             <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography variant="body2" sx={{ fontWeight: 600, color: 'white' }}>
+              <Typography variant="body2" sx={{ 
+                fontWeight: 600, 
+                color: isDark ? '#ffffff' : '#374151' 
+              }}>
                 {user?.name || 'User'}
               </Typography>
-              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+              <Typography variant="caption" sx={{ 
+                color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(55, 65, 81, 0.7)' 
+              }}>
                 {user?.role || 'Role'}
               </Typography>
             </Box>

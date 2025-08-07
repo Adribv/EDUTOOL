@@ -30,6 +30,7 @@ import { useQuery } from '@tanstack/react-query';
 import { teacherAPI, staffAPI, api } from '../../services/api';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import Timetable from './Timetable';
 import Assignments from './Assignments';
@@ -181,6 +182,7 @@ const allFeatureTabs = [
 // Dashboard Overview Component
 function DashboardOverview() {
   const { user } = useAuth();
+  const { isDark } = useTheme();
   const navigate = useNavigate();
   const staffId = user?._id || user?.id; // Try both _id and id properties
   
@@ -1673,15 +1675,34 @@ export default function TeacherDashboard() {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      {/* Back Button */}
-      <Box sx={{ position: 'absolute', top: 20, left: 20, zIndex: 10 }}>
+      {/* Back Button - Minimal Design */}
+      <Box sx={{ 
+        position: 'fixed', 
+        top: 15, 
+        left: 15, 
+        zIndex: 1201,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 48,
+        height: 48,
+        bgcolor: isDark ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+        borderRadius: '50%',
+        backdropFilter: 'blur(10px)',
+        border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.1)',
+        boxShadow: isDark 
+          ? '0 4px 12px rgba(0, 0, 0, 0.3)' 
+          : '0 4px 12px rgba(0, 0, 0, 0.1)',
+      }}>
         <IconButton
           onClick={() => window.history.back()}
           sx={{
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-            color: '#1976d2',
+            color: isDark ? '#f1f5f9' : '#1e293b',
+            width: 40,
+            height: 40,
             '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 1)',
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.04)',
+              transform: 'scale(1.05)',
             }
           }}
         >

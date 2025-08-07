@@ -22,7 +22,7 @@ import {
   IconButton,
   Menu,
   MenuItem,
-  useTheme,
+  useTheme as useMuiTheme,
   useMediaQuery,
   LinearProgress,
   Table,
@@ -75,6 +75,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme as useCustomTheme } from '../../context/ThemeContext';
 import { 
   filterDashboardTabsByActivitiesControl, 
   useUserActivitiesControl,
@@ -153,8 +154,9 @@ const allHODTabs = [
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const { isDark } = useCustomTheme();
   const navigate = useNavigate();
-  const theme = useTheme();
+  const theme = useMuiTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const queryClient = useQueryClient();
   
@@ -724,15 +726,34 @@ const Dashboard = () => {
 
   return (
     <Box sx={{ p: { xs: 1, md: 3 }, width: '100%', maxWidth: '1400px', mx: 'auto' }}>
-      {/* Back Button */}
-      <Box sx={{ position: 'absolute', top: 20, left: 20, zIndex: 10 }}>
+      {/* Back Button - Minimal Design */}
+      <Box sx={{ 
+        position: 'fixed', 
+        top: 15, 
+        left: 15, 
+        zIndex: 1201,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 48,
+        height: 48,
+        bgcolor: isDark ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+        borderRadius: '50%',
+        backdropFilter: 'blur(10px)',
+        border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.1)',
+        boxShadow: isDark 
+          ? '0 4px 12px rgba(0, 0, 0, 0.3)' 
+          : '0 4px 12px rgba(0, 0, 0, 0.1)',
+      }}>
         <IconButton
           onClick={() => window.history.back()}
           sx={{
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-            color: '#1976d2',
+            color: isDark ? '#f1f5f9' : '#1e293b',
+            width: 40,
+            height: 40,
             '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 1)',
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.04)',
+              transform: 'scale(1.05)',
             }
           }}
         >

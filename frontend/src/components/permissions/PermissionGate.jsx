@@ -221,7 +221,6 @@ export const PermissionButton = ({
         gap: 1,
         p: 1.5,
         px: 3,
-        border: 'none',
         borderRadius: 1,
         cursor: isDisabled ? 'not-allowed' : 'pointer',
         opacity: isDisabled ? 0.6 : 1,

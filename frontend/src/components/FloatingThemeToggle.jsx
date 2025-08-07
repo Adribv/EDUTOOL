@@ -1,77 +1,89 @@
 import React from 'react';
-import { Fab, Tooltip, Box } from '@mui/material';
-import { 
-  Brightness4 as DarkIcon, 
-  Brightness7 as LightIcon,
-  Settings as SystemIcon 
-} from '@mui/icons-material';
+import { Fab, Tooltip } from '@mui/material';
 import { motion } from 'framer-motion';
+import { Brightness4, Brightness7 } from '@mui/icons-material';
 import { useTheme } from '../context/ThemeContext';
 
 const FloatingThemeToggle = () => {
-  const { themeMode, toggleTheme, isDark } = useTheme();
+  const { isDark, toggleTheme } = useTheme();
 
-  const getIcon = () => {
-    return isDark ? <DarkIcon /> : <LightIcon />;
-  };
-
-  const getTooltip = () => {
-    return isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode';
-  };
+  const MotionFab = motion(Fab);
 
   return (
-    <Box
+    <Tooltip
+      title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+      placement="left"
+      arrow
       sx={{
-        position: 'fixed',
-        top: { xs: 20, sm: 20 },
-        right: { xs: 20, sm: 20 },
-        zIndex: 9999,
-        display: { xs: 'block', md: 'block' }, // Always visible
+        '& .MuiTooltip-tooltip': {
+          background: 'rgba(0, 0, 0, 0.8)',
+          backdropFilter: 'blur(10px)',
+          borderRadius: 2,
+          fontSize: '0.875rem',
+          padding: '8px 12px',
+        },
+        '& .MuiTooltip-arrow': {
+          color: 'rgba(0, 0, 0, 0.8)',
+        },
       }}
     >
-              <motion.div
-          initial={{ scale: 0, rotate: -180 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-          whileHover={{ scale: 1.1, rotate: 5 }}
-          whileTap={{ scale: 0.95 }}
-          style={{
-            filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))',
-          }}
+      <MotionFab
+        component={motion.button}
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        whileHover={{
+          scale: 1.1,
+          rotate: 180,
+          transition: { duration: 0.3, ease: "easeOut" }
+        }}
+        whileTap={{
+          scale: 0.95,
+          transition: { duration: 0.1 }
+        }}
+        onClick={toggleTheme}
+        sx={{
+          position: 'fixed !important',
+          top: 24,
+          right: 24,
+          zIndex: 9999,
+          background: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
+          color: '#1e293b',
+          width: 56,
+          height: 56,
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
+            borderRadius: '50%',
+            zIndex: -1,
+          },
+          '&:hover': {
+            background: 'rgba(255, 255, 255, 0.15)',
+            boxShadow: '0 15px 35px rgba(0, 0, 0, 0.2)',
+            transform: 'translateY(-2px)',
+          },
+          '&:active': {
+            transform: 'translateY(0px)',
+          },
+        }}
+        size="medium"
+      >
+        <motion.div
+          initial={false}
+          animate={{ rotate: isDark ? 180 : 0 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
         >
-        <Tooltip title={getTooltip()} placement="left">
-          <Fab
-            onClick={toggleTheme}
-            sx={{
-              backgroundColor: isDark ? '#ffffff' : '#ffffff',
-              color: isDark ? '#1e293b' : '#1e293b',
-              boxShadow: isDark 
-                ? '0 4px 20px rgba(255, 255, 255, 0.3)' 
-                : '0 4px 20px rgba(0, 0, 0, 0.2)',
-              '&:hover': {
-                backgroundColor: isDark ? '#f8fafc' : '#f1f5f9',
-                color: isDark ? '#0f172a' : '#1e293b',
-                boxShadow: isDark 
-                  ? '0 6px 25px rgba(255, 255, 255, 0.4)' 
-                  : '0 6px 25px rgba(0, 0, 0, 0.3)',
-                transform: 'translateY(-2px)',
-              },
-              transition: 'all 0.3s ease',
-              width: 48,
-              height: 48,
-            }}
-            size="medium"
-          >
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 0.5, ease: 'easeInOut' }}
-            >
-              {getIcon()}
-            </motion.div>
-          </Fab>
-        </Tooltip>
-      </motion.div>
-    </Box>
+          {isDark ? <Brightness7 /> : <Brightness4 />}
+        </motion.div>
+      </MotionFab>
+    </Tooltip>
   );
 };
 
