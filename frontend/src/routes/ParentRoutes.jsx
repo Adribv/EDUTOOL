@@ -1,6 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import ParentLayout from '../components/layout/ParentLayout';
-import ParentDashboard from '../pages/parent/ParentDashboard';
+import Dashboard from '../pages/parent/Dashboard';
 import Profile from '../pages/parent/Profile';
 import Children from '../pages/parent/Children';
 import ChildProgress from '../pages/parent/ChildProgress';
@@ -36,8 +36,8 @@ const ParentRoutes = () => {
   return (
     <Routes>
       <Route element={<ParentLayout />}>
-        <Route index element={<ParentDashboard />} />
-        <Route path="dashboard" element={<ParentDashboard />} />
+        <Route index element={<Dashboard />} />
+        <Route path="dashboard" element={<Dashboard />} />
         <Route path="profile" element={<Profile />} />
         <Route path="children" element={<Children />} />
         <Route path="children/:rollNumber/progress" element={<ChildProgress />} />

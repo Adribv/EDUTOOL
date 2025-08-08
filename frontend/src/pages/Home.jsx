@@ -1,96 +1,108 @@
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useMemo, useCallback, useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
-  Container,
   Box,
   Typography,
   Button,
+  IconButton,
   Grid,
-  Card,
-  CardContent,
-  CardActions,
   useTheme,
   useMediaQuery,
-  Divider,
+  Container,
   Paper,
-  Tabs,
-  Tab,
-  IconButton,
 } from '@mui/material';
-import SchoolIcon from '@mui/icons-material/School';
-import AutoStoriesIcon from '@mui/icons-material/AutoStories';
-import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
-import PersonIcon from '@mui/icons-material/Person';
-import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
-import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
-import PsychologyIcon from '@mui/icons-material/Psychology';
-import BusinessIcon from '@mui/icons-material/Business';
-import GroupIcon from '@mui/icons-material/Group';
-import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
-import School from '@mui/icons-material/School';
-import Book from '@mui/icons-material/Book';
-import Assignment from '@mui/icons-material/Assignment';
-import Event from '@mui/icons-material/Event';
+import {
+  School,
+  People,
+  Business,
+  AccountBalance,
+} from '@mui/icons-material';
+
 import logo from '../assets/logo.png';
-import backgroundVideo from '../assets/background.mp4';
-import { useTheme as useAppTheme } from '../context/ThemeContext';
-import ThemeToggle from '../components/ThemeToggle';
-import GlassCard from '../components/GlassCard';
-import AnimatedButton from '../components/AnimatedButton';
 
 const Home = () => {
   const navigate = useNavigate();
   const theme = useTheme();
-  const { isDark } = useAppTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const [selectedTab, setSelectedTab] = useState(0);
 
-  const studentParentPortals = [
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+  const intervalRef = useRef(null);
+
+  const userTypes = [
     {
-      title: 'Student Portal',
-      description: 'Access your academic dashboard, assignments, and grades',
-      icon: <AutoStoriesIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: '#ffffff' }} />,
+      id: 'student',
+      label: 'Student',
+      icon: School,
       color: '#2563eb',
-      path: '/student-login',
-      gradient: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)',
+      description: 'Access academic dashboard',
+      inputPlaceholder: 'Admission No'
     },
     {
-      title: 'Parent Portal',
-      description: 'Monitor your child\'s progress and stay connected',
-      icon: <FamilyRestroomIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: '#ffffff' }} />,
+      id: 'parent',
+      label: 'Parent',
+      icon: People,
       color: '#dc2626',
-      path: '/parent-login',
-      gradient: 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)',
+      description: 'Monitor child progress',
+      inputPlaceholder: 'Email ID'
     },
+    {
+      id: 'staff',
+      label: 'Staff',
+      icon: Business,
+      color: '#0891b2',
+      description: 'Staff management portal',
+      inputPlaceholder: 'Email ID'
+    },
+    {
+      id: 'accountant',
+      label: 'Accountant',
+      icon: AccountBalance,
+      color: '#d97706',
+      description: 'Financial management portal',
+      inputPlaceholder: 'Email ID'
+    }
   ];
 
-  const managementPortals = useMemo(() => [
-    {
-      title: 'Staff Login',
-      description: 'Login for all teaching and non-teaching staff, principals, HODs, and officials',
-      icon: <BusinessIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: '#ffffff' }} />,
-      color: '#0891b2',
-      path: '/management-login',
-      gradient: 'linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)',
-    },
-    {
-      title: 'Accountant Login',
-      description: 'Access financial dashboard and manage school expenses',
-      icon: <AccountBalanceWalletIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: '#ffffff' }} />,
-      color: '#d97706',
-      path: '/accountant-login',
-      gradient: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)',
-    },
-  ], []);
+  // Video sequence effect with bgv5
+  useEffect(() => {
+    const videos = ['/assets/mp4/bgv1.mp4', '/assets/mp4/bgv2.mp4', '/assets/mp4/bgv3.mp4', '/assets/mp4/bgv4.mp4', '/assets/mp4/bgv5.mp4'];
+    
+    intervalRef.current = setInterval(() => {
+      setCurrentVideoIndex(prevIndex => (prevIndex + 1) % videos.length);
+    }, 5000); // 5 seconds for smooth viewing
 
-  const handlePortalClick = useCallback((path) => {
-    navigate(path);
-  }, [navigate]);
-
-  const handleTabChange = useCallback((event, newValue) => {
-    setSelectedTab(newValue);
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
   }, []);
+
+
+
+  const handleUserTypeSelect = (userType) => {
+    // Direct navigation to respective login pages
+    switch (userType) {
+      case 'student':
+        navigate('/student-login');
+        break;
+      case 'parent':
+        navigate('/parent-login');
+        break;
+      case 'staff':
+        navigate('/management-login');
+        break;
+      case 'accountant':
+        navigate('/accountant-login');
+        break;
+      default:
+        break;
+    }
+  };
+
+
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -98,194 +110,31 @@ const Home = () => {
       opacity: 1,
       transition: {
         duration: 0.8,
-        staggerChildren: 0.15,
-      },
-    },
+        staggerChildren: 0.1
+      }
+    }
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 30 },
+    hidden: { opacity: 0, y: 20 },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
         duration: 0.6,
-        ease: [0.25, 0.46, 0.45, 0.94],
-      },
-    },
+        ease: "easeOut"
+      }
+    }
   };
 
-  const PortalCard = ({ portal, index }) => (
-      <motion.div
-      initial={{ opacity: 0, y: 30, scale: 0.9 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.6, delay: 0.1 * index, ease: "easeOut" }}
-      whileHover={{ 
-        y: -10,
-        scale: 1.02,
-        transition: { duration: 0.2 }
-      }}
-      whileTap={{ 
-        scale: 0.98,
-        transition: { duration: 0.1 }
-      }}
-      >
-        <Card
-        onClick={() => handlePortalClick(portal.path)}
-          sx={{
-          height: { xs: '320px', sm: '380px', md: '420px' },
-            display: 'flex',
-            flexDirection: 'column',
-          background: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(20px)',
-          border: isDark ? '1px solid rgba(148, 163, 184, 0.2)' : '1px solid rgba(37, 99, 235, 0.2)',
-          borderRadius: 3,
-          boxShadow: isDark ? '0 8px 32px rgba(0, 0, 0, 0.3)' : '0 8px 32px rgba(37, 99, 235, 0.1)',
-            transition: 'all 0.3s ease-in-out',
-            cursor: 'pointer',
-          position: 'relative',
-          overflow: 'hidden',
-            '&:hover': {
-              transform: 'translateY(-8px)',
-            boxShadow: isDark ? '0 20px 40px rgba(0, 0, 0, 0.4)' : '0 20px 40px rgba(37, 99, 235, 0.15)',
-            },
-          }}
-        >
-          <CardContent sx={{ 
-          flex: 1, 
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-          p: 3,
-          position: 'relative',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'linear-gradient(45deg, transparent 30%, rgba(59, 130, 246, 0.05) 50%, transparent 70%)',
-            backgroundSize: '200% 200%',
-            animation: 'shimmer 3s ease-in-out infinite',
-            borderRadius: 'inherit',
-            zIndex: 0,
-          }
-        }}>
-          <Box>
-            <motion.div
-              whileHover={{ 
-                scale: 1.1,
-                transition: { duration: 0.2 }
-              }}
-              whileTap={{ 
-                scale: 0.95,
-                transition: { duration: 0.1 }
-              }}
-            >
-              <Box
-                sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-                  width: 100,
-                  height: 100,
-                  borderRadius: 3,
-                  background: portal.gradient,
-                  mb: 4,
-                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
-                  position: 'relative',
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: -2,
-                    left: -2,
-                    right: -2,
-                    bottom: -2,
-                    background: 'linear-gradient(45deg, #3b82f6, #8b5cf6, #ec4899, #3b82f6)',
-                    borderRadius: 'inherit',
-                    zIndex: -1,
-                    opacity: 0,
-                    transition: 'opacity 0.3s ease-in-out',
-                  },
-                  '&:hover::before': {
-                    opacity: 1,
-                  }
-                }}
-              >
-                <motion.div
-                  animate={{ 
-                    scale: [1, 1.05, 1]
-                  }}
-                  transition={{ 
-                    duration: 2, 
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                >
-              {portal.icon}
-                </motion.div>
-            </Box>
-            </motion.div>
-            
-            <Typography
-              variant="h5"
-              sx={{
-                fontWeight: 700,
-                color: isDark ? '#ffffff' : 'text.primary',
-                mb: 3,
-                fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
-                textShadow: isDark ? '0 1px 2px rgba(0, 0, 0, 0.5)' : 'none',
-              }}
-            >
-              {portal.title}
-            </Typography>
-            
-            <Typography
-              variant="body2"
-              sx={{ 
-                color: isDark ? '#e2e8f0' : 'text.secondary',
-                lineHeight: 1.6,
-                fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' },
-                fontWeight: isDark ? 500 : 400,
-                textShadow: isDark ? '0 1px 2px rgba(0, 0, 0, 0.3)' : 'none',
-                minHeight: '4rem',
-                display: 'flex',
-                alignItems: 'flex-start',
-              }}
-            >
-              {portal.description}
-            </Typography>
-          </Box>
-          
-            <Button
-              variant="contained"
-              sx={{
-                background: portal.gradient,
-                color: 'white',
-              mt: 0,
-              py: 1.5,
-                fontWeight: 600,
-                textTransform: 'none',
-                borderRadius: 2,
-                '&:hover': {
-                  background: portal.gradient,
-                  opacity: 0.9,
-                  transform: 'translateY(-1px)',
-                },
-              }}
-            >
-              Access Portal
-            </Button>
-        </CardContent>
-        </Card>
-      </motion.div>
-  );
+  const videos = ['/assets/mp4/bgv1.mp4', '/assets/mp4/bgv2.mp4', '/assets/mp4/bgv3.mp4', '/assets/mp4/bgv4.mp4', '/assets/mp4/bgv5.mp4'];
 
   return (
     <Box
       sx={{
         minHeight: '100vh',
+        display: 'flex',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         position: 'relative',
         overflow: 'hidden',
         '&::before': {
@@ -295,136 +144,129 @@ const Home = () => {
           left: 0,
           right: 0,
           bottom: 0,
-          background: isDark 
-            ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.6) 0%, rgba(30, 41, 59, 0.6) 50%, rgba(51, 65, 85, 0.6) 100%)'
-            : 'linear-gradient(135deg, rgba(15, 23, 42, 0.4) 0%, rgba(30, 41, 59, 0.4) 50%, rgba(51, 65, 85, 0.4) 100%)',
-          zIndex: 1,
+          background: 'radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%), radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 50%)',
+          zIndex: 0
         },
+        '@keyframes shimmer': {
+          '0%': {
+            backgroundPosition: '-200% 0',
+          },
+          '100%': {
+            backgroundPosition: '200% 0',
+          },
+        },
+        '@keyframes float': {
+          '0%, 100%': {
+            transform: 'translateY(0px)',
+          },
+          '50%': {
+            transform: 'translateY(-10px)',
+          },
+        },
+        '@keyframes pulse': {
+          '0%, 100%': {
+            opacity: 1,
+          },
+          '50%': {
+            opacity: 0.7,
+          },
+        },
+
       }}
     >
-      {/* Theme Toggle Button */}
+      {/* Video Background Sequence */}
       <Box
         sx={{
           position: 'fixed',
-          top: 20,
-          right: 20,
-          zIndex: 9999,
-          pointerEvents: 'auto',
-        }}
-      >
-        <IconButton
-          sx={{
-            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.95)',
-            color: isDark ? '#ffffff' : '#1976d2',
-            border: isDark ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid rgba(0, 0, 0, 0.1)',
-            backdropFilter: 'blur(10px)',
-            width: 48,
-            height: 48,
-            '&:hover': {
-              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 1)',
-              transform: 'scale(1.05)',
-            }
-          }}
-        >
-          <ThemeToggle />
-        </IconButton>
-      </Box>
-      {/* Video Background */}
-      <video
-        autoPlay
-        muted
-        loop
-        style={{
-          position: 'absolute',
           top: 0,
           left: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
+          width: '100vw',
+          height: '100vh',
           zIndex: 0,
+          overflow: 'hidden',
+          background: '#000'
         }}
       >
-        <source src={backgroundVideo} type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
+        <AnimatePresence mode="wait">
+          {videos.map((video, index) => (
+            index === currentVideoIndex && (
+              <motion.video
+                key={`${video}-${index}`}
+                autoPlay
+                muted
+                loop={false}
+                playsInline
+                preload="auto"
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  zIndex: 1,
+                }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ 
+                  duration: 0.6,
+                  ease: "easeInOut"
+                }}
+                onEnded={() => {
+                  setCurrentVideoIndex(prevIndex => (prevIndex + 1) % videos.length);
+                }}
+              >
+                <source src={video} type="video/mp4" />
+                Your browser does not support the video tag.
+              </motion.video>
+            )
+          ))}
+        </AnimatePresence>
+      </Box>
 
-      {/* Simple Floating Icons */}
+      {/* Video Overlay */}
       <Box
         sx={{
-          position: 'absolute',
+          position: 'fixed',
           top: 0,
           left: 0,
-          width: '100%',
-          height: '100%',
+          width: '100vw',
+          height: '100vh',
+          background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.3) 0%, rgba(30, 41, 59, 0.2) 50%, rgba(51, 65, 85, 0.3) 100%)',
           zIndex: 1,
-          pointerEvents: 'none',
-          overflow: 'hidden',
         }}
-      >
-        {[...Array(4)].map((_, i) => (
-          <motion.div
-            key={i}
-            style={{
-              position: 'absolute',
-              left: `${20 + (i * 20)}%`,
-              top: `${30 + (i * 15)}%`,
-              color: isDark ? '#ffffff' : '#1e293b',
-              opacity: 0.05,
-            }}
-            animate={{
-              y: [0, -10, 0],
-            }}
-            transition={{
-              duration: 4,
-              repeat: Infinity,
-              delay: i * 0.5,
-              ease: "easeInOut",
-            }}
-          >
-            {i % 4 === 0 ? <School sx={{ fontSize: 24 }} /> :
-             i % 4 === 1 ? <Book sx={{ fontSize: 20 }} /> :
-             i % 4 === 2 ? <Assignment sx={{ fontSize: 22 }} /> :
-             <Event sx={{ fontSize: 18 }} />}
-          </motion.div>
-        ))}
-      </Box>
-      <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2 }}>
+      />
+
+
+
+      {/* Main Content */}
+      <Container maxWidth="xl" sx={{ 
+        position: 'relative', 
+        zIndex: 2, 
+        py: { xs: 2, sm: 3, md: 4 }, 
+        minHeight: '100vh', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}>
         <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
+          style={{ width: '100%', maxWidth: '1200px' }}
         >
-          {/* Header Section */}
+          {/* Header with Logo */}
           <motion.div variants={itemVariants}>
-            <Box
-              sx={{
-                textAlign: 'center',
-                py: { xs: 4, md: 6 },
-                mb: 4,
-                display: 'flex', 
-                flexDirection: 'column',
-                alignItems: 'center', 
-                justifyContent: 'center', 
-              }}
-            >
-              <motion.div
-                initial={{ opacity: 0, scale: 0.5, y: -30 }}
-                animate={{ 
-                  opacity: 1, 
-                  scale: 1, 
-                  y: 0
-                }}
-                transition={{ 
-                  duration: 0.8, 
-                  ease: "easeOut"
-                }}
+            <Box sx={{ textAlign: 'center', mb: { xs: 1, sm: 2 } }}>
+                              <motion.div
+                initial={{ opacity: 0, y: -20, scale: 0.8 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 1, delay: 0.2 }}
                 whileHover={{ 
-                  scale: 1.1,
-                  transition: { duration: 0.2 }
-                }}
-                whileTap={{ 
-                  scale: 0.95,
-                  transition: { duration: 0.1 }
+                  scale: 1.05,
+                  transition: { duration: 0.3 }
                 }}
               >
                 <Box
@@ -432,254 +274,475 @@ const Home = () => {
                   src={logo}
                   alt="EDULIVES Logo"
                   sx={{
-                    height: isMobile ? 180 : 240,
+                    height: { xs: 100, sm: 120, md: 150, lg: 180 },
                     width: 'auto',
                     maxWidth: '100%',
                     objectFit: 'contain',
-                    mb: 3,
-                    filter: 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2))',
+                    mb: { xs: 1, sm: 2 },
+                    filter: 'drop-shadow(0 12px 24px rgba(0, 0, 0, 0.4))',
                     display: 'block',
                     margin: '0 auto',
                     cursor: 'pointer',
+                    position: 'relative',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: '-10px',
+                      left: '-10px',
+                      right: '-10px',
+                      bottom: '-10px',
+                      background: 'linear-gradient(45deg, #3b82f6, #8b5cf6, #ec4899, #3b82f6)',
+                      borderRadius: '20px',
+                      zIndex: -1,
+                      opacity: 0,
+                      transition: 'opacity 0.3s ease',
+                    },
+                    '&:hover::before': {
+                      opacity: 0.3,
+                    }
                   }}
                 />
               </motion.div>
-              
-                              <motion.div
-                  initial={{ opacity: 0, y: 50, scale: 0.8 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ duration: 1.2, delay: 0.5, ease: "easeOut" }}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+              >
+                <Typography
+                  variant="h4"
+                  sx={{
+                    color: 'rgba(255, 255, 255, 0.95)',
+                    fontWeight: 600,
+                    mb: { xs: 2, sm: 3 },
+                    fontSize: { xs: '1.3rem', sm: '1.5rem', md: '1.7rem', lg: '1.9rem' },
+                    textAlign: 'center',
+                    textShadow: '0 3px 6px rgba(0, 0, 0, 0.4)',
+                    letterSpacing: '0.8px',
+                    lineHeight: 1.3,
+                    fontFamily: '"Inter", "Roboto", sans-serif',
+                    background: 'linear-gradient(135deg, #ffffff 0%, #e2e8f0 50%, #cbd5e1 100%)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    position: 'relative',
+                    textTransform: 'uppercase',
+                    '&::after': {
+                      content: '""',
+                      position: 'absolute',
+                      bottom: '-10px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      width: '80px',
+                      height: '3px',
+                      background: 'linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899, #3b82f6)',
+                      borderRadius: '2px',
+                      opacity: 0.9,
+                      animation: 'shimmer 2s ease-in-out infinite'
+                    }
+                  }}
                 >
-                  <motion.div
-                    animate={{ 
-                      y: [0, -5, 0]
-                    }}
-                    transition={{ 
-                      duration: 3, 
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
-                  >
-                    <Box sx={{ position: 'relative', display: 'inline-block' }}>
-                      <Typography
-                        variant="h1"
-                        sx={{
-                          fontWeight: 900,
-                          mb: 2,
-                          fontSize: { xs: '2.5rem', sm: '3.5rem', md: '4rem' },
-                          background: isDark 
-                            ? 'linear-gradient(135deg, #ffffff 0%, #e2e8f0 50%, #cbd5e1 100%)'
-                            : 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 50%, #e2e8f0 100%)',
-                          backgroundClip: 'text',
-                          WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
-                          letterSpacing: '-0.02em',
-                          filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3))',
-                          position: 'relative',
-                          cursor: 'pointer',
-                          '&::before': {
-                            content: '""',
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            background: 'linear-gradient(45deg, transparent 30%, rgba(59, 130, 246, 0.1) 50%, transparent 70%)',
-                            backgroundSize: '200% 200%',
-                            animation: 'shimmer 3s ease-in-out infinite',
-                          }
-                        }}
-                      >
-                        Welcome to EduTool
-              </Typography>
-                      
-                      {/* Simple Glow Effect */}
-                      <motion.div
-                        style={{
-                          position: 'absolute',
-                          top: '50%',
-                          left: '50%',
-                          width: '100%',
-                          height: '100%',
-                          background: 'radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%)',
-                          borderRadius: '50%',
-                          transform: 'translate(-50%, -50%)',
-                        }}
-                        animate={{ 
-                          scale: [1, 1.2, 1],
-                          opacity: [0.3, 0.6, 0.3],
-                        }}
-                        transition={{
-                          duration: 3,
-                          repeat: Infinity,
-                          ease: "easeInOut"
-                        }}
-                      />
-                    </Box>
-                  </motion.div>
-                </motion.div>
-              
-                              <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.4 }}
-                >
-                  <motion.div
-                    animate={{ 
-                      opacity: [0.95, 1, 0.95],
-                      scale: [1, 1.01, 1]
-                    }}
-                    transition={{ 
-                      duration: 3, 
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
-                  >
-                                         <Box
-                       sx={{
-                         background: isDark 
-                           ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%)'
-                           : 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(147, 51, 234, 0.05) 100%)',
-                         backdropFilter: 'blur(10px)',
-                         border: isDark 
-                           ? '1px solid rgba(59, 130, 246, 0.2)'
-                           : '1px solid rgba(59, 130, 246, 0.1)',
-                         borderRadius: 2,
-                         padding: '1rem 2rem',
-                         position: 'relative',
-                         overflow: 'hidden',
-                       }}
-                     >
-              <Typography
-                variant="h5"
-                sx={{
-                          color: isDark ? '#e2e8f0' : '#ffffff',
-                          fontWeight: 600,
-                          mb: 4,
-                          fontSize: { xs: '1.1rem', sm: '1.3rem', md: '1.5rem' },
-                          maxWidth: '800px',
-                          margin: '0 auto',
-                          lineHeight: 1.4,
-                          textShadow: isDark 
-                            ? '0 2px 4px rgba(255, 255, 255, 0.2)'
-                            : '0 2px 4px rgba(0, 0, 0, 0.7)',
-                          filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3))',
-                          position: 'relative',
-                          zIndex: 1,
-                        }}
-                      >
-                        Your comprehensive educational management platform.
-              </Typography>
-                    </Box>
-                  </motion.div>
-                </motion.div>
+                  Your comprehensive educational management platform
+                </Typography>
+              </motion.div>
             </Box>
           </motion.div>
 
-          {/* Portal Selection Tabs */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-          >
-            <Paper 
-              sx={{ 
-                background: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                backdropFilter: 'blur(20px)',
-                border: isDark ? '1px solid rgba(148, 163, 184, 0.2)' : '1px solid rgba(37, 99, 235, 0.2)',
-                borderRadius: 3,
-                mb: 4,
-                overflow: 'hidden',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+          {/* Main Login Section */}
+          <motion.div variants={itemVariants}>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', lg: 'row' },
+                gap: { xs: 2, sm: 3, lg: 4 },
+                maxWidth: 1200,
+                mx: 'auto',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: { xs: '60vh', sm: '65vh', md: '70vh' },
+                position: 'relative',
+                zIndex: 2,
+                width: '100%'
               }}
             >
-              <Tabs 
-                value={selectedTab} 
-                onChange={handleTabChange}
-                variant="fullWidth"
+              {/* Left Section - Branding & Info */}
+              <motion.div
+                variants={itemVariants}
                 sx={{
-                  '& .MuiTabs-indicator': {
-                    height: 3,
-                    background: 'linear-gradient(135deg, #2563eb 0%, #dc2626 100%)',
-                  },
-                  '& .MuiTab-root': {
-                    color: isDark ? '#94a3b8' : '#64748b',
-                    fontWeight: 600,
-                    fontSize: { xs: '0.875rem', sm: '1rem' },
-                    textTransform: 'none',
-                    py: 2,
-                    '&.Mui-selected': {
-                      color: isDark ? '#ffffff' : '#2563eb',
-                      fontWeight: 700,
-                  },
-                    '&:hover': {
-                      color: isDark ? '#cbd5e1' : '#475569',
-                  },
-                  },
+                  flex: 1,
+                  display: { xs: 'none', lg: 'flex' },
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  textAlign: 'center',
+                  color: 'black'
                 }}
               >
-                <Tab label="Students & Parents" />
-                <Tab label="Management" />
-              </Tabs>
-            </Paper>
-          </motion.div>
+                <Box sx={{ mb: { xs: 2, sm: 3, md: 4 } }}>
+                  <Typography
+                    variant="h2"
+                    sx={{
+                      fontWeight: 800,
+                      mb: { xs: 2, sm: 3 },
+                      fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem', lg: '3.5rem' },
+                      background: 'linear-gradient(135deg, #fff 0%, #e2e8f0 50%, #cbd5e1 100%)',
+                      backgroundClip: 'text',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      textAlign: 'center',
+                      textShadow: '0 4px 8px rgba(0, 0, 0, 0.4)',
+                      letterSpacing: '0.5px',
+                      lineHeight: 1.1
+                    }}
+                  >
+                    Transforming Education
+                  </Typography>
+                  <Typography
+                    variant="h4"
+                    sx={{
+                      color: 'rgba(255, 255, 255, 0.9)',
+                      fontWeight: 400,
+                      mb: { xs: 2, sm: 3, md: 4 },
+                      fontSize: { xs: '1.2rem', sm: '1.4rem', md: '1.6rem', lg: '1.8rem' },
+                      textAlign: 'center',
+                      textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
+                      letterSpacing: '0.2px',
+                      lineHeight: 1.2,
+                      fontStyle: 'italic',
+                      fontFamily: '"Playfair Display", "Georgia", serif',
+                      position: 'relative',
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        left: '-15px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        width: '2px',
+                        height: '70%',
+                        background: 'linear-gradient(45deg, #3b82f6, #8b5cf6, #ec4899)',
+                        borderRadius: '1px',
+                        animation: 'cursorBlink 2s infinite',
+                        opacity: 0,
+                        transition: 'opacity 0.3s ease'
+                      },
+                      '&::after': {
+                        content: '""',
+                        position: 'absolute',
+                        right: '-15px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        width: '2px',
+                        height: '70%',
+                        background: 'linear-gradient(45deg, #ec4899, #8b5cf6, #3b82f6)',
+                        borderRadius: '1px',
+                        animation: 'cursorBlink 2s infinite 1s',
+                        opacity: 0,
+                        transition: 'opacity 0.3s ease'
+                      },
+                      '&:hover::before': {
+                        opacity: 1
+                      },
+                      '&:hover::after': {
+                        opacity: 1
+                      },
+                      '@keyframes cursorBlink': {
+                        '0%, 50%': {
+                          opacity: 1,
+                          transform: 'translateY(-50%) scaleY(1)'
+                        },
+                        '51%, 100%': {
+                          opacity: 0.3,
+                          transform: 'translateY(-50%) scaleY(0.8)'
+                        }
+                      }
+                    }}
+                  >
+                    Next Generation Learning Platform
+                  </Typography>
+                </Box>
+              </motion.div>
 
-          {/* Portal Cards */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-          >
-            <AnimatePresence mode="wait">
-              {selectedTab === 0 ? (
+              {/* Right Section - Login Form */}
+              <motion.div
+                variants={itemVariants}
+                sx={{
+                  flex: 1,
+                  maxWidth: 500,
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center'
+                }}
+              >
                 <motion.div
-                  key="students-parents"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  initial={{ opacity: 0, y: 30, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.8, delay: 0.4 }}
+                  whileHover={{ 
+                    scale: 1.02,
+                    transition: { duration: 0.3 }
+                  }}
+                  style={{
+                    width: '100%',
+                    maxWidth: '500px',
+                    margin: '0 auto'
+                  }}
                 >
                   <Box
-                  sx={{
-                      display: 'grid',
-                      gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-                      gap: 3,
-                      maxWidth: 800,
-                      mx: 'auto',
+                    sx={{
+                      p: { xs: 3, sm: 4 },
+                      borderRadius: 4,
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      backdropFilter: 'blur(20px)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      width: '100%',
+                      maxWidth: { xs: '100%', sm: '500px', md: '550px' },
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'linear-gradient(135deg, rgba(30, 144, 255, 0.15) 0%, rgba(30, 144, 255, 0.1) 30%, rgba(255, 193, 7, 0.15) 45%, rgba(255, 193, 7, 0.1) 55%, rgba(76, 175, 80, 0.1) 70%, rgba(76, 175, 80, 0.15) 100%)',
+                        borderRadius: 'inherit',
+                        zIndex: 0,
+                      }
                     }}
                   >
-                {studentParentPortals.map((portal, index) => (
-                      <PortalCard key={portal.title} portal={portal} index={index} />
-                ))}
+                    {/* Modern Sign In Heading */}
+                    <Typography
+                      variant="h4"
+                      sx={{
+                        fontWeight: 700,
+                                              color: 'rgba(0, 0, 0, 0.9)',
+                      mb: 1,
+                      textAlign: 'center',
+                      fontSize: { xs: '1.5rem', sm: '1.8rem', md: '2rem' },
+                      textShadow: '0 2px 4px rgba(255, 255, 255, 0.3)',
+                        letterSpacing: '0.5px',
+                        fontFamily: '"Inter", "Roboto", sans-serif',
+                        position: 'relative',
+                        zIndex: 1
+                      }}
+                    >
+                      Welcome Back
+                    </Typography>
+
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        color: 'rgba(0, 0, 0, 0.7)',
+                        mb: 3,
+                        textAlign: 'center',
+                        fontWeight: 400,
+                        fontSize: { xs: '0.9rem', sm: '1rem' },
+                        fontFamily: '"Inter", "Roboto", sans-serif',
+                        position: 'relative',
+                        zIndex: 1
+                      }}
+                    >
+                      Choose your portal to continue
+                    </Typography>
+
+                    {/* Sleek User Type Selection */}
+                    <Box sx={{ 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      gap: { xs: 1.5, sm: 2 },
+                      position: 'relative',
+                      zIndex: 1
+                    }}>
+                      {userTypes.map((userType, index) => (
+                        <motion.div
+                          key={userType.id}
+                          initial={{ opacity: 0, x: -30 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.5, delay: index * 0.1 }}
+                          whileHover={{ 
+                            scale: 1.01,
+                            x: 5,
+                            transition: { duration: 0.2 }
+                          }}
+                          whileTap={{ scale: 0.99 }}
+                        >
+                          <Button
+                            fullWidth
+                            onClick={() => handleUserTypeSelect(userType.id)}
+                            sx={{
+                              py: { xs: 2, sm: 2.5 },
+                              px: { xs: 3, sm: 4 },
+                              borderRadius: 3,
+                              background: 'rgba(255, 255, 255, 0.2)',
+                              backdropFilter: 'blur(15px)',
+                              border: '1px solid rgba(255, 255, 255, 0.4)',
+                              color: 'rgba(0, 0, 0, 0.9)',
+                              fontWeight: 600,
+                              textTransform: 'none',
+                              fontSize: { xs: '1rem', sm: '1.1rem' },
+                              height: 'auto',
+                              minHeight: { xs: '60px', sm: '70px' },
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'flex-start',
+                              gap: { xs: 2, sm: 3 },
+                              position: 'relative',
+                              overflow: 'hidden',
+                              fontFamily: '"Inter", "Roboto", sans-serif',
+                              '&::before': {
+                                content: '""',
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                background: `linear-gradient(135deg, ${userType.color}20 0%, ${userType.color}10 100%)`,
+                                opacity: 0,
+                                transition: 'opacity 0.3s ease',
+                              },
+                              '&:hover': {
+                                background: 'rgba(255, 255, 255, 0.25)',
+                                borderColor: 'rgba(255, 255, 255, 0.4)',
+                                transform: 'translateY(-1px)',
+                                boxShadow: `0 6px 20px ${userType.color}30`,
+                                '&::before': {
+                                  opacity: 1,
+                                }
+                              }
+                            }}
+                          >
+                            <Box sx={{ 
+                              fontSize: { xs: '1.5rem', sm: '1.8rem' },
+                              color: userType.color,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              width: { xs: 40, sm: 45 },
+                              height: { xs: 40, sm: 45 },
+                              borderRadius: '50%',
+                              background: 'rgba(255, 255, 255, 0.2)',
+                              backdropFilter: 'blur(10px)',
+                              border: '1px solid rgba(255, 255, 255, 0.3)',
+                              mr: { xs: 1.5, sm: 2 }
+                            }}>
+                              <userType.icon />
+                            </Box>
+                            <Box sx={{ textAlign: 'left', flex: 1 }}>
+                              <Typography 
+                                variant="h6" 
+                                sx={{ 
+                                  fontWeight: 700,
+                                  color: 'rgba(0, 0, 0, 0.9)',
+                                  mb: 0.5,
+                                  fontSize: { xs: '1rem', sm: '1.1rem' }
+                                }}
+                              >
+                                {userType.label}
+                              </Typography>
+                              <Typography 
+                                variant="body2" 
+                                sx={{ 
+                                  color: 'rgba(0, 0, 0, 0.6)',
+                                  fontSize: { xs: '0.8rem', sm: '0.9rem' },
+                                  fontWeight: 400
+                                }}
+                              >
+                                {userType.description}
+                              </Typography>
+                            </Box>
+                            <Box sx={{ 
+                              fontSize: { xs: '1.2rem', sm: '1.4rem' },
+                              color: 'rgba(0, 0, 0, 0.5)',
+                              transition: 'all 0.3s ease',
+                              '&:hover': {
+                                color: 'rgba(0, 0, 0, 0.8)',
+                                transform: 'translateX(3px)',
+                              }
+                            }}>
+                              →
+                            </Box>
+                          </Button>
+                        </motion.div>
+                      ))}
+                    </Box>
                   </Box>
-            </motion.div>
-              ) : (
-                <motion.div
-                  key="management"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Box
-                  sx={{
-                      display: 'grid',
-                      gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-                      gap: 3,
-                      maxWidth: 800,
-                      mx: 'auto',
-                    }}
-                  >
-                {managementPortals.map((portal, index) => (
-                      <PortalCard key={portal.title} portal={portal} index={index} />
-                ))}
-                  </Box>
-            </motion.div>
-          )}
-            </AnimatePresence>
+                </motion.div>
+                </motion.div>
+            </Box>
           </motion.div>
         </motion.div>
       </Container>
+
+      {/* Animated Background Elements */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          overflow: 'hidden',
+          pointerEvents: 'none',
+          zIndex: 0
+        }}
+      >
+        {[...Array(12)].map((_, i) => (
+          <motion.div
+            key={i}
+            animate={{
+              x: [0, 150, 0],
+              y: [0, -150, 0],
+              rotate: [0, 360],
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: 25 + i * 3,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+            style={{
+              position: 'absolute',
+              width: 6 + i * 3,
+              height: 6 + i * 3,
+              background: `rgba(255, 255, 255, ${0.15 - i * 0.01})`,
+              borderRadius: '50%',
+              left: `${15 + i * 12}%`,
+              top: `${25 + i * 8}%`,
+              filter: 'blur(1px)',
+            }}
+          />
+        ))}
+        
+        {/* Floating Icons */}
+        {[...Array(6)].map((_, i) => (
+          <motion.div
+            key={`icon-${i}`}
+            animate={{
+              y: [0, -20, 0],
+              rotate: [0, 5, 0],
+            }}
+            transition={{
+              duration: 4 + i,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+            style={{
+              position: 'absolute',
+              left: `${10 + i * 15}%`,
+              top: `${40 + i * 10}%`,
+              color: 'rgba(255, 255, 255, 0.1)',
+              fontSize: 24 + i * 4,
+            }}
+          >
+            {i % 4 === 0 ? <School /> :
+             i % 4 === 1 ? <People /> :
+             i % 4 === 2 ? <Business /> :
+             <AccountBalance />}
+          </motion.div>
+        ))}
+      </Box>
     </Box>
   );
 };

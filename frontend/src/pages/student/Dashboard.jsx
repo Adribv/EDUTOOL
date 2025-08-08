@@ -93,16 +93,19 @@ import studentService from '../../services/studentService';
 import axios from 'axios';
 import { Alert as MuiAlert } from '@mui/material';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '@mui/material/styles';
 import { toast } from 'react-toastify';
 import GlassCard from '../../components/GlassCard';
 import StatCard from '../../components/StatCard';
 import AnimatedButton from '../../components/AnimatedButton';
 import LoadingSpinner from '../../components/LoadingSpinner';
-import backgroundVideo from '../../assets/background.mp4';
+
+
 
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -876,7 +879,7 @@ const Dashboard = () => {
             variant="h4"
             sx={{
               fontWeight: 700,
-              color: 'text.primary',
+              color: theme.palette.mode === 'dark' ? '#f1f5f9' : 'text.primary',
               mb: 0.5,
               fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
             }}
@@ -887,7 +890,7 @@ const Dashboard = () => {
           <Typography
             variant="body2"
             sx={{
-              color: 'text.secondary',
+              color: theme.palette.mode === 'dark' ? '#cbd5e1' : 'text.secondary',
               fontWeight: 500,
               mb: 1,
             }}
@@ -981,7 +984,7 @@ const Dashboard = () => {
                       size="small"
               sx={{
                   background: 'rgba(255, 255, 255, 0.2)',
-                  color: 'text.primary',
+                  color: theme.palette.mode === 'dark' ? '#f1f5f9' : 'text.primary',
                   fontWeight: 600,
               }}
             />
@@ -992,7 +995,7 @@ const Dashboard = () => {
             variant="h6"
             sx={{
               fontWeight: 600,
-              color: 'text.primary',
+              color: theme.palette.mode === 'dark' ? '#f1f5f9' : 'text.primary',
               mb: 1,
               fontSize: { xs: '1rem', sm: '1.125rem' },
             }}
@@ -1003,7 +1006,7 @@ const Dashboard = () => {
           <Typography
             variant="body2"
             sx={{
-              color: 'text.secondary',
+              color: theme.palette.mode === 'dark' ? '#cbd5e1' : 'text.secondary',
               lineHeight: 1.4,
               fontSize: { xs: '0.875rem', sm: '1rem' },
             }}
@@ -1188,29 +1191,14 @@ const Dashboard = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(226, 232, 240, 0.8) 50%, rgba(203, 213, 225, 0.8) 100%)',
+            background: theme.palette.mode === 'dark' 
+            ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 50%, rgba(51, 65, 85, 0.95) 100%)'
+            : 'linear-gradient(135deg, rgba(248, 250, 252, 0.95) 0%, rgba(226, 232, 240, 0.95) 50%, rgba(203, 213, 225, 0.95) 100%)',
             zIndex: 1,
           },
         }}
       >
-      {/* Video Background */}
-      <video
-        autoPlay
-        muted
-        loop
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-                  width: '100%',
-                  height: '100%',
-          objectFit: 'cover',
-          zIndex: 0,
-        }}
-      >
-        <source src={backgroundVideo} type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
+
 
       {/* Floating Particles Animation */}
                         <Box
@@ -1252,6 +1240,7 @@ const Dashboard = () => {
           />
             ))}
           </Box>
+
       <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 2, py: 4 }}>
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -1284,7 +1273,7 @@ const Dashboard = () => {
                   variant="h3"
           sx={{
                     fontWeight: 800,
-                    color: 'text.primary',
+                    color: theme.palette.mode === 'dark' ? '#f1f5f9' : 'text.primary',
                     mb: 1,
                     fontSize: { xs: '1.75rem', sm: '2rem', md: '2.5rem' },
                     background: 'linear-gradient(135deg, #6366f1 0%, #f59e0b 100%)',
@@ -1299,7 +1288,7 @@ const Dashboard = () => {
               <Typography
                 variant="h6"
                 sx={{
-                  color: 'text.secondary',
+                  color: theme.palette.mode === 'dark' ? '#cbd5e1' : 'text.secondary',
                   fontWeight: 500,
                 }}
               >
@@ -1314,7 +1303,7 @@ const Dashboard = () => {
               variant="h5"
               sx={{
                 fontWeight: 600,
-                color: 'text.primary',
+                color: theme.palette.mode === 'dark' ? '#f1f5f9' : 'text.primary',
                 mb: 3,
               }}
             >
@@ -1372,7 +1361,7 @@ const Dashboard = () => {
               variant="h5"
               sx={{
                 fontWeight: 600,
-                color: 'text.primary',
+                color: theme.palette.mode === 'dark' ? '#f1f5f9' : 'text.primary',
                 mb: 3,
               }}
             >

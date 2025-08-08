@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { accountantAPI, incomeLogAPI, expenseLogAPI } from '../../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme as useAppTheme } from '../../context/ThemeContext';
-import ThemeToggle from '../../components/ThemeToggle';
+
 import {
   Box,
   Grid,
@@ -2872,7 +2872,7 @@ const EnhancedAccountantDashboard = () => {
           }}>
             <Tooltip title="Toggle Theme">
               <IconButton sx={{ color: 'white' }}>
-                <ThemeToggle />
+        
               </IconButton>
             </Tooltip>
             <Tooltip title="Profile">

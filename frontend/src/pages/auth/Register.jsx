@@ -14,7 +14,7 @@ import {
   Grid,
   useTheme,
 } from '@mui/material';
-import { useTheme as useAppTheme } from '../../context/ThemeContext';
+
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { useMutation } from '@tanstack/react-query';
@@ -78,7 +78,7 @@ function Register() {
   const [error, setError] = useState('');
   const [showAdminWarning, setShowAdminWarning] = useState(false);
   const theme = useTheme();
-  const { isDark } = useAppTheme();
+
 
   const registerMutation = useMutation({
     mutationFn: async (values) => {
@@ -121,7 +121,7 @@ function Register() {
         minWidth: '100vw',
         display: 'flex',
         flexDirection: { xs: 'column', md: 'row' },
-        backgroundColor: isDark ? '#1e293b' : '#f0f8ff',
+        backgroundColor: '#f0f8ff',
         position: 'relative',
         overflow: 'hidden',
       }}

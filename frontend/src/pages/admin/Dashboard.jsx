@@ -74,6 +74,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 
+
 function AdminDashboard() {
   const { user } = useAuth();
   const { isDark } = useTheme();
@@ -404,38 +405,43 @@ function AdminDashboard() {
 
   return (
     <Box p={3}>
-      {/* Back Button - Minimal Design */}
+      {/* Back Button and Theme Toggle - Top Right */}
       <Box sx={{ 
-        position: 'fixed', 
-        top: 15, 
-        left: 15, 
+        position: 'absolute', 
+        top: 20, 
+        right: 20, 
         zIndex: 1201,
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: 48,
-        height: 48,
-        bgcolor: isDark ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
-        borderRadius: '50%',
-        backdropFilter: 'blur(10px)',
-        border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.1)',
-        boxShadow: isDark 
-          ? '0 4px 12px rgba(0, 0, 0, 0.3)' 
-          : '0 4px 12px rgba(0, 0, 0, 0.1)',
+        gap: 2,
       }}>
         <IconButton
           onClick={() => window.history.back()}
           sx={{
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
             color: isDark ? '#f1f5f9' : '#1e293b',
-            width: 40,
-            height: 40,
             '&:hover': {
-              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.04)',
+              backgroundColor: 'rgba(255, 255, 255, 0.2)',
               transform: 'scale(1.05)',
             }
           }}
         >
           <ArrowBack />
+        </IconButton>
+        <IconButton
+          sx={{
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            color: isDark ? '#f1f5f9' : '#1e293b',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+              transform: 'scale(1.05)',
+            }
+          }}
+        >
+  
         </IconButton>
       </Box>
 

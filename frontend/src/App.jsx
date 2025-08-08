@@ -10,7 +10,7 @@ import { AuthProvider } from './context/AuthContext';
 import { StaffPermissionProvider } from './context/StaffPermissionContext';
 import { ThemeProvider } from './context/ThemeContext';
 import ThemeAwareWrapper from './components/ThemeAwareWrapper';
-import FloatingThemeToggle from './components/FloatingThemeToggle';
+
 
 // Components
 import Layout from './components/layout/Layout';
@@ -27,20 +27,14 @@ const ManagementLogin = lazy(() => import('./pages/auth/ManagementLogin'));
 const Home = lazy(() => import('./pages/Home'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const AccountantLogin = lazy(() => import('./pages/auth/AccountantLogin'));
-const AccountantDashboard = lazy(() => import('./pages/accountant/AccountantDashboard'));
+const AccountantDashboard = lazy(() => import('./pages/accountant/EnhancedAccountantDashboard'));
 const AccountantProfile = lazy(() => import('./pages/accountant/AccountantProfile'));
 
 // Main Dashboard
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 
-// Role-specific Dashboard Components
-const LibrarianDashboardProtected = lazy(() => import('./pages/Dashboard').then(module => ({ default: module.LibrarianDashboardProtected })));
-const CounselorDashboardProtected = lazy(() => import('./pages/Dashboard').then(module => ({ default: module.CounselorDashboardProtected })));
-const PTTeacherDashboardProtected = lazy(() => import('./pages/Dashboard').then(module => ({ default: module.PTTeacherDashboardProtected })));
-const EventHandlerDashboardProtected = lazy(() => import('./pages/Dashboard').then(module => ({ default: module.EventHandlerDashboardProtected })));
-const TransportManagerDashboardProtected = lazy(() => import('./pages/Dashboard').then(module => ({ default: module.TransportManagerDashboardProtected })));
-const SoftSkillsManagerDashboardProtected = lazy(() => import('./pages/Dashboard').then(module => ({ default: module.SoftSkillsManagerDashboardProtected })));
-const AdminDashboardProtected = lazy(() => import('./pages/Dashboard').then(module => ({ default: module.AdminDashboardProtected })));
+// Role-specific Dashboard Components - Simplified imports
+const DashboardModule = lazy(() => import('./pages/Dashboard'));
 
 // Student Pages
 const StudentRoutes = lazy(() => import('./routes/StudentRoutes'));
@@ -59,14 +53,13 @@ const VicePrincipalDashboard = lazy(() => import('./pages/viceprincipal/VicePrin
 
 // Loading component
 const LoadingSpinner = () => {
-  const theme = useTheme();
   return (
     <Box 
       display="flex" 
       justifyContent="center" 
       alignItems="center" 
       minHeight="100vh"
-      sx={{ background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)` }}
+      sx={{ background: 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)' }}
     >
       <CircularProgress size={60} sx={{ color: 'white' }} />
     </Box>
@@ -113,13 +106,13 @@ function App() {
                     <Route path="/test-dashboard" element={<Dashboard />} />
                     
                     {/* Role-specific Dashboard Routes */}
-                    <Route path="/dashboard/librarian" element={<LibrarianDashboardProtected />} />
-                    <Route path="/dashboard/counselor" element={<CounselorDashboardProtected />} />
-                    <Route path="/dashboard/ptteacher" element={<PTTeacherDashboardProtected />} />
-                    <Route path="/dashboard/eventhandler" element={<EventHandlerDashboardProtected />} />
-                    <Route path="/dashboard/transportmanager" element={<TransportManagerDashboardProtected />} />
-                    <Route path="/dashboard/softskillsmanager" element={<SoftSkillsManagerDashboardProtected />} />
-                    <Route path="/dashboard/admin" element={<AdminDashboardProtected />} />
+                    <Route path="/dashboard/librarian" element={<DashboardModule />} />
+                    <Route path="/dashboard/counselor" element={<DashboardModule />} />
+                    <Route path="/dashboard/ptteacher" element={<DashboardModule />} />
+                    <Route path="/dashboard/eventhandler" element={<DashboardModule />} />
+                    <Route path="/dashboard/transportmanager" element={<DashboardModule />} />
+                    <Route path="/dashboard/softskillsmanager" element={<DashboardModule />} />
+                    <Route path="/dashboard/admin" element={<DashboardModule />} />
                     
                     {/* Protected Routes */}
                     <Route element={<ProtectedRoute allowedRoles={['Student']} />}>
@@ -156,6 +149,8 @@ function App() {
                       <Route path="/accountant/dashboard" element={<AccountantDashboard />} />
                       <Route path="/accountant/profile" element={<AccountantProfile />} />
                     </Route>
+                    
+
 
                     {/* 404 Route */}
                     <Route path="*" element={<NotFound />} />

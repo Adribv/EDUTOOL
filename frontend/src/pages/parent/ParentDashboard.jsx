@@ -1,571 +1,494 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Box,
-  Grid,
-  Paper,
-  Typography,
-  Avatar,
-  CircularProgress,
-  Alert,
-  Tabs,
-  Tab,
   Card,
   CardContent,
+  Typography,
+  Grid,
+  Avatar,
   Chip,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  Divider,
+  LinearProgress,
   Button,
-  useTheme,
-  useMediaQuery,
+  IconButton,
+  Badge,
+  Tooltip,
+  useTheme
 } from '@mui/material';
 import {
-  School,
-  Assignment,
+  Person,
+  Group,
+  TrendingUp,
+  CheckCircle,
   Payment,
   Event,
   Message,
-  Assessment,
-  Timeline,
-  Person,
-  Notifications,
   CalendarToday,
-  LocationOn,
-  AccessTime,
-  TrendingUp,
-  TrendingDown,
-  CheckCircle,
-  Warning,
-  Info,
+  EmojiEvents,
+  Star,
+  Notifications,
+  Settings,
+  School,
+  Assessment
 } from '@mui/icons-material';
-import { parentAPI } from '../../services/api';
-import { useTheme as useCustomTheme } from '../../context/ThemeContext';
-
-const StatCard = ({ title, value, icon, color, onClick, subtitle, trend }) => {
-  const { isDark } = useCustomTheme();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  
-  return (
-    <Card 
-      sx={{ 
-        height: '100%', 
-        cursor: onClick ? 'pointer' : 'default',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        background: isDark 
-          ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' 
-          : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-        border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-        '&:hover': {
-          transform: onClick ? 'translateY(-4px)' : 'none',
-          boxShadow: onClick 
-            ? (isDark ? '0 8px 25px rgba(0, 0, 0, 0.4)' : '0 8px 25px rgba(0, 0, 0, 0.15)')
-            : (isDark ? '0 4px 12px rgba(0, 0, 0, 0.3)' : '0 4px 12px rgba(0, 0, 0, 0.1)'),
-        }
-      }}
-      onClick={onClick}
-    >
-      <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-        <Box display="flex" alignItems="center" justifyContent="space-between" mb={isMobile ? 1.5 : 2}>
-          <Box display="flex" alignItems="center" sx={{ flex: 1, minWidth: 0 }}>
-            <Box sx={{ 
-              p: isMobile ? 1 : 1.5, 
-              borderRadius: 2, 
-              background: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(37, 99, 235, 0.1)',
-              mr: isMobile ? 1.5 : 2,
-              flexShrink: 0
-            }}>
-              {icon}
-            </Box>
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography variant={isMobile ? "body1" : "h6"} component="div" sx={{ 
-                fontWeight: 600,
-                color: isDark ? '#f1f5f9' : '#1e293b',
-                mb: 0.5,
-                fontSize: isMobile ? '0.875rem' : '1rem'
-              }}>
-                {title}
-              </Typography>
-              {subtitle && (
-                <Typography variant="caption" sx={{ 
-                  color: isDark ? '#94a3b8' : '#64748b',
-                  fontWeight: 500,
-                  fontSize: isMobile ? '0.7rem' : '0.75rem'
-                }}>
-                  {subtitle}
-                </Typography>
-              )}
-            </Box>
-          </Box>
-          {trend && (
-            <Chip 
-              icon={trend === 'up' ? <TrendingUp /> : <TrendingDown />}
-              label={trend === 'up' ? '+12%' : '-5%'}
-              size="small"
-              color={trend === 'up' ? 'success' : 'error'}
-              sx={{ 
-                background: isDark ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.1)',
-                border: isDark ? '1px solid #10b981' : '1px solid #10b981',
-                fontSize: isMobile ? '0.6rem' : '0.75rem',
-                height: isMobile ? 20 : 24
-              }}
-            />
-          )}
-        </Box>
-        <Typography variant={isMobile ? "h4" : "h3"} component="div" sx={{ 
-          color: color || (isDark ? '#60a5fa' : '#2563eb'),
-          fontWeight: 800,
-          textAlign: 'center',
-          textShadow: isDark ? '0 2px 4px rgba(0, 0, 0, 0.3)' : '0 2px 4px rgba(0, 0, 0, 0.1)',
-          fontSize: isMobile ? '1.75rem' : '3rem'
-        }}>
-          {value}
-        </Typography>
-      </CardContent>
-    </Card>
-  );
-};
+import ModernLayout from '../../components/ModernLayout';
 
 const ParentDashboard = () => {
-  const [selectedChild, setSelectedChild] = useState(null);
-  const { isDark } = useCustomTheme();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
-
-  const { data: children, isLoading: childrenLoading, error: childrenError } = useQuery({
-    queryKey: ['parent_children'],
-    queryFn: parentAPI.getChildren,
-    onSuccess: (data) => {
-      if (data && data.length > 0) {
-        setSelectedChild(data[0]);
+  const [parentData, setParentData] = useState({
+    name: 'Sarah Johnson',
+    children: [
+      { name: 'Alex Johnson', grade: 'Grade 10', age: 15 },
+      { name: 'Emma Johnson', grade: 'Grade 8', age: 13 }
+    ],
+    notifications: 7,
+    achievements: [
+      { title: 'Perfect Attendance', icon: Star, color: 'success', child: 'Alex' },
+      { title: 'Top Performer', icon: Star, color: 'warning', child: 'Emma' },
+      { title: 'Quick Learner', icon: EmojiEvents, color: 'info', child: 'Alex' }
+    ],
+    childrenProgress: [
+      {
+        name: 'Alex Johnson',
+        subjects: [
+          { name: 'Mathematics', progress: 85, grade: 'A-' },
+          { name: 'Science', progress: 92, grade: 'A' },
+          { name: 'English', progress: 78, grade: 'B+' },
+          { name: 'History', progress: 88, grade: 'A-' }
+        ],
+        attendance: 95,
+        performance: 88
+      },
+      {
+        name: 'Emma Johnson',
+        subjects: [
+          { name: 'Mathematics', progress: 78, grade: 'B+' },
+          { name: 'Science', progress: 85, grade: 'A-' },
+          { name: 'English', progress: 92, grade: 'A' },
+          { name: 'History', progress: 80, grade: 'B+' }
+        ],
+        attendance: 92,
+        performance: 84
       }
+    ],
+    upcomingEvents: [
+      { title: 'Parent-Teacher Meeting', date: 'Tomorrow', time: '3:00 PM' },
+      { title: 'Science Fair', date: 'Next Week', time: '2:00 PM' },
+      { title: 'Sports Day', date: 'Friday', time: '9:00 AM' }
+    ],
+    feeStatus: {
+      total: 5000,
+      paid: 3500,
+      pending: 1500,
+      dueDate: '2024-02-15'
     }
   });
 
-  const { data: dashboardData, isLoading: dashboardLoading, error: dashboardError } = useQuery({
-    queryKey: ['parent_dashboard'],
-    queryFn: parentAPI.getDashboard,
-    enabled: !!children && children.length > 0,
-  });
-  
-  const handleChildChange = (event, newValue) => {
-    setSelectedChild(children[newValue]);
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
   };
 
-  const isLoading = childrenLoading || dashboardLoading;
-  const error = childrenError || dashboardError;
-
-  if (isLoading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Box>
-        <Alert severity="error">
-          Failed to load dashboard data: {error.message}
-        </Alert>
-      </Box>
-    );
-  }
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.6,
+        ease: "easeOut"
+      }
+    }
+  };
 
   return (
-    <Box sx={{ 
-      p: { xs: 1, sm: 2, md: 3 },
-      maxWidth: '100%',
-      overflow: 'hidden'
-    }}>
-      {/* Modern Header */}
-      <Box sx={{ 
-        mb: { xs: 2, sm: 3, md: 4 }, 
-        p: { xs: 2, sm: 3, md: 4 }, 
-        background: isDark 
-          ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' 
-          : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-        borderRadius: { xs: 2, sm: 3 }, 
-        boxShadow: isDark 
-          ? '0 4px 6px rgba(0, 0, 0, 0.3)' 
-          : '0 4px 6px rgba(0, 0, 0, 0.05)',
-        border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-        borderLeft: `4px solid ${isDark ? '#3b82f6' : '#2563eb'}`
-      }}>
-        <Typography 
-          variant={isMobile ? "h4" : "h3"} 
-          gutterBottom 
-          sx={{ 
-            fontWeight: 800,
-            color: isDark ? '#f1f5f9' : '#1e293b',
-            textShadow: isDark ? '0 2px 4px rgba(0,0,0,0.3)' : '0 2px 4px rgba(0,0,0,0.1)',
-            mb: 1,
-            fontSize: isMobile ? '1.5rem' : '2.5rem'
-          }}
-        >
-          Parent Dashboard
-        </Typography>
-        <Typography 
-          variant={isMobile ? "body1" : "h6"} 
-          sx={{ 
-            color: isDark ? '#cbd5e1' : '#64748b',
-            fontWeight: 500,
-            lineHeight: 1.6,
-            fontSize: isMobile ? '0.875rem' : '1rem'
-          }}
-        >
-          Welcome back, <strong style={{ color: isDark ? '#60a5fa' : '#2563eb' }}>Gokulpriyan Karthikeyan</strong>. 
-          Monitor your children's progress and manage school-related activities.
-        </Typography>
-      </Box>
-
-      {/* Child Selector */}
-      {children && children.length > 0 && (
-        <Paper elevation={0} sx={{ 
-          mb: { xs: 2, sm: 3, md: 4 }, 
-          p: { xs: 2, sm: 3 }, 
-          borderRadius: { xs: 2, sm: 3 },
-          background: isDark 
-            ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' 
-            : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-          border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-          boxShadow: isDark 
-            ? '0 4px 6px rgba(0, 0, 0, 0.3)' 
-            : '0 4px 6px rgba(0, 0, 0, 0.05)'
-        }}>
-          <Typography variant={isMobile ? "h6" : "h6"} sx={{ 
-            mb: { xs: 1.5, sm: 2 }, 
-            fontWeight: 600,
-            color: isDark ? '#f1f5f9' : '#1e293b',
-            fontSize: isMobile ? '1rem' : '1.125rem'
-          }}>
-            Select Child
-          </Typography>
-          <Tabs
-            value={Math.max(0, children.findIndex(c => c._id === selectedChild?._id))}
-            onChange={handleChildChange}
-            variant="scrollable"
-            scrollButtons="auto"
-            aria-label="child selector"
-            sx={{
-              '& .MuiTab-root': {
-                color: isDark ? '#94a3b8' : '#64748b',
-                fontWeight: 500,
-                textTransform: 'none',
-                minHeight: isMobile ? 48 : 64,
-                borderRadius: 2,
-                mx: 0.5,
-                fontSize: isMobile ? '0.75rem' : '0.875rem',
-                '&.Mui-selected': {
-                  color: isDark ? '#60a5fa' : '#2563eb',
-                  background: isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(37, 99, 235, 0.1)',
-                }
-              },
-              '& .MuiTabs-indicator': {
-                backgroundColor: isDark ? '#3b82f6' : '#2563eb',
-                height: 3,
-                borderRadius: 1.5
-              }
-            }}
-          >
-            {children.map(child => (
-              <Tab 
-                key={`child-tab-${child._id}`}
-                label={
-                  <Box display="flex" alignItems="center" sx={{ flexDirection: isMobile ? 'column' : 'row' }}>
-                    <Avatar sx={{ 
-                      width: isMobile ? 24 : 32, 
-                      height: isMobile ? 24 : 32, 
-                      mr: isMobile ? 0 : 1.5,
-                      mb: isMobile ? 0.5 : 0,
-                      border: isDark ? '2px solid #475569' : '2px solid #e2e8f0'
-                    }} src={child.profilePhoto}>
-                      {child.name.charAt(0)}
-                    </Avatar>
-                    <Typography sx={{ 
-                      fontWeight: 600,
-                      fontSize: isMobile ? '0.7rem' : '0.875rem',
-                      textAlign: isMobile ? 'center' : 'left'
-                    }}>
-                      {child.name}
-                    </Typography>
-                  </Box>
-                }
+    <ModernLayout userType="parent">
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <Box sx={{ p: { xs: 2, md: 4 } }}>
+          {/* Welcome Header */}
+          <motion.div variants={itemVariants}>
+            <Card
+              sx={{
+                background: `linear-gradient(135deg, ${theme.palette.parent.main}20 0%, ${theme.palette.parent.main}10 100%)`,
+                border: `2px solid ${theme.palette.parent.main}30`,
+                mb: 4,
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+            >
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: -50,
+                  right: -50,
+                  width: 200,
+                  height: 200,
+                  borderRadius: '50%',
+                  background: `linear-gradient(135deg, ${theme.palette.parent.main}10 0%, transparent 100%)`,
+                  opacity: 0.6
+                }}
               />
-            ))}
-          </Tabs>
-        </Paper>
-      )}
-
-      {selectedChild && dashboardData && (
-        <Grid container spacing={{ xs: 1, sm: 2, md: 3 }}>
-          {/* Quick Stats */}
-          <Grid item xs={12} sm={6} md={4}>
-            <StatCard
-              title="Total Children"
-              value={dashboardData.totalChildren || 0}
-              icon={<Person sx={{ color: isDark ? '#60a5fa' : '#2563eb' }} />}
-              color={isDark ? '#60a5fa' : '#2563eb'}
-              subtitle="Registered children"
-              trend="up"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={4}>
-            <StatCard
-              title="Announcements"
-              value={dashboardData.announcements?.length || 0}
-              icon={<Notifications sx={{ color: isDark ? '#f59e0b' : '#f59e0b' }} />}
-              color={isDark ? '#fbbf24' : '#f59e0b'}
-              subtitle="New notifications"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={4}>
-            <StatCard
-              title="Upcoming Events"
-              value={dashboardData.upcomingEvents?.length || 0}
-              icon={<Event sx={{ color: isDark ? '#10b981' : '#10b981' }} />}
-              color={isDark ? '#34d399' : '#10b981'}
-              subtitle="This month"
-              trend="up"
-            />
-          </Grid>
-
-          {/* Selected Child Details */}
-          <Grid item xs={12} lg={8}>
-            <Card sx={{ 
-              height: '100%',
-              background: isDark 
-                ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' 
-                : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-              border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-              boxShadow: isDark 
-                ? '0 4px 6px rgba(0, 0, 0, 0.3)' 
-                : '0 4px 6px rgba(0, 0, 0, 0.05)'
-            }}>
-              <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-                <Typography variant={isMobile ? "h6" : "h6"} gutterBottom sx={{ 
-                  fontWeight: 600,
-                  color: isDark ? '#f1f5f9' : '#1e293b',
-                  mb: { xs: 2, sm: 3 },
-                  fontSize: isMobile ? '1rem' : '1.125rem'
-                }}>
-                  Selected Child Details
-                </Typography>
-                <Box display="flex" alignItems="center" mb={3} sx={{ 
-                  flexDirection: isMobile ? 'column' : 'row',
-                  textAlign: isMobile ? 'center' : 'left'
-                }}>
-                  <Avatar 
-                    src={selectedChild.profilePhoto} 
-                    sx={{ 
-                      width: isMobile ? 56 : 64, 
-                      height: isMobile ? 56 : 64, 
-                      mr: isMobile ? 0 : 3,
-                      mb: isMobile ? 2 : 0,
-                      border: isDark ? '3px solid #475569' : '3px solid #e2e8f0'
-                    }}
-                  >
-                    {selectedChild.name.charAt(0)}
-                  </Avatar>
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography variant={isMobile ? "h6" : "h5"} sx={{ 
-                      fontWeight: 700,
-                      color: isDark ? '#f1f5f9' : '#1e293b',
-                      mb: 1,
-                      fontSize: isMobile ? '1.125rem' : '1.5rem'
-                    }}>
-                      {selectedChild.name}
-                    </Typography>
-                    <Box display="flex" gap={1} flexWrap="wrap" sx={{ 
-                      justifyContent: isMobile ? 'center' : 'flex-start'
-                    }}>
-                      <Chip 
-                        label={`Roll: ${selectedChild.rollNumber}`}
-                        size="small"
-                        sx={{ 
-                          background: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(37, 99, 235, 0.1)',
-                          color: isDark ? '#60a5fa' : '#2563eb',
-                          border: isDark ? '1px solid #3b82f6' : '1px solid #2563eb',
-                          fontSize: isMobile ? '0.6rem' : '0.75rem'
+              <CardContent sx={{ p: 4, position: 'relative', zIndex: 1 }}>
+                <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2}>
+                  <Box display="flex" alignItems="center" gap={3}>
+                    <motion.div
+                      whileHover={{ scale: 1.1, rotate: 5 }}
+                      transition={{ type: "spring", stiffness: 300 }}
+                    >
+                      <Avatar
+                        sx={{
+                          width: 80,
+                          height: 80,
+                          bgcolor: theme.palette.parent.main,
+                          fontSize: '2rem',
+                          boxShadow: `0 8px 32px ${theme.palette.parent.main}40`
                         }}
-                      />
-                      <Chip 
-                        label={`Class: ${selectedChild.class}`}
-                        size="small"
-                        sx={{ 
-                          background: isDark ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.1)',
-                          color: isDark ? '#34d399' : '#10b981',
-                          border: isDark ? '1px solid #10b981' : '1px solid #10b981',
-                          fontSize: isMobile ? '0.6rem' : '0.75rem'
-                        }}
-                      />
-                      <Chip 
-                        label={`Section: ${selectedChild.section}`}
-                        size="small"
-                        sx={{ 
-                          background: isDark ? 'rgba(245, 158, 11, 0.2)' : 'rgba(245, 158, 11, 0.1)',
-                          color: isDark ? '#fbbf24' : '#f59e0b',
-                          border: isDark ? '1px solid #f59e0b' : '1px solid #f59e0b',
-                          fontSize: isMobile ? '0.6rem' : '0.75rem'
-                        }}
-                      />
-                      <Chip 
-                        label="Active"
-                        size="small"
-                        color="success"
-                        sx={{ 
-                          background: isDark ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.1)',
-                          border: isDark ? '1px solid #10b981' : '1px solid #10b981',
-                          fontSize: isMobile ? '0.6rem' : '0.75rem'
-                        }}
-                      />
+                      >
+                        <Person />
+                      </Avatar>
+                    </motion.div>
+                    <Box>
+                      <Typography variant="h4" fontWeight={700} color="text.primary" gutterBottom>
+                        Welcome back, {parentData.name}!
+                      </Typography>
+                      <Typography variant="body1" color="text.secondary" gutterBottom>
+                        Parent Dashboard • {parentData.children.length} Children
+                      </Typography>
+                      <Box display="flex" gap={1}>
+                        <Chip
+                          label="Active"
+                          color="success"
+                          size="small"
+                          icon={<Star />}
+                        />
+                        <Chip
+                          label="Today"
+                          variant="outlined"
+                          size="small"
+                        />
+                      </Box>
                     </Box>
                   </Box>
-                </Box>
-                
-                {/* Quick Actions */}
-                <Box display="flex" gap={1} flexWrap="wrap" sx={{ 
-                  justifyContent: isMobile ? 'center' : 'flex-start'
-                }}>
-                  <Button 
-                    variant="outlined" 
-                    startIcon={<Assessment />}
-                    size={isMobile ? "small" : "medium"}
-                    sx={{ 
-                      borderColor: isDark ? '#475569' : '#e2e8f0',
-                      color: isDark ? '#f1f5f9' : '#1e293b',
-                      fontSize: isMobile ? '0.7rem' : '0.875rem',
-                      '&:hover': {
-                        borderColor: isDark ? '#60a5fa' : '#2563eb',
-                        background: isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(37, 99, 235, 0.1)'
-                      }
-                    }}
-                  >
-                    View Progress
-                  </Button>
-                  <Button 
-                    variant="outlined" 
-                    startIcon={<Payment />}
-                    size={isMobile ? "small" : "medium"}
-                    sx={{ 
-                      borderColor: isDark ? '#475569' : '#e2e8f0',
-                      color: isDark ? '#f1f5f9' : '#1e293b',
-                      fontSize: isMobile ? '0.7rem' : '0.875rem',
-                      '&:hover': {
-                        borderColor: isDark ? '#60a5fa' : '#2563eb',
-                        background: isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(37, 99, 235, 0.1)'
-                      }
-                    }}
-                  >
-                    Pay Fees
-                  </Button>
-                  <Button 
-                    variant="outlined" 
-                    startIcon={<Message />}
-                    size={isMobile ? "small" : "medium"}
-                    sx={{ 
-                      borderColor: isDark ? '#475569' : '#e2e8f0',
-                      color: isDark ? '#f1f5f9' : '#1e293b',
-                      fontSize: isMobile ? '0.7rem' : '0.875rem',
-                      '&:hover': {
-                        borderColor: isDark ? '#60a5fa' : '#2563eb',
-                        background: isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(37, 99, 235, 0.1)'
-                      }
-                    }}
-                  >
-                    Contact Teacher
-                  </Button>
+                  <Box display="flex" gap={1}>
+                    <Tooltip title="Notifications">
+                      <IconButton
+                        sx={{
+                          bgcolor: 'rgba(255, 255, 255, 0.2)',
+                          backdropFilter: 'blur(10px)',
+                          '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.3)' }
+                        }}
+                      >
+                        <Badge badgeContent={parentData.notifications} color="error">
+                          <Notifications />
+                        </Badge>
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Settings">
+                      <IconButton
+                        sx={{
+                          bgcolor: 'rgba(255, 255, 255, 0.2)',
+                          backdropFilter: 'blur(10px)',
+                          '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.3)' }
+                        }}
+                      >
+                        <Settings />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
+          </motion.div>
 
-          {/* All Your Children */}
-          <Grid item xs={12} lg={4}>
-            <Card sx={{ 
-              height: '100%',
-              background: isDark 
-                ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' 
-                : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-              border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-              boxShadow: isDark 
-                ? '0 4px 6px rgba(0, 0, 0, 0.3)' 
-                : '0 4px 6px rgba(0, 0, 0, 0.05)'
-            }}>
-              <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-                <Typography variant={isMobile ? "h6" : "h6"} gutterBottom sx={{ 
-                  fontWeight: 600,
-                  color: isDark ? '#f1f5f9' : '#1e293b',
-                  mb: { xs: 2, sm: 3 },
-                  fontSize: isMobile ? '1rem' : '1.125rem'
-                }}>
-                  All Your Children
-                </Typography>
-                <List sx={{ p: 0 }}>
-                  {children.map((child, index) => (
-                    <ListItem 
-                      key={child._id} 
-                      sx={{ 
-                        mb: 1,
-                        borderRadius: 2,
-                        background: selectedChild?._id === child._id 
-                          ? (isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(37, 99, 235, 0.1)')
-                          : 'transparent',
-                        border: selectedChild?._id === child._id
-                          ? (isDark ? '1px solid #3b82f6' : '1px solid #2563eb')
-                          : '1px solid transparent',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s ease',
-                        p: isMobile ? 1 : 1.5,
-                        '&:hover': {
-                          background: isDark 
-                            ? 'rgba(59, 130, 246, 0.15)' 
-                            : 'rgba(37, 99, 235, 0.08)',
-                        }
-                      }}
-                      onClick={() => setSelectedChild(child)}
-                    >
-                      <ListItemIcon sx={{ minWidth: isMobile ? 40 : 48 }}>
-                        <Avatar 
-                          src={child.profilePhoto}
-                          sx={{ 
-                            width: isMobile ? 32 : 40,
-                            height: isMobile ? 32 : 40,
-                            border: isDark ? '2px solid #475569' : '2px solid #e2e8f0'
+          {/* Children Overview */}
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            {parentData.children.map((child, index) => (
+              <Grid item xs={12} md={6} key={index}>
+                <motion.div variants={itemVariants}>
+                  <Card
+                    sx={{
+                      height: '100%',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      '&:hover': {
+                        transform: 'translateY(-8px) scale(1.02)',
+                        boxShadow: `0 25px 50px ${theme.palette.parent.main}20`
+                      }
+                    }}
+                  >
+                    <CardContent sx={{ p: 3 }}>
+                      <Box display="flex" alignItems="center" gap={2} mb={3}>
+                        <Avatar
+                          sx={{
+                            width: 60,
+                            height: 60,
+                            bgcolor: theme.palette.parent.main,
+                            fontSize: '1.5rem'
                           }}
                         >
                           {child.name.charAt(0)}
                         </Avatar>
-                      </ListItemIcon>
-                      <ListItemText 
-                        primary={child.name}
-                        secondary={`Class ${child.class}-${child.section}`}
+                        <Box>
+                          <Typography variant="h6" fontWeight={600}>
+                            {child.name}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {child.grade} • Age {child.age}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      
+                      <Box display="flex" justifyContent="space-between" mb={2}>
+                        <Typography variant="body2" color="text.secondary">
+                          Attendance
+                        </Typography>
+                        <Typography variant="body2" fontWeight={600}>
+                          {parentData.childrenProgress[index]?.attendance || 0}%
+                        </Typography>
+                      </Box>
+                      <LinearProgress
+                        variant="determinate"
+                        value={parentData.childrenProgress[index]?.attendance || 0}
                         sx={{
-                          '& .MuiTypography-root': {
-                            color: isDark ? '#f1f5f9' : '#1e293b',
-                            fontWeight: selectedChild?._id === child._id ? 600 : 500,
-                            fontSize: isMobile ? '0.875rem' : '1rem'
-                          },
-                          '& .MuiTypography-body2': {
-                            color: isDark ? '#94a3b8' : '#64748b',
-                            fontSize: isMobile ? '0.7rem' : '0.875rem'
+                          height: 6,
+                          borderRadius: 3,
+                          bgcolor: `${theme.palette.parent.main}20`,
+                          mb: 2,
+                          '& .MuiLinearProgress-bar': {
+                            borderRadius: 3,
+                            background: `linear-gradient(90deg, ${theme.palette.parent.main} 0%, ${theme.palette.parent.main}dd 100%)`
                           }
                         }}
                       />
-                    </ListItem>
-                  ))}
-                </List>
-              </CardContent>
-            </Card>
+                      
+                      <Box display="flex" justifyContent="space-between">
+                        <Typography variant="body2" color="text.secondary">
+                          Performance
+                        </Typography>
+                        <Typography variant="body2" fontWeight={600}>
+                          {parentData.childrenProgress[index]?.performance || 0}%
+                        </Typography>
+                      </Box>
+                      <LinearProgress
+                        variant="determinate"
+                        value={parentData.childrenProgress[index]?.performance || 0}
+                        sx={{
+                          height: 6,
+                          borderRadius: 3,
+                          bgcolor: `${theme.palette.parent.main}20`,
+                          '& .MuiLinearProgress-bar': {
+                            borderRadius: 3,
+                            background: `linear-gradient(90deg, ${theme.palette.parent.main} 0%, ${theme.palette.parent.main}dd 100%)`
+                          }
+                        }}
+                      />
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </Grid>
+            ))}
           </Grid>
-        </Grid>
-      )}
-    </Box>
+
+          {/* Main Content Grid */}
+          <Grid container spacing={3}>
+            {/* Children Academic Progress */}
+            <Grid item xs={12} md={8}>
+              <motion.div variants={itemVariants}>
+                <Card>
+                  <CardContent sx={{ p: 3 }}>
+                    <Typography variant="h6" fontWeight={600} gutterBottom>
+                      Children Academic Progress
+                    </Typography>
+                    <Box sx={{ mt: 3 }}>
+                      {parentData.childrenProgress.map((child, childIndex) => (
+                        <Box key={childIndex} sx={{ mb: 4 }}>
+                          <Typography variant="h6" fontWeight={600} color="text.primary" gutterBottom>
+                            {child.name}
+                          </Typography>
+                          {child.subjects.map((subject, subjectIndex) => (
+                            <Box key={subjectIndex} sx={{ mb: 2 }}>
+                              <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                                <Typography variant="body2" fontWeight={600}>
+                                  {subject.name}
+                                </Typography>
+                                <Box display="flex" alignItems="center" gap={1}>
+                                  <Typography variant="body2" color="text.secondary">
+                                    {subject.progress}%
+                                  </Typography>
+                                  <Chip
+                                    label={subject.grade}
+                                    size="small"
+                                    color="primary"
+                                    variant="outlined"
+                                  />
+                                </Box>
+                              </Box>
+                              <LinearProgress
+                                variant="determinate"
+                                value={subject.progress}
+                                sx={{
+                                  height: 6,
+                                  borderRadius: 3,
+                                  bgcolor: `${theme.palette.parent.main}20`,
+                                  '& .MuiLinearProgress-bar': {
+                                    borderRadius: 3,
+                                    background: `linear-gradient(90deg, ${theme.palette.parent.main} 0%, ${theme.palette.parent.main}dd 100%)`
+                                  }
+                                }}
+                              />
+                            </Box>
+                          ))}
+                        </Box>
+                      ))}
+                    </Box>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </Grid>
+
+            {/* Sidebar */}
+            <Grid item xs={12} md={4}>
+              <Grid container spacing={3}>
+                {/* Fee Status */}
+                <Grid item xs={12}>
+                  <motion.div variants={itemVariants}>
+                    <Card>
+                      <CardContent sx={{ p: 3 }}>
+                        <Typography variant="h6" fontWeight={600} gutterBottom>
+                          Fee Status
+                        </Typography>
+                        <Box sx={{ mt: 2 }}>
+                          <Box display="flex" justifyContent="space-between" mb={1}>
+                            <Typography variant="body2">Total Fee</Typography>
+                            <Typography variant="body2" fontWeight={600}>
+                              ${parentData.feeStatus.total}
+                            </Typography>
+                          </Box>
+                          <Box display="flex" justifyContent="space-between" mb={1}>
+                            <Typography variant="body2">Paid</Typography>
+                            <Typography variant="body2" color="success.main" fontWeight={600}>
+                              ${parentData.feeStatus.paid}
+                            </Typography>
+                          </Box>
+                          <Box display="flex" justifyContent="space-between" mb={2}>
+                            <Typography variant="body2">Pending</Typography>
+                            <Typography variant="body2" color="error.main" fontWeight={600}>
+                              ${parentData.feeStatus.pending}
+                            </Typography>
+                          </Box>
+                          <LinearProgress
+                            variant="determinate"
+                            value={(parentData.feeStatus.paid / parentData.feeStatus.total) * 100}
+                            sx={{
+                              height: 8,
+                              borderRadius: 4,
+                              bgcolor: `${theme.palette.parent.main}20`,
+                              '& .MuiLinearProgress-bar': {
+                                borderRadius: 4,
+                                background: `linear-gradient(90deg, ${theme.palette.parent.main} 0%, ${theme.palette.parent.main}dd 100%)`
+                              }
+                            }}
+                          />
+                          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                            Due: {parentData.feeStatus.dueDate}
+                          </Typography>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                </Grid>
+
+                {/* Achievements */}
+                <Grid item xs={12}>
+                  <motion.div variants={itemVariants}>
+                    <Card>
+                      <CardContent sx={{ p: 3 }}>
+                        <Typography variant="h6" fontWeight={600} gutterBottom>
+                          Children Achievements
+                        </Typography>
+                        <Box sx={{ mt: 2 }}>
+                          {parentData.achievements.map((achievement, index) => (
+                            <Box
+                              key={index}
+                              display="flex"
+                              alignItems="center"
+                              gap={2}
+                              sx={{ mb: 2, p: 1, borderRadius: 2, bgcolor: 'grey.50' }}
+                            >
+                              <Avatar
+                                sx={{
+                                  width: 40,
+                                  height: 40,
+                                  bgcolor: `${achievement.color}.main`,
+                                  color: 'white'
+                                }}
+                              >
+                                <achievement.icon />
+                              </Avatar>
+                              <Box>
+                                <Typography variant="body2" fontWeight={500}>
+                                  {achievement.title}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {achievement.child}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          ))}
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                </Grid>
+
+                {/* Upcoming Events */}
+                <Grid item xs={12}>
+                  <motion.div variants={itemVariants}>
+                    <Card>
+                      <CardContent sx={{ p: 3 }}>
+                        <Typography variant="h6" fontWeight={600} gutterBottom>
+                          Upcoming Events
+                        </Typography>
+                        <Box sx={{ mt: 2 }}>
+                          {parentData.upcomingEvents.map((event, index) => (
+                            <Box
+                              key={index}
+                              sx={{
+                                mb: 2,
+                                p: 2,
+                                borderRadius: 2,
+                                bgcolor: `${theme.palette.parent.main}10`,
+                                border: `1px solid ${theme.palette.parent.main}20`
+                              }}
+                            >
+                              <Typography variant="body2" fontWeight={600} gutterBottom>
+                                {event.title}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {event.date} • {event.time}
+                              </Typography>
+                            </Box>
+                          ))}
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                </Grid>
+              </Grid>
+            </Grid>
+          </Grid>
+        </Box>
+      </motion.div>
+    </ModernLayout>
   );
 };
 

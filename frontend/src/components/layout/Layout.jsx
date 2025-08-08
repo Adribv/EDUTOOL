@@ -562,20 +562,39 @@ const Layout = () => {
       <List sx={{ flex: 1, px: 1, py: 2 }}>
         {userActivitiesControl && (
           <Box sx={{ mb: 2, px: 2 }}>
-            <Alert severity="info" sx={{ 
-              fontSize: '0.75rem', 
-              py: 0.5,
-              '& .MuiAlert-message': {
-                color: isDark ? '#e2e8f0' : '#374151'
-              }
-            }}>
-              <Typography variant="caption" sx={{ color: 'inherit' }}>
+            <Box
+              sx={{
+                background: isDark 
+                  ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(96, 165, 250, 0.08) 100%)'
+                  : 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(96, 165, 250, 0.05) 100%)',
+                backdropFilter: 'blur(10px)',
+                border: isDark 
+                  ? '1px solid rgba(59, 130, 246, 0.3)' 
+                  : '1px solid rgba(59, 130, 246, 0.2)',
+                borderRadius: 2,
+                p: 1.5,
+                fontSize: '0.75rem',
+                color: isDark ? '#e2e8f0' : '#374151',
+                boxShadow: isDark 
+                  ? '0 4px 12px rgba(59, 130, 246, 0.2)' 
+                  : '0 4px 12px rgba(59, 130, 246, 0.1)',
+              }}
+            >
+              <Typography variant="caption" sx={{ 
+                color: 'inherit',
+                fontWeight: 600,
+                display: 'block',
+                mb: 0.5
+              }}>
                 VP Controlled Access
               </Typography>
-              <Typography variant="caption" display="block" sx={{ color: 'inherit' }}>
+              <Typography variant="caption" sx={{ 
+                color: 'inherit',
+                opacity: 0.8
+              }}>
                 {userActivitiesControl.activityAssignments?.filter(a => a.accessLevel !== 'Unauthorized').length || 0} features available
               </Typography>
-            </Alert>
+            </Box>
           </Box>
         )}
         
@@ -615,23 +634,47 @@ const Layout = () => {
               onClick={() => handleNavigation(item.path)}
               selected={isActiveRoute(item.path)}
               sx={{
-                borderRadius: 2,
-                mb: 0.5,
-                minHeight: 48,
+                borderRadius: 3,
+                mb: 1,
+                minHeight: 52,
                 color: isDark ? '#e2e8f0' : '#374151',
+                background: isActiveRoute(item.path) 
+                  ? isDark 
+                    ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(129, 140, 248, 0.1) 100%)'
+                    : 'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(129, 140, 248, 0.08) 100%)'
+                  : 'transparent',
+                border: isActiveRoute(item.path) 
+                  ? `1px solid ${isDark ? 'rgba(99, 102, 241, 0.3)' : 'rgba(99, 102, 241, 0.2)'}`
+                  : '1px solid transparent',
+                backdropFilter: isActiveRoute(item.path) ? 'blur(10px)' : 'none',
                 '&.Mui-selected': {
-                  backgroundColor: isDark ? 'rgba(59, 130, 246, 0.25)' : 'rgba(59, 130, 246, 0.15)',
+                  backgroundColor: isDark 
+                    ? 'linear-gradient(135deg, rgba(99, 102, 246, 0.25) 0%, rgba(129, 140, 248, 0.15) 100%)'
+                    : 'linear-gradient(135deg, rgba(99, 102, 246, 0.2) 0%, rgba(129, 140, 248, 0.1) 100%)',
                   color: isDark ? '#ffffff' : '#1e293b',
+                  boxShadow: isDark 
+                    ? '0 4px 12px rgba(99, 102, 241, 0.3)' 
+                    : '0 4px 12px rgba(99, 102, 241, 0.2)',
                   '&:hover': {
-                    backgroundColor: isDark ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)',
+                    backgroundColor: isDark 
+                      ? 'linear-gradient(135deg, rgba(99, 102, 246, 0.3) 0%, rgba(129, 140, 248, 0.2) 100%)'
+                      : 'linear-gradient(135deg, rgba(99, 102, 246, 0.25) 0%, rgba(129, 140, 248, 0.15) 100%)',
                   },
                   '& .MuiListItemIcon-root': {
                     color: isDark ? '#ffffff' : '#1e293b',
                   },
                 },
                 '&:hover': {
-                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+                  backgroundColor: isDark 
+                    ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)'
+                    : 'linear-gradient(135deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.02) 100%)',
+                  border: isDark 
+                    ? '1px solid rgba(255, 255, 255, 0.1)' 
+                    : '1px solid rgba(0, 0, 0, 0.1)',
+                  backdropFilter: 'blur(10px)',
+                  transform: 'translateY(-1px)',
                 },
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
             >
               <ListItemIcon
@@ -664,33 +707,64 @@ const Layout = () => {
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
       
       <Box sx={{ p: 2 }}>
-        <ListItem sx={{ px: 0 }}>
-          <Avatar 
-            sx={{ 
-              width: 40, 
-              height: 40, 
-              bgcolor: 'primary.main',
-              mr: drawerCollapsed ? 0 : 2
-            }}
-          >
-            {user?.name?.charAt(0) || 'U'}
-          </Avatar>
-          {!drawerCollapsed && (
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography variant="body2" sx={{ 
-                fontWeight: 600, 
-                color: isDark ? '#ffffff' : '#374151' 
-              }}>
-                {user?.name || 'User'}
-              </Typography>
-              <Typography variant="caption" sx={{ 
-                color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(55, 65, 81, 0.7)' 
-              }}>
-                {user?.role || 'Role'}
-              </Typography>
-            </Box>
-          )}
-        </ListItem>
+        <Box
+          sx={{
+            background: isDark 
+              ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)'
+              : 'linear-gradient(135deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.02) 100%)',
+            backdropFilter: 'blur(10px)',
+            border: isDark 
+              ? '1px solid rgba(255, 255, 255, 0.1)' 
+              : '1px solid rgba(0, 0, 0, 0.1)',
+            borderRadius: 3,
+            p: 2,
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            '&:hover': {
+              background: isDark 
+                ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%)'
+                : 'linear-gradient(135deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.04) 100%)',
+              transform: 'translateY(-2px)',
+              boxShadow: isDark 
+                ? '0 8px 32px rgba(0, 0, 0, 0.3)' 
+                : '0 8px 32px rgba(0, 0, 0, 0.1)',
+            }
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Avatar 
+              sx={{ 
+                width: 48, 
+                height: 48, 
+                background: 'linear-gradient(135deg, #6366f1 0%, #818cf8 100%)',
+                mr: drawerCollapsed ? 0 : 2,
+                boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
+                border: '2px solid rgba(255, 255, 255, 0.2)'
+              }}
+            >
+              {user?.name?.charAt(0) || 'U'}
+            </Avatar>
+            {!drawerCollapsed && (
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography variant="body2" sx={{ 
+                  fontWeight: 700, 
+                  color: isDark ? '#ffffff' : '#1e293b',
+                  fontSize: '1rem',
+                  mb: 0.5
+                }}>
+                  {user?.name || 'User'}
+                </Typography>
+                <Typography variant="caption" sx={{ 
+                  color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(55, 65, 81, 0.7)',
+                  fontWeight: 500,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px'
+                }}>
+                  {user?.role || 'Role'}
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        </Box>
       </Box>
     </Box>
   );
@@ -709,12 +783,15 @@ const Layout = () => {
             xs: 0,
             md: user?.role === 'HOD' ? 0 : `${currentDrawerWidth}px` 
           },
-          bgcolor: isDark ? '#1e293b' : 'white',
+          background: isDark 
+            ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(51, 65, 85, 0.95) 100%)'
+            : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%)',
+          backdropFilter: 'blur(20px)',
+          borderBottom: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.1)',
           color: isDark ? '#f1f5f9' : 'text.primary',
           boxShadow: isDark 
-            ? '0px 1px 3px rgba(0, 0, 0, 0.3), 0px 1px 2px rgba(0, 0, 0, 0.2)' 
-            : '0px 1px 3px rgba(0, 0, 0, 0.1), 0px 1px 2px rgba(0, 0, 0, 0.06)',
-          borderBottom: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+            ? '0 8px 32px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.2)' 
+            : '0 8px 32px rgba(0, 0, 0, 0.1), 0 4px 16px rgba(0, 0, 0, 0.05)',
           transition: theme.transitions.create(['width', 'margin', 'background-color', 'color'], {
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.leavingScreen,
@@ -784,8 +861,23 @@ const Layout = () => {
               minWidth: { xs: 48, md: 40 },
               minHeight: { xs: 48, md: 40 },
               color: isDark ? '#f1f5f9' : 'inherit',
+              background: isDark 
+                ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)'
+                : 'linear-gradient(135deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.02) 100%)',
+              backdropFilter: 'blur(10px)',
+              border: isDark 
+                ? '1px solid rgba(255, 255, 255, 0.1)' 
+                : '1px solid rgba(0, 0, 0, 0.1)',
+              borderRadius: 2,
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               '&:hover': {
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.04)',
+                background: isDark 
+                  ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%)'
+                  : 'linear-gradient(135deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.04) 100%)',
+                transform: 'translateY(-2px)',
+                boxShadow: isDark 
+                  ? '0 8px 32px rgba(0, 0, 0, 0.3)' 
+                  : '0 8px 32px rgba(0, 0, 0, 0.1)',
               }
             }}
           >
@@ -800,8 +892,23 @@ const Layout = () => {
               minWidth: { xs: 48, md: 40 },
               minHeight: { xs: 48, md: 40 },
               color: isDark ? '#f1f5f9' : 'inherit',
+              background: isDark 
+                ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)'
+                : 'linear-gradient(135deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.02) 100%)',
+              backdropFilter: 'blur(10px)',
+              border: isDark 
+                ? '1px solid rgba(255, 255, 255, 0.1)' 
+                : '1px solid rgba(0, 0, 0, 0.1)',
+              borderRadius: 2,
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               '&:hover': {
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.04)',
+                background: isDark 
+                  ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%)'
+                  : 'linear-gradient(135deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.04) 100%)',
+                transform: 'translateY(-2px)',
+                boxShadow: isDark 
+                  ? '0 8px 32px rgba(0, 0, 0, 0.3)' 
+                  : '0 8px 32px rgba(0, 0, 0, 0.1)',
               }
             }}
           />
@@ -811,22 +918,37 @@ const Layout = () => {
             size="small"
             sx={{ 
               ml: { xs: 0.5, sm: 1 },
-              border: isDark ? '2px solid #475569' : '2px solid #e2e8f0',
               minWidth: { xs: 48, md: 40 },
               minHeight: { xs: 48, md: 40 },
+              background: isDark 
+                ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)'
+                : 'linear-gradient(135deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.02) 100%)',
+              backdropFilter: 'blur(10px)',
+              border: isDark 
+                ? '2px solid rgba(255, 255, 255, 0.2)' 
+                : '2px solid rgba(0, 0, 0, 0.1)',
+              borderRadius: 2,
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               '&:hover': {
-                borderColor: isDark ? '#60a5fa' : '#3b82f6',
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.04)',
-              },
-              transition: 'all 0.3s ease'
+                background: isDark 
+                  ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%)'
+                  : 'linear-gradient(135deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.04) 100%)',
+                borderColor: isDark ? 'rgba(99, 102, 241, 0.5)' : 'rgba(99, 102, 241, 0.3)',
+                transform: 'translateY(-2px)',
+                boxShadow: isDark 
+                  ? '0 8px 32px rgba(0, 0, 0, 0.3)' 
+                  : '0 8px 32px rgba(0, 0, 0, 0.1)',
+              }
             }}
           >
             <Avatar sx={{ 
               width: { xs: 32, md: 32 }, 
               height: { xs: 32, md: 32 }, 
-              bgcolor: isDark ? '#3b82f6' : 'primary.main',
+              background: 'linear-gradient(135deg, #6366f1 0%, #818cf8 100%)',
               color: '#ffffff',
-              fontSize: { xs: '0.875rem', md: '1rem' }
+              fontSize: { xs: '0.875rem', md: '1rem' },
+              boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
+              border: '2px solid rgba(255, 255, 255, 0.2)'
             }}>
               {user?.name?.charAt(0) || 'U'}
             </Avatar>
@@ -860,9 +982,15 @@ const Layout = () => {
               '& .MuiDrawer-paper': {
                 boxSizing: 'border-box',
                 width: drawerWidth,
-                bgcolor: isDark ? '#0f172a' : '#ffffff',
-                borderRight: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-                transition: 'background-color 0.3s ease, border-color 0.3s ease',
+                background: isDark 
+                  ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%)'
+                  : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%)',
+                backdropFilter: 'blur(20px)',
+                borderRight: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.1)',
+                boxShadow: isDark 
+                  ? '0 8px 32px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.2)' 
+                  : '0 8px 32px rgba(0, 0, 0, 0.1), 0 4px 16px rgba(0, 0, 0, 0.05)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               },
             }}
           >
@@ -877,9 +1005,15 @@ const Layout = () => {
               '& .MuiDrawer-paper': {
                 boxSizing: 'border-box',
                 width: currentDrawerWidth,
-                bgcolor: isDark ? '#0f172a' : '#ffffff',
+                background: isDark 
+                  ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%)'
+                  : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%)',
+                backdropFilter: 'blur(20px)',
                 border: 'none',
-                borderRight: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+                borderRight: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.1)',
+                boxShadow: isDark 
+                  ? '0 8px 32px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.2)' 
+                  : '0 8px 32px rgba(0, 0, 0, 0.1), 0 4px 16px rgba(0, 0, 0, 0.05)',
                 transition: theme.transitions.create(['width', 'background-color', 'border-color'], {
                   easing: theme.transitions.easing.sharp,
                   duration: theme.transitions.duration.enteringScreen,
@@ -909,10 +1043,31 @@ const Layout = () => {
           minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
+          background: isDark 
+            ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)'
+            : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%)',
+          backgroundAttachment: 'fixed',
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: isDark
+              ? 'radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(245, 158, 11, 0.1) 0%, transparent 50%), radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.1) 0%, transparent 50%)'
+              : 'radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.05) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(245, 158, 11, 0.05) 0%, transparent 50%), radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.05) 0%, transparent 50%)',
+            pointerEvents: 'none',
+            zIndex: 0
+          }
         }}
       >
         <Toolbar sx={{ minHeight: 64 }} />
-        <Outlet />
+        <Box sx={{ position: 'relative', zIndex: 1 }}>
+          <Outlet />
+        </Box>
       </Box>
 
       <Menu
@@ -924,8 +1079,18 @@ const Layout = () => {
           sx: {
             mt: 1.5,
             minWidth: 200,
-            boxShadow: '0px 10px 15px rgba(0, 0, 0, 0.1), 0px 4px 6px rgba(0, 0, 0, 0.05)',
-            borderRadius: 2,
+            background: isDark 
+              ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(51, 65, 85, 0.95) 100%)'
+              : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%)',
+            backdropFilter: 'blur(20px)',
+            border: isDark 
+              ? '1px solid rgba(255, 255, 255, 0.1)' 
+              : '1px solid rgba(0, 0, 0, 0.1)',
+            boxShadow: isDark 
+              ? '0 8px 32px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.2)' 
+              : '0 8px 32px rgba(0, 0, 0, 0.1), 0 4px 16px rgba(0, 0, 0, 0.05)',
+            borderRadius: 3,
+            overflow: 'hidden',
           },
         }}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}

@@ -14,7 +14,7 @@ import {
   Alert,
   Link,
 } from '@mui/material';
-import { useTheme as useAppTheme } from '../../context/ThemeContext';
+
 import { Person, Email, Lock, ChildCare } from '@mui/icons-material';
 import { authAPI } from '../../services/api';
 import { toast } from 'react-toastify';
@@ -32,7 +32,7 @@ const validationSchema = Yup.object({
 const ParentRegister = () => {
   const navigate = useNavigate();
   const [error, setError] = useState('');
-  const { isDark } = useAppTheme();
+
 
   const registerMutation = useMutation({
     mutationFn: (values) => {
@@ -69,7 +69,7 @@ const ParentRegister = () => {
       minHeight: '100vh',
       display: 'flex',
       alignItems: 'center',
-      backgroundColor: isDark ? '#1e293b' : '#f0f8ff',
+              backgroundColor: '#f0f8ff',
     }}>
       <Paper elevation={3} sx={{ 
         mt: 8, 
@@ -77,11 +77,11 @@ const ParentRegister = () => {
         display: 'flex', 
         flexDirection: 'column', 
         alignItems: 'center',
-        backgroundColor: isDark ? '#334155' : '#ffffff',
+        backgroundColor: '#ffffff',
         borderRadius: 3,
       }}>
         <Typography component="h1" variant="h5" sx={{ 
-          color: isDark ? '#ffffff' : '#1e293b',
+          color: '#1e293b',
           fontWeight: 600,
         }}>
           Parent Registration

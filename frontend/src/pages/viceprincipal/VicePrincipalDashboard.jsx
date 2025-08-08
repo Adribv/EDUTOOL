@@ -33,7 +33,7 @@ import CommentIcon from '@mui/icons-material/Comment';
 import ActivitiesControl from './ActivitiesControl';
 import DelegationAuthorityNotice from '../../components/DelegationAuthorityNotice';
 import { useTheme as useAppTheme } from '../../context/ThemeContext';
-import ThemeToggle from '../../components/ThemeToggle';
+
 
 // API service for Vice Principal using axios instance (token auto-attached)
 const vpAPI = {
@@ -642,7 +642,7 @@ export default function VicePrincipalDashboard() {
             Welcome, {user?.name}
           </Typography>
           <IconButton sx={{ color: isDark ? '#e2e8f0' : '#374151' }}>
-            <ThemeToggle />
+    
           </IconButton>
           <IconButton
             onClick={(e) => setProfileMenuAnchor(e.currentTarget)}

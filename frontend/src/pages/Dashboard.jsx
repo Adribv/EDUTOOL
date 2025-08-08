@@ -39,6 +39,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useStaffPermissions, RoleGate, PermissionGate } from '../context/StaffPermissionContext';
+import ModernLayout from '../components/ModernLayout';
+import ModernDashboard from '../components/ModernDashboard';
 
 // Import role-specific dashboards
 import LibrarianDashboard from './librarian/LibrarianDashboard';
@@ -116,69 +118,91 @@ const Dashboard = () => {
   // Loading state
   if (loading) {
     return (
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          height: '100vh',
-          flexDirection: 'column',
-          gap: 2
-        }}
-      >
-        <CircularProgress size={60} />
-        <Typography variant="h6" color="text.secondary">
-          Loading your dashboard...
-        </Typography>
-      </Box>
+      <ModernLayout userType="staff">
+        <Box 
+          sx={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            height: '100vh',
+            flexDirection: 'column',
+            gap: 2
+          }}
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          >
+            <CircularProgress size={60} />
+          </motion.div>
+          <Typography variant="h6" color="text.secondary">
+            Loading your dashboard...
+          </Typography>
+        </Box>
+      </ModernLayout>
     );
   }
 
   // Error state
   if (error) {
     return (
-      <Box sx={{ p: 4 }}>
-        <Alert severity="error">
-          <AlertTitle>Error</AlertTitle>
-          {error}
-        </Alert>
-      </Box>
+      <ModernLayout userType="staff">
+        <Box sx={{ p: 4 }}>
+          <Alert severity="error">
+            <AlertTitle>Error</AlertTitle>
+            {error}
+          </Alert>
+        </Box>
+      </ModernLayout>
     );
   }
 
   // No user or no roles assigned
   if (!user || userRoles.length === 0) {
     return (
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          height: '100vh',
-          flexDirection: 'column',
-          gap: 3
-        }}
-      >
-        <InfoIcon sx={{ fontSize: 80, color: 'text.secondary' }} />
-        <Typography variant="h4" color="text.secondary">
-          No Dashboard Access
-        </Typography>
-        <Typography variant="body1" color="text.secondary" textAlign="center">
-          {!user 
-            ? 'Please log in to access your dashboard.'
-            : 'You have not been assigned any roles yet. Please contact your administrator.'
-          }
-        </Typography>
-        {!user && (
-          <Button 
-            variant="contained" 
-            size="large"
-            onClick={() => navigate('/management-login')}
+      <ModernLayout userType="staff">
+        <Box 
+          sx={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            height: '100vh',
+            flexDirection: 'column',
+            gap: 3
+          }}
+        >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 300 }}
           >
-            Get Started
-          </Button>
-        )}
-      </Box>
+            <InfoIcon sx={{ fontSize: 80, color: 'text.secondary' }} />
+          </motion.div>
+          <Typography variant="h4" color="text.secondary">
+            No Dashboard Access
+          </Typography>
+          <Typography variant="body1" color="text.secondary" textAlign="center">
+            {!user 
+              ? 'Please log in to access your dashboard.'
+              : 'You have not been assigned any roles yet. Please contact your administrator.'
+            }
+          </Typography>
+          {!user && (
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Button 
+                variant="contained" 
+                size="large"
+                onClick={() => navigate('/management-login')}
+              >
+                Get Started
+              </Button>
+            </motion.div>
+          )}
+        </Box>
+      </ModernLayout>
     );
   }
 
@@ -190,185 +214,193 @@ const Dashboard = () => {
 
   // Multiple roles - show role selection
   return (
-    <Box sx={{ minHeight: '100vh', background: theme.palette.grey[50] }}>
-      {/* Header */}
-      <Box sx={{ 
-        background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-        color: 'white',
-        p: 4,
-        textAlign: 'center'
-      }}>
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <Typography variant="h3" sx={{ fontWeight: 700, mb: 1 }}>
-            Welcome, {user.name || user.email}!
-          </Typography>
-          <Typography variant="h6" sx={{ opacity: 0.9 }}>
-            Select a dashboard to get started
-          </Typography>
-        </motion.div>
-      </Box>
+    <ModernLayout userType="staff">
+      <Box sx={{ minHeight: '100vh' }}>
+        {/* Header */}
+        <Box sx={{ 
+          background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+          color: 'white',
+          p: 4,
+          textAlign: 'center'
+        }}>
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <Typography variant="h3" sx={{ fontWeight: 700, mb: 1 }}>
+              Welcome, {user.name || user.email}!
+            </Typography>
+            <Typography variant="h6" sx={{ opacity: 0.9 }}>
+              Select a dashboard to get started
+            </Typography>
+          </motion.div>
+        </Box>
 
-      <Box sx={{ p: { xs: 2, md: 4 } }}>
-        {/* User Info Card */}
-        <Paper sx={{ p: 3, mb: 4, maxWidth: 600, mx: 'auto' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <Avatar 
-              sx={{ 
-                width: 64, 
-                height: 64, 
-                bgcolor: theme.palette.primary.main,
-                mr: 2
-              }}
-            >
-              <PersonIcon sx={{ fontSize: 32 }} />
-            </Avatar>
-            <Box>
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                {userStaff?.name || user.name || 'Staff Member'}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {userStaff?.department || 'Department'}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {user.email}
-              </Typography>
-            </Box>
-          </Box>
-          
-          <Divider sx={{ my: 2 }} />
-          
-          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-            Your Assigned Roles:
-          </Typography>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            {userRoles.map((role) => {
-              const RoleIcon = roleIcons[role];
-              return (
-                <Chip
-                  key={role}
-                  label={roleNames[role]}
-                  icon={<RoleIcon />}
-                  sx={{
-                    bgcolor: `${roleColors[role]}20`,
-                    color: roleColors[role],
-                    fontWeight: 600
-                  }}
-                />
-              );
-            })}
-          </Box>
-        </Paper>
-
-        {/* Role Selection Grid */}
-        <Grid container spacing={3} justifyContent="center">
-          {userRoles.map((role, index) => {
-            const RoleIcon = roleIcons[role];
-            const roleDef = getRoleDefinition(role);
-            
-            return (
-              <Grid item xs={12} sm={6} md={4} key={role}>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Card 
-                    sx={{ 
-                      height: '100%',
-                      cursor: 'pointer',
-                      border: selectedRole === role ? `3px solid ${roleColors[role]}` : '3px solid transparent',
-                      transition: 'all 0.3s ease',
-                      '&:hover': {
-                        borderColor: roleColors[role],
-                        boxShadow: theme.shadows[8]
-                      }
-                    }}
-                    onClick={() => setSelectedRole(role)}
-                  >
-                    <CardContent sx={{ textAlign: 'center', p: 4 }}>
-                      <Avatar 
-                        sx={{ 
-                          width: 80, 
-                          height: 80, 
-                          bgcolor: roleColors[role],
-                          mx: 'auto',
-                          mb: 2
-                        }}
-                      >
-                        <RoleIcon sx={{ fontSize: 40 }} />
-                      </Avatar>
-                      
-                      <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
-                        {roleNames[role]}
-                      </Typography>
-                      
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                        {roleDef?.description || 'Manage your assigned responsibilities'}
-                      </Typography>
-                      
-                      <Button
-                        variant={selectedRole === role ? "contained" : "outlined"}
-                        startIcon={<ArrowForwardIcon />}
-                        fullWidth
-                        sx={{ 
-                          bgcolor: selectedRole === role ? roleColors[role] : 'transparent',
-                          color: selectedRole === role ? 'white' : roleColors[role],
-                          borderColor: roleColors[role],
-                          '&:hover': {
-                            bgcolor: selectedRole === role ? roleColors[role] : `${roleColors[role]}10`
-                          }
-                        }}
-                        onClick={() => setSelectedRole(role)}
-                      >
-                        {selectedRole === role ? 'Selected' : 'Select Dashboard'}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              </Grid>
-            );
-          })}
-        </Grid>
-
-        {/* Launch Dashboard Button */}
-        {selectedRole && (
+        <Box sx={{ p: { xs: 2, md: 4 } }}>
+          {/* User Info Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <Box sx={{ textAlign: 'center', mt: 4 }}>
-              <Button
-                variant="contained"
-                size="large"
-                startIcon={<DashboardIcon />}
-                sx={{ 
-                  bgcolor: roleColors[selectedRole],
-                  px: 4,
-                  py: 1.5,
-                  fontSize: '1.1rem',
-                  '&:hover': {
-                    bgcolor: roleColors[selectedRole]
-                  }
-                }}
-                onClick={() => {
-                  // Navigate to role-specific dashboard
-                  navigate(`/dashboard/${selectedRole}`);
-                }}
-              >
-                Launch {roleNames[selectedRole]} Dashboard
-              </Button>
-            </Box>
+            <Paper sx={{ p: 3, mb: 4, maxWidth: 600, mx: 'auto' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Avatar 
+                  sx={{ 
+                    width: 64, 
+                    height: 64, 
+                    bgcolor: theme.palette.primary.main,
+                    mr: 2
+                  }}
+                >
+                  <PersonIcon sx={{ fontSize: 32 }} />
+                </Avatar>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    {userStaff?.name || user.name || 'Staff Member'}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {userStaff?.department || 'Department'}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {user.email}
+                  </Typography>
+                </Box>
+              </Box>
+              
+              <Divider sx={{ my: 2 }} />
+              
+              <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                Your Assigned Roles:
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {userRoles.map((role) => {
+                  const RoleIcon = roleIcons[role];
+                  return (
+                    <Chip
+                      key={role}
+                      label={roleNames[role]}
+                      icon={<RoleIcon />}
+                      sx={{
+                        bgcolor: `${roleColors[role]}20`,
+                        color: roleColors[role],
+                        fontWeight: 600
+                      }}
+                    />
+                  );
+                })}
+              </Box>
+            </Paper>
           </motion.div>
-        )}
+
+          {/* Role Selection Grid */}
+          <Grid container spacing={3} justifyContent="center">
+            {userRoles.map((role, index) => {
+              const RoleIcon = roleIcons[role];
+              const roleDef = getRoleDefinition(role);
+              
+              return (
+                <Grid item xs={12} sm={6} md={4} key={role}>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: index * 0.1 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Card 
+                      sx={{ 
+                        height: '100%',
+                        cursor: 'pointer',
+                        border: selectedRole === role ? `3px solid ${roleColors[role]}` : '3px solid transparent',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          borderColor: roleColors[role],
+                          boxShadow: theme.shadows[8]
+                        }
+                      }}
+                      onClick={() => setSelectedRole(role)}
+                    >
+                      <CardContent sx={{ textAlign: 'center', p: 4 }}>
+                        <Avatar 
+                          sx={{ 
+                            width: 80, 
+                            height: 80, 
+                            bgcolor: roleColors[role],
+                            mx: 'auto',
+                            mb: 2
+                          }}
+                        >
+                          <RoleIcon sx={{ fontSize: 40 }} />
+                        </Avatar>
+                        
+                        <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+                          {roleNames[role]}
+                        </Typography>
+                        
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                          {roleDef?.description || 'Manage your assigned responsibilities'}
+                        </Typography>
+                        
+                        <Button
+                          variant={selectedRole === role ? "contained" : "outlined"}
+                          startIcon={<ArrowForwardIcon />}
+                          fullWidth
+                          sx={{ 
+                            bgcolor: selectedRole === role ? roleColors[role] : 'transparent',
+                            color: selectedRole === role ? 'white' : roleColors[role],
+                            borderColor: roleColors[role],
+                            '&:hover': {
+                              bgcolor: selectedRole === role ? roleColors[role] : `${roleColors[role]}10`
+                            }
+                          }}
+                          onClick={() => setSelectedRole(role)}
+                        >
+                          {selectedRole === role ? 'Selected' : 'Select Dashboard'}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                </Grid>
+              );
+            })}
+          </Grid>
+
+          {/* Launch Dashboard Button */}
+          {selectedRole && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
+              <Box sx={{ textAlign: 'center', mt: 4 }}>
+                <Button
+                  variant="contained"
+                  size="large"
+                  startIcon={<DashboardIcon />}
+                  sx={{ 
+                    bgcolor: roleColors[selectedRole],
+                    px: 4,
+                    py: 1.5,
+                    fontSize: '1.1rem',
+                    '&:hover': {
+                      bgcolor: roleColors[selectedRole]
+                    }
+                  }}
+                  onClick={() => {
+                    // Navigate to role-specific dashboard
+                    navigate(`/dashboard/${selectedRole}`);
+                  }}
+                >
+                  Launch {roleNames[selectedRole]} Dashboard
+                </Button>
+              </Box>
+            </motion.div>
+          )}
+        </Box>
       </Box>
-    </Box>
+    </ModernLayout>
   );
 };
 
@@ -391,11 +423,13 @@ const renderRoleDashboard = (role) => {
       return <AdminDashboard />;
     default:
       return (
-        <Box sx={{ p: 4, textAlign: 'center' }}>
-          <Typography variant="h4" color="text.secondary">
-            Dashboard not found for role: {role}
-          </Typography>
-        </Box>
+        <ModernLayout userType="staff">
+          <Box sx={{ p: 4, textAlign: 'center' }}>
+            <Typography variant="h4" color="text.secondary">
+              Dashboard not found for role: {role}
+            </Typography>
+          </Box>
+        </ModernLayout>
       );
   }
 };

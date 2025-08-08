@@ -425,8 +425,8 @@ const OverallProgress = () => {
               <Box sx={{ mt: 2 }}>
                 <ResponsiveContainer width="100%" height={60}>
                   <BarChart data={[
-                    { status: 'Present', days: mockData.attendance.daysPresent, color: '#4caf50' },
-                    { status: 'Absent', days: mockData.attendance.daysAbsent, color: '#f44336' }
+                    { status: 'Present', days: mockData.attendance.daysPresent, color: '#9c27b0' },
+                    { status: 'Absent', days: mockData.attendance.daysAbsent, color: '#e1bee7' }
                   ]}>
                     <XAxis dataKey="status" />
                     <YAxis />
@@ -456,7 +456,7 @@ const OverallProgress = () => {
               <Box sx={{ mt: 2 }}>
                 <ResponsiveContainer width="100%" height={60}>
                   <BarChart data={[
-                    { aspect: 'Overall', rating: getRatingScore(mockData.behavior.overallRating), color: getRatingColor(mockData.behavior.overallRating) }
+                    { aspect: 'Overall', rating: getRatingScore(mockData.behavior.overallRating), color: '#9c27b0' }
                   ]}>
                     <XAxis dataKey="aspect" />
                     <YAxis />
@@ -486,7 +486,7 @@ const OverallProgress = () => {
               <Box sx={{ mt: 2 }}>
                 <ResponsiveContainer width="100%" height={60}>
                   <BarChart data={[
-                    { metric: 'Rank', value: mockData.academicPerformance.rank || 0, color: '#ff9800' }
+                    { metric: 'Rank', value: mockData.academicPerformance.rank || 0, color: '#9c27b0' }
                   ]}>
                     <XAxis dataKey="metric" />
                     <YAxis />
