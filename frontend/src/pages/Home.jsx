@@ -427,22 +427,22 @@ const Home = () => {
                   transition: { duration: 0.1 }
                 }}
               >
-                <Box
-                  component="img"
-                  src={logo}
-                  alt="EDULIVES Logo"
-                  sx={{
-                    height: isMobile ? 180 : 240,
-                    width: 'auto',
-                    maxWidth: '100%',
-                    objectFit: 'contain',
-                    mb: 3,
-                    filter: 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2))',
-                    display: 'block',
-                    margin: '0 auto',
-                    cursor: 'pointer',
-                  }}
-                />
+                                 <Box
+                   component="img"
+                   src={logo}
+                   alt="EDULIVES Logo"
+                   sx={{
+                     height: isMobile ? 280 : 400,
+                     width: 'auto',
+                     maxWidth: '100%',
+                     objectFit: 'contain',
+                     mb: 3,
+                     filter: 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2))',
+                     display: 'block',
+                     margin: '0 auto',
+                     cursor: 'pointer',
+                   }}
+                 />
               </motion.div>
               
                               <motion.div
