@@ -145,48 +145,139 @@ const AccountantLogin = () => {
         transition: 'background-image 0.3s ease',
       }} />
 
-      {/* Branding */}
-      <Box sx={{
-        flex: { xs: 'none', md: '1' },
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        color: 'white',
-        position: 'relative',
-        zIndex: 1,
-        p: { xs: 4, md: 6 },
-        textAlign: 'center',
-      }}>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-          <Box sx={{ mb: 4 }}>
-            <img src={logo} alt="EDURAYS Logo" style={{ height: isMobile ? 80 : 120, width: 'auto', marginBottom: 16 }} />
-          </Box>
-          <Typography variant="h2" sx={{ fontWeight: 700, mb: 2, color: '#ffffff', fontSize: { xs: '2rem', md: '3rem' } }}>
-            Accountant Portal
-          </Typography>
-          <Typography variant="h6" sx={{ color: '#ffffff', opacity: 0.9 }}>
-            Manage the school's finances and monitor economic health
-          </Typography>
-        </motion.div>
-      </Box>
+      {/* Content Container */}
+      <Container
+        maxWidth="lg"
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+          zIndex: 1,
+          px: { xs: 2, sm: 4, md: 6 },
+          py: { xs: 4, sm: 6, md: 8 },
+        }}
+      >
+        {/* Left side branding */}
+        <Box
+          sx={{
+            flex: '1 1 auto',
+            maxWidth: { md: '50%' },
+            textAlign: { xs: 'center', md: 'left' },
+            mb: { xs: 6, md: 0 },
+            pr: { md: 6 },
+          }}
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <Box sx={{ mb: 4 }}>
+              <img 
+                src={logo} 
+                alt="EDULIVES Logo" 
+                style={{ 
+                  height: isMobile ? 200 : 300, 
+                  width: 'auto',
+                  marginBottom: 16,
+                  filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3))'
+                }} 
+              />
+            </Box>
+            <Typography
+              variant="h1"
+              sx={{
+                fontSize: { xs: '2.5rem', sm: '3rem', md: '3.5rem', lg: '4rem' },
+                fontWeight: 700,
+                mb: 3,
+                letterSpacing: '-0.02em',
+                color: isDark ? '#ffffff' : '#ffffff',
+                textShadow: isDark ? '0 2px 4px rgba(0, 0, 0, 0.5)' : '0 2px 4px rgba(0, 0, 0, 0.7)',
+              }}
+            >
+              EDULIVES
+            </Typography>
+            <Typography
+              variant="h2"
+              sx={{
+                fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem', lg: '2.5rem' },
+                fontWeight: 600,
+                mb: 4,
+                letterSpacing: '-0.01em',
+                color: isDark ? '#ffffff' : '#ffffff',
+                textShadow: isDark ? '0 2px 4px rgba(0, 0, 0, 0.5)' : '0 2px 4px rgba(0, 0, 0, 0.7)',
+              }}
+            >
+              ACCOUNTANT PORTAL
+            </Typography>
+            <Typography
+              variant="h5"
+              sx={{
+                fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem', lg: '1.5rem' },
+                fontWeight: 400,
+                opacity: 0.9,
+                lineHeight: 1.6,
+                color: isDark ? '#ffffff' : '#ffffff',
+                textShadow: isDark ? '0 2px 4px rgba(0, 0, 0, 0.5)' : '0 2px 4px rgba(0, 0, 0, 0.7)',
+              }}
+            >
+              Manage the school's finances and monitor economic health
+            </Typography>
+          </motion.div>
+        </Box>
 
-      {/* Login Form */}
-      <Box sx={{ flex: { xs: '1', md: '1' }, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 1, p: { xs: 2, sm: 4 } }}>
-        <Container maxWidth="sm">
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, delay: 0.2 }}>
-            <Paper elevation={24} sx={{ 
-              p: { xs: 3, sm: 4, md: 5 }, 
-              borderRadius: 3, 
-              background: isDark ? 'rgba(51, 65, 85, 0.95)' : 'rgba(255,255,255,0.95)', 
-              backdropFilter: 'blur(10px)', 
-              border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(255,255,255,0.2)' 
-            }}>
-                              <Box sx={{ textAlign: 'center', mb: 4 }}>
-                  <WalletIcon sx={{ fontSize: 40, color: isDark ? '#ffffff' : '#1976d2', mb: 1 }} />
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: isDark ? '#ffffff' : '#000000', mb: 1 }}>Accountant Login</Typography>
-                  <Typography variant="body1" sx={{ color: isDark ? '#ffffff' : '#000000', fontWeight: 500 }}>Access financial management tools</Typography>
-                </Box>
+        {/* Right side form */}
+        <Box
+          sx={{
+            flex: '1 1 auto',
+            maxWidth: { xs: '100%', sm: '450px', md: '400px' },
+            width: '100%',
+            backgroundColor: isDark ? 'rgba(51, 65, 85, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(10px)',
+            border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: 3,
+            p: { xs: 3, sm: 4 },
+            boxShadow: isDark 
+              ? '0 8px 32px rgba(0, 0, 0, 0.3)' 
+              : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          }}
+        >
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+              <WalletIcon sx={{ 
+                fontSize: { xs: 32, sm: 40 }, 
+                color: isDark ? '#ffffff' : '#1976d2', 
+                mr: 2 
+              }} />
+              <Typography
+                variant="h3"
+                sx={{
+                  fontSize: { xs: '1.75rem', sm: '2rem' },
+                  fontWeight: 700,
+                  color: isDark ? '#ffffff' : '#000000',
+                }}
+              >
+                Accountant Login
+              </Typography>
+            </Box>
+
+            <Typography
+              variant="body1"
+              sx={{
+                color: isDark ? '#ffffff' : '#000000',
+                mb: 4,
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+                fontWeight: 500,
+              }}
+            >
+              Access financial management tools
+            </Typography>
 
               {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
@@ -282,21 +373,20 @@ const AccountantLogin = () => {
                   onClick={() => navigate('/')} 
                   sx={{ 
                     textTransform: 'none',
-                    color: isDark ? '#60a5fa' : '#1a237e',
+                    color: isDark ? '#ffffff' : '#000000',
                     '&:hover': {
-                      backgroundColor: isDark ? 'rgba(96, 165, 250, 0.1)' : 'rgba(26, 35, 126, 0.1)',
+                      color: isDark ? '#60a5fa' : '#1976d2',
                     },
                   }}
                 >
                   ← Back to Portal Selection
                 </Button>
               </Box>
-            </Paper>
-          </motion.div>
+            </motion.div>
+          </Box>
         </Container>
       </Box>
-    </Box>
-  );
-};
+    );
+  };
 
-export default AccountantLogin; 
+  export default AccountantLogin; 

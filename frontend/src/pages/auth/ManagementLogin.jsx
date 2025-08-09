@@ -214,136 +214,139 @@ const StaffLogin = () => {
         }}
       />
 
-      {/* Left side - Branding */}
-      <Box
+      {/* Content Container */}
+      <Container
+        maxWidth="lg"
         sx={{
-          flex: { xs: 'none', md: '1' },
           display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
+          flexDirection: { xs: 'column', md: 'row' },
           alignItems: 'center',
-          color: 'white',
-          position: 'relative',
+          justifyContent: 'center',
+          minHeight: '100vh',
           zIndex: 1,
-          p: { xs: 4, md: 6 },
-          textAlign: 'center',
+          px: { xs: 2, sm: 4, md: 6 },
+          py: { xs: 4, sm: 6, md: 8 },
         }}
       >
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+        {/* Left side branding */}
+        <Box
+          sx={{
+            flex: '1 1 auto',
+            maxWidth: { md: '50%' },
+            textAlign: { xs: 'center', md: 'left' },
+            mb: { xs: 6, md: 0 },
+            pr: { md: 6 },
+          }}
         >
-          <Box sx={{ mb: 4 }}>
-            <img 
-              src={logo} 
-                              alt="EDULIVES Logo" 
-              style={{ 
-                height: isMobile ? 80 : 120, 
-                width: 'auto',
-                marginBottom: 16
-              }} 
-            />
-          </Box>
-          <Typography
-            variant="h1"
-            sx={{
-              fontSize: { xs: '2.5rem', sm: '3rem', md: '3.5rem', lg: '4rem' },
-              fontWeight: 700,
-              mb: 3,
-              letterSpacing: '-0.02em',
-              color: 'white',
-            }}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
           >
-                          EDULIVES
-          </Typography>
-          <Typography
-            variant="h2"
-            sx={{
-              fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem', lg: '2.5rem' },
-              fontWeight: 600,
-              mb: 4,
-              letterSpacing: '-0.01em',
-              color: 'white',
-            }}
-          >
-            MANAGEMENT PORTAL
-          </Typography>
-          <Typography
-            variant="h5"
-            sx={{
-              fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem', lg: '1.5rem' },
-              fontWeight: 400,
-              opacity: 0.9,
-              lineHeight: 1.6,
-              color: 'white',
-            }}
-          >
-            Administrative Access for School Management
-          </Typography>
-        </motion.div>
-      </Box>
+            <Box sx={{ mb: 4 }}>
+              <img 
+                src={logo} 
+                alt="EDULIVES Logo" 
+                style={{ 
+                  height: isMobile ? 200 : 300, 
+                  width: 'auto',
+                  marginBottom: 16,
+                  filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3))'
+                }} 
+              />
+            </Box>
+            <Typography
+              variant="h1"
+              sx={{
+                fontSize: { xs: '2.5rem', sm: '3rem', md: '3.5rem', lg: '4rem' },
+                fontWeight: 700,
+                mb: 3,
+                letterSpacing: '-0.02em',
+                color: isDark ? '#ffffff' : '#ffffff',
+                textShadow: isDark ? '0 2px 4px rgba(0, 0, 0, 0.5)' : '0 2px 4px rgba(0, 0, 0, 0.7)',
+              }}
+            >
+              EDULIVES
+            </Typography>
+            <Typography
+              variant="h2"
+              sx={{
+                fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem', lg: '2.5rem' },
+                fontWeight: 600,
+                mb: 4,
+                letterSpacing: '-0.01em',
+                color: isDark ? '#ffffff' : '#ffffff',
+                textShadow: isDark ? '0 2px 4px rgba(0, 0, 0, 0.5)' : '0 2px 4px rgba(0, 0, 0, 0.7)',
+              }}
+            >
+              MANAGEMENT PORTAL
+            </Typography>
+            <Typography
+              variant="h5"
+              sx={{
+                fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem', lg: '1.5rem' },
+                fontWeight: 400,
+                opacity: 0.9,
+                lineHeight: 1.6,
+                color: isDark ? '#ffffff' : '#ffffff',
+                textShadow: isDark ? '0 2px 4px rgba(0, 0, 0, 0.5)' : '0 2px 4px rgba(0, 0, 0, 0.7)',
+              }}
+            >
+              Administrative Access for School Management
+            </Typography>
+          </motion.div>
+        </Box>
 
-      {/* Right side - Login Form */}
-      <Box
-        sx={{
-          flex: { xs: '1', md: '1' },
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          position: 'relative',
-          zIndex: 1,
-          p: { xs: 2, sm: 4 },
-        }}
-      >
-        <Container maxWidth="sm">
+        {/* Right side form */}
+        <Box
+          sx={{
+            flex: '1 1 auto',
+            maxWidth: { xs: '100%', sm: '450px', md: '400px' },
+            width: '100%',
+            backgroundColor: isDark ? 'rgba(51, 65, 85, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(10px)',
+            border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: 3,
+            p: { xs: 3, sm: 4 },
+            boxShadow: isDark 
+              ? '0 8px 32px rgba(0, 0, 0, 0.3)' 
+              : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          }}
+        >
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            <Paper
-              elevation={24}
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+              <BusinessIcon sx={{ 
+                fontSize: { xs: 32, sm: 40 }, 
+                color: isDark ? '#ffffff' : '#1976d2', 
+                mr: 2 
+              }} />
+              <Typography
+                variant="h3"
+                sx={{
+                  fontSize: { xs: '1.75rem', sm: '2rem' },
+                  fontWeight: 700,
+                  color: isDark ? '#ffffff' : '#000000',
+                }}
+              >
+                Staff Login
+              </Typography>
+            </Box>
+
+            <Typography
+              variant="body1"
               sx={{
-                p: { xs: 3, sm: 4, md: 5 },
-                borderRadius: 3,
-                background: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                backdropFilter: 'blur(10px)',
-                border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.2)',
-                transition: 'all 0.3s ease',
+                color: isDark ? '#ffffff' : '#000000',
+                mb: 4,
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+                fontWeight: 500,
               }}
             >
-              <Box sx={{ textAlign: 'center', mb: 4 }}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    mb: 2,
-                  }}
-                >
-                  <BusinessIcon sx={{ fontSize: 40, color: 'primary.main', mr: 1 }} />
-                </Box>
-                <Typography
-                  variant="h4"
-                  sx={{
-                    fontWeight: 700,
-                    color: 'text.primary',
-                    mb: 1,
-                  }}
-                >
-                  Staff Login
-                </Typography>
-                <Typography
-                  variant="body1"
-                  sx={{
-                    color: 'text.secondary',
-                    fontSize: '1rem',
-                  }}
-                >
-                  Login for all teaching and non-teaching staff. Your role and department will be automatically detected.
-                </Typography>
-              </Box>
+              Login for all teaching and non-teaching staff. Your role and department will be automatically detected.
+            </Typography>
 
               {error && (
                 <Alert severity="error" sx={{ mb: 3 }}>
@@ -362,8 +365,25 @@ const StaffLogin = () => {
                   error={formik.touched.email && Boolean(formik.errors.email)}
                   helperText={formik.touched.email && formik.errors.email}
                   margin="normal"
+                  autoFocus
+                  sx={{
+                    mb: 2,
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 1.5,
+                      backgroundColor: isDark ? '#94a3b8' : '#e2e8f0',
+                      '&:hover fieldset': {
+                        borderColor: 'primary.main',
+                      },
+                    },
+                    '& .MuiInputLabel-root': {
+                      color: isDark ? '#e2e8f0' : 'text.primary',
+                    },
+                    '& .MuiOutlinedInput-input': {
+                      color: isDark ? '#ffffff' : 'text.primary',
+                    },
+                  }}
                   InputProps={{
-                    startAdornment: <EmailIcon sx={{ mr: 1, color: 'text.secondary' }} />,
+                    startAdornment: <EmailIcon sx={{ mr: 1, color: isDark ? '#e2e8f0' : 'text.secondary' }} />,
                   }}
                 />
                 <TextField
@@ -377,8 +397,24 @@ const StaffLogin = () => {
                   error={formik.touched.password && Boolean(formik.errors.password)}
                   helperText={formik.touched.password && formik.errors.password}
                   margin="normal"
+                  sx={{
+                    mb: 3,
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 1.5,
+                      backgroundColor: isDark ? '#94a3b8' : '#e2e8f0',
+                      '&:hover fieldset': {
+                        borderColor: 'primary.main',
+                      },
+                    },
+                    '& .MuiInputLabel-root': {
+                      color: isDark ? '#e2e8f0' : 'text.primary',
+                    },
+                    '& .MuiOutlinedInput-input': {
+                      color: isDark ? '#ffffff' : 'text.primary',
+                    },
+                  }}
                   InputProps={{
-                    startAdornment: <LockIcon sx={{ mr: 1, color: 'text.secondary' }} />,
+                    startAdornment: <LockIcon sx={{ mr: 1, color: isDark ? '#e2e8f0' : 'text.secondary' }} />,
                     endAdornment: (
                       <InputAdornment position="end">
                         <IconButton
@@ -397,10 +433,21 @@ const StaffLogin = () => {
                   type="submit"
                   fullWidth
                   variant="contained"
-                  sx={{ mt: 3, mb: 2 }}
                   disabled={loginMutation.isLoading}
+                  sx={{
+                    py: 1.8,
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    borderRadius: 1.5,
+                    backgroundColor: '#1976d2',
+                    '&:hover': {
+                      backgroundColor: '#1565c0',
+                    },
+                    mb: 3,
+                  }}
                 >
-                  {loginMutation.isLoading ? <CircularProgress size={24} /> : 'Sign In to Staff Portal'}
+                  {loginMutation.isLoading ? <CircularProgress size={24} /> : 'SIGN IN TO STAFF PORTAL'}
                 </Button>
               </Box>
 
@@ -409,23 +456,22 @@ const StaffLogin = () => {
                   variant="text"
                   onClick={() => navigate('/')}
                   sx={{
-                    color: 'text.secondary',
+                    color: isDark ? '#ffffff' : '#000000',
                     textTransform: 'none',
                     fontSize: '0.9rem',
                     '&:hover': {
-                      color: 'primary.main',
+                      color: isDark ? '#60a5fa' : '#1976d2',
                     },
                   }}
                 >
                   ← Back to Portal Selection
                 </Button>
               </Box>
-            </Paper>
-          </motion.div>
+            </motion.div>
+          </Box>
         </Container>
       </Box>
-    </Box>
-  );
-};
+    );
+  };
 
-export default StaffLogin; 
+  export default StaffLogin; 
