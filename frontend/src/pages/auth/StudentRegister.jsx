@@ -21,6 +21,7 @@ import * as yup from 'yup';
 import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { useTheme as useCustomTheme } from '../../context/ThemeContext';
 import SchoolIcon from '@mui/icons-material/School';
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -71,6 +72,8 @@ function StudentRegister() {
   const navigate = useNavigate();
   const [error, setError] = useState('');
   const theme = useTheme();
+  const { isDark } = useCustomTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
 
   const registerMutation = useMutation({
@@ -217,6 +220,18 @@ function StudentRegister() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
           >
+            <Box sx={{ mb: 3, mt: -2, display: 'flex', justifyContent: 'center' }}>
+              <img 
+                src={logo} 
+                alt="EDULIVES Logo" 
+                style={{ 
+                  height: isMobile ? 200 : 280, 
+                  width: 'auto',
+                  marginBottom: 12,
+                  filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3))'
+                }} 
+              />
+            </Box>
             <Typography
               variant="h1"
               sx={{

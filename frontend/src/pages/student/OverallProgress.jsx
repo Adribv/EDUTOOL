@@ -425,12 +425,12 @@ const OverallProgress = () => {
               <Box sx={{ mt: 2 }}>
                 <ResponsiveContainer width="100%" height={60}>
                   <BarChart data={[
-                    { status: 'Present', days: mockData.attendance.daysPresent, color: '#9c27b0' },
-                    { status: 'Absent', days: mockData.attendance.daysAbsent, color: '#e1bee7' }
+                    { status: 'Present', days: mockData.attendance.daysPresent },
+                    { status: 'Absent', days: mockData.attendance.daysAbsent }
                   ]}>
                     <XAxis dataKey="status" />
                     <YAxis />
-                    <Bar dataKey="days" fill={(entry) => entry.color} />
+                    <Bar dataKey="days" fill="#00ff00" />
                   </BarChart>
                 </ResponsiveContainer>
               </Box>
@@ -456,11 +456,11 @@ const OverallProgress = () => {
               <Box sx={{ mt: 2 }}>
                 <ResponsiveContainer width="100%" height={60}>
                   <BarChart data={[
-                    { aspect: 'Overall', rating: getRatingScore(mockData.behavior.overallRating), color: '#9c27b0' }
+                    { aspect: 'Overall', rating: getRatingScore(mockData.behavior.overallRating) }
                   ]}>
                     <XAxis dataKey="aspect" />
                     <YAxis />
-                    <Bar dataKey="rating" fill={(entry) => entry.color} />
+                    <Bar dataKey="rating" fill="#ff00ff" />
                   </BarChart>
                 </ResponsiveContainer>
               </Box>
@@ -486,11 +486,11 @@ const OverallProgress = () => {
               <Box sx={{ mt: 2 }}>
                 <ResponsiveContainer width="100%" height={60}>
                   <BarChart data={[
-                    { metric: 'Rank', value: mockData.academicPerformance.rank || 0, color: '#9c27b0' }
+                    { metric: 'Rank', value: mockData.academicPerformance.rank || 0 }
                   ]}>
                     <XAxis dataKey="metric" />
                     <YAxis />
-                    <Bar dataKey="value" fill={(entry) => entry.color} />
+                    <Bar dataKey="value" fill="#0000ff" />
                   </BarChart>
                 </ResponsiveContainer>
               </Box>

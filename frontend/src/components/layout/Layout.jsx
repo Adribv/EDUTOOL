@@ -60,7 +60,7 @@ import { useAuth } from '../../context/AuthContext';
 import Logo from './Logo';
 import { roleConfig } from '../../pages/admin/roleConfig';
 import { api, staffActivitiesControlAPI } from '../../services/api';
-import ThemeToggle from '../ThemeToggle';
+
 import { useTheme as useAppTheme } from '../../context/ThemeContext';
 import { 
   getUserActivitiesControl, 
@@ -886,32 +886,7 @@ const Layout = () => {
             </Badge>
           </IconButton>
           
-          <ThemeToggle 
-            sx={{ 
-              mr: { xs: 0.5, sm: 1 },
-              minWidth: { xs: 48, md: 40 },
-              minHeight: { xs: 48, md: 40 },
-              color: isDark ? '#f1f5f9' : 'inherit',
-              background: isDark 
-                ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)'
-                : 'linear-gradient(135deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.02) 100%)',
-              backdropFilter: 'blur(10px)',
-              border: isDark 
-                ? '1px solid rgba(255, 255, 255, 0.1)' 
-                : '1px solid rgba(0, 0, 0, 0.1)',
-              borderRadius: 2,
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              '&:hover': {
-                background: isDark 
-                  ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%)'
-                  : 'linear-gradient(135deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.04) 100%)',
-                transform: 'translateY(-2px)',
-                boxShadow: isDark 
-                  ? '0 8px 32px rgba(0, 0, 0, 0.3)' 
-                  : '0 8px 32px rgba(0, 0, 0, 0.1)',
-              }
-            }}
-          />
+
           
           <IconButton
             onClick={handleProfileMenuOpen}

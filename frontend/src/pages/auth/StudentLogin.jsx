@@ -629,20 +629,28 @@ function StudentLogin() {
                     }}
                   >
                     Don't have an account?{' '}
-                    <Link
+                    <Button
                       component={RouterLink}
                       to="/student-register"
+                      onClick={() => console.log('Create Account clicked')}
                       sx={{
                         color: '#ffffff',
                         fontWeight: 600,
                         textDecoration: 'none',
+                        cursor: 'pointer',
+                        textTransform: 'none',
+                        fontSize: '0.9rem',
+                        p: 0,
+                        minWidth: 'auto',
                         '&:hover': {
                           textDecoration: 'underline',
+                          color: '#e0e7ff',
+                          background: 'transparent',
                         },
                       }}
                     >
                       Create Account
-                    </Link>
+                    </Button>
                   </Typography>
                 </Box>
               </motion.div>

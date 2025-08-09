@@ -64,13 +64,11 @@ import {
 } from '@mui/icons-material';
 import { adminAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
 import { toast } from 'react-toastify';
 
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const { isDark } = useTheme();
   const navigate = useNavigate();
   const [childrenFeeStatus, setChildrenFeeStatus] = useState([]);
   const [showFeePopup, setShowFeePopup] = useState(false);
@@ -320,16 +318,7 @@ const Dashboard = () => {
       minHeight: '100vh',
       position: 'relative',
       overflow: 'hidden',
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'linear-gradient(135deg, rgba(248, 249, 250, 0.8) 0%, rgba(240, 242, 245, 0.8) 50%, rgba(233, 236, 239, 0.8) 100%)',
-        zIndex: 1,
-      },
+      backgroundColor: '#ffffff',
     }}>
 
       {/* Back Button and Theme Toggle - Top Right */}
@@ -344,31 +333,16 @@ const Dashboard = () => {
         <IconButton
           onClick={() => window.history.back()}
           sx={{
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            color: isDark ? '#f1f5f9' : '#1e293b',
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            border: '1px solid rgba(0, 0, 0, 0.1)',
+            color: '#1e293b',
             '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+              backgroundColor: 'rgba(255, 255, 255, 1)',
               transform: 'scale(1.05)',
             }
           }}
         >
           <ArrowBack />
-        </IconButton>
-        <IconButton
-          sx={{
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            color: isDark ? '#f1f5f9' : '#1e293b',
-            '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              transform: 'scale(1.05)',
-            }
-          }}
-        >
-  
         </IconButton>
       </Box>
 
@@ -376,17 +350,18 @@ const Dashboard = () => {
       <Box sx={{ 
         mb: 4, 
         p: 3, 
-        backgroundColor: 'white', 
+        backgroundColor: '#ffffff', 
         borderRadius: 2, 
-        boxShadow: 2,
-        borderLeft: '4px solid #1976d2'
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+        borderLeft: '4px solid #1976d2',
+        border: '1px solid #e0e0e0'
       }}>
         <Typography 
           variant="h3" 
           gutterBottom 
           sx={{ 
             fontWeight: 800,
-            color: '#1976d2',
+            color: '#000000',
             textShadow: '0 2px 4px rgba(0,0,0,0.1)',
             mb: 1
           }}
@@ -396,7 +371,7 @@ const Dashboard = () => {
         <Typography 
           variant="h6" 
           sx={{ 
-            color: '#666',
+            color: '#000000',
             fontWeight: 600,
             lineHeight: 1.6
           }}
@@ -420,7 +395,7 @@ const Dashboard = () => {
                 <Box>
                   <Typography 
                     sx={{ 
-                      color: '#666', 
+                      color: '#000000', 
                       fontWeight: 600, 
                       fontSize: '0.9rem',
                       textTransform: 'uppercase',
@@ -459,7 +434,7 @@ const Dashboard = () => {
                 <Box>
                   <Typography 
                     sx={{ 
-                      color: '#666', 
+                      color: '#000000', 
                       fontWeight: 600, 
                       fontSize: '0.9rem',
                       textTransform: 'uppercase',
@@ -498,7 +473,7 @@ const Dashboard = () => {
                 <Box>
                   <Typography 
                     sx={{ 
-                      color: '#666', 
+                      color: '#000000', 
                       fontWeight: 600, 
                       fontSize: '0.9rem',
                       textTransform: 'uppercase',
@@ -537,7 +512,7 @@ const Dashboard = () => {
                 <Box>
                   <Typography 
                     sx={{ 
-                      color: '#666', 
+                      color: '#000000', 
                       fontWeight: 600, 
                       fontSize: '0.9rem',
                       textTransform: 'uppercase',
@@ -572,7 +547,7 @@ const Dashboard = () => {
           gutterBottom 
           sx={{ 
             fontWeight: 700,
-            color: '#1976d2',
+            color: '#000000',
             borderBottom: '3px solid #1976d2',
             pb: 1,
             mb: 3
@@ -588,7 +563,7 @@ const Dashboard = () => {
         }}>
           <CardContent sx={{ p: 3 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-              <Typography variant="h6">Submit Service Requests</Typography>
+              <Typography variant="h6" sx={{ color: '#000000', fontWeight: 600 }}>Submit Service Requests</Typography>
               <Button
                 variant="contained"
                 startIcon={<Send />}
@@ -613,7 +588,18 @@ const Dashboard = () => {
               </Box>
             ) : (
                           <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 2 }}>
-              <Table sx={{ '& .MuiTableCell-root': { fontWeight: 500 } }}>
+              <Table sx={{ 
+                '& .MuiTableCell-root': { 
+                  fontWeight: 600,
+                  color: '#000000',
+                  backgroundColor: '#f5f5f5'
+                },
+                '& .MuiTableHead-root .MuiTableCell-root': {
+                  backgroundColor: '#e0e0e0',
+                  fontWeight: 700,
+                  color: '#000000'
+                }
+              }}>
                   <TableHead>
                     <TableRow>
                       <TableCell>Request Number</TableCell>
@@ -678,7 +664,7 @@ const Dashboard = () => {
               <Typography variant="h6" gutterBottom>
                 Progress Report
               </Typography>
-              <Typography variant="body2" color="textSecondary">
+              <Typography variant="body2" sx={{ color: '#000000' }}>
                 View comprehensive academic progress
               </Typography>
             </CardContent>
@@ -698,7 +684,7 @@ const Dashboard = () => {
               <Typography variant="h6" gutterBottom>
                 My Children
               </Typography>
-              <Typography variant="body2" color="textSecondary">
+              <Typography variant="body2" sx={{ color: '#000000' }}>
                 Manage children information
               </Typography>
             </CardContent>
@@ -718,7 +704,7 @@ const Dashboard = () => {
               <Typography variant="h6" gutterBottom>
                 Fee Management
               </Typography>
-              <Typography variant="body2" color="textSecondary">
+              <Typography variant="body2" sx={{ color: '#000000' }}>
                 View and manage payments
               </Typography>
             </CardContent>
@@ -738,7 +724,7 @@ const Dashboard = () => {
               <Typography variant="h6" gutterBottom>
                 Communication
               </Typography>
-              <Typography variant="body2" color="textSecondary">
+              <Typography variant="body2" sx={{ color: '#000000' }}>
                 Connect with teachers
               </Typography>
             </CardContent>
@@ -751,7 +737,7 @@ const Dashboard = () => {
         <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
+              <Typography variant="h6" gutterBottom sx={{ color: '#000000', fontWeight: 600 }}>
                 Children Information
               </Typography>
               <List>
@@ -763,8 +749,8 @@ const Dashboard = () => {
                       </Avatar>
                     </ListItemAvatar>
                     <ListItemText
-                      primary={child.name}
-                      secondary={`Grade ${child.grade} • ${child.school}`}
+                      primary={<Typography sx={{ color: '#000000', fontWeight: 600 }}>{child.name}</Typography>}
+                      secondary={<Typography sx={{ color: '#000000' }}>{`Grade ${child.grade} • ${child.school}`}</Typography>}
                     />
                     <Chip
                       label={child.status}
@@ -781,15 +767,15 @@ const Dashboard = () => {
         <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
+              <Typography variant="h6" gutterBottom sx={{ color: '#000000', fontWeight: 600 }}>
                 Recent Activities
               </Typography>
               <List>
                 {dashboardData?.recentActivities?.map((activity, index) => (
                   <ListItem key={index}>
                     <ListItemText
-                      primary={activity.title}
-                      secondary={activity.date}
+                      primary={<Typography sx={{ color: '#000000', fontWeight: 600 }}>{activity.title}</Typography>}
+                      secondary={<Typography sx={{ color: '#000000' }}>{activity.date}</Typography>}
                     />
                     <Chip
                       label={activity.type}

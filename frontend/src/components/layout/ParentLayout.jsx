@@ -228,61 +228,13 @@ const ParentLayout = () => {
         ))}
       </List>
       
-      {/* Theme Toggle & User Info */}
+      {/* User Info */}
       <Box sx={{ 
         p: 2, 
         mt: 'auto', 
         borderTop: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
         background: isDark ? 'rgba(15, 23, 42, 0.5)' : 'rgba(248, 250, 252, 0.5)'
       }}>
-        {/* Theme Toggle */}
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between',
-          mb: 2,
-          p: 1.5,
-          borderRadius: 2,
-          background: isDark ? 'rgba(30, 41, 59, 0.5)' : 'rgba(255, 255, 255, 0.5)',
-          border: isDark ? '1px solid #475569' : '1px solid #e2e8f0',
-          cursor: 'pointer',
-          transition: 'all 0.3s ease',
-          '&:hover': {
-            background: isDark ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-            transform: 'translateY(-1px)',
-            boxShadow: isDark 
-              ? '0 4px 12px rgba(0, 0, 0, 0.3)' 
-              : '0 4px 12px rgba(0, 0, 0, 0.1)'
-          }
-        }}>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Brightness4 sx={{ 
-              fontSize: 20, 
-              color: isDark ? '#94a3b8' : '#64748b',
-              mr: 1 
-            }} />
-            <Typography variant="caption" sx={{ 
-              color: isDark ? '#cbd5e1' : '#64748b',
-              fontWeight: 500
-            }}>
-              Dark Mode
-            </Typography>
-          </Box>
-          <Switch
-            checked={isDark}
-            onChange={toggleTheme}
-            sx={{
-              '& .MuiSwitch-switchBase': {
-                color: isDark ? '#60a5fa' : '#2563eb',
-              },
-              '& .MuiSwitch-track': {
-                backgroundColor: isDark ? '#475569' : '#cbd5e1',
-              },
-            }}
-          />
-        </Box>
-        
-        {/* User Info */}
         <Box sx={{ 
           display: 'flex', 
           alignItems: 'center', 
@@ -385,18 +337,6 @@ const ParentLayout = () => {
           </Typography>
           
           <div>
-            {/* Theme Toggle in Header */}
-            <Tooltip title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}>
-              <IconButton
-                size="large"
-                color="inherit"
-                onClick={toggleTheme}
-                sx={{ mr: 1 }}
-              >
-                {isDark ? <Brightness7 /> : <Brightness4 />}
-              </IconButton>
-            </Tooltip>
-            
             <Tooltip title="Notifications">
               <IconButton
                 size="large"
