@@ -151,14 +151,14 @@ const OfficialsLogin = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <Box sx={{ mb: 4 }}>
+          <Box sx={{ mb: 3, mt: -2, display: 'flex', justifyContent: 'center' }}>
             <img 
               src={logo} 
-                              alt="EDULIVES Logo" 
+              alt="EDULIVES Logo" 
               style={{ 
                 height: isMobile ? 80 : 120, 
                 width: 'auto',
-                marginBottom: 16
+                marginBottom: 12
               }} 
             />
           </Box>

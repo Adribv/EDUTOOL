@@ -257,14 +257,14 @@ const StaffLogin = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <Box sx={{ mb: 4 }}>
+            <Box sx={{ mb: 3, mt: -2, display: 'flex', justifyContent: 'center' }}>
               <img 
                 src={logo} 
                 alt="EDULIVES Logo" 
                 style={{ 
-                  height: isMobile ? 200 : 300, 
+                  height: isMobile ? 200 : 280, 
                   width: 'auto',
-                  marginBottom: 16,
+                  marginBottom: 12,
                   filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3))'
                 }} 
               />

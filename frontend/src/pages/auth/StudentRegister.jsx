@@ -212,29 +212,6 @@ function StudentRegister() {
             transition={{ duration: 0.8 }}
             style={{ width: '100%' }}
           >
-            {/* Edulives Logo - Centered and bigger */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              style={{ 
-                marginBottom: '3rem',
-                display: 'flex',
-                justifyContent: 'center',
-                width: '100%'
-              }}
-            >
-              <img 
-                src={logo} 
-                alt="EDULIVES Logo" 
-                style={{ 
-                  height: 200, 
-                  width: 'auto',
-                  objectFit: 'contain'
-                }} 
-              />
-            </motion.div>
-
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
