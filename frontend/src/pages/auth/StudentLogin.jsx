@@ -12,6 +12,7 @@ import {
   Alert,
   Grid,
   useTheme,
+  useMediaQuery,
   InputAdornment,
   IconButton,
 } from '@mui/material';
@@ -26,7 +27,11 @@ import AutoStoriesIcon from '@mui/icons-material/AutoStories';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+<<<<<<< HEAD
+import ThemeToggle from '../../components/ThemeToggle';
+=======
 
+>>>>>>> 08e9588258795fa563a6d5240b58e760f915a608
 import logo from '../../assets/logo.png';
 
 const validationSchema = yup.object({
@@ -62,7 +67,12 @@ function StudentLogin() {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const theme = useTheme();
+<<<<<<< HEAD
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { isDark } = useAppTheme();
+=======
 
+>>>>>>> 08e9588258795fa563a6d5240b58e760f915a608
 
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
@@ -234,6 +244,18 @@ function StudentLogin() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
           >
+            <Box sx={{ mb: 4 }}>
+              <img 
+                src={logo} 
+                alt="EDULIVES Logo" 
+                style={{ 
+                  height: isMobile ? 200 : 300, 
+                  width: 'auto',
+                  marginBottom: 16,
+                  filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3))'
+                }} 
+              />
+            </Box>
             <Typography
               variant="h1"
               sx={{
