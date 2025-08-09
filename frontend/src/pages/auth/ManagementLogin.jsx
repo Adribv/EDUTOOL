@@ -33,6 +33,24 @@ import { toast } from 'react-toastify';
 import logo from '../../assets/logo.png';
 import { roleConfig } from '../admin/roleConfig';
 
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { duration: 0.5, staggerChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: { 
+    y: 0,
+    opacity: 1,
+    transition: { duration: 0.5 }
+  }
+};
+
 const validationSchema = Yup.object({
   email: Yup.string()
     .email('Invalid email address')
@@ -140,9 +158,6 @@ const StaffLogin = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        minWidth: '100vw',
-        padding: '0',
-        gap: '50',
         display: 'flex',
         flexDirection: { xs: 'column', md: 'row' },
         backgroundColor: isDark ? '#1e293b' : '#f0f8ff',
@@ -162,12 +177,11 @@ const StaffLogin = () => {
         <IconButton
           onClick={() => navigate('/')}
           sx={{
-            backgroundColor: isDark ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
-            color: isDark ? '#60a5fa' : '#1976d2',
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.9)',
+            color: isDark ? '#ffffff' : '#1976d2',
             '&:hover': {
-              backgroundColor: isDark ? 'rgba(30, 41, 59, 1)' : 'rgba(255, 255, 255, 1)',
-            },
-            transition: 'all 0.3s ease'
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 1)',
+            }
           }}
         >
           <ArrowBackIcon />
@@ -185,17 +199,17 @@ const StaffLogin = () => {
       >
         <IconButton
           sx={{
-            backgroundColor: isDark ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
-            color: isDark ? '#60a5fa' : '#1976d2',
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.9)',
+            color: isDark ? '#ffffff' : '#1976d2',
             '&:hover': {
-              backgroundColor: isDark ? 'rgba(30, 41, 59, 1)' : 'rgba(255, 255, 255, 1)',
-            },
-            transition: 'all 0.3s ease'
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 1)',
+            }
           }}
         >
           <ThemeToggle />
         </IconButton>
       </Box>
+
       {/* Background image for all screen sizes */}
       <Box
         sx={{
@@ -314,9 +328,9 @@ const StaffLogin = () => {
           }}
         >
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
           >
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
               <BusinessIcon sx={{ 
@@ -348,24 +362,27 @@ const StaffLogin = () => {
               Login for all teaching and non-teaching staff. Your role and department will be automatically detected.
             </Typography>
 
-              {error && (
-                <Alert severity="error" sx={{ mb: 3 }}>
-                  {error}
-                </Alert>
-              )}
+            {error && (
+              <Alert severity="error" sx={{ mb: 3 }}>
+                {error}
+              </Alert>
+            )}
 
-              <Box component="form" onSubmit={formik.handleSubmit}>
+            <Box component="form" onSubmit={formik.handleSubmit}>
+              <motion.div variants={itemVariants}>
                 <TextField
+                  margin="normal"
+                  required
                   fullWidth
                   id="email"
-                  name="email"
                   label="Email Address"
+                  name="email"
+                  autoComplete="email"
+                  autoFocus
                   value={formik.values.email}
                   onChange={formik.handleChange}
                   error={formik.touched.email && Boolean(formik.errors.email)}
                   helperText={formik.touched.email && formik.errors.email}
-                  margin="normal"
-                  autoFocus
                   sx={{
                     mb: 2,
                     '& .MuiOutlinedInput-root': {
@@ -386,17 +403,22 @@ const StaffLogin = () => {
                     startAdornment: <EmailIcon sx={{ mr: 1, color: isDark ? '#e2e8f0' : 'text.secondary' }} />,
                   }}
                 />
+              </motion.div>
+
+              <motion.div variants={itemVariants}>
                 <TextField
+                  margin="normal"
+                  required
                   fullWidth
-                  id="password"
                   name="password"
                   label="Password"
                   type={showPassword ? 'text' : 'password'}
+                  id="password"
+                  autoComplete="current-password"
                   value={formik.values.password}
                   onChange={formik.handleChange}
                   error={formik.touched.password && Boolean(formik.errors.password)}
                   helperText={formik.touched.password && formik.errors.password}
-                  margin="normal"
                   sx={{
                     mb: 3,
                     '& .MuiOutlinedInput-root': {
@@ -429,6 +451,9 @@ const StaffLogin = () => {
                     ),
                   }}
                 />
+              </motion.div>
+
+              <motion.div variants={itemVariants}>
                 <Button
                   type="submit"
                   fullWidth
@@ -449,29 +474,32 @@ const StaffLogin = () => {
                 >
                   {loginMutation.isLoading ? <CircularProgress size={24} /> : 'SIGN IN TO STAFF PORTAL'}
                 </Button>
-              </Box>
+              </motion.div>
 
-              <Box sx={{ textAlign: 'center', mt: 3 }}>
-                <Button
-                  variant="text"
-                  onClick={() => navigate('/')}
-                  sx={{
-                    color: isDark ? '#ffffff' : '#000000',
-                    textTransform: 'none',
-                    fontSize: '0.9rem',
-                    '&:hover': {
-                      color: isDark ? '#60a5fa' : '#1976d2',
-                    },
-                  }}
-                >
-                  ← Back to Portal Selection
-                </Button>
-              </Box>
-            </motion.div>
-          </Box>
-        </Container>
-      </Box>
-    );
-  };
+              <motion.div variants={itemVariants}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Button
+                    variant="text"
+                    onClick={() => navigate('/')}
+                    sx={{
+                      color: isDark ? '#ffffff' : '#000000',
+                      textTransform: 'none',
+                      fontSize: '0.9rem',
+                      '&:hover': {
+                        color: isDark ? '#60a5fa' : '#1976d2',
+                      },
+                    }}
+                  >
+                    ← Back to Portal Selection
+                  </Button>
+                </Box>
+              </motion.div>
+            </Box>
+          </motion.div>
+        </Box>
+      </Container>
+    </Box>
+  );
+};
 
-  export default StaffLogin; 
+export default StaffLogin; 

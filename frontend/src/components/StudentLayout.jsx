@@ -43,8 +43,10 @@ import {
   ExpandMore,
   Computer,
   Assessment,
+  ArrowBack,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
+
 
 const drawerWidth = 280;
 
@@ -326,6 +328,20 @@ const StudentLayout = ({ children }) => {
           <Typography variant="h6" noWrap component="div">
             {getCurrentPageTitle()}
           </Typography>
+          <Box sx={{ flexGrow: 1 }} />
+          <IconButton
+            onClick={() => navigate('/')}
+            sx={{
+              color: 'inherit',
+              mr: 1,
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              }
+            }}
+          >
+            <ArrowBack />
+          </IconButton>
+  
         </Toolbar>
       </AppBar>
 

@@ -69,7 +69,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { toast } from 'react-toastify';
 import { api, incomeLogAPI, expenseLogAPI } from '../../services/api';
-import ThemeToggle from '../../components/ThemeToggle';
+
 
 // Tab Panel Component
 function TabPanel({ children, value, index, ...other }) {
@@ -543,7 +543,7 @@ const AccountantDashboard = () => {
           ? '0 4px 12px rgba(0, 0, 0, 0.3)' 
           : '0 4px 12px rgba(0, 0, 0, 0.1)',
       }}>
-        <ThemeToggle />
+
       </Box>
 
       <Typography variant="h4" gutterBottom sx={{ 

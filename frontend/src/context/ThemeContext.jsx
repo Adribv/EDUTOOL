@@ -49,6 +49,21 @@ const lightTheme = createTheme({
       light: '#60a5fa',
       dark: '#2563eb',
     },
+    accountant: {
+      main: '#8b5cf6',
+      light: '#a78bfa',
+      dark: '#7c3aed',
+    },
+    parent: {
+      main: '#10b981',
+      light: '#34d399',
+      dark: '#059669',
+    },
+    student: {
+      main: '#3b82f6',
+      light: '#60a5fa',
+      dark: '#2563eb',
+    },
     divider: '#e2e8f0',
   },
   typography: {
@@ -150,6 +165,21 @@ const darkTheme = createTheme({
       dark: '#d97706',
     },
     info: {
+      main: '#3b82f6',
+      light: '#60a5fa',
+      dark: '#2563eb',
+    },
+    accountant: {
+      main: '#8b5cf6',
+      light: '#a78bfa',
+      dark: '#7c3aed',
+    },
+    parent: {
+      main: '#10b981',
+      light: '#34d399',
+      dark: '#059669',
+    },
+    student: {
       main: '#3b82f6',
       light: '#60a5fa',
       dark: '#2563eb',

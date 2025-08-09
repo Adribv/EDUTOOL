@@ -32,6 +32,7 @@ import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
+
 import Timetable from './Timetable';
 import Assignments from './Assignments';
 import Students from './Students';
@@ -1719,6 +1720,17 @@ export default function TeacherDashboard() {
           <Box display="flex" alignItems="center" gap={2}>
             <IconButton color="inherit">
               <Notifications />
+            </IconButton>
+            <IconButton 
+              color="inherit"
+              sx={{
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                }
+              }}
+            >
+      
             </IconButton>
             <IconButton color="inherit" onClick={handleMenuOpen}>
               <AccountCircle />
