@@ -22,16 +22,20 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: false,
     minify: 'terser',
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
-          mui: ['@mui/material', '@mui/icons-material'],
+          mui: ['@mui/material', '@mui/icons-material', '@mui/x-data-grid', '@mui/x-date-pickers'],
           router: ['react-router-dom'],
           utils: ['axios', 'react-toastify'],
           charts: ['recharts'],
           forms: ['formik', 'yup'],
           animations: ['framer-motion'],
+          pdf: ['html2canvas', 'jspdf'],
+          excel: ['xlsx', 'papaparse'],
+          antd: ['antd', '@ant-design/icons'],
         },
         chunkFileNames: 'assets/js/[name]-[hash].js',
         entryFileNames: 'assets/js/[name]-[hash].js',
@@ -42,6 +46,7 @@ export default defineConfig({
       compress: {
         drop_console: true,
         drop_debugger: true,
+        pure_funcs: ['console.log', 'console.info', 'console.debug'],
       },
     },
   },
