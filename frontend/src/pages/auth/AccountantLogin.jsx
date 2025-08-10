@@ -182,7 +182,7 @@ const AccountantLogin = () => {
                   src={logo} 
                   alt="EDULIVES Logo" 
                   style={{ 
-                    height: isMobile ? 200 : 280, 
+                    height: isMobile ? 250 : 350, 
                     width: 'auto',
                     marginBottom: 12,
                     filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3))'

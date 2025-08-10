@@ -215,7 +215,7 @@ function StudentLogin() {
                 src={logo} 
                 alt="EDULIVES Logo" 
                 style={{ 
-                  height: 280, 
+                  height: 350, 
                   width: 'auto',
                   marginBottom: 12,
                   filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3))'
