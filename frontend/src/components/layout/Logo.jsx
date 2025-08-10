@@ -15,7 +15,7 @@ const Logo = ({ collapsed }) => {
         src={logo} 
         alt="EDULIVES Logo" 
         style={{ 
-          height: 120, 
+          height: 350, 
           width: 'auto',
           objectFit: 'contain'
         }} 

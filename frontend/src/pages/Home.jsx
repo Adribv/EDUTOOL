@@ -274,7 +274,7 @@ const Home = () => {
                   src={logo}
                   alt="EDULIVES Logo"
                   sx={{
-                    height: { xs: 100, sm: 120, md: 150, lg: 180 },
+                    height: { xs: 250, sm: 300, md: 350, lg: 350 },
                     width: 'auto',
                     maxWidth: '100%',
                     objectFit: 'contain',
