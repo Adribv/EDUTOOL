@@ -78,11 +78,6 @@ const StudentLayout = ({ children }) => {
       path: '/student/overall-progress',
     },
     {
-      text: 'Comprehensive Report',
-      icon: <Assessment />,
-      path: '/student/comprehensive-progress',
-    },
-    {
       text: 'School Timetable',
       icon: <Schedule />,
       path: '/student/timetable',
